@@ -1,0 +1,1370 @@
+import 'dart:convert';
+
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
+import 'package:trvlus/Screens/NotificationScreen.dart';
+import 'package:trvlus/Screens/ProfilePage.dart';
+import 'package:trvlus/Screens/WalletScreen.dart';
+import 'package:trvlus/Screens/roundtrip.dart';
+
+import 'Search_Result_Page.dart';
+import 'flightname.dart';
+
+String selectedDepDate = "";
+String selectedRetDate = "";
+DateTime? departureDate;
+DateTime? returnDate;
+
+String _selectedDepDate = '';
+String _dateCount = '';
+String _range = '';
+String _rangeCount = '';
+
+class SearchFlightPage extends StatefulWidget {
+  @override
+  _SearchFlightPageState createState() => _SearchFlightPageState();
+}
+
+class _SearchFlightPageState extends State<SearchFlightPage> {
+  String selectedTripType = "One way";
+  String specialFare = "Senior citizen";
+
+  int adults = 1;
+  int children = 0;
+  int infants = 0;
+  String travelClass = "Economy";
+  int selectedIndex = -1;
+  int departureIndex = -1;
+
+  // State variables for From and To fields
+  String fromAirport = "Delhi";
+  String airportCode = "DLH";
+  String fromCode = "DEL, Delhi Airport India";
+  String toAirport = "Bengaluru";
+  String toairportCode = "BLR, Bengaluru International Airport India";
+
+  // Function to swap From and To fields
+  void _swapFields() {
+    setState(() {
+      final tempAirport = fromAirport;
+      final tempCode = airportCode;
+
+      fromAirport = toAirport;
+      airportCode = toairportCode;
+
+      toAirport = tempAirport;
+      toairportCode = tempCode;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Format only the date part
+    _selectedDepDate = DateFormat('dd-MM-yyyy').format(today);
+    print("dad$selectedDepDate");
+    print(selectedDepDate);
+
+    // _selectedDepDate = today.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    String leftDescription = "${adults + children + infants} travelers";
+    return Scaffold(
+      bottomNavigationBar: SingleChildScrollView(
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FlightResultsPage(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF37023),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
+              padding: EdgeInsets.symmetric(vertical: 0.02.sh),
+            ),
+            child: Center(
+              child: Text(
+                "Search Flights",
+                style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16.sp,
+                    color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFFF5F5F5),
+        titleSpacing: 0,
+        leadingWidth: 80.w,
+        leading: GestureDetector(
+          onTap: () {
+            Get.to(ProfilePage());
+          },
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              // Avatar
+              Padding(
+                padding: EdgeInsets.only(left: 20.w),
+                child: CircleAvatar(
+                  radius: 20.r,
+                  // Adjust size of avatar
+                  child: Icon(Icons.person),
+                  // backgroundImage: Icon(Icons.p),
+                  backgroundColor: Colors.grey.shade200,
+                ),
+              ),
+              // Menu Icon on Avatar
+              Positioned(
+                left: 44.w,
+                top: 20.h,
+                child: Container(
+                  height: 15.h,
+                  width: 15.w,
+                  child: Image.asset(
+                    "assets/images/Menu_1.png",
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: Container(
+          margin: EdgeInsets.only(top: 8.h),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: GestureDetector(
+                onTap: () {},
+                child: Image.asset(
+                  'assets/images/Trvlus_Logo.png',
+                  height: 28.h,
+                ),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          // Price Tag
+          GestureDetector(
+            onTap: () {
+              Get.to(
+                const Wallet(),
+                duration: const Duration(milliseconds: 600),
+              );
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset("assets/images/Group_1.png"),
+                Padding(
+                  padding: EdgeInsets.only(right: 40.w, bottom: 15.h),
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF37003),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      '₹0',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Notification Icon
+          Padding(
+            padding: EdgeInsets.only(right: 16.w),
+            child: GestureDetector(
+              onTap: () {
+                Get.to(NotificationScreen());
+              },
+              child: Image.asset("assets/images/Bell_1.png"),
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.all(16.r),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: TripTypeButton(
+                      label: "One way",
+                      isSelected: selectedTripType == "One way",
+                      onTap: () {
+                        setState(() {
+                          selectedTripType = "One way";
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 0.02.sw),
+                  Expanded(
+                    child: TripTypeButton(
+                      label: "Round trip",
+                      isSelected: selectedTripType == "Round trip",
+                      onTap: () {
+                        setState(() {
+                          selectedTripType = "Round trip";
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 0.02.sw),
+                ],
+              ),
+              SizedBox(height: 0.02.sh),
+              Stack(
+                children: [
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          var value = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Flightname(
+                                        from: "From",
+                                      )));
+                          var finalValue = jsonDecode(value);
+                          setState(() {
+                            airportCode = finalValue['airport_code'];
+
+                            fromAirport = finalValue['airport_city'];
+                          });
+                        },
+                        child: FlightField(
+                          label: "FROM",
+                          airport: fromAirport,
+                          code: airportCode,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () async {
+                          var value = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Flightname(
+                                        from: "To",
+                                      )));
+                          var finalValue = jsonDecode(value);
+
+                          setState(() {
+                            toairportCode = finalValue['airport_code'];
+
+                            toAirport = finalValue['airport_city'];
+                          });
+                        },
+                        child: FlightField(
+                          label: "TO",
+                          airport: toAirport,
+                          code: toairportCode,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 15.w,
+                    top: 65.h,
+                    child: GestureDetector(
+                      onTap: _swapFields, // Call swap function on tap
+                      child: Container(
+                        height: 50.h, // Size of the circular button
+                        width: 50.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          // Background color for the circle
+                          shape: BoxShape.circle,
+                          // Circular shape
+                          border: Border.all(
+                            color: const Color(0xFFF7F7F7),
+                            width: 5.w,
+                          ),
+                        ),
+                        child: Center(
+                          child: Image.asset(
+                            "assets/images/swap.png",
+                            height: 30.h, // Adjust image size
+                            width: 30.h,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: DatePickerField(
+                      label: "Departure on",
+                      selectedDate: departureDate,
+                      onDateChanged: (date) {
+                        setState(() {
+                          departureDate = date;
+                          returnDate = date.add(const Duration(
+                              days: 1)); // Automatically update return date
+                        });
+                      },
+                      firstDate: DateTime.now(),
+                      selectedTripType: '', // Start from today
+                    ),
+                  ),
+                  SizedBox(width: 0.02.sw),
+                  Expanded(
+                    child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const Roundtrip()));
+                          setState(() {
+                            selectedTripType =
+                                "Round trip"; // Immediately change trip type
+                          });
+                        },
+                        child: Container(
+                          margin: EdgeInsets.only(top: 8),
+                          height: 63,
+                          width: 156,
+                          child: DottedBorder(
+                            color: Colors.orange,
+                            strokeWidth: 1.5,
+                            dashPattern: [4, 4],
+                            // 4px dash, 4px gap
+                            borderType: BorderType.RRect,
+                            radius: const Radius.circular(8),
+                            child: const Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                "+ Add Round Trip",
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+              CombinedSelectionField(),
+              SizedBox(height: 0.02.sh),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(
+                    color: Colors.grey[300]!,
+                    width: 1.w,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Special fare (optional)",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.sp,
+                        color: const Color(0xFF7F8387),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Wrap(
+                        spacing: 10.w,
+                        children: [
+                          SpecialFareButton(
+                            label: "Student",
+                            isSelected: specialFare == "Student",
+                            onTap: () {
+                              setState(() {
+                                specialFare = "Student";
+                              });
+                            },
+                          ),
+                          SpecialFareButton(
+                            label: "Senior citizen",
+                            isSelected: specialFare == "Senior citizen",
+                            onTap: () {
+                              setState(() {
+                                specialFare = "Senior citizen";
+                              });
+                            },
+                          ),
+                          SpecialFareButton(
+                            label: "Defence",
+                            isSelected: specialFare == "Defence",
+                            onTap: () {
+                              setState(() {
+                                specialFare = "Defence";
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 30.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Trip type button widget
+class TripTypeButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  TripTypeButton(
+      {required this.label, required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    print("_selectedDepDate_selectedDepDate$_selectedDepDate");
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFE7DA) : Colors.white,
+            borderRadius: BorderRadius.circular(5.r),
+            border: isSelected
+                ? Border.all(color: Colors.orange, width: 1)
+                : Border.all(color: const Color(0xFFE6E6E6), width: 1)),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12.sp,
+              fontWeight: FontWeight.bold,
+              color: isSelected
+                  ? const Color(0xFFF37023)
+                  : const Color(0xFF1C1E1D),
+              //fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// FlightField widget
+class FlightField extends StatelessWidget {
+  final String label;
+  final String airport;
+  final String code;
+
+  FlightField({required this.label, required this.airport, required this.code});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8.h),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF7F8387),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    airport,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1C1E1D),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    code,
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.sp,
+                        color: const Color(0xFF7F8387)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class DatePickerField extends StatefulWidget {
+  final String label;
+  final DateTime? selectedDate;
+  final Function(DateTime) onDateChanged;
+  final DateTime firstDate;
+  final String selectedTripType;
+
+  const DatePickerField({
+    required this.label,
+    required this.selectedDate,
+    required this.onDateChanged,
+    required this.firstDate,
+    required this.selectedTripType,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<DatePickerField> createState() => _DatePickerFieldState();
+}
+
+class _DatePickerFieldState extends State<DatePickerField> {
+  DateTime? departureDate;
+  DateTime? returnDate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8.h),
+        GestureDetector(
+          onTap: () async {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (context) {
+                DateTime? tempSelectedDate = widget.selectedDate;
+                print("tempSelectedDate$tempSelectedDate");
+                DateTime? tempReturnDate;
+                print("hello${widget.onDateChanged}");
+                return StatefulBuilder(
+                  builder: (context, localSetState) {
+                    return Container(
+                      height: 550,
+                      child: Scaffold(
+                        floatingActionButton: Container(
+                          color: const Color(0xFFF5F5F5),
+                          margin: EdgeInsets.symmetric(
+                              horizontal: 12.w, vertical: 6.h),
+                          width: 300,
+                          height: 40.h,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF37023),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25.r),
+                              ),
+                            ),
+                            onPressed: () {
+                              if (tempSelectedDate != null) {
+                                widget.onDateChanged(departureDate!);
+                              }
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Done"),
+                          ),
+                        ),
+                        body: SingleChildScrollView(
+                          child: Container(
+                            color: const Color(0xFFF5F5F5),
+                            child: Column(
+                              children: [
+                                Container(
+                                  color: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w, vertical: 10.h),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(left: 9.w),
+                                        child: Text(
+                                          widget.label == "Departure on"
+                                              ? "Select Departure Date"
+                                              : "Select Return Date",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Inter',
+                                            fontSize: 20.sp,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      GestureDetector(
+                                        onTap: () => Navigator.pop(context),
+                                        child: const Icon(Icons.close),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 10.h),
+                                Container(
+                                  color: Colors.white,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {});
+                                        },
+                                        child: Padding(
+                                          padding:
+                                              EdgeInsets.only(left: 20.0.w),
+                                          child: Container(
+                                            width: 150.w,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 5.w, vertical: 3.h),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  widget.label == "Departure on"
+                                                      ? const Color(0xFFFFE7DA)
+                                                      : Colors.white,
+                                              border: Border.all(
+                                                color: widget.label ==
+                                                        "Departure on"
+                                                    ? const Color(0xFFE6E6E6)
+                                                    : Colors.grey.shade300,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Image.asset(
+                                                        "assets/images/takeoff2.png"),
+                                                    SizedBox(width: 5.w),
+                                                    Text(
+                                                      "Departure",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .headlineMedium
+                                                          ?.copyWith(
+                                                            color: const Color(
+                                                                0xFFF37023),
+                                                            fontSize: 15.sp,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 4.h),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    text: tempSelectedDate !=
+                                                            null
+                                                        ? DateFormat('dd MMM ')
+                                                            .format(
+                                                                tempSelectedDate!)
+                                                        : "Select Date",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headlineSmall
+                                                        ?.copyWith(
+                                                          fontSize: 12.sp,
+                                                          color: Colors.black,
+                                                        ),
+                                                    children: [
+                                                      TextSpan(
+                                                        text: tempSelectedDate !=
+                                                                null
+                                                            ? DateFormat(
+                                                                    'EEE, yyyy')
+                                                                .format(
+                                                                    tempSelectedDate!)
+                                                            : "",
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodyLarge
+                                                            ?.copyWith(
+                                                              fontSize: 10.sp,
+                                                              color: const Color(
+                                                                  0xFF909090),
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {});
+                                        },
+                                        child: Container(
+                                          width: 150.w,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 5.w, vertical: 3.h),
+                                          decoration: BoxDecoration(
+                                            color: widget.label == "Return on"
+                                                ? const Color(0xFFFFE7DA)
+                                                : Colors.white,
+                                            border: Border.all(
+                                              color: widget.label == "Return on"
+                                                  ? const Color(0xFFE6E6E6)
+                                                  : Colors.grey.shade300,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Image.asset(
+                                                      "assets/images/takeoff1.png"),
+                                                  SizedBox(width: 5.w),
+                                                  Text(
+                                                    "Return",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headlineSmall
+                                                        ?.copyWith(
+                                                          color: const Color(
+                                                              0xFFF37023),
+                                                          fontSize: 15.sp,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(height: 4.h),
+                                              RichText(
+                                                text: TextSpan(
+                                                  text: tempReturnDate != null
+                                                      ? DateFormat('dd MMM ')
+                                                          .format(
+                                                              tempReturnDate!)
+                                                      : "Add return and save",
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.copyWith(
+                                                        fontSize: 10.sp,
+                                                        color: const Color(
+                                                            0xFF909090),
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 20.h),
+                                SizedBox(
+                                  height: MediaQuery.sizeOf(context).height * 1,
+                                  child: SfDateRangePicker(
+                                    backgroundColor: Colors.white,
+                                    headerStyle: DateRangePickerHeaderStyle(
+                                        // backgroundColor:
+                                        //     primaryColor.withOpacity(0.4),
+                                        ),
+                                    view: DateRangePickerView.month,
+                                    showTodayButton: false,
+                                    todayHighlightColor: Colors.transparent,
+                                    cellBuilder: (BuildContext context,
+                                        DateRangePickerCellDetails details) {
+                                      final DateTime date = details.date;
+                                      final DateTime now = DateTime.now();
+                                      final DateTime today = DateTime(
+                                          now.year, now.month, now.day);
+                                      print("DateTime today$today");
+                                      final bool isPast = date.isBefore(today);
+                                      final bool isToday =
+                                          date.isAtSameMomentAs(today);
+
+                                      final bool isSelected =
+                                          (tempSelectedDate != null &&
+                                                  date.isAtSameMomentAs(
+                                                      tempSelectedDate)) ||
+                                              (tempReturnDate != null &&
+                                                  date.isAtSameMomentAs(
+                                                      tempReturnDate!));
+                                      print("bool isSelected$isSelected");
+
+                                      return Container(
+                                        margin: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          // color: isSelected
+                                          //     ? primaryColor.withOpacity(0.2)
+                                          //     : Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          border: isToday
+                                              ? Border.all(
+                                                  color: Colors.orange,
+                                                  width: 2)
+                                              : null,
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              date.day.toString(),
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: isToday
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                                color: isPast
+                                                    ? Colors.grey
+                                                        .withOpacity(0.5)
+                                                    : (isSelected
+                                                        ? Colors.black
+                                                        : Colors.black87),
+                                              ),
+                                            ),
+                                            Text(
+                                              '\$100',
+                                              style: TextStyle(
+                                                fontSize: 10.sp,
+                                                color: isPast
+                                                    ? Colors.grey
+                                                        .withOpacity(0.3)
+                                                    : Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    enableMultiView: true,
+                                    selectionShape:
+                                        DateRangePickerSelectionShape.rectangle,
+                                    navigationDirection:
+                                        DateRangePickerNavigationDirection
+                                            .vertical,
+                                    navigationMode:
+                                        DateRangePickerNavigationMode.scroll,
+                                    selectionMode: widget.selectedTripType ==
+                                            'One Way'
+                                        ? DateRangePickerSelectionMode.single
+                                        : DateRangePickerSelectionMode.range,
+                                    minDate: widget.firstDate,
+                                    showNavigationArrow: true,
+                                    onSelectionChanged:
+                                        (DateRangePickerSelectionChangedArgs
+                                            args) {
+                                      localSetState(() {});
+                                      setState(() {
+                                        _selectedDepDate =
+                                            args.value.toString();
+                                      });
+                                      print("after $_selectedDepDate");
+                                    },
+                                  ),
+                                ),
+                                SizedBox(height: 10.h),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+          child: Container(
+            padding: EdgeInsets.all(14.sp),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFFFF),
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12.sp,
+                    color: const Color(0xFF7F8387),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Row(
+                  children: [
+                    Text(
+                      _selectedDepDate == null
+                          ? "Select date"
+                          : _selectedDepDate.contains("startDate")
+                              ? _selectedDepDate.substring(33, 43)
+                              : _selectedDepDate,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1C1E1D),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Image.asset("assets/images/Calendar_image.png"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// SpecialFareButton widget
+class SpecialFareButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const SpecialFareButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 15.w),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFFFE7DA) : Colors.white,
+          borderRadius: BorderRadius.circular(30.r),
+          border: Border.all(
+            color: isSelected ? Colors.orange : const Color(0xFFE6E6E6),
+            width: 1.w,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12.sp,
+              fontWeight: FontWeight.bold,
+              color: isSelected
+                  ? const Color(0xFFF37023)
+                  : const Color(0xFF1C1E1D),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CombinedSelectionField extends StatefulWidget {
+  @override
+  _CombinedSelectionFieldState createState() => _CombinedSelectionFieldState();
+}
+
+class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
+  int adults = 1;
+  int children = 0;
+  int infants = 0;
+  String travelClass = "Economy";
+
+  @override
+  Widget build(BuildContext context) {
+    String leftDescription = "${adults + children + infants} Travelers";
+
+    return GestureDetector(
+      onTap: () => _showTravelerAndClassDialog(context),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Traveler & class",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: const Color(0xFF7F8387),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+
+            // Right Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  leftDescription,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.sp,
+                    color: const Color(0xFF1C1E1D),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      travelClass, // Dynamically update travel class
+                      style: TextStyle(
+                        fontFamily: 'BricolageGrotesque',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                        color: const Color(0xFF1C1E1D),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Image.asset(
+                      'assets/images/star1.png',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTravelerAndClassDialog(BuildContext context) {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero, // Removes the rounded corners
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalSetState) {
+            return Container(
+              height: 400.h,
+              child: Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Select Traveler & Class",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 20.sp,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    const Divider(),
+                    SizedBox(height: 5.h),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Wrap(
+                        spacing: 5.w,
+                        runSpacing: 5.h,
+                        children: [
+                          "Economy",
+                          "Premium Economy",
+                          "Business",
+                          "First Class"
+                        ].map((classType) {
+                          return ChoiceChip(
+                            label: Text(
+                              classType,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: travelClass == classType
+                                    ? Colors.orange
+                                    : Colors.black,
+                              ),
+                            ),
+                            selected: travelClass == classType,
+                            selectedColor: const Color(0xFFFFE7DA),
+                            backgroundColor: travelClass == classType
+                                ? const Color(0xFFFFE7DA)
+                                : Colors.white,
+                            shape: StadiumBorder(
+                              side: BorderSide(
+                                color: travelClass == classType
+                                    ? Colors.orange
+                                    : const Color(0xFFE6E6E6),
+                                width: 1.5
+                                    .w, // Border width scaled with ScreenUtil
+                              ),
+                            ),
+                            onSelected: (bool selected) {
+                              if (selected) {
+                                modalSetState(() {
+                                  travelClass = classType; // Update local state
+                                });
+                                setState(() {
+                                  travelClass = classType;
+                                });
+                              }
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    const Divider(),
+                    SizedBox(height: 5.h),
+
+                    _buildCounterRow(
+                      "Adults",
+                      "12 years and above",
+                      adults,
+                      (value) {
+                        modalSetState(() => adults = value);
+                        setState(() => adults = value); // Update parent state
+                      },
+                    ),
+                    _buildCounterRow(
+                      "Children",
+                      "Between 2 and 12 years",
+                      children,
+                      (value) {
+                        modalSetState(() => children = value);
+                        setState(() => children = value); // Update parent state
+                      },
+                    ),
+                    _buildCounterRow(
+                      "Infants",
+                      "Below 2 years",
+                      infants,
+                      (value) {
+                        modalSetState(() => infants = value);
+                        setState(() => infants = value); // Update parent state
+                      },
+                    ),
+                    SizedBox(height: 20.h),
+                    Padding(
+                      padding: EdgeInsets.only(right: 10.w, left: 10.w),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF37023),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Done",
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCounterRow(
+    String label,
+    String subtitle,
+    int value,
+    ValueChanged<int> onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16.sp,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+              ),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.only(right: 15.w),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 6.w),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                border: Border.all(color: const Color(0xFFE6E6E6)),
+                borderRadius: BorderRadius.circular(5.r),
+                //borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (value > 0) onChanged(value - 1);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.only(right: 5.w),
+                      child: Icon(
+                        Icons.remove,
+                        color: const Color(0xFF909090), // Icon color
+                        size: 15.h, // Icon size
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(vertical: 6.h, horizontal: 13.w),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      //borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "$value",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => onChanged(value + 1),
+                    child: Container(
+                      padding: EdgeInsets.only(left: 5.w),
+                      // Padding for the icon
+                      child: Icon(
+                        Icons.add,
+                        color: const Color(0xFF909090), // Icon color
+                        size: 15.h, // Icon size
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

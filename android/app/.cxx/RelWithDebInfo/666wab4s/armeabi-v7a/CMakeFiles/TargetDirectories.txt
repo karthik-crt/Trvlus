@@ -1,0 +1,2 @@
+C:/Users/CODE REGIME/StudioProjects/trvlus/android/app/.cxx/RelWithDebInfo/666wab4s/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/CODE REGIME/StudioProjects/trvlus/android/app/.cxx/RelWithDebInfo/666wab4s/armeabi-v7a/CMakeFiles/rebuild_cache.dir
