@@ -17,7 +17,7 @@ class _RoundtripState extends State<Roundtrip> {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
-        title: Text("Round Trip"),
+        title: const Text("Round Trip"),
       ),
       body: ListView(
         children: [
