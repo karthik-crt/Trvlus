@@ -9,13 +9,46 @@ class OtpVerificationScreen extends StatefulWidget {
   final dynamic flight;
   final String city;
   final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
+  final double? basefare;
 
-  const OtpVerificationScreen({
-    super.key,
-    required this.flight,
-    required this.city,
-    required this.destination,
-  });
+  const OtpVerificationScreen(
+      {super.key,
+      required this.flight,
+      required this.city,
+      required this.destination,
+      required this.airlineName,
+      required this.cityName,
+      required this.cityCode,
+      this.airlineCode,
+      this.airportName,
+      this.desairportName,
+      this.flightNumber,
+      this.depDate,
+      this.depTime,
+      this.refundable,
+      this.arrDate,
+      this.arrTime,
+      this.descityName,
+      this.descityCode,
+      this.stop,
+      this.duration,
+      this.basefare});
 
   @override
   _OtpVerificationScreenState createState() => _OtpVerificationScreenState();
@@ -40,10 +73,26 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _verifyOtp() {
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
       Get.to(() => TravelerDetailsPage(
-            flight: const {},
-            city: 'mdu',
-            destination: 'chennai',
-          ));
+          flight: {},
+          city: widget.city,
+          destination: widget.destination,
+          airlineName: widget.airlineName,
+          airlineCode: widget.airlineCode,
+          flightNumber: widget.flightNumber,
+          cityName: widget.cityName,
+          cityCode: widget.cityCode,
+          descityName: widget.descityName,
+          descityCode: widget.descityCode,
+          depDate: widget.depDate,
+          depTime: widget.depTime,
+          arrDate: widget.arrDate,
+          arrTime: widget.arrTime,
+          duration: widget.duration,
+          refundable: widget.refundable,
+          stop: widget.stop,
+          airportName: widget.airportName,
+          desairportName: widget.desairportName,
+          basefare: widget.basefare));
     } else {
       print("Enter complete OTP");
     }

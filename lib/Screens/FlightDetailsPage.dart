@@ -1,21 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:trvlus/Screens/ViewFullDetails.dart';
 import 'package:trvlus/utils/constant.dart';
 
 import 'DotDivider.dart';
 import 'Mobile_Verification.dart';
-import 'Seat.dart';
 import 'ShowModelSheet.dart';
 
 class FlightDetailsPage extends StatefulWidget {
   final Map<String, dynamic> flight;
   final String city;
   final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
+  final String? cabinBaggage;
+  final String? baggage;
+  final String? cancellation;
+  final String? journeypoint;
+  final String? reissue;
+  final double? basefare;
 
   FlightDetailsPage(
-      {required this.flight, required this.city, required this.destination});
+      {required this.flight,
+      required this.city,
+      required this.destination,
+      required this.airlineName,
+      required this.cityName,
+      required this.cityCode,
+      this.airlineCode,
+      this.airportName,
+      this.desairportName,
+      this.flightNumber,
+      this.depDate,
+      this.depTime,
+      this.refundable,
+      this.arrDate,
+      this.arrTime,
+      this.descityName,
+      this.descityCode,
+      this.stop,
+      this.duration,
+      this.cabinBaggage,
+      this.baggage,
+      this.cancellation,
+      this.journeypoint,
+      this.reissue,
+      this.basefare});
 
   @override
   _FlightDetailsPageState createState() => _FlightDetailsPageState();
@@ -27,6 +74,25 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+
+    final airportName = widget.airportName;
+    print("airportName$airportName");
+    final desairportName = widget.desairportName;
+
+    final cabin = widget.baggage;
+    print("cabin$cabin");
+
+    final cabinBah = widget.cabinBaggage;
+    print("cabinBah$cabinBah");
+
+    final depDateformat = widget.depDate;
+    DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
+    final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
+
+    final arrDateformat = widget.arrDate;
+    DateTime arrparsedDate = DateFormat("yyyy-MM-dd").parse(arrDateformat!);
+    final finalarrDateformat =
+        DateFormat("EEE,dd MMM yy").format(arrparsedDate);
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -61,41 +127,57 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                     Row(
                       children: [
                         // Image.asset(flight['logo'], height: 40, width: 40),
+                        Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
                         SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Text(
-                            //   flight['airline'],
-                            //   style: TextStyle(
-                            //       fontFamily: 'Inter',
-                            //       fontWeight: FontWeight.bold,
-                            //       fontSize: 14.sp,
-                            //       color: Colors.black),
-                            // ),
-                            RichText(
+                        Container(
+                          width: 120,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.airlineName,
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                    color: Colors.black),
+                              ),
+                              RichText(
                                 text: TextSpan(
-                                    text: 'XL2724',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.grey.shade700),
-                                    children: [
-                                  TextSpan(
-                                      text: " NR",
+                                  text: widget.airlineCode ?? "", // first text
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall, // base style
+                                  children: [
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: widget.flightNumber ?? "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                              color: Colors.grey.shade700),
+                                    ),
+                                    TextSpan(
+                                      text: " ${widget.refundable ?? ""}",
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall
                                           ?.copyWith(
-                                              fontSize: 12.sp,
-                                              color: primaryColor))
-                                ]))
-                          ],
+                                            fontSize: 12.sp,
+                                            color: primaryColor,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                        SizedBox(width: 43.w),
-                        Image.asset(
-                          "assets/images/Line.png",
-                        ),
+                        // SizedBox(width: 43.w),
+                        // Image.asset(
+                        //   "assets/images/Line.png",
+                        // ),
                         const Spacer(),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -120,7 +202,8 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                               ],
                             ),
                             Text(
-                              "Aircraft Boeing",
+                              // "Aircraft Boeing",
+                              "",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -150,7 +233,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             Row(
                               children: [
                                 Text(
-                                  "05:30",
+                                  widget.depTime ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -162,7 +245,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             ),
                             //SizedBox(height: 4.h),
                             Text(
-                              "Sat,30 Nov 24",
+                              finaldepDateformat,
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: Colors.grey,
@@ -172,13 +255,14 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                         ),
                         Column(
                           children: [
-                            Text("1 hr 14m", style: TextStyle(fontSize: 12.sp)),
+                            Text(widget.stop ?? "",
+                                style: TextStyle(fontSize: 12.sp)),
                             Image.asset('assets/images/flightColor.png'),
-                            // Text(
-                            //   "1 hr 14m",
-                            //   style: TextStyle(
-                            //       fontFamily: 'Inter', fontSize: 12.sp),
-                            // ),
+                            Text(
+                              widget.duration ?? "",
+                              style: TextStyle(
+                                  fontFamily: 'Inter', fontSize: 12.sp),
+                            ),
                           ],
                         ),
                         Column(
@@ -188,7 +272,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  "05:30",
+                                  widget.arrTime ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -199,7 +283,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                               ],
                             ),
                             Text(
-                              "Sat,30 Nov 24",
+                              finalarrDateformat,
                               style: TextStyle(fontSize: 12.sp),
                             ),
                           ],
@@ -216,7 +300,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             Row(
                               children: [
                                 Text(
-                                  city,
+                                  widget.cityName,
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -225,7 +309,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "DEL",
+                                  widget.cityCode,
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -250,7 +334,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  destination,
+                                  widget.descityName ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -259,7 +343,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "BLR",
+                                  widget.descityCode ?? "",
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -293,6 +377,22 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             flight: flight,
                             city: widget.city,
                             destination: widget.destination,
+                            airlineName: widget.airlineName,
+                            airlineCode: widget.airlineCode,
+                            flightNumber: widget.flightNumber,
+                            cityName: widget.cityName,
+                            cityCode: widget.cityCode,
+                            descityName: widget.descityName,
+                            descityCode: widget.descityCode,
+                            depDate: widget.depDate,
+                            depTime: widget.depTime,
+                            arrDate: widget.arrDate,
+                            arrTime: widget.arrTime,
+                            duration: widget.duration,
+                            refundable: widget.refundable,
+                            stop: widget.stop,
+                            airportName: widget.airportName,
+                            desairportName: widget.desairportName,
                           ),
                         );
                       },
@@ -346,7 +446,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   children: [
                     Image.asset(
                       'assets/images/promocode.png',
-                      height: 40,
+                      height: 32,
                     ),
                     SizedBox(
                       width: 15,
@@ -354,10 +454,14 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Promo Code"),
+                        Text(
+                          "Promo Code",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         Text(
                           "TRVLUS",
-                          style: TextStyle(color: Colors.black),
+                          style: TextStyle(
+                              color: Colors.black, fontWeight: FontWeight.bold),
                         )
                       ],
                     ),
@@ -366,15 +470,270 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          "CHANGE",
-                          style: TextStyle(
-                            color: Color(0xFFF37023),
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet<void>(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 15, vertical: 15),
+                                  width: MediaQuery.sizeOf(context).width,
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "PromoCode",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                                fontSize: 20),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Icon(
+                                              Icons.cancel_outlined,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 15,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/promocode.png',
+                                            height: 35,
+                                          ),
+                                          SizedBox(
+                                            width: 20,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "TRVLUS",
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              Text(
+                                                "₹4,555 saved",
+                                                style: TextStyle(
+                                                    color: Color(0xFFF37023),
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              )
+                                            ],
+                                          ),
+                                          Spacer(),
+                                          Container(
+                                            width: 80,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                                color: Color(0xFFF37023)),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              "Applied",
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/promocode.png',
+                                            height: 35,
+                                          ),
+                                          SizedBox(
+                                            width: 20,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "TRVLUS",
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              Text(
+                                                "₹4,555 saved",
+                                                style: TextStyle(
+                                                    color: Color(0xFFF37023),
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              )
+                                            ],
+                                          ),
+                                          Spacer(),
+                                          Container(
+                                            width: 80,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                                border: Border.all(
+                                                    color: Color(0xFFF37023)),
+                                                color: Colors.transparent),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              "Apply",
+                                              style: TextStyle(
+                                                  color: Color(0xFFF37023),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/promocode.png',
+                                            height: 35,
+                                          ),
+                                          SizedBox(
+                                            width: 20,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "TRVLUS",
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              Text(
+                                                "₹4,555 saved",
+                                                style: TextStyle(
+                                                    color: Color(0xFFF37023),
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              )
+                                            ],
+                                          ),
+                                          Spacer(),
+                                          Container(
+                                            width: 80,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                                border: Border.all(
+                                                    color: Color(0xFFF37023)),
+                                                color: Colors.transparent),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              "Apply",
+                                              style: TextStyle(
+                                                color: Color(0xFFF37023),
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/promocode.png',
+                                            height: 35,
+                                          ),
+                                          SizedBox(
+                                            width: 20,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "TRVLUS",
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              Text(
+                                                "₹4,555 saved",
+                                                style: TextStyle(
+                                                    color: Color(0xFFF37023),
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              )
+                                            ],
+                                          ),
+                                          Spacer(),
+                                          Container(
+                                            width: 80,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                                border: Border.all(
+                                                    color: Color(0xFFF37023)),
+                                                color: Colors.transparent),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              "Apply",
+                                              style: TextStyle(
+                                                  color: Color(0xFFF37023),
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Text(
+                            "CHANGE",
+                            style: TextStyle(
+                              color: Color(0xFFF37023),
+                            ),
                           ),
                         ),
                         Text(
                           "₹4,555 saved",
-                          style: TextStyle(color: Color(0xFF138808)),
+                          style: TextStyle(
+                              color: Color(0xFFF37023),
+                              fontWeight: FontWeight.bold),
                         )
                       ],
                     )
@@ -383,6 +742,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
             SizedBox(height: 10.h),
             _buildCancellationPolicy(),
             SizedBox(height: 10.h),
+            _buildDateChange(),
             //_buildPromoCodeSection(),
             //_buildRefundableBooking(),
 
@@ -444,7 +804,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹8,000",
+                          "₹${widget.basefare ?? ""}",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -466,10 +826,26 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                 ElevatedButton(
                   onPressed: () {
                     Get.to(MobileVerificationScreen(
-                      flight: flight,
-                      city: widget.city,
-                      destination: widget.destination,
-                    ));
+                        flight: flight,
+                        city: widget.city,
+                        destination: widget.destination,
+                        airlineName: widget.airlineName,
+                        airlineCode: widget.airlineCode,
+                        flightNumber: widget.flightNumber,
+                        cityName: widget.cityName,
+                        cityCode: widget.cityCode,
+                        descityName: widget.descityName,
+                        descityCode: widget.descityCode,
+                        depDate: widget.depDate,
+                        depTime: widget.depTime,
+                        arrDate: widget.arrDate,
+                        arrTime: widget.arrTime,
+                        duration: widget.duration,
+                        refundable: widget.refundable,
+                        stop: widget.stop,
+                        airportName: widget.airportName,
+                        desairportName: widget.desairportName,
+                        basefare: widget.basefare));
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 40.h),
@@ -597,33 +973,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   ),
                 ),
                 SizedBox(width: 130.w),
-                ElevatedButton(
-                  onPressed: () {
-                    // Action for the button
-                    // ScaffoldMessenger.of(context).showSnackBar(
-                    //   SnackBar(content: Text("Button Pressed")),
-                    // );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFF37023), // Button color
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => FlightSeatApp()));
-                    },
-                    child: Text(
-                      "ADD MORE",
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             Text(
@@ -720,7 +1069,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                         //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "7kg",
+                            widget.cabinBaggage ?? "",
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12.sp,
@@ -731,7 +1080,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                           //Spacer(),
                           SizedBox(width: 50.w),
                           Text(
-                            "15kg",
+                            widget.baggage ?? "",
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12.sp,
@@ -741,7 +1090,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                           ),
                           SizedBox(width: 60.h),
                           Text(
-                            "DEL-MAA(Adult)",
+                            " ${widget.cityCode} - ${widget.descityCode}",
                             style: TextStyle(
                                 fontSize: 14.sp,
                                 fontFamily: 'Inter',
@@ -778,9 +1127,10 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         //SizedBox(height: 8.h),
         SizedBox(height: 8.h),
         _buildPolicyRow(
-          "0-4 hrs to departure:",
-          "Non Refundable",
-          valueColor: Color(0xFFF32323),
+          widget.journeypoint ?? "",
+          widget.cancellation ?? "",
+
+          // valueColor: Color(0xFFF32323),
         ),
         SizedBox(height: 12.h),
         _buildPolicyRow("4hrs - 4 days to departure:", "₹4,555"),
@@ -790,17 +1140,23 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     );
   }
 
-  // Widget _buildRefundableBooking() {
-  //   return _buildSectionCard(
-  //     "Refundable Booking",
-  //     [
-  //       Row(
-  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //         children: [Text("Refundable Booking"), Text("₹500")],
-  //       ),
-  //     ],
-  //   );
-  // }
+  Widget _buildDateChange() {
+    return _buildDateChangeCard(
+      "Date Change Charges",
+      [
+        SizedBox(height: 8.h),
+        _buildPolicyRow(
+          "0-4 hrs to departure: ${widget.journeypoint ?? ""}",
+          widget.reissue ?? "",
+          // valueColor: Color(0xFFF32323),
+        ),
+        SizedBox(height: 12.h),
+        _buildPolicyRow("4hrs - 4 days to departure:", "₹4,555"),
+        SizedBox(height: 12.h),
+        _buildPolicyRow("4 - 999 days to departure:", "₹4,555"),
+      ],
+    );
+  }
 
   Widget _buildSectionCard(String title, List<Widget> content) {
     return Card(
@@ -816,6 +1172,40 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
             Row(
               children: [
                 Image.asset("assets/images/cancellation.png"),
+                SizedBox(width: 8.w),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            ...content,
+          ],
+        ),
+      ),
+    );
+  }
+
+  _buildDateChangeCard(String title, List<Widget> content) {
+    return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                SvgPicture.asset("assets/icon/datechange.svg"),
                 SizedBox(width: 8.w),
                 Text(
                   title,
@@ -853,7 +1243,7 @@ Widget _buildPolicyRow(String label, String value,
         Text(
           label,
           style: TextStyle(
-              fontSize: 12.sp, fontFamily: 'Inter', color: Color(0xFF909090)),
+              fontSize: 12.sp, fontFamily: 'Inter', color: Color(0xFFF32323)),
         ),
         Text(
           value,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:trvlus/Screens/Home_Page.dart';
 import 'package:trvlus/Screens/ProfilePage.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,8 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // List of pages corresponding to each navigation item
   final List<Widget> _pages = [
-    HomePage(),
-    //Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
+    // HomePage(),
+    Center(child: Text('Home Page', style: TextStyle(fontSize: 24))),
     Center(child: Text('Flights Page', style: TextStyle(fontSize: 24))),
     Center(child: Text('Offers Page', style: TextStyle(fontSize: 24))),
     ProfilePage()

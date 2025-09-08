@@ -46,6 +46,10 @@ dependencies:
   crypto: ^3.0.3
   dotted_border: ^2.1.0
   syncfusion_flutter_datepicker: ^30.2.5
+  flutter_svg: ^2.2.0
+  image_picker: ^1.1.2   # use latest version
+
+
 
 
 
@@ -78,6 +82,8 @@ flutter:
   assets:
     - assets/images/
     - assets/
+    - assets/ssr/
+    - assets/icon/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

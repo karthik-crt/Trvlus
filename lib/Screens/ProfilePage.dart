@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:trvlus/Screens/DotDivider.dart';
 import 'package:trvlus/Screens/EditProfile.dart';
 import 'package:trvlus/Screens/Home_Page.dart';
+import 'package:trvlus/Screens/customer_support.dart';
+import 'package:trvlus/Screens/tearmsandcondition.dart';
 
 import 'BookingHistory.dart';
 import 'NotificationScreen.dart';
@@ -14,7 +21,24 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   //final AuthController authController = Get.find<AuthController>();
+
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
   bool isNotificationsEnabled = true;
+
+  String _selectedCountry = "India"; // default
+  String _selectedFlag = "🇮🇳";
+  String _selectedcurrency = "INR ₹";
 
   @override
   Widget build(BuildContext context) {
@@ -92,25 +116,55 @@ class _ProfilePageState extends State<ProfilePage> {
                           children: [
                             Stack(
                               clipBehavior: Clip.none,
-                              //alignment: Alignment.bottomRight,
                               children: [
-                                Container(
-                                  height: 65.h,
-                                  width: 58.w,
-                                  child: CircleAvatar(
-                                    radius: 25.r,
-                                    backgroundImage: AssetImage(
-                                      "assets/profile.png",
+                                GestureDetector(
+                                  onTap: () {
+                                    // Open a bottom sheet for camera/gallery choice
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (context) {
+                                        return Wrap(
+                                          children: [
+                                            ListTile(
+                                              leading:
+                                                  Icon(Icons.photo_library),
+                                              title: Text('Pick from Gallery'),
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                                _pickImage(ImageSource.gallery);
+                                              },
+                                            ),
+                                            ListTile(
+                                              leading: Icon(Icons.camera_alt),
+                                              title: Text('Take a Photo'),
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                                _pickImage(ImageSource.camera);
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Container(
+                                    height: 65.h,
+                                    width: 58.w,
+                                    child: CircleAvatar(
+                                      radius: 25.r,
+                                      backgroundImage: _image != null
+                                          ? FileImage(_image!) as ImageProvider
+                                          : AssetImage("assets/profile.png"),
+                                      backgroundColor: Colors.white,
                                     ),
-                                    backgroundColor: Colors.white,
                                   ),
                                 ),
                                 Positioned(
-                                    //bottom: 4.h,
-                                    left: 40.w,
-                                    top: 30.h,
-                                    child: Image.asset(
-                                        "assets/images/EditProfile.png"))
+                                  left: 40.w,
+                                  top: 30.h,
+                                  child: Image.asset(
+                                      "assets/images/EditProfile.png"),
+                                ),
                               ],
                             ),
                             SizedBox(height: 10.h),
@@ -124,7 +178,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             SizedBox(height: 10.h),
                             Text(
-                              "987667788",
+                              "1234567895",
                               style: TextStyle(
                                   fontSize: 12.sp, color: Colors.grey),
                             ),
@@ -132,20 +186,266 @@ class _ProfilePageState extends State<ProfilePage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset("assets/images/Flag.png"),
+                                // Image.asset("assets/images/Flag.png"),
                                 SizedBox(width: 7.w),
-                                Text(
-                                  "India",
-                                  style: TextStyle(
-                                      color: Colors.black, fontSize: 14.sp),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final List<Map<String, String>> countries =
+                                        [
+                                      {"name": "India", "flag": "🇮🇳"},
+                                      {"name": "UAE", "flag": "🇦🇪"},
+                                      {"name": "UK", "flag": "🇬🇧"},
+                                      {"name": "Japan", "flag": "🇯🇵"},
+                                      {"name": "Germany", "flag": "🇩🇪"},
+                                      {"name": "France", "flag": "🇫🇷"},
+                                      {"name": "Canada", "flag": "🇨🇦"},
+                                      {"name": "Australia", "flag": "🇦🇺"},
+                                    ];
+
+                                    // return full map
+                                    final selected = await showModalBottomSheet<
+                                        Map<String, String>>(
+                                      context: context,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(5),
+                                          topRight: Radius.circular(5),
+                                        ),
+                                      ),
+                                      builder: (BuildContext context) {
+                                        return Container(
+                                          margin: EdgeInsets.all(10),
+                                          padding: EdgeInsets.all(10),
+                                          height: 400,
+                                          width:
+                                              MediaQuery.sizeOf(context).width,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text("Select Country",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Colors.black)),
+                                              SizedBox(height: 15),
+                                              DotDivider(
+                                                color: Colors.grey,
+                                                dotSize: 1.5,
+                                                dotCount: 90,
+                                                spacing: 2.0,
+                                              ),
+                                              SizedBox(height: 15),
+                                              Expanded(
+                                                child: GridView.builder(
+                                                  gridDelegate:
+                                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount: 2,
+                                                    mainAxisSpacing: 25,
+                                                    crossAxisSpacing: 15,
+                                                    childAspectRatio: 2.5,
+                                                  ),
+                                                  itemCount: countries.length,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        Navigator.pop(
+                                                            context,
+                                                            countries[
+                                                                index]); // return map
+                                                      },
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          border: Border.all(
+                                                              color: Colors.grey
+                                                                  .shade400),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Text(
+                                                                countries[index]
+                                                                    ["flag"]!,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        20)),
+                                                            SizedBox(width: 8),
+                                                            Text(
+                                                                countries[index]
+                                                                    ["name"]!,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14)),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+
+                                    if (selected != null) {
+                                      setState(() {
+                                        _selectedCountry = selected["name"]!;
+                                        _selectedFlag = selected["flag"]!;
+                                      });
+                                    }
+                                  },
+                                  child: Text(
+                                    "$_selectedFlag $_selectedCountry",
+                                    // ✅ both flag + name
+                                    style: TextStyle(
+                                        color: Colors.black, fontSize: 14.sp),
+                                  ),
                                 ),
+
                                 SizedBox(width: 7.w),
                                 Text("|"),
                                 SizedBox(width: 8.w),
-                                Text(
-                                  "₹INR",
-                                  style: TextStyle(
-                                      fontSize: 14.sp, color: Colors.black),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final List<Map<String, String>> countries =
+                                        [
+                                      {
+                                        "flag": "🇮🇳",
+                                        "currency": "INR ₹",
+                                        "name": "India"
+                                      },
+                                      {
+                                        "flag": "🇦🇪",
+                                        "currency": "AED د.إ",
+                                        "name": "UAE"
+                                      },
+                                      // {"flag": "🇬🇧", "currency": "GBP £", "name": "UK"},
+                                      // {"flag": "🇯🇵", "currency": "JPY ¥", "name": "Japan"},
+                                      // {"flag": "🇩🇪", "currency": "EUR €", "name": "Germany"},
+                                      // {"flag": "🇫🇷", "currency": "EUR €", "name": "France"},
+                                      // {"flag": "🇨🇦", "currency": "CAD C$", "name": "Canada"},
+                                      // {"flag": "🇦🇺", "currency": "AUD A$", "name": "Australia"},
+                                      //
+                                    ];
+
+                                    // ✅ Await the result
+                                    final selected =
+                                        await showModalBottomSheet<String>(
+                                      context: context,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(5),
+                                          topRight: Radius.circular(5),
+                                        ),
+                                      ),
+                                      builder: (BuildContext context) {
+                                        return Container(
+                                          margin: EdgeInsets.all(10),
+                                          padding: EdgeInsets.all(10),
+                                          height: 400,
+                                          width:
+                                              MediaQuery.sizeOf(context).width,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text("Select Currency",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 18,
+                                                      color: Colors.black)),
+                                              SizedBox(height: 15),
+                                              DotDivider(
+                                                color: Colors.grey,
+                                                dotSize: 1.5,
+                                                dotCount: 90,
+                                                spacing: 2.0,
+                                              ),
+                                              SizedBox(height: 15),
+                                              Expanded(
+                                                child: GridView.builder(
+                                                  gridDelegate:
+                                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount: 2,
+                                                    mainAxisSpacing: 25,
+                                                    crossAxisSpacing: 15,
+                                                    childAspectRatio: 2.5,
+                                                  ),
+                                                  itemCount: countries.length,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        Navigator.pop(
+                                                            context,
+                                                            countries[index][
+                                                                "currency"]); // return currency
+                                                      },
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          border: Border.all(
+                                                              color: Colors.grey
+                                                                  .shade400),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Text(
+                                                                countries[index]
+                                                                    ["flag"]!,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        20)),
+                                                            SizedBox(width: 8),
+                                                            Text(
+                                                                countries[index]
+                                                                    ["name"]!,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14)),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+
+                                    // ✅ Update only if user selected something
+                                    if (selected != null) {
+                                      setState(() {
+                                        _selectedcurrency = selected;
+                                      });
+                                    }
+                                  },
+                                  child: Text(
+                                    _selectedcurrency ?? "Select Currency",
+                                    // show selected currency
+                                    style: TextStyle(
+                                        fontSize: 14.sp, color: Colors.black),
+                                  ),
                                 ),
                                 SizedBox(width: 10.w),
                                 Image.asset("assets/images/TraingleBlack.png"),
@@ -182,7 +482,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 children: [
                   buildListTile(
-                    "assets/images/History.png",
+                    "assets/icon/booking_history.svg",
                     "Booking history",
                     onTap: () {
                       Navigator.push(
@@ -195,7 +495,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Column(
                     children: [
                       buildListTile(
-                        "assets/images/bell.png",
+                        "assets/icon/notification.svg",
                         "Notification",
                         onTap: () {
                           Navigator.push(
@@ -207,14 +507,30 @@ class _ProfilePageState extends State<ProfilePage> {
                       )
                     ],
                   ),
-                  buildListTile("assets/images/translate-2.png", "Language",
+                  buildListTile("assets/icon/translate.svg", "Language",
                       trailing: "English"),
-                  buildListTile(
-                      "assets/images/contacts-line.png", "Help & Support"),
-                  buildListTile(
-                      "assets/images/privacy.png", "T&C and Privacy policy"),
-                  buildListTile("assets/images/share.png", "Share App"),
-                  buildListTile("assets/images/logout.png", "Logout")
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CustomerSupport()));
+                    },
+                    child: buildListTile(
+                        "assets/icon/contacts.svg", "Help & Support"),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Tearmsandcondition()));
+                    },
+                    child: buildListTile(
+                        "assets/icon/T&C.svg", "T&C and Privacy policy"),
+                  ),
+                  buildListTile("assets/icon/share.svg", "Share App"),
+                  buildListTile("assets/icon/logout.svg", "Logout")
                 ],
               ),
             ),
@@ -227,13 +543,13 @@ class _ProfilePageState extends State<ProfilePage> {
   ListTile buildListTile(String imagePath, String title,
       {String? trailing, VoidCallback? onTap}) {
     return ListTile(
-      leading: Image.asset(imagePath, width: 24.w, height: 24.h),
+      leading: SvgPicture.asset(imagePath, width: 24.w, height: 20.h),
       title: Text(
         title,
         style: TextStyle(
             fontFamily: 'Inter',
             color: Color(0xFF606060),
-            fontWeight: FontWeight.normal,
+            fontWeight: FontWeight.bold,
             fontSize: 14.sp),
       ),
       trailing: trailing != null

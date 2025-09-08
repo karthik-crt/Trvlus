@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../utils/constant.dart';
 import 'DotDivider.dart';
@@ -8,9 +9,44 @@ class Viewfulldetails extends StatefulWidget {
   final Map<String, dynamic> flight;
   final String city;
   final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
 
-  Viewfulldetails(
-      {required this.flight, required this.city, required this.destination});
+  Viewfulldetails({
+    required this.flight,
+    required this.city,
+    required this.destination,
+    required this.airlineName,
+    required this.cityName,
+    required this.cityCode,
+    this.airlineCode,
+    this.airportName,
+    this.desairportName,
+    this.flightNumber,
+    this.depDate,
+    this.depTime,
+    this.refundable,
+    this.arrDate,
+    this.arrTime,
+    this.descityName,
+    this.descityCode,
+    this.stop,
+    this.duration,
+  });
 
   @override
   State<Viewfulldetails> createState() => _ViewfulldetailsState();
@@ -22,6 +58,18 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+    final sights = widget.airportName;
+    print(sights);
+
+    final depDateformat = widget.depDate;
+    DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
+    final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
+
+    final arrDateformat = widget.arrDate;
+    DateTime arrparsedDate = DateFormat("yyyy-MM-dd").parse(arrDateformat!);
+    final finalarrDateformat =
+        DateFormat("EEE,dd MMM yy").format(arrparsedDate);
+
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -54,42 +102,58 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                   children: [
                     Row(
                       children: [
-                        // Image.asset(flight['logo'], height: 40, width: 40),
+                        Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
                         SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Text(
-                            //   flight['airline'],
-                            //   style: TextStyle(
-                            //       fontFamily: 'Inter',
-                            //       fontWeight: FontWeight.bold,
-                            //       fontSize: 14.sp,
-                            //       color: Colors.black),
-                            // ),
-                            RichText(
+                        Container(
+                          width: 100,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.airlineName,
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                    color: Colors.black),
+                              ),
+                              RichText(
                                 text: TextSpan(
-                                    text: 'XL2724',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.grey.shade700),
-                                    children: [
-                                  TextSpan(
-                                      text: " NR",
+                                  text: widget.airlineCode ?? "", // first text
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall, // base style
+                                  children: [
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: widget.flightNumber ?? "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                              color: Colors.grey.shade700),
+                                    ),
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: " ${widget.refundable ?? ""}",
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall
                                           ?.copyWith(
-                                              fontSize: 12.sp,
-                                              color: primaryColor))
-                                ]))
-                          ],
+                                            fontSize: 12.sp,
+                                            color: primaryColor,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                        SizedBox(width: 43.w),
-                        Image.asset(
-                          "assets/images/Line.png",
-                        ),
+                        // SizedBox(width: 43.w),
+                        // Image.asset(
+                        //   "assets/images/Line.png",
+                        // ),
                         const Spacer(),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -112,13 +176,6 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                 ),
                                 Image.asset("assets/images/star.png")
                               ],
-                            ),
-                            Text(
-                              "Aircraft Boeing",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: Colors.grey.shade700),
                             ),
                           ],
                         )
@@ -144,7 +201,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                             Row(
                               children: [
                                 Text(
-                                  "05:30",
+                                  widget.depTime ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -156,7 +213,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                             ),
                             //SizedBox(height: 4.h),
                             Text(
-                              "Sat,30 Nov 24",
+                              finaldepDateformat,
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: Colors.grey,
@@ -166,13 +223,14 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                         ),
                         Column(
                           children: [
-                            Text("1 hr 14m", style: TextStyle(fontSize: 12.sp)),
+                            Text(widget.stop ?? "",
+                                style: TextStyle(fontSize: 12.sp)),
                             Image.asset('assets/images/flightColor.png'),
-                            // Text(
-                            //   "1 hr 14m",
-                            //   style: TextStyle(
-                            //       fontFamily: 'Inter', fontSize: 12.sp),
-                            // ),
+                            Text(
+                              widget.duration ?? "",
+                              style: TextStyle(
+                                  fontFamily: 'Inter', fontSize: 12.sp),
+                            ),
                           ],
                         ),
                         Column(
@@ -182,7 +240,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  "05:30",
+                                  widget.arrTime ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -193,7 +251,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                               ],
                             ),
                             Text(
-                              "Sat,30 Nov 24",
+                              finalarrDateformat,
                               style: TextStyle(fontSize: 12.sp),
                             ),
                           ],
@@ -210,7 +268,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                             Row(
                               children: [
                                 Text(
-                                  city,
+                                  widget.cityName,
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -219,7 +277,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "DEL",
+                                  widget.cityCode,
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -227,14 +285,14 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                 ),
                               ],
                             ),
-                            //SizedBox(height: 4.h),
-                            // Text(
-                            //   flight["departure"],
-                            //   style: TextStyle(
-                            //     fontSize: 12.sp,
-                            //     color: Colors.grey,
-                            //   ),
-                            // ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              widget.airportName ?? "",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                         Column(
@@ -244,7 +302,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  destination,
+                                  widget.descityName ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -253,7 +311,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "BLR",
+                                  widget.descityCode ?? "",
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -261,10 +319,10 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                 ),
                               ],
                             ),
-                            // Text(
-                            //   flight["arrival"],
-                            //   style: TextStyle(fontSize: 12.sp),
-                            // ),
+                            Text(
+                              widget.desairportName ?? "",
+                              style: TextStyle(fontSize: 12.sp),
+                            ),
                           ],
                         ),
                       ],
@@ -378,7 +436,8 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                               ],
                             ),
                             Text(
-                              "Aircraft Boeing",
+                              // "Aircraft Boeing",
+                              "",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall

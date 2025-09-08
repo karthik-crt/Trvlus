@@ -37,7 +37,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     ApiService().initApiService(navigatorKey);
-    ApiService().getSearchResult({});
+    // ApiService().getSearchResult();
     super.initState();
   }
 

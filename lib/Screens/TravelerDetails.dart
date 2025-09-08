@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../utils/constant.dart';
 import 'ConfirmTraveler.dart';
 import 'DotDivider.dart';
-import 'FlightDetailsPage.dart';
 import 'ShowModelSheet.dart';
 import 'ViewFullDetails.dart';
 
@@ -13,9 +13,45 @@ class TravelerDetailsPage extends StatefulWidget {
   final Map<String, dynamic> flight;
   final String city;
   final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
+  final double? basefare;
 
   TravelerDetailsPage(
-      {required this.flight, required this.city, required this.destination});
+      {required this.flight,
+      required this.city,
+      required this.destination,
+      required this.airlineName,
+      required this.cityName,
+      required this.cityCode,
+      this.airlineCode,
+      this.airportName,
+      this.desairportName,
+      this.flightNumber,
+      this.depDate,
+      this.depTime,
+      this.refundable,
+      this.arrDate,
+      this.arrTime,
+      this.descityName,
+      this.descityCode,
+      this.stop,
+      this.duration,
+      this.basefare});
 
   @override
   _TravelerDetailsPageState createState() => _TravelerDetailsPageState();
@@ -29,6 +65,15 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+
+    final depDateformat = widget.depDate;
+    DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
+    final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
+
+    final arrDateformat = widget.arrDate;
+    DateTime arrparsedDate = DateFormat("yyyy-MM-dd").parse(arrDateformat!);
+    final finalarrDateformat =
+        DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -61,47 +106,58 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   children: [
                     Row(
                       children: [
-                        // Image.asset(flight['logo'], height: 40, width: 40),
-                        Image.asset(
-                          "assets/images/flight.png",
-                          height: 40,
-                          width: 40,
-                        ),
+                        Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
                         SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Text(
-                            //   // flight['airline']
-                            //   style: TextStyle(
-                            //       fontFamily: 'Inter',
-                            //       fontWeight: FontWeight.bold,
-                            //       fontSize: 14.sp,
-                            //       color: Colors.black),
-                            // ),
-                            RichText(
+                        Container(
+                          width: 100,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.airlineName ?? "",
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                    color: Colors.black),
+                              ),
+                              RichText(
                                 text: TextSpan(
-                                    text: 'XL2724',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.grey.shade700),
-                                    children: [
-                                  TextSpan(
-                                      text: " NR",
+                                  text: widget.airlineCode ?? "", // first text
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall, // base style
+                                  children: [
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: widget.flightNumber ?? "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                              color: Colors.grey.shade700),
+                                    ),
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: " ${widget.refundable ?? ""}",
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall
                                           ?.copyWith(
-                                              fontSize: 12.sp,
-                                              color: primaryColor))
-                                ]))
-                          ],
+                                            fontSize: 12.sp,
+                                            color: primaryColor,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                        SizedBox(width: 43.w),
-                        Image.asset(
-                          "assets/images/Line.png",
-                        ),
+                        // SizedBox(width: 43.w),
+                        // Image.asset(
+                        //   "assets/images/Line.png",
+                        // ),
                         const Spacer(),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -124,13 +180,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                 ),
                                 Image.asset("assets/images/star.png")
                               ],
-                            ),
-                            Text(
-                              "Aircraft Boeing",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: Colors.grey.shade700),
                             ),
                           ],
                         )
@@ -156,7 +205,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             Row(
                               children: [
                                 Text(
-                                  "05:30",
+                                  widget.depTime ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -168,7 +217,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             ),
                             //SizedBox(height: 4.h),
                             Text(
-                              "Sat,30 Nov 24",
+                              finaldepDateformat,
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: Colors.grey,
@@ -178,13 +227,14 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         ),
                         Column(
                           children: [
-                            Text("1 hr 14m", style: TextStyle(fontSize: 12.sp)),
-                            // Image.asset('assets/images/flightColor.png'),
-                            // Text(
-                            //   "1 hr 14m",
-                            //   style: TextStyle(
-                            //       fontFamily: 'Inter', fontSize: 12.sp),
-                            // ),
+                            Text(widget.stop ?? "",
+                                style: TextStyle(fontSize: 12.sp)),
+                            Image.asset('assets/images/flightColor.png'),
+                            Text(
+                              widget.duration ?? "",
+                              style: TextStyle(
+                                  fontFamily: 'Inter', fontSize: 12.sp),
+                            ),
                           ],
                         ),
                         Column(
@@ -194,7 +244,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  "05:30",
+                                  widget.arrTime ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -205,7 +255,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               ],
                             ),
                             Text(
-                              "Sat,30 Nov 24",
+                              finalarrDateformat,
                               style: TextStyle(fontSize: 12.sp),
                             ),
                           ],
@@ -222,7 +272,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             Row(
                               children: [
                                 Text(
-                                  city,
+                                  widget.cityName,
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -231,7 +281,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "DEL",
+                                  widget.cityCode,
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -256,7 +306,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  destination,
+                                  widget.descityName ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -265,7 +315,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "BLR",
+                                  widget.descityCode ?? "",
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -295,10 +345,26 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                     GestureDetector(
                       onTap: () {
                         Get.to(
-                          () => FlightDetailsPage(
+                          () => Viewfulldetails(
                             flight: flight,
                             city: widget.city,
                             destination: widget.destination,
+                            airlineName: widget.airlineName,
+                            airlineCode: widget.airlineCode,
+                            flightNumber: widget.flightNumber,
+                            cityName: widget.cityName,
+                            cityCode: widget.cityCode,
+                            descityName: widget.descityName,
+                            descityCode: widget.descityCode,
+                            depDate: widget.depDate,
+                            depTime: widget.depTime,
+                            arrDate: widget.arrDate,
+                            arrTime: widget.arrTime,
+                            duration: widget.duration,
+                            refundable: widget.refundable,
+                            stop: widget.stop,
+                            airportName: widget.airportName,
+                            desairportName: widget.desairportName,
                           ),
                         );
                       }, // Action to execute on tap
@@ -314,10 +380,10 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               fontSize: 14.sp,
                             ),
                           ),
-                          const SizedBox(width: 5),
-                          Padding(
-                              padding: EdgeInsets.only(top: 2.h),
-                              child: Image.asset("assets/images/Traingle.png"))
+                          // const SizedBox(width: 5),
+                          // Padding(
+                          //     padding: EdgeInsets.only(top: 2.h),
+                          //     child: Image.asset("assets/images/Traingle.png"))
                         ],
                       ),
                     ),
@@ -412,7 +478,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹8,000",
+                          "₹${widget.basefare ?? ""}",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -435,10 +501,26 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   onPressed: () {
                     Get.to(
                       () => ConfirmTravelerDetails(
-                        flight: flight,
-                        city: widget.city,
-                        destination: widget.destination,
-                      ),
+                          flight: {},
+                          city: widget.city,
+                          destination: widget.destination,
+                          airlineName: widget.airlineName,
+                          airlineCode: widget.airlineCode,
+                          flightNumber: widget.flightNumber,
+                          cityName: widget.cityName,
+                          cityCode: widget.cityCode,
+                          descityName: widget.descityName,
+                          descityCode: widget.descityCode,
+                          depDate: widget.depDate,
+                          depTime: widget.depTime,
+                          arrDate: widget.arrDate,
+                          arrTime: widget.arrTime,
+                          duration: widget.duration,
+                          refundable: widget.refundable,
+                          stop: widget.stop,
+                          airportName: widget.airportName,
+                          desairportName: widget.desairportName,
+                          basefare: widget.basefare),
                       //transition: Transition.leftToRight
                     );
                   },
@@ -554,6 +636,42 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
   String selectedCountry = 'India';
   List<String> issusingcountry = <String>['India', 'Saudi', 'Malayasia', 'USA'];
 
+  final dateController = TextEditingController();
+  final expiryController = TextEditingController();
+  DateTime? selectedDate;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+    );
+    print("psicked date$picked");
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        dateController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
+      });
+    }
+  }
+
+  Future<void> _ExpiryDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+    );
+    print("psicked date$picked");
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        expiryController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final flight = widget.flight;
@@ -563,7 +681,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
         title: Text(
-          'Add new traveler',
+          'Add New Traveler',
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.bold,
@@ -652,7 +770,8 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                               ],
                             ),
                             Text(
-                              "Aircraft Boeing",
+                              // "Aircraft Boeing",
+                              "",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -825,6 +944,9 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                             flight: flight,
                             city: widget.city,
                             destination: widget.destination,
+                            airlineName: '',
+                            cityName: '',
+                            cityCode: '',
                           ),
                         );
                       },
@@ -910,9 +1032,12 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
               ],
             ),
             SizedBox(height: 10.h),
-            _buildTextField('First name *', 'Text here'),
-            _buildTextField('Last name *', 'Text here'),
-            _buildTextField('Date of birth *', 'Text here'),
+            _buildTextField(label: 'First name *', hintText: 'Text here'),
+            _buildTextField(label: 'Last name *', hintText: 'Text here'),
+            _buildTextField(
+                label: 'Date of birth *',
+                hintText: 'Text here',
+                controller: dateController),
             _buildDropdownField(
               'Nationality *',
               selectedNationality,
@@ -923,20 +1048,16 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 });
               },
             ),
+            SizedBox(height: 8.h),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                    height: 98,
-                    width: 150,
-                    child: _buildTextField('PassportNo*', 'Text here')),
-                Container(
-                    height: 98,
-                    width: 150,
-                    child: _buildTextField('Expiry Date*', 'Text here')),
-              ],
+            _buildTextField(
+              label: 'PassportNo*',
+              hintText: 'Text here',
             ),
+            _buildTextField(
+                label: 'Expiry Date*',
+                hintText: 'Text here',
+                controller: expiryController),
             _buildDropdownField(
               'Issusing Country *',
               selectedCountry,
@@ -960,7 +1081,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
             //     )
             //   ],
             // ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 15.h),
             Text(
               'Contact details',
               style: TextStyle(
@@ -969,9 +1090,9 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 color: Colors.black,
               ),
             ),
-            _buildTextField('Country', 'India(+91)'),
-            _buildTextField('ContactNo', 'Text here'),
-            _buildTextField('Email', 'Text here'),
+            _buildTextField(label: 'Country', hintText: 'India(+91)'),
+            _buildTextField(label: 'ContactNo', hintText: 'Text here'),
+            _buildTextField(label: 'Email', hintText: 'Text here'),
             //SizedBox(height: 16.h),
             _buildOptionToggle(
                 'Wheel chair option', ['Yes', 'No'], isWheelchairSelected,
@@ -987,7 +1108,8 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 isFrequentFlyerSelected = selected;
               });
             }),
-            _buildTextField('Frequent flyer number', 'Flight number'),
+            _buildTextField(
+                label: 'Frequent flyer number', hintText: 'Flight number'),
           ],
         ),
       ),
@@ -1120,45 +1242,61 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText) {
+  Widget _buildTextField(
+      {required String label,
+      required String hintText,
+      TextEditingController? controller}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.h),
-      child: Container(
-        //height: 50.h,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: Colors.grey.shade300), // Border color
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontFamily: 'BricolageGrotesque',
-                color: Color(0xFF909090),
-              ),
-            ),
-            TextField(
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: hintText,
-                hintStyle: TextStyle(
-                  fontFamily: 'Inter',
-                  color: Colors.black,
-                  fontSize: 14.sp,
-                ),
-              ),
-              style: TextStyle(
-                fontSize: 16.sp,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              suffixIcon: label == "Date of birth *"
+                  ? GestureDetector(
+                      onTap: () {
+                        _selectDate(context);
+                      },
+                      child: Icon(
+                        Icons.date_range,
+                        color: Colors.grey.shade800,
+                      ),
+                    )
+                  : label == "Expiry Date*"
+                      ? GestureDetector(
+                          onTap: () {
+                            _ExpiryDate(context);
+                          },
+                          child: Icon(
+                            Icons.date_range,
+                            color: Colors.grey.shade800,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+              border: OutlineInputBorder(),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade400)),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade700)),
+              fillColor: Colors.white,
+              filled: true,
+              label: Text(label),
+              focusColor: Colors.orange,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontFamily: 'Inter',
                 color: Colors.black,
+                fontSize: 14.sp,
               ),
             ),
-          ],
-        ),
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.black,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1181,7 +1319,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(

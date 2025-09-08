@@ -45175,7 +45175,6 @@ class _FlightnameState extends State<Flightname> {
       "airport_city": "Deoghar Airport"
     }
   ];
-
   late List<Map<String, String>> filteredAirports;
 
   @override
@@ -45187,17 +45186,30 @@ class _FlightnameState extends State<Flightname> {
 
   void _searchAirports(String query) {
     if (query.isEmpty) {
-      // Reset to default suggestions
       filteredAirports = airports.take(3).toList();
     } else {
-      filteredAirports = airports.where((airport) {
+      final q = query.toLowerCase();
+
+      // Collect all possible matches
+      final matches = airports.where((airport) {
+        final code = airport["airport_code"]!.toLowerCase();
         final city = airport["airport_city"]!.toLowerCase();
         final name = airport["airport_name"]!.toLowerCase();
-        final code = airport["airport_code"]!.toLowerCase();
-        final q = query.toLowerCase();
 
-        return code.contains(q) || city.contains(q) || name.contains(q);
+        return code.startsWith(q) || city.startsWith(q) || name.startsWith(q);
       }).toList();
+
+      // ✅ If query is an exact code (like maa/che/mst), then keep only that exact match
+      final exactCodeMatch = matches.where((airport) {
+        final code = airport["airport_code"]!.toLowerCase();
+        return code == q;
+      }).toList();
+
+      if (exactCodeMatch.isNotEmpty) {
+        filteredAirports = exactCodeMatch;
+      } else {
+        filteredAirports = matches;
+      }
     }
     setState(() {});
   }

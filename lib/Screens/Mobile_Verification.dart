@@ -7,12 +7,49 @@ import '../controller/auth_controller.dart';
 import 'Otp_Verification.dart';
 
 class MobileVerificationScreen extends StatefulWidget {
+  final dynamic flight;
+  final String city;
+  final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
+  final double? basefare;
+
   const MobileVerificationScreen(
-      {Key? key,
-      required Map<String, dynamic> flight,
-      required String city,
-      required String destination})
-      : super(key: key);
+      {super.key,
+      required this.flight,
+      required this.city,
+      required this.destination,
+      required this.airlineName,
+      required this.cityName,
+      required this.cityCode,
+      this.airlineCode,
+      this.airportName,
+      this.desairportName,
+      this.flightNumber,
+      this.depDate,
+      this.depTime,
+      this.refundable,
+      this.arrDate,
+      this.arrTime,
+      this.descityName,
+      this.descityCode,
+      this.stop,
+      this.duration,
+      this.basefare});
 
   @override
   _MobileVerificationScreenState createState() =>
@@ -24,11 +61,13 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
   final TextEditingController _mobileController = TextEditingController();
   Country? _selectedCountry;
 
-  final RegExp _mobileRegex =
-      RegExp(r'^[1-9]\d{9}$'); // Validate 10-digit Indian mobile numbers
+  final RegExp _mobileRegex = RegExp(r'^[1-9]\d{9}$');
 
   @override
   void initState() {
+    print("efe");
+    var ell = widget.airlineName;
+    print("efrgfr$ell");
     super.initState();
     // Manually set default country to India
     _selectedCountry = Country(
@@ -81,7 +120,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
             ),
             SizedBox(height: 40.h),
             Text(
-              'Verify Mobile',
+              "Verify Mobile",
               style: TextStyle(
                 fontSize: 24.sp,
                 fontWeight: FontWeight.bold,
@@ -203,11 +242,27 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                 return ElevatedButton(
                   onPressed: isMobileValid
                       ? () {
-                          Get.to(() => const OtpVerificationScreen(
-                                flight: 'AirIndia',
-                                city: 'mdu',
-                                destination: 'chennai',
-                              ));
+                          Get.to(() => OtpVerificationScreen(
+                              flight: {},
+                              city: widget.city,
+                              destination: widget.destination,
+                              airlineName: widget.airlineName,
+                              airlineCode: widget.airlineCode,
+                              flightNumber: widget.flightNumber,
+                              cityName: widget.cityName,
+                              cityCode: widget.cityCode,
+                              descityName: widget.descityName,
+                              descityCode: widget.descityCode,
+                              depDate: widget.depDate,
+                              depTime: widget.depTime,
+                              arrDate: widget.arrDate,
+                              arrTime: widget.arrTime,
+                              duration: widget.duration,
+                              refundable: widget.refundable,
+                              stop: widget.stop,
+                              airportName: widget.airportName,
+                              desairportName: widget.desairportName,
+                              basefare: widget.basefare));
                         }
                       : null,
                   style: ElevatedButton.styleFrom(

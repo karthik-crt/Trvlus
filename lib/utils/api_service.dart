@@ -62,7 +62,7 @@ class ApiBaseHelper {
 
     if (token != null) {
       headers['Authorization'] =
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1Njk1MDQ3LCJpYXQiOjE3NTU2NjYyNDcsImp0aSI6ImQxN2YyYzI2OTk3OTRhNTU4MTgzNzY4MWY4NGNkODQ0IiwidXNlcl9pZCI6NX0.VsrDoINjQr8eXq-84rIBI2mQZU-SQoB-0-yo59fj4JY';
+          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU2NzMyNzM4LCJpYXQiOjE3NTY3MDM5MzgsImp0aSI6ImYzOTM4ZWY5N2YyMDRkMTE5ZmQzNDcxM2JkYjRlNmZiIiwidXNlcl9pZCI6NX0.aAdPPw2iReD544KvIMJckPjly631ZNDiszZVnxoW5Ks';
     }
     return headers;
   }
@@ -181,10 +181,24 @@ class ApiService {
 
   final ApiBaseHelper _helper = ApiBaseHelper();
 
-  Future<search.SearchData> getSearchResult(params) async {
+  Future<search.SearchData> getSearchResult(
+    String airportCode,
+    String fromAirport,
+    String toairportCode,
+    String toAirport,
+    String selectedDepDate,
+  ) async {
+    print("Origin$airportCode");
+    print("Destination$toairportCode");
+    String formatted = selectedDepDate.toString().contains("PickerDateRange")
+        ? selectedDepDate.toString().substring(33, 43)
+        : selectedDepDate.toString();
+
+    print(formatted);
+
     final params = {
       "EndUserIp": "192.168.0.2",
-      "TokenId": "c3b0a274-f02f-493c-9188-d426197e2f5c",
+      "TokenId": "7ebfe1ec-337f-46c8-b042-99ec84319719",
       "AdultCount": "1",
       "ChildCount": "0",
       "InfantCount": "0",
@@ -194,15 +208,16 @@ class ApiService {
       "PreferredAirlines": null,
       "Segments": [
         {
-          "Origin": "DEL",
-          "Destination": "BOM",
+          "Origin": airportCode,
+          "Destination": toairportCode,
           "FlightCabinClass": "1",
-          "PreferredDepartureTime": "2025-08-26T00: 00: 00",
-          "PreferredArrivalTime": "2025-08-27T00:00:00"
+          "PreferredDepartureTime": formatted + "T00: 00: 00",
+          "PreferredArrivalTime": "2025-09-27T00:00:00"
         }
       ],
       "Sources": null
     };
+    print("params$params");
     final response = await _helper.post("Search", params);
     print(jsonEncode(response));
     return search.searchDataFromJson(response);

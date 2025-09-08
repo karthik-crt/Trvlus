@@ -1,22 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
+import '../utils/constant.dart';
 import 'DotDivider.dart';
 import 'Payment.dart';
 import 'ShowModelSheet.dart';
 import 'ViewFullDetails.dart';
+import 'additions.dart';
 
 class ConfirmTravelerDetails extends StatefulWidget {
   final Map<String, dynamic> flight;
   final String city;
   final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
+  final double? basefare;
 
-  ConfirmTravelerDetails({
-    required this.flight,
-    required this.city,
-    required this.destination,
-  });
+  ConfirmTravelerDetails(
+      {required this.flight,
+      required this.city,
+      required this.destination,
+      required this.airlineName,
+      required this.cityName,
+      required this.cityCode,
+      this.airlineCode,
+      this.airportName,
+      this.desairportName,
+      this.flightNumber,
+      this.depDate,
+      this.depTime,
+      this.refundable,
+      this.arrDate,
+      this.arrTime,
+      this.descityName,
+      this.descityCode,
+      this.stop,
+      this.duration,
+      this.basefare});
 
   @override
   State<ConfirmTravelerDetails> createState() => _ConfirmTravelerDetailsState();
@@ -28,6 +64,17 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+
+    int selectedindex = -1;
+
+    final depDateformat = widget.depDate;
+    DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
+    final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
+
+    final arrDateformat = widget.arrDate;
+    DateTime arrparsedDate = DateFormat("yyyy-MM-dd").parse(arrDateformat!);
+    final finalarrDateformat =
+        DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     final List<Map<String, String>> travelers = [
       {"type": "ADULT 1", "name": "John"},
       {"type": "ADULT 2", "name": "ABC"},
@@ -40,14 +87,24 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text(
-          'Traveler Details ',
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.bold,
-            fontSize: 14.sp,
+        title: Row(children: [
+          Text(
+            'Traveler Details ',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.bold,
+              fontSize: 14.sp,
+            ),
           ),
-        ),
+          // SizedBox(
+          //   width: 25,
+          // ),
+          // SvgPicture.asset(
+          //   "assets/icon/pricealert.svg",
+          //   height: 25,
+          //   width: 10,
+          // )
+        ]),
         foregroundColor: Colors.black,
         backgroundColor: Color(0xFFF5F5F5),
         elevation: 0,
@@ -71,46 +128,59 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     // Flight header
                     Row(
                       children: [
-                        // Image.asset(flight['logo'], height: 40, width: 40),
+                        Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
                         SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Text(
-                            //   flight['airline'],
-                            //   style: TextStyle(
-                            //     fontFamily: 'Inter',
-                            //     fontWeight: FontWeight.bold,
-                            //     fontSize: 14.sp,
-                            //     color: Colors.black,
-                            //   ),
-                            // ),
-                            RichText(
-                              text: TextSpan(
-                                text: 'XL2724',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: Colors.grey.shade700),
-                                children: [
-                                  TextSpan(
-                                    text: " NR",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                            fontSize: 12.sp,
-                                            color: Colors.orange),
-                                  ),
-                                ],
+                        Container(
+                          width: 120,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.airlineName,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.sp,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                          ],
+                              RichText(
+                                text: TextSpan(
+                                  text: widget.airlineCode ?? "", // first text
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall, // base style
+                                  children: [
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: widget.flightNumber ?? "",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                              color: Colors.grey.shade700),
+                                    ),
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: " ${widget.refundable ?? ""}",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                            fontSize: 12.sp,
+                                            color: primaryColor,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ),
-                        SizedBox(width: 45.w),
-                        Image.asset(
-                          "assets/images/Line.png",
-                        ),
+                        // SizedBox(width: 45.w),
+                        // Image.asset(
+                        //   "assets/images/Line.png",
+                        // ),
                         const Spacer(),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -131,7 +201,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               ],
                             ),
                             Text(
-                              "Aircraft Boeing",
+                              // "Aircraft Boeing",
+                              "",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -160,7 +231,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "05:30",
+                              widget.depTime ?? "",
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.bold,
@@ -168,7 +239,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               ),
                             ),
                             Text(
-                              "Sat, 30 Nov 24",
+                              finaldepDateformat,
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: Colors.grey,
@@ -178,15 +249,18 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                         ),
                         Column(
                           children: [
-                            Text("1 hr 14m", style: TextStyle(fontSize: 12.sp)),
+                            Text(widget.stop ?? "",
+                                style: TextStyle(fontSize: 12.sp)),
                             Image.asset('assets/images/flightColor.png'),
+                            Text(widget.duration ?? "",
+                                style: TextStyle(fontSize: 12.sp)),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              "06:44",
+                              widget.arrTime ?? "",
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.bold,
@@ -194,7 +268,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               ),
                             ),
                             Text(
-                              "Sat, 30 Nov 24",
+                              finalarrDateformat,
                               style: TextStyle(fontSize: 12.sp),
                             ),
                           ],
@@ -210,7 +284,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             Row(
                               children: [
                                 Text(
-                                  city,
+                                  widget.cityName,
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -219,7 +293,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "DEL",
+                                  widget.cityCode,
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -244,7 +318,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  destination,
+                                  widget.descityName ?? "",
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -253,7 +327,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                 ),
                                 SizedBox(width: 4.w),
                                 Text(
-                                  "BLR",
+                                  widget.descityCode ?? "",
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
@@ -284,9 +358,25 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       onTap: () {
                         Get.to(
                           () => Viewfulldetails(
-                            flight: flight,
+                            flight: {},
                             city: widget.city,
                             destination: widget.destination,
+                            airlineName: widget.airlineName,
+                            airlineCode: widget.airlineCode,
+                            flightNumber: widget.flightNumber,
+                            cityName: widget.cityName,
+                            cityCode: widget.cityCode,
+                            descityName: widget.descityName,
+                            descityCode: widget.descityCode,
+                            depDate: widget.depDate,
+                            depTime: widget.depTime,
+                            arrDate: widget.arrDate,
+                            arrTime: widget.arrTime,
+                            duration: widget.duration,
+                            refundable: widget.refundable,
+                            stop: widget.stop,
+                            airportName: widget.airportName,
+                            desairportName: widget.desairportName,
                           ),
                         );
                       },
@@ -395,6 +485,166 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 fontFamily: 'Inter',
               ),
             ),
+            SizedBox(
+              height: 5,
+            ),
+            Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  height: 60,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.grey,
+                            spreadRadius: 0.5,
+                            blurRadius: 0.3,
+                            offset: Offset(0, 0.5))
+                      ]),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/seat.png',
+                        height: 19,
+                        width: 25,
+                      ),
+                      SizedBox(
+                        width: 20,
+                      ),
+                      Text(
+                        "Seats",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            color: Colors.black),
+                      ),
+                      Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Additions()));
+                        },
+                        child: Text(
+                          "+ ADD",
+                          style: TextStyle(
+                              color: Color(0xFFF37023),
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                Container(
+                  height: 60,
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.grey,
+                            spreadRadius: 0.5,
+                            blurRadius: 0.3,
+                            offset: Offset(0, 0.5))
+                      ]),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/baggage.png',
+                        height: 25,
+                        width: 25,
+                      ),
+                      SizedBox(
+                        width: 20,
+                      ),
+                      Text(
+                        "Baggage",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            color: Colors.black),
+                      ),
+                      Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const Additions()));
+                        },
+                        child: Text(
+                          "+ ADD",
+                          style: TextStyle(
+                              color: Color(0xFFF37023),
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 15,
+                ),
+                Container(
+                  height: 60,
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.grey,
+                            spreadRadius: 0.5,
+                            blurRadius: 0.3,
+                            offset: Offset(0, 0.5))
+                      ]),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/meals.png',
+                        height: 25,
+                        width: 25,
+                      ),
+                      SizedBox(
+                        width: 20,
+                      ),
+                      Text(
+                        "Meals",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            color: Colors.black),
+                      ),
+                      Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const Additions()));
+                        },
+                        child: Text(
+                          "+ ADD",
+                          style: TextStyle(
+                              color: Color(0xFFF37023),
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ),
+            SizedBox(
+              height: 20,
+            ),
             Text(
               "GSTN Details (Optional)",
               style: TextStyle(
@@ -448,6 +698,194 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+
+            GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Color(0xFFF5F5F5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(7)),
+                    builder: (BuildContext context) {
+                      selectedindex = -1;
+                      return StatefulBuilder(
+                        builder: (BuildContext context,
+                            void Function(void Function()) setState) {
+                          return Padding(
+                            padding: MediaQuery.viewInsetsOf(context),
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              child: SizedBox(
+                                height: 450,
+                                width: MediaQuery.sizeOf(context).width,
+                                child: Column(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Align(
+                                          alignment: Alignment.topRight,
+                                          child: Icon(Icons.cancel_outlined)),
+                                    ),
+                                    Image.asset(
+                                      "assets/icon/priceAlert.png",
+                                      height: 70,
+                                      fit: BoxFit.fitHeight,
+                                      width: MediaQuery.sizeOf(context).width,
+                                      // width: 35,
+                                    ),
+                                    Text(
+                                      "Price Alert!",
+                                      style: TextStyle(
+                                          color: Color(0xFF444444),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 32),
+                                    ),
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                          "airline has increased the price by ₹500 \n please review the new price before \n booking"),
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Container(
+                                      height: 60,
+                                      padding: EdgeInsets.all(10),
+                                      margin: EdgeInsets.all(15),
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: Colors.white),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Column(
+                                            children: [
+                                              Text("Old Fare"),
+                                              Text(
+                                                "₹5000",
+                                                style: TextStyle(
+                                                  color: Color(0xFFD10909),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Image.asset(
+                                              "assets/icon/pricechange.png"),
+                                          Column(
+                                            children: [
+                                              Text("New Fare"),
+                                              Text(
+                                                "₹5000",
+                                                style: TextStyle(
+                                                  color: Color(0xFF138808),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              print("gdger");
+                                              setState(() {
+                                                selectedindex = 0;
+                                              });
+                                              print(
+                                                  "selectedIndex ${selectedindex}");
+                                            },
+                                            child: Container(
+                                              margin: EdgeInsets.all(10),
+                                              padding: EdgeInsets.all(5),
+                                              height: 45,
+                                              width: 100,
+                                              decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                  border: Border.all(
+                                                      color: Colors.orange),
+                                                  color: selectedindex == 0
+                                                      ? Colors.deepOrange
+                                                      : Colors.white),
+                                              child: Align(
+                                                  alignment: Alignment.center,
+                                                  child: Text(
+                                                    "Return",
+                                                    style: TextStyle(
+                                                        color:
+                                                            selectedindex == 0
+                                                                ? Colors.white
+                                                                : Colors.orange,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                selectedindex = 1;
+                                              });
+                                            },
+                                            child: Container(
+                                              margin: EdgeInsets.all(10),
+                                              padding: EdgeInsets.all(5),
+                                              height: 45,
+                                              width: 100,
+                                              decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                  border: Border.all(
+                                                    color: Colors.orange,
+                                                  ),
+                                                  color: selectedindex == 1
+                                                      ? Colors.deepOrange
+                                                      : Colors.white),
+                                              child: Align(
+                                                  alignment: Alignment.center,
+                                                  child: Text(
+                                                    "Continue",
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: selectedindex ==
+                                                                1
+                                                            ? Colors.white
+                                                            : Colors.orange),
+                                                  )),
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    });
+              },
+              child: Text(
+                "Price Alert",
+                style: TextStyle(color: Colors.grey.shade900),
               ),
             ),
           ],
@@ -507,7 +945,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹8,000",
+                          "₹${widget.basefare ?? ""}",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -530,10 +968,26 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                   onPressed: () {
                     Get.to(
                       () => MakePaymentScreen(
-                        flight: flight,
-                        city: widget.city,
-                        destination: widget.destination,
-                      ),
+                          flight: flight,
+                          city: widget.city,
+                          destination: widget.destination,
+                          airlineName: widget.airlineName,
+                          airlineCode: widget.airlineCode,
+                          flightNumber: widget.flightNumber,
+                          cityName: widget.cityName,
+                          cityCode: widget.cityCode,
+                          descityName: widget.descityName,
+                          descityCode: widget.descityCode,
+                          depDate: widget.depDate,
+                          depTime: widget.depTime,
+                          arrDate: widget.arrDate,
+                          arrTime: widget.arrTime,
+                          duration: widget.duration,
+                          refundable: widget.refundable,
+                          stop: widget.stop,
+                          airportName: widget.airportName,
+                          desairportName: widget.desairportName,
+                          basefare: widget.basefare),
                     );
                   },
                   style: ElevatedButton.styleFrom(

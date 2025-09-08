@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:trvlus/Screens/ticketdetails.dart';
 
 import 'DotDivider.dart';
+import 'Ticket.dart';
 
 class BookingHistoryPage extends StatefulWidget {
   @override
@@ -12,12 +15,24 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
   // Example: Dynamic booking status (could be toggled or updated via API)
   String bookingStatus = "CONFIRMED";
 
+  List<String> nationality = <String>[
+    'Cancellation',
+    'Flight rescheduling charges',
+    'Flight Booking status',
+    'Flight refund status',
+    'Others'
+  ];
+
+  String selectedNationality = 'Cancellation';
+
+  final remarkController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: Color(0xFFF5F5F5),
+        backgroundColor: const Color(0xFFF5F5F5),
         title: Text(
           "Booking history",
           style: TextStyle(
@@ -53,7 +68,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                       children: [
                         Image.asset('assets/images/Emirates.png',
                             height: 40, width: 40),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -112,7 +127,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               ],
                             ),
                             Text(
-                              "Aircraft Boeing",
+                              "",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -133,12 +148,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    Column(
-                      children: [
-                        Text("1 hr 14m", style: TextStyle(fontSize: 12.sp)),
-                        Image.asset('assets/images/flightDetails.png'),
-                      ],
-                    ),
                     SizedBox(
                       height: 10.h,
                     ),
@@ -269,77 +278,88 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Airline PNR",
-                              style: TextStyle(
-                                  fontSize: 12.sp, fontFamily: 'Inter'),
-                            ),
-                            Text(
-                              "98498yeey",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.h,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Reference Number",
-                              style: TextStyle(
-                                  fontSize: 12.sp, fontFamily: 'Inter'),
-                            ),
-                            Text(
-                              "ATA2463545T",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.h,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Booking Status",
-                              style: TextStyle(
-                                  fontSize: 12.sp, fontFamily: 'Inter'),
-                            ),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w, vertical: 5.h),
-                              decoration: BoxDecoration(
-                                color: Color(0xFFDEF6DB),
-                                borderRadius: BorderRadius.circular(15.r),
-                              ),
-                              child: Text(
-                                "CONFIRMED",
+                    InkWell(
+                      splashColor: Colors.white,
+                      onTap: () {
+                        print("hello");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Ticketdetails()));
+                      },
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Airline PNR",
                                 style: TextStyle(
-                                  color: Color(0xFF138808), // Green text color
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10.sp,
-                                ),
+                                    fontSize: 12.sp, fontFamily: 'Inter'),
                               ),
-                            )
-                          ],
-                        )
-                      ],
+                              Text(
+                                "98498yeey",
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 8.h,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Reference Number",
+                                style: TextStyle(
+                                    fontSize: 12.sp, fontFamily: 'Inter'),
+                              ),
+                              Text(
+                                "ATA2463545T",
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 8.h,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Booking Status",
+                                style: TextStyle(
+                                    fontSize: 12.sp, fontFamily: 'Inter'),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w, vertical: 5.h),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDEF6DB),
+                                  borderRadius: BorderRadius.circular(15.r),
+                                ),
+                                child: Text(
+                                  "CONFIRMED",
+                                  style: TextStyle(
+                                    color: const Color(0xFF138808),
+                                    // Green text color
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10.sp,
+                                  ),
+                                ),
+                              )
+                            ],
+                          )
+                        ],
+                      ),
                     ),
 
                     SizedBox(
@@ -362,14 +382,18 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildActionButton(
-                          imagePath: "assets/images/Download.png",
+                          imagePath: "assets/icon/download.svg",
                           label: "Download\nE-ticket",
                           onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const Ticket()));
                             print("Download E-ticket tapped");
                           },
                         ),
                         _buildActionButton(
-                          imagePath: "assets/images/Message.png",
+                          imagePath: "assets/icon/email.svg",
                           label: "Email\nE-ticket",
                           onTap: () {
                             // Action for Email E-ticket
@@ -377,7 +401,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                           },
                         ),
                         _buildActionButton(
-                          imagePath: "assets/images/Invoice.png",
+                          imagePath: "assets/icon/invoice.svg",
                           label: "Download\nInvoice",
                           onTap: () {
                             // Action for Download Invoice
@@ -386,6 +410,160 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                         ),
                       ],
                     ),
+                    SizedBox(
+                      height: 10.h,
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DotDivider(
+                        dotSize: 1.h, // Adjust size
+                        spacing: 2.r, // Adjust spacing
+                        dotCount: 97, // Adjust number of dots
+                        color: Colors.grey, // Adjust color
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10.h,
+                    ),
+                    // Container(
+                    //   padding: const EdgeInsets.all(5),
+                    //   height: 55,
+                    //   width: 300,
+                    //   decoration: BoxDecoration(
+                    //       borderRadius: BorderRadius.circular(10),
+                    //       color: const Color(0xFFFFE9DD)),
+                    //   alignment: Alignment.center,
+                    //   child: const Text(
+                    //     "",
+                    //     // "Requested for cancellation on 12 Sep, 2025 .\n You will get a confirmation by our team shortly.",
+                    //     style: TextStyle(fontSize: 12, color: Colors.black),
+                    //   ),
+                    // ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Want to change request?",
+                          style:
+                              TextStyle(fontSize: 12, color: Color(0xFF606060)),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet<void>(
+                                context: context,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(7)),
+                                clipBehavior: Clip.antiAlias,
+                                builder: (BuildContext context) {
+                                  return Padding(
+                                    padding: MediaQuery.viewInsetsOf(context),
+                                    child: Container(
+                                      padding: EdgeInsets.all(20),
+                                      child: SizedBox(
+                                        height: 400,
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Change Request",
+                                                        style: TextStyle(
+                                                            fontSize: 25,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color:
+                                                                Colors.black),
+                                                      ),
+                                                      Text("PNR: 98498YEEY"),
+                                                    ],
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Icon(
+                                                      Icons.cancel_outlined,
+                                                      size: 30,
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                height: 15,
+                                              ),
+                                              _buildDropdownField(
+                                                'Select',
+                                                selectedNationality,
+                                                nationality,
+                                                // your list of countries
+                                                (value) {
+                                                  setState(() {
+                                                    selectedNationality =
+                                                        value!;
+                                                  });
+                                                },
+                                              ),
+                                              _buildTextField(
+                                                  label: 'Remarks',
+                                                  hintText: 'Text here',
+                                                  controller: remarkController),
+                                              SizedBox(
+                                                height: 50,
+                                              ),
+                                              Container(
+                                                height: 50,
+                                                width:
+                                                    MediaQuery.sizeOf(context)
+                                                        .width,
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                    color: Color(0xFFF37023)),
+                                                alignment: Alignment.center,
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Text(
+                                                    "Send",
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 20),
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                });
+                          },
+                          child: const Text(
+                            "Change Request",
+                            style: TextStyle(
+                                color: Color(0xFFF37023),
+                                fontSize: 17,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Color(0xFFF37023)),
+                          ),
+                        )
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -395,6 +573,115 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
       ),
     );
   }
+}
+
+Widget _buildDropdownField(String label, String? selectedValue,
+    List<String> items, Function(String?) onChanged) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: selectedValue,
+            isExpanded: true,
+            icon: const Icon(Icons.arrow_drop_down),
+            style: const TextStyle(color: Colors.black, fontSize: 14),
+            onChanged: onChanged,
+            items: items.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildTextField(
+    {required String label,
+    required String hintText,
+    TextEditingController? controller}) {
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: 8.h),
+    child: Container(
+      height: 80.h,
+      width: 350,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: Colors.grey.shade300), // Border color
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontFamily: 'BricolageGrotesque',
+              color: Color(0xFF909090),
+            ),
+          ),
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              suffixIcon: label == "Date of birth *"
+                  ? GestureDetector(
+                      onTap: () {
+                        //   _selectDate(context);
+                      },
+                      child: Icon(
+                        Icons.date_range,
+                        color: Colors.black,
+                      ),
+                    )
+                  : label == "Expiry Date*"
+                      ? GestureDetector(
+                          onTap: () {
+                            //  _ExpiryDate(context);
+                          },
+                          child: Icon(
+                            Icons.date_range,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+              border: InputBorder.none,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontFamily: 'Inter',
+                color: Colors.black,
+                fontSize: 14.sp,
+              ),
+            ),
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget _buildActionButton({
@@ -415,7 +702,7 @@ Widget _buildActionButton({
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(imagePath),
+          SvgPicture.asset(imagePath),
           SizedBox(height: 10.h),
           Text(
             label,

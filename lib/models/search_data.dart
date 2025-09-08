@@ -119,6 +119,7 @@ class Result {
   List<List<MiniFareRule>> miniFareRules;
   String validatingAirline;
   ResultFareClassification fareClassification;
+  bool isExpanded;
 
   Result({
     required this.fareInclusions,
@@ -154,58 +155,58 @@ class Result {
     required this.miniFareRules,
     required this.validatingAirline,
     required this.fareClassification,
+    required this.isExpanded,
   });
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
-        fareInclusions:
-            List<dynamic>.from(json["FareInclusions"].map((x) => x)),
-        firstNameFormat: json["FirstNameFormat"],
-        isBookableIfSeatNotAvailable:
-            json["IsBookableIfSeatNotAvailable"] ?? false,
-        isFreeMealAvailable: json["IsFreeMealAvailable"] ?? false,
-        isHoldAllowedWithSsr: json["IsHoldAllowedWithSSR"] ?? false,
-        isHoldMandatoryWithSsr: json["IsHoldMandatoryWithSSR"],
-        isUpsellAllowed: json["IsUpsellAllowed"] ?? false,
-        lastNameFormat: json["LastNameFormat"] ?? "",
-        resultIndex: json["ResultIndex"],
-        source: json["Source"],
-        isLcc: json["IsLCC"],
-        isRefundable: json["IsRefundable"] ?? false,
-        isPanRequiredAtBook: json["IsPanRequiredAtBook"] ?? false,
-        isPanRequiredAtTicket: json["IsPanRequiredAtTicket"] ?? false,
-        isPassportRequiredAtBook: json["IsPassportRequiredAtBook"] ?? false,
-        isPassportRequiredAtTicket: json["IsPassportRequiredAtTicket"] ?? false,
-        gstAllowed: json["GSTAllowed"] ?? false,
-        isCouponAppilcable: json["IsCouponAppilcable"] ?? false,
-        isGstMandatory: json["IsGSTMandatory"] ?? false,
-        airlineRemark: json["AirlineRemark"] ?? "",
-        isPassportFullDetailRequiredAtBook:
-            json["IsPassportFullDetailRequiredAtBook"] ?? false,
-        resultFareType: json["ResultFareType"] ?? "",
-        fare: Fare.fromJson(json["Fare"] ?? {}),
-        fareBreakdown: List<FareBreakdown>.from(
-            json["FareBreakdown"].map((x) => FareBreakdown.fromJson(x))),
-        segments: List<List<Segment>>.from(json["Segments"]
-            .map((x) => List<Segment>.from(x.map((x) => Segment.fromJson(x))))),
-        lastTicketDate: json["LastTicketDate"] ?? "",
-        ticketAdvisory: json["TicketAdvisory"] ?? "",
-        fareRules: List<FareRule>.from(
-            json["FareRules"].map((x) => FareRule.fromJson(x))),
-        penaltyCharges: PenaltyCharges.fromJson(json["PenaltyCharges"] ?? {}),
-        airlineCode: json["AirlineCode"],
-        miniFareRules: json["MiniFareRules"] != null
-            ? List<List<MiniFareRule>>.from(
-                json["MiniFareRules"].map(
-                  (x) => List<MiniFareRule>.from(
-                    x.map((x) => MiniFareRule.fromJson(x)),
-                  ),
+      fareInclusions: List<dynamic>.from(json["FareInclusions"].map((x) => x)),
+      firstNameFormat: json["FirstNameFormat"],
+      isBookableIfSeatNotAvailable:
+          json["IsBookableIfSeatNotAvailable"] ?? false,
+      isFreeMealAvailable: json["IsFreeMealAvailable"] ?? false,
+      isHoldAllowedWithSsr: json["IsHoldAllowedWithSSR"] ?? false,
+      isHoldMandatoryWithSsr: json["IsHoldMandatoryWithSSR"],
+      isUpsellAllowed: json["IsUpsellAllowed"] ?? false,
+      lastNameFormat: json["LastNameFormat"] ?? "",
+      resultIndex: json["ResultIndex"],
+      source: json["Source"],
+      isLcc: json["IsLCC"],
+      isRefundable: json["IsRefundable"] ?? false,
+      isPanRequiredAtBook: json["IsPanRequiredAtBook"] ?? false,
+      isPanRequiredAtTicket: json["IsPanRequiredAtTicket"] ?? false,
+      isPassportRequiredAtBook: json["IsPassportRequiredAtBook"] ?? false,
+      isPassportRequiredAtTicket: json["IsPassportRequiredAtTicket"] ?? false,
+      gstAllowed: json["GSTAllowed"] ?? false,
+      isCouponAppilcable: json["IsCouponAppilcable"] ?? false,
+      isGstMandatory: json["IsGSTMandatory"] ?? false,
+      airlineRemark: json["AirlineRemark"] ?? "",
+      isPassportFullDetailRequiredAtBook:
+          json["IsPassportFullDetailRequiredAtBook"] ?? false,
+      resultFareType: json["ResultFareType"] ?? "",
+      fare: Fare.fromJson(json["Fare"] ?? {}),
+      fareBreakdown: List<FareBreakdown>.from(
+          json["FareBreakdown"].map((x) => FareBreakdown.fromJson(x))),
+      segments: List<List<Segment>>.from(json["Segments"]
+          .map((x) => List<Segment>.from(x.map((x) => Segment.fromJson(x))))),
+      lastTicketDate: json["LastTicketDate"] ?? "",
+      ticketAdvisory: json["TicketAdvisory"] ?? "",
+      fareRules: List<FareRule>.from(
+          json["FareRules"].map((x) => FareRule.fromJson(x))),
+      penaltyCharges: PenaltyCharges.fromJson(json["PenaltyCharges"] ?? {}),
+      airlineCode: json["AirlineCode"],
+      miniFareRules: json["MiniFareRules"] != null
+          ? List<List<MiniFareRule>>.from(
+              json["MiniFareRules"].map(
+                (x) => List<MiniFareRule>.from(
+                  x.map((x) => MiniFareRule.fromJson(x)),
                 ),
-              )
-            : [],
-        validatingAirline: json["ValidatingAirline"] ?? "",
-        fareClassification:
-            ResultFareClassification.fromJson(json["FareClassification"] ?? {}),
-      );
+              ),
+            )
+          : [],
+      validatingAirline: json["ValidatingAirline"] ?? "",
+      fareClassification:
+          ResultFareClassification.fromJson(json["FareClassification"] ?? {}),
+      isExpanded: false);
 
   Map<String, dynamic> toJson() => {
         "FareInclusions": List<dynamic>.from(fareInclusions.map((x) => x)),

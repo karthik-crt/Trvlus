@@ -2,21 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
+import '../utils/constant.dart';
 import 'ConfirmTraveler.dart';
 import 'DotDivider.dart';
 import 'ViewFullDetails.dart';
+import 'afterPayment.dart';
 
 class MakePaymentScreen extends StatefulWidget {
   final Map<String, dynamic> flight;
   final String city;
   final String destination;
+  final String airlineName;
+  final String cityName;
+  final String cityCode;
+  final String? flightNumber;
+  final String? depDate;
+  final String? depTime;
+  final String? refundable;
+  final String? arrDate;
+  final String? arrTime;
+  final String? descityName;
+  final String? descityCode;
+  final String? airlineCode;
+  final String? stop;
+  final String? duration;
+  final String? airportName;
+  final String? desairportName;
+  final double? basefare;
 
-  MakePaymentScreen({
-    required this.flight,
-    required this.city,
-    required this.destination,
-  });
+  MakePaymentScreen(
+      {required this.flight,
+      required this.city,
+      required this.destination,
+      required this.airlineName,
+      required this.cityName,
+      required this.cityCode,
+      this.airlineCode,
+      this.airportName,
+      this.desairportName,
+      this.flightNumber,
+      this.depDate,
+      this.depTime,
+      this.refundable,
+      this.arrDate,
+      this.arrTime,
+      this.descityName,
+      this.descityCode,
+      this.stop,
+      this.duration,
+      this.basefare});
 
   @override
   _MakePaymentScreenState createState() => _MakePaymentScreenState();
@@ -31,6 +67,15 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+
+    final depDateformat = widget.depDate;
+    DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
+    final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
+
+    final arrDateformat = widget.arrDate;
+    DateTime arrparsedDate = DateFormat("yyyy-MM-dd").parse(arrDateformat!);
+    final finalarrDateformat =
+        DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -69,46 +114,59 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                       // Flight header
                       Row(
                         children: [
-                          // Image.asset(flight['logo'], height: 40, width: 40),
+                          Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
                           SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Text(
-                              //   flight['airline'],
-                              //   style: TextStyle(
-                              //     fontFamily: 'Inter',
-                              //     fontWeight: FontWeight.bold,
-                              //     fontSize: 14.sp,
-                              //     color: Colors.black,
-                              //   ),
-                              // ),
-                              RichText(
-                                text: TextSpan(
-                                  text: 'XL2724',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: Colors.grey.shade700),
-                                  children: [
-                                    TextSpan(
-                                      text: " NR",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                              fontSize: 12.sp,
-                                              color: Colors.orange),
-                                    ),
-                                  ],
+                          Container(
+                            width: 120,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.airlineName,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                    color: Colors.black,
+                                  ),
                                 ),
-                              ),
-                            ],
+                                RichText(
+                                  text: TextSpan(
+                                    text: widget.airlineCode ?? "",
+                                    // first text
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                    // base style
+                                    children: [
+                                      TextSpan(text: " "),
+                                      TextSpan(
+                                        text: widget.flightNumber ?? "",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                                color: Colors.grey.shade700),
+                                      ),
+                                      TextSpan(
+                                        text: " ${widget.refundable ?? ""}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontSize: 12.sp,
+                                              color: primaryColor,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
-                          SizedBox(width: 43.w),
-                          Image.asset(
-                            "assets/images/Line.png",
-                          ),
+                          // SizedBox(width: 43.w),
+                          // Image.asset(
+                          //   "assets/images/Line.png",
+                          // ),
                           const Spacer(),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -129,7 +187,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                 ],
                               ),
                               Text(
-                                "Aircraft Boeing",
+                                // "Aircraft Boeing",
+                                "",
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -157,7 +216,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "05:30",
+                                widget.depTime ?? "",
                                 style: TextStyle(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
@@ -165,7 +224,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                 ),
                               ),
                               Text(
-                                "Sat, 30 Nov 24",
+                                finaldepDateformat,
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
@@ -175,16 +234,18 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                           ),
                           Column(
                             children: [
-                              Text("1 hr 14m",
+                              Text(widget.stop ?? "",
                                   style: TextStyle(fontSize: 12.sp)),
                               Image.asset('assets/images/flightColor.png'),
+                              Text(widget.duration ?? "",
+                                  style: TextStyle(fontSize: 12.sp)),
                             ],
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "06:44",
+                                widget.arrTime ?? "",
                                 style: TextStyle(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
@@ -192,7 +253,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                 ),
                               ),
                               Text(
-                                "Sat, 30 Nov 24",
+                                finalarrDateformat,
                                 style: TextStyle(fontSize: 12.sp),
                               ),
                             ],
@@ -208,7 +269,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    city,
+                                    widget.cityName,
                                     style: TextStyle(
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.bold,
@@ -217,7 +278,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                   ),
                                   SizedBox(width: 4.w),
                                   Text(
-                                    "DEL",
+                                    widget.cityCode,
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       color: Colors.grey,
@@ -242,7 +303,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Text(
-                                    destination,
+                                    widget.descityName ?? "",
                                     style: TextStyle(
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.bold,
@@ -251,7 +312,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                   ),
                                   SizedBox(width: 4.w),
                                   Text(
-                                    "BLR",
+                                    widget.descityCode ?? "",
                                     style: TextStyle(
                                       fontSize: 12.sp,
                                       color: Colors.grey,
@@ -285,6 +346,22 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                               flight: flight,
                               city: widget.city,
                               destination: widget.destination,
+                              airlineName: widget.airlineName,
+                              airlineCode: widget.airlineCode,
+                              flightNumber: widget.flightNumber,
+                              cityName: widget.cityName,
+                              cityCode: widget.cityCode,
+                              descityName: widget.descityName,
+                              descityCode: widget.descityCode,
+                              depDate: widget.depDate,
+                              depTime: widget.depTime,
+                              arrDate: widget.arrDate,
+                              arrTime: widget.arrTime,
+                              duration: widget.duration,
+                              refundable: widget.refundable,
+                              stop: widget.stop,
+                              airportName: widget.airportName,
+                              desairportName: widget.desairportName,
                             ),
                           );
                         },
@@ -522,6 +599,38 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                   ),
                 ),
               ),
+              Card(
+                color: Colors.white,
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "WALLET",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontFamily: 'Inter'),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedPaymentMethod = 'WALLET';
+                          });
+                        },
+                        child: Icon(
+                          selectedPaymentMethod == 'WALLET'
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          color: selectedPaymentMethod == 'WALLET'
+                              ? Color(0xFFF37023)
+                              : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               SizedBox(
                 height: 8.h,
               ),
@@ -616,7 +725,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹8,000",
+                          "₹${widget.basefare ?? ""}",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -637,11 +746,15 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                 SizedBox(height: 5.h),
                 ElevatedButton(
                   onPressed: () {
-                    Get.to(MakePaymentScreen(
-                      flight: flight,
-                      city: widget.city,
-                      destination: widget.destination,
-                    ));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const Afterpayment()));
+                    // Get.to(MakePaymentScreen(
+                    //   flight: flight,
+                    //   city: widget.city,
+                    //   destination: widget.destination,
+                    // ));
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 40.h),

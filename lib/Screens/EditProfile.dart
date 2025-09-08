@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 class EditProfilePage extends StatefulWidget {
   @override
@@ -20,6 +21,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController cityController = TextEditingController();
   final TextEditingController countryController = TextEditingController();
   String SelectButton = "Mr.";
+
+  final dateController = TextEditingController();
+  DateTime? selectedDate;
+
+  Future<void> _selectedDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+    );
+    print("psicked date$picked");
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        dateController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,9 +118,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ],
             ),
             SizedBox(height: 20.h),
-            _buildTextField1('First name', 'Text here'),
-            _buildTextField1('Last name', 'Text here'),
-            _buildTextField1('Date of birth', 'Text here'),
+            _buildTextField1(label: 'First name *', hintText: 'Text here'),
+            _buildTextField1(label: 'Last name *', hintText: 'Text here'),
+            _buildTextField1(
+                label: 'Date of birth *',
+                hintText: 'Text here',
+                controller: dateController),
             SizedBox(height: 10.h),
             Padding(
               padding: EdgeInsets.only(left: 8.w),
@@ -116,8 +139,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             SizedBox(
               height: 10.h,
             ),
-            _buildTextField1('Mobile', 'Text here'),
-            _buildTextField1('Email', 'Text here'),
+            _buildTextField1(label: 'Mobile *', hintText: 'Text here'),
+            _buildTextField1(label: 'Email *', hintText: 'Text here'),
             SizedBox(
               height: 10.h,
             ),
@@ -133,9 +156,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             SizedBox(height: 10.h),
-            _buildTextField1('Billing address', 'Text here'),
-            _buildTextField1('Pincode', 'Text here'),
-            _buildTextField1('State', 'Text here'),
+            _buildTextField1(label: 'Billing Address ', hintText: 'Text here'),
+            _buildTextField1(label: 'Pincode', hintText: 'Text here'),
+            _buildTextField1(label: 'State', hintText: 'Text here'),
             // SizedBox(height: 10.h),
             // Text(
             //   "Contact details",
@@ -226,6 +249,63 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
     );
   }
+
+  Widget _buildTextField1(
+      {required String label,
+      required String hintText,
+      TextEditingController? controller}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              suffixIcon: label == "Date of birth *"
+                  ? GestureDetector(
+                      onTap: () {
+                        _selectedDate(context);
+                      },
+                      child: Icon(
+                        Icons.date_range,
+                        color: Colors.grey.shade800,
+                      ),
+                    )
+                  : label == "Expiry Date*"
+                      ? GestureDetector(
+                          onTap: () {},
+                          child: Icon(
+                            Icons.date_range,
+                            color: Colors.grey.shade800,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+              border: OutlineInputBorder(),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade400)),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey.shade700)),
+              fillColor: Colors.white,
+              filled: true,
+              label: Text(label),
+              focusColor: Colors.orange,
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontFamily: 'Inter',
+                color: Colors.black,
+                fontSize: 14.sp,
+              ),
+            ),
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class MaritalStatus1 extends StatelessWidget {
@@ -270,47 +350,4 @@ class MaritalStatus1 extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildTextField1(String label, String hintText) {
-  return Padding(
-    padding: EdgeInsets.only(left: 10.w, right: 10.w, bottom: 10.h),
-    child: Container(
-      //height: 50.h,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: Colors.grey.shade300), // Border color
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontFamily: 'BricolageGrotesque',
-              color: Color(0xFF909090),
-            ),
-          ),
-          TextField(
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: hintText,
-              hintStyle: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.black,
-                fontSize: 14.sp,
-              ),
-            ),
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.black,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }
