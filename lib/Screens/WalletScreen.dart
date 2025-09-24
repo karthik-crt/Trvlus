@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'Home_Page.dart';
+import 'addamount.dart';
+
 class Wallet extends StatefulWidget {
   const Wallet({super.key});
 
@@ -26,7 +29,8 @@ class _WalletState extends State<Wallet> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () {
-            Navigator.pop(context);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => SearchFlightPage()));
           },
           child: Padding(
             padding: EdgeInsets.only(left: 20.0.w),
@@ -96,7 +100,12 @@ class _WalletState extends State<Wallet> {
                     right: 20.w,
                     top: 40.h,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Addamount()));
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFFF37023),
                       ),
@@ -107,17 +116,58 @@ class _WalletState extends State<Wallet> {
               ),
             ),
             SizedBox(height: 50),
-            Align(
-              alignment: Alignment.center,
-              child: Text(
-                "Wallet is empty",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+            // Align(
+            //   alignment: Alignment.center,
+            //   child: Text(
+            //     "Wallet is empty",
+            //     style: TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.w500,
+            //       color: Colors.black,
+            //     ),
+            //   ),
+            // ),
+            Row(
+              children: [
+                Image.asset(
+                  "assets/icon/gpay.png",
+                  height: 30,
                 ),
-              ),
+                SizedBox(
+                  width: 15,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "12 Jan, 2023 ",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Text("12:00 am", style: TextStyle(fontSize: 12))
+                  ],
+                ),
+                Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "₹100",
+                      style: TextStyle(
+                          color: Color(0xFF138808),
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      "Credited",
+                      style: TextStyle(fontSize: 12),
+                    )
+                  ],
+                ),
+              ],
             ),
+
             SizedBox(height: 20.h),
           ],
         ),

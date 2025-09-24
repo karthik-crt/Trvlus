@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:trvlus/Screens/ticketdetails.dart';
 
 import 'DotDivider.dart';
+import 'Home_Page.dart';
 import 'Ticket.dart';
 
 class BookingHistoryPage extends StatefulWidget {
@@ -30,7 +31,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F5F5),
         title: Text(
@@ -43,7 +44,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.push(context,
+              MaterialPageRoute(builder: (context) => SearchFlightPage())),
         ),
         elevation: 1,
       ),
@@ -157,54 +159,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "05:30",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            Text(
-                              "Sat, 30 Nov 24",
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Text("1 hr 14m", style: TextStyle(fontSize: 12.sp)),
-                            Image.asset('assets/images/flightDetails.png'),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              "06:44",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            Text(
-                              "Sat, 30 Nov 24",
-                              style: TextStyle(fontSize: 12.sp),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
                             Row(
                               children: [
                                 Text(
@@ -228,6 +182,13 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                             //SizedBox(height: 4.h),
                             Text(
                               "Delhi Airport",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              "Terminal 3",
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: Colors.grey,
@@ -263,10 +224,72 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               "Bengaluru Airport",
                               style: TextStyle(fontSize: 12.sp),
                             ),
+                            Text(
+                              "Terminal 1",
+                              style: TextStyle(fontSize: 12.sp),
+                            ),
                           ],
                         ),
                       ],
                     ),
+                    SizedBox(height: 5),
+                    Container(
+                      margin: EdgeInsets.all(5),
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Color(0xFFFFF4EE)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "05:30",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Text(
+                                "Sat, 30 Nov 24",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text("1 hr 14m",
+                                  style: TextStyle(fontSize: 12.sp)),
+                              Image.asset('assets/images/flightDetails.png'),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "06:44",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Text(
+                                "Sat, 30 Nov 24",
+                                style: TextStyle(fontSize: 12.sp),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
                     SizedBox(height: 8.h),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -453,6 +476,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                         GestureDetector(
                           onTap: () {
                             showModalBottomSheet<void>(
+                                backgroundColor: Color(0xFFF5F5F5),
                                 context: context,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(7)),
@@ -480,7 +504,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                       Text(
                                                         "Change Request",
                                                         style: TextStyle(
-                                                            fontSize: 25,
+                                                            fontSize: 20,
                                                             fontWeight:
                                                                 FontWeight.bold,
                                                             color:
@@ -493,9 +517,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                     onTap: () {
                                                       Navigator.pop(context);
                                                     },
-                                                    child: Icon(
-                                                      Icons.cancel_outlined,
-                                                      size: 30,
+                                                    child: Image.asset(
+                                                      "assets/icon/Close.png",
+                                                      height: 25,
                                                     ),
                                                   )
                                                 ],
@@ -515,10 +539,12 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                   });
                                                 },
                                               ),
-                                              _buildTextField(
-                                                  label: 'Remarks',
-                                                  hintText: 'Text here',
-                                                  controller: remarkController),
+                                              SizedBox(
+                                                height: 5,
+                                              ),
+                                              _buildTextField1(
+                                                  label: 'Remarks *',
+                                                  hintText: 'Text here'),
                                               SizedBox(
                                                 height: 50,
                                               ),
@@ -589,11 +615,11 @@ Widget _buildDropdownField(String label, String? selectedValue,
       ),
       const SizedBox(height: 8),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4.5),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: Colors.grey.shade400),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(5),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
@@ -615,71 +641,57 @@ Widget _buildDropdownField(String label, String? selectedValue,
   );
 }
 
-Widget _buildTextField(
+Widget _buildTextField1(
     {required String label,
     required String hintText,
     TextEditingController? controller}) {
   return Padding(
     padding: EdgeInsets.symmetric(vertical: 8.h),
-    child: Container(
-      height: 80.h,
-      width: 350,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: Colors.grey.shade300), // Border color
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontFamily: 'BricolageGrotesque',
-              color: Color(0xFF909090),
-            ),
-          ),
-          TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              suffixIcon: label == "Date of birth *"
-                  ? GestureDetector(
-                      onTap: () {
-                        //   _selectDate(context);
-                      },
-                      child: Icon(
-                        Icons.date_range,
-                        color: Colors.black,
-                      ),
-                    )
-                  : label == "Expiry Date*"
-                      ? GestureDetector(
-                          onTap: () {
-                            //  _ExpiryDate(context);
-                          },
-                          child: Icon(
-                            Icons.date_range,
-                            color: Colors.black,
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-              border: InputBorder.none,
-              hintText: hintText,
-              hintStyle: TextStyle(
-                fontFamily: 'Inter',
-                color: Colors.black,
-                fontSize: 14.sp,
-              ),
-            ),
-            style: TextStyle(
-              fontSize: 16.sp,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            suffixIcon: label == "Date of birth *"
+                ? GestureDetector(
+                    onTap: () {},
+                    child: Icon(
+                      Icons.date_range,
+                      color: Colors.grey.shade800,
+                    ),
+                  )
+                : label == "Expiry Date*"
+                    ? GestureDetector(
+                        onTap: () {},
+                        child: Icon(
+                          Icons.date_range,
+                          color: Colors.grey.shade800,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+            border: OutlineInputBorder(),
+            enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey.shade400)),
+            focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey.shade700)),
+            fillColor: Colors.white,
+            filled: true,
+            label: Text(label),
+            focusColor: Colors.orange,
+            hintText: hintText,
+            hintStyle: TextStyle(
+              fontFamily: 'Inter',
               color: Colors.black,
+              fontSize: 14.sp,
             ),
           ),
-        ],
-      ),
+          style: TextStyle(
+            fontSize: 16.sp,
+            color: Colors.black,
+          ),
+        ),
+      ],
     ),
   );
 }

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../controller/auth_controller.dart';
+import '../models/search_data.dart';
 import 'Otp_Verification.dart';
 
 class MobileVerificationScreen extends StatefulWidget {
@@ -27,6 +28,9 @@ class MobileVerificationScreen extends StatefulWidget {
   final String? airportName;
   final String? desairportName;
   final double? basefare;
+  final List<List<Segment>>? segments;
+  final String? resultindex;
+  final String? traceid;
 
   const MobileVerificationScreen(
       {super.key,
@@ -49,7 +53,10 @@ class MobileVerificationScreen extends StatefulWidget {
       this.descityCode,
       this.stop,
       this.duration,
-      this.basefare});
+      this.basefare,
+      this.segments,
+      this.resultindex,
+      this.traceid});
 
   @override
   _MobileVerificationScreenState createState() =>
@@ -190,7 +197,8 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(5.r),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border:
+                            Border.all(color: Colors.grey[300]!, width: 1.0),
                       ),
                       child: TextFormField(
                         controller: _mobileController,
@@ -209,6 +217,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                             horizontal: 15.w,
                             vertical: 15.h,
                           ),
+                          fillColor: Colors.white,
                           hintText: 'Mobile number',
                           hintStyle: TextStyle(
                             color: Colors.grey[400],
@@ -262,7 +271,10 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                               stop: widget.stop,
                               airportName: widget.airportName,
                               desairportName: widget.desairportName,
-                              basefare: widget.basefare));
+                              basefare: widget.basefare,
+                              segments: widget.segments,
+                              resultindex: widget.resultindex,
+                              traceid: widget.traceid));
                         }
                       : null,
                   style: ElevatedButton.styleFrom(

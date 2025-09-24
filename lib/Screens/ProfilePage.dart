@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:trvlus/Screens/DotDivider.dart';
 import 'package:trvlus/Screens/EditProfile.dart';
 import 'package:trvlus/Screens/Home_Page.dart';
@@ -529,7 +530,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: buildListTile(
                         "assets/icon/T&C.svg", "T&C and Privacy policy"),
                   ),
-                  buildListTile("assets/icon/share.svg", "Share App"),
+                  GestureDetector(
+                      onTap: () => _onShareXFileFromAssets(context),
+                      child:
+                          buildListTile("assets/icon/share.svg", "Share App")),
                   buildListTile("assets/icon/logout.svg", "Logout")
                 ],
               ),
@@ -538,6 +542,21 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  void _onShareXFileFromAssets(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+    try {
+      await Share.share(
+        'Check out this awesome app: https://play.google.com/store/apps/details?id=com.example.myapp',
+        subject: 'Download this app!',
+        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   ListTile buildListTile(String imagePath, String title,

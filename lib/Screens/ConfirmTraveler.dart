@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../models/search_data.dart';
 import '../utils/constant.dart';
 import 'DotDivider.dart';
 import 'Payment.dart';
@@ -31,6 +32,10 @@ class ConfirmTravelerDetails extends StatefulWidget {
   final String? airportName;
   final String? desairportName;
   final double? basefare;
+  final List<List<Segment>>? segments;
+  final List<Map<String, dynamic>>? initialData;
+  final String? resultindex;
+  final String? traceid;
 
   ConfirmTravelerDetails(
       {required this.flight,
@@ -52,7 +57,11 @@ class ConfirmTravelerDetails extends StatefulWidget {
       this.descityCode,
       this.stop,
       this.duration,
-      this.basefare});
+      this.basefare,
+      this.segments,
+      this.initialData,
+      this.resultindex,
+      this.traceid});
 
   @override
   State<ConfirmTravelerDetails> createState() => _ConfirmTravelerDetailsState();
@@ -64,6 +73,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+    final pax = widget.initialData;
+    print("PAxdetails$pax");
 
     int selectedindex = -1;
 
@@ -72,17 +83,20 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
 
     final arrDateformat = widget.arrDate;
-    DateTime arrparsedDate = DateFormat("yyyy-MM-dd").parse(arrDateformat!);
+    DateTime arrparsedDate = DateTime.parse(arrDateformat!);
     final finalarrDateformat =
         DateFormat("EEE,dd MMM yy").format(arrparsedDate);
-    final List<Map<String, String>> travelers = [
-      {"type": "ADULT 1", "name": "John"},
-      {"type": "ADULT 2", "name": "ABC"},
-    ];
-    final List<Map<String, String>> travelers1 = [
-      {"type": "CHILD 1", "name": "XYZ"},
-      {"type": "CHILD 2", "name": "Smith"},
-    ];
+
+    // Create travelers list from initialData
+    final List<Map<String, String>> travelers =
+        (pax ?? []).asMap().entries.map((entry) {
+      int index = entry.key;
+      Map<String, dynamic> passenger = entry.value;
+      return {
+        "type": "ADULT ${index + 1}",
+        "name": "${passenger['Firstname']} ${passenger['lastname']}",
+      };
+    }).toList();
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -96,14 +110,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
               fontSize: 14.sp,
             ),
           ),
-          // SizedBox(
-          //   width: 25,
-          // ),
-          // SvgPicture.asset(
-          //   "assets/icon/pricealert.svg",
-          //   height: 25,
-          //   width: 10,
-          // )
         ]),
         foregroundColor: Colors.black,
         backgroundColor: Color(0xFFF5F5F5),
@@ -114,7 +120,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Flight details card
+            // Flight details card (unchanged)
             Card(
               color: Colors.white,
               shape: RoundedRectangleBorder(
@@ -125,7 +131,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Flight header
+                    // Flight header (unchanged)
                     Row(
                       children: [
                         Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
@@ -146,10 +152,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               ),
                               RichText(
                                 text: TextSpan(
-                                  text: widget.airlineCode ?? "", // first text
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall, // base style
+                                  text: widget.airlineCode ?? "",
+                                  style: Theme.of(context).textTheme.bodySmall,
                                   children: [
                                     TextSpan(text: " "),
                                     TextSpan(
@@ -177,10 +181,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             ],
                           ),
                         ),
-                        // SizedBox(width: 45.w),
-                        // Image.asset(
-                        //   "assets/images/Line.png",
-                        // ),
                         const Spacer(),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -201,7 +201,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               ],
                             ),
                             Text(
-                              // "Aircraft Boeing",
                               "",
                               style: Theme.of(context)
                                   .textTheme
@@ -216,14 +215,13 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 97, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
+                        dotSize: 1.h,
+                        spacing: 2.r,
+                        dotCount: 97,
+                        color: Colors.grey,
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    // Flight timing and city details
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -301,14 +299,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                 ),
                               ],
                             ),
-                            //SizedBox(height: 4.h),
-                            // Text(
-                            //   flight["departure"],
-                            //   style: TextStyle(
-                            //     fontSize: 12.sp,
-                            //     color: Colors.grey,
-                            //   ),
-                            // ),
                           ],
                         ),
                         Column(
@@ -335,10 +325,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                 ),
                               ],
                             ),
-                            // Text(
-                            //   flight["arrival"],
-                            //   style: TextStyle(fontSize: 12.sp),
-                            // ),
                           ],
                         ),
                       ],
@@ -347,10 +333,10 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 97, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
+                        dotSize: 1.h,
+                        spacing: 2.r,
+                        dotCount: 97,
+                        color: Colors.grey,
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -377,6 +363,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             stop: widget.stop,
                             airportName: widget.airportName,
                             desairportName: widget.desairportName,
+                            segments: widget.segments,
                           ),
                         );
                       },
@@ -433,7 +420,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 )
               ],
             ),
-
             SizedBox(height: 5.h),
             Text(
               "Adults",
@@ -444,38 +430,21 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                   fontSize: 12.sp),
             ),
             SizedBox(height: 2.h),
+            // Display travelers from initialData
             ...travelers.map((traveler) {
-              final isAdult = traveler['type']!.startsWith('ADULT');
               return Padding(
                 padding: EdgeInsets.symmetric(vertical: 0.h),
                 child: TravelerCard(
                   name: traveler['name']!,
                   type: traveler['type']!,
-                  isAdult: isAdult,
+                  isAdult:
+                      true, // Assuming all passengers in initialData are adults
                 ),
               );
             }).toList(),
-            SizedBox(height: 5.h),
-            Text(
-              "Child",
-              style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Inter',
-                  fontSize: 12.sp),
-            ),
-            SizedBox(height: 2.h),
-            ...travelers1.map((traveler) {
-              final isAdult = traveler['type']!.startsWith('ADULT');
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 0.h),
-                child: TravelerCard(
-                  name: traveler['name']!,
-                  type: traveler['type']!,
-                  isAdult: isAdult,
-                ),
-              );
-            }).toList(),
+            // Remove the "Child" section since you only want adults
+            SizedBox(height: 20.h),
+            // Rest of the UI (Add Additional, GSTN Details, etc.) remains unchanged
             Text(
               'Add Additional',
               style: TextStyle(
@@ -485,9 +454,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 fontFamily: 'Inter',
               ),
             ),
-            SizedBox(
-              height: 5,
-            ),
+            SizedBox(height: 5),
             Column(
               children: [
                 Container(
@@ -510,9 +477,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                         height: 19,
                         width: 25,
                       ),
-                      SizedBox(
-                        width: 20,
-                      ),
+                      SizedBox(width: 20),
                       Text(
                         "Seats",
                         style: TextStyle(
@@ -538,9 +503,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: 15,
-                ),
+                SizedBox(height: 15),
                 Container(
                   height: 60,
                   padding: EdgeInsets.all(10),
@@ -561,9 +524,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                         height: 25,
                         width: 25,
                       ),
-                      SizedBox(
-                        width: 20,
-                      ),
+                      SizedBox(width: 20),
                       Text(
                         "Baggage",
                         style: TextStyle(
@@ -589,9 +550,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: 15,
-                ),
+                SizedBox(height: 15),
                 Container(
                   height: 60,
                   padding: EdgeInsets.all(10),
@@ -612,9 +571,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                         height: 25,
                         width: 25,
                       ),
-                      SizedBox(
-                        width: 20,
-                      ),
+                      SizedBox(width: 20),
                       Text(
                         "Meals",
                         style: TextStyle(
@@ -642,9 +599,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 )
               ],
             ),
-            SizedBox(
-              height: 20,
-            ),
+            SizedBox(height: 20),
             Text(
               "GSTN Details (Optional)",
               style: TextStyle(
@@ -700,10 +655,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 ],
               ),
             ),
-            SizedBox(
-              height: 20,
-            ),
-
+            SizedBox(height: 20),
             GestureDetector(
               onTap: () {
                 showModalBottomSheet(
@@ -738,7 +690,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                       height: 70,
                                       fit: BoxFit.fitHeight,
                                       width: MediaQuery.sizeOf(context).width,
-                                      // width: 35,
                                     ),
                                     Text(
                                       "Price Alert!",
@@ -752,9 +703,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                       child: Text(
                                           "airline has increased the price by ₹500 \n please review the new price before \n booking"),
                                     ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
+                                    SizedBox(height: 10),
                                     Container(
                                       height: 60,
                                       padding: EdgeInsets.all(10),
@@ -987,7 +936,11 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                           stop: widget.stop,
                           airportName: widget.airportName,
                           desairportName: widget.desairportName,
-                          basefare: widget.basefare),
+                          basefare: widget.basefare,
+                          segments: widget.segments,
+                          initialData: widget.initialData,
+                          resultindex: widget.resultindex,
+                          traceid: widget.traceid),
                     );
                   },
                   style: ElevatedButton.styleFrom(

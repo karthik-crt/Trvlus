@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:trvlus/Screens/ViewFullDetails.dart';
 import 'package:trvlus/utils/constant.dart';
 
+import '../models/search_data.dart';
 import 'DotDivider.dart';
 import 'Mobile_Verification.dart';
 import 'ShowModelSheet.dart';
@@ -36,6 +39,9 @@ class FlightDetailsPage extends StatefulWidget {
   final String? journeypoint;
   final String? reissue;
   final double? basefare;
+  final List<List<Segment>>? segments;
+  final String? resultindex;
+  final String? traceid;
 
   FlightDetailsPage(
       {required this.flight,
@@ -62,28 +68,24 @@ class FlightDetailsPage extends StatefulWidget {
       this.cancellation,
       this.journeypoint,
       this.reissue,
-      this.basefare});
+      this.basefare,
+      this.segments,
+      this.resultindex,
+      this.traceid});
 
   @override
   _FlightDetailsPageState createState() => _FlightDetailsPageState();
 }
 
 class _FlightDetailsPageState extends State<FlightDetailsPage> {
+  int appliedPromoIndex = 0; // default applied promo
+
   @override
   Widget build(BuildContext context) {
     final flight = widget.flight;
-    final city = widget.city;
-    final destination = widget.destination;
 
-    final airportName = widget.airportName;
-    print("airportName$airportName");
-    final desairportName = widget.desairportName;
-
-    final cabin = widget.baggage;
-    print("cabin$cabin");
-
-    final cabinBah = widget.cabinBaggage;
-    print("cabinBah$cabinBah");
+    final segments = jsonEncode(widget.segments);
+    print("allsegments$segments");
 
     final depDateformat = widget.depDate;
     DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
@@ -114,311 +116,317 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r)),
-              elevation: 2,
-              child: Padding(
-                padding: EdgeInsets.all(12.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        // Image.asset(flight['logo'], height: 40, width: 40),
-                        Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
-                        SizedBox(width: 12),
-                        Container(
-                          width: 120,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.airlineName,
-                                style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14.sp,
-                                    color: Colors.black),
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: widget.airlineCode ?? "", // first text
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall, // base style
-                                  children: [
-                                    TextSpan(text: " "),
-                                    TextSpan(
-                                      text: widget.flightNumber ?? "",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                              color: Colors.grey.shade700),
-                                    ),
-                                    TextSpan(
-                                      text: " ${widget.refundable ?? ""}",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontSize: 12.sp,
-                                            color: primaryColor,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                        // SizedBox(width: 43.w),
-                        // Image.asset(
-                        //   "assets/images/Line.png",
-                        // ),
-                        const Spacer(),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Row(
+            const Divider(),
+            ...List.generate(widget.segments?.length ?? 0, (segmentIndex) {
+              return Card(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r)),
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // Image.asset(flight['logo'], height: 40, width: 40),
+                          Image.asset("assets/${widget.airlineCode ?? ""}.gif"),
+                          SizedBox(width: 12),
+                          Container(
+                            width: 120,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Economy Class",
+                                  widget.airlineName,
                                   style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 12.sp,
+                                      fontSize: 14.sp,
                                       color: Colors.black),
                                 ),
-                                SizedBox(
-                                  width: 6.w,
-                                ),
-                                SizedBox(
-                                  height: 4.h,
-                                ),
-                                Image.asset("assets/images/star.png")
-                              ],
-                            ),
-                            Text(
-                              // "Aircraft Boeing",
-                              "",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: Colors.grey.shade700),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 97, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  widget.depTime ?? "",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                RichText(
+                                  text: TextSpan(
+                                    text: widget.airlineCode ?? "",
+                                    // first text
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                    // base style
+                                    children: [
+                                      TextSpan(text: " "),
+                                      TextSpan(
+                                        text: widget.flightNumber ?? "",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                                color: Colors.grey.shade700),
+                                      ),
+                                      TextSpan(
+                                        text: " ${widget.refundable ?? ""}",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontSize: 12.sp,
+                                              color: primaryColor,
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                SizedBox(width: 4.w),
+                                )
                               ],
                             ),
-                            //SizedBox(height: 4.h),
-                            Text(
-                              finaldepDateformat,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: Colors.grey,
+                          ),
+                          // SizedBox(width: 43.w),
+                          // Image.asset(
+                          //   "assets/images/Line.png",
+                          // ),
+                          const Spacer(),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    "Economy Class",
+                                    style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.sp,
+                                        color: Colors.black),
+                                  ),
+                                  SizedBox(
+                                    width: 6.w,
+                                  ),
+                                  SizedBox(
+                                    height: 4.h,
+                                  ),
+                                  Image.asset("assets/images/star.png")
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Text(widget.stop ?? "",
-                                style: TextStyle(fontSize: 12.sp)),
-                            Image.asset('assets/images/flightColor.png'),
-                            Text(
-                              widget.duration ?? "",
-                              style: TextStyle(
-                                  fontFamily: 'Inter', fontSize: 12.sp),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  widget.arrTime ?? "",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                SizedBox(width: 4.w),
-                              ],
-                            ),
-                            Text(
-                              finalarrDateformat,
-                              style: TextStyle(fontSize: 12.sp),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  widget.cityName,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  widget.cityCode,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            //SizedBox(height: 4.h),
-                            // Text(
-                            //   flight["departure"],
-                            //   style: TextStyle(
-                            //     fontSize: 12.sp,
-                            //     color: Colors.grey,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  widget.descityName ?? "",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  widget.descityCode ?? "",
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // Text(
-                            //   flight["arrival"],
-                            //   style: TextStyle(fontSize: 12.sp),
-                            // ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 97, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(
-                          () => Viewfulldetails(
-                            flight: flight,
-                            city: widget.city,
-                            destination: widget.destination,
-                            airlineName: widget.airlineName,
-                            airlineCode: widget.airlineCode,
-                            flightNumber: widget.flightNumber,
-                            cityName: widget.cityName,
-                            cityCode: widget.cityCode,
-                            descityName: widget.descityName,
-                            descityCode: widget.descityCode,
-                            depDate: widget.depDate,
-                            depTime: widget.depTime,
-                            arrDate: widget.arrDate,
-                            arrTime: widget.arrTime,
-                            duration: widget.duration,
-                            refundable: widget.refundable,
-                            stop: widget.stop,
-                            airportName: widget.airportName,
-                            desairportName: widget.desairportName,
-                          ),
-                        );
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'View full details',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              color: Color(0xFFF37023),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Padding(
-                              padding: EdgeInsets.only(top: 4.h),
-                              child: Image.asset("assets/images/Traingle.png"))
+                              Text(
+                                // "Aircraft Boeing",
+                                "",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.grey.shade700),
+                              ),
+                            ],
+                          )
                         ],
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 8.h),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DotDivider(
+                          dotSize: 1.h, // Adjust size
+                          spacing: 2.r, // Adjust spacing
+                          dotCount: 97, // Adjust number of dots
+                          color: Colors.grey, // Adjust color
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.depTime ?? "",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                ],
+                              ),
+                              //SizedBox(height: 4.h),
+                              Text(
+                                finaldepDateformat,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text(widget.stop ?? "",
+                                  style: TextStyle(fontSize: 12.sp)),
+                              Image.asset('assets/images/flightColor.png'),
+                              Text(
+                                widget.duration ?? "",
+                                style: TextStyle(
+                                    fontFamily: 'Inter', fontSize: 12.sp),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    widget.arrTime ?? "",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                ],
+                              ),
+                              Text(
+                                finalarrDateformat,
+                                style: TextStyle(fontSize: 12.sp),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 5.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.cityName,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    widget.cityCode,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              //SizedBox(height: 4.h),
+                              // Text(
+                              //   flight["departure"],
+                              //   style: TextStyle(
+                              //     fontSize: 12.sp,
+                              //     color: Colors.grey,
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    widget.descityName ?? "",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    widget.descityCode ?? "",
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // Text(
+                              //   flight["arrival"],
+                              //   style: TextStyle(fontSize: 12.sp),
+                              // ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DotDivider(
+                          dotSize: 1.h, // Adjust size
+                          spacing: 2.r, // Adjust spacing
+                          dotCount: 97, // Adjust number of dots
+                          color: Colors.grey, // Adjust color
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => Viewfulldetails(
+                              flight: flight,
+                              city: widget.city,
+                              destination: widget.destination,
+                              airlineName: widget.airlineName,
+                              airlineCode: widget.airlineCode,
+                              flightNumber: widget.flightNumber,
+                              cityName: widget.cityName,
+                              cityCode: widget.cityCode,
+                              descityName: widget.descityName,
+                              descityCode: widget.descityCode,
+                              depDate: widget.depDate,
+                              depTime: widget.depTime,
+                              arrDate: widget.arrDate,
+                              arrTime: widget.arrTime,
+                              duration: widget.duration,
+                              refundable: widget.refundable,
+                              stop: widget.stop,
+                              airportName: widget.airportName,
+                              desairportName: widget.desairportName,
+                              segments: widget.segments,
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'View full details',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: Color(0xFFF37023),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.sp,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Padding(
+                                padding: EdgeInsets.only(top: 4.h),
+                                child:
+                                    Image.asset("assets/images/Traingle.png"))
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
 
             SizedBox(height: 16),
 
@@ -474,266 +482,93 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                           onTap: () {
                             showModalBottomSheet<void>(
                               context: context,
+                              isScrollControlled: true,
+                              // shape: RoundedRectangleBorder(
+                              //   borderRadius: BorderRadius.vertical(
+                              //       top: Radius.circular(16.r)),
+                              // ),
+                              shape: Border(
+                                  left: BorderSide.none,
+                                  right: BorderSide.none),
                               builder: (BuildContext context) {
-                                return Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 15, vertical: 15),
-                                  width: MediaQuery.sizeOf(context).width,
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                return StatefulBuilder(
+                                  builder: (BuildContext context,
+                                      StateSetter setModalState) {
+                                    return Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 15, vertical: 25),
+                                      width: MediaQuery.sizeOf(context).width,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            "PromoCode",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                                fontSize: 20),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: Icon(
-                                              Icons.cancel_outlined,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 15,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/promocode.png',
-                                            height: 35,
-                                          ),
-                                          SizedBox(
-                                            width: 20,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                "TRVLUS",
+                                                "Promo Code",
                                                 style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
                                                     color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.bold),
+                                                    fontSize: 20),
                                               ),
-                                              Text(
-                                                "₹4,555 saved",
-                                                style: TextStyle(
-                                                    color: Color(0xFFF37023),
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              )
+                                              GestureDetector(
+                                                onTap: () =>
+                                                    Navigator.pop(context),
+                                                child: Image.asset(
+                                                  "assets/icon/Close.png",
+                                                  height: 25,
+                                                ),
+                                              ),
                                             ],
                                           ),
-                                          Spacer(),
-                                          Container(
-                                            width: 80,
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                                color: Color(0xFFF37023)),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              "Applied",
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          )
+                                          SizedBox(height: 25),
+                                          promoRowModal(
+                                              0,
+                                              "TRVLUS09",
+                                              "₹4,555 save",
+                                              "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
+                                              setModalState),
+                                          promoRowModal(
+                                              1,
+                                              "TRVLUS10",
+                                              "₹3,200 save",
+                                              "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
+                                              setModalState),
+                                          promoRowModal(
+                                              2,
+                                              "TRVLUS11",
+                                              "₹2,100 save",
+                                              "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
+                                              setModalState),
+                                          SizedBox(height: 20),
                                         ],
                                       ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/promocode.png',
-                                            height: 35,
-                                          ),
-                                          SizedBox(
-                                            width: 20,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "TRVLUS",
-                                                style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              Text(
-                                                "₹4,555 saved",
-                                                style: TextStyle(
-                                                    color: Color(0xFFF37023),
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              )
-                                            ],
-                                          ),
-                                          Spacer(),
-                                          Container(
-                                            width: 80,
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                                border: Border.all(
-                                                    color: Color(0xFFF37023)),
-                                                color: Colors.transparent),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              "Apply",
-                                              style: TextStyle(
-                                                  color: Color(0xFFF37023),
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/promocode.png',
-                                            height: 35,
-                                          ),
-                                          SizedBox(
-                                            width: 20,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "TRVLUS",
-                                                style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              Text(
-                                                "₹4,555 saved",
-                                                style: TextStyle(
-                                                    color: Color(0xFFF37023),
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              )
-                                            ],
-                                          ),
-                                          Spacer(),
-                                          Container(
-                                            width: 80,
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                                border: Border.all(
-                                                    color: Color(0xFFF37023)),
-                                                color: Colors.transparent),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              "Apply",
-                                              style: TextStyle(
-                                                color: Color(0xFFF37023),
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/promocode.png',
-                                            height: 35,
-                                          ),
-                                          SizedBox(
-                                            width: 20,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "TRVLUS",
-                                                style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              Text(
-                                                "₹4,555 saved",
-                                                style: TextStyle(
-                                                    color: Color(0xFFF37023),
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              )
-                                            ],
-                                          ),
-                                          Spacer(),
-                                          Container(
-                                            width: 80,
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                                border: Border.all(
-                                                    color: Color(0xFFF37023)),
-                                                color: Colors.transparent),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              "Apply",
-                                              style: TextStyle(
-                                                  color: Color(0xFFF37023),
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 );
                               },
                             );
                           },
-                          child: Text(
-                            "CHANGE",
-                            style: TextStyle(
-                              color: Color(0xFFF37023),
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "CHANGE",
+                                style: TextStyle(
+                                  color: Color(0xFFF37023),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                "₹4,555 saved",
+                                style: TextStyle(
+                                  color: Color(0xFF138808),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Text(
-                          "₹4,555 saved",
-                          style: TextStyle(
-                              color: Color(0xFFF37023),
-                              fontWeight: FontWeight.bold),
                         )
                       ],
                     )
@@ -845,7 +680,10 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                         stop: widget.stop,
                         airportName: widget.airportName,
                         desairportName: widget.desairportName,
-                        basefare: widget.basefare));
+                        basefare: widget.basefare,
+                        segments: widget.segments,
+                        resultindex: widget.resultindex,
+                        traceid: widget.traceid));
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 40.h),
@@ -1133,9 +971,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           // valueColor: Color(0xFFF32323),
         ),
         SizedBox(height: 12.h),
-        _buildPolicyRow("4hrs - 4 days to departure:", "₹4,555"),
+        _buildPolicyRow("4hrs - 4 days to departure:", "No Data"),
         SizedBox(height: 12.h),
-        _buildPolicyRow("4 - 999 days to departure:", "₹4,555"),
+        _buildPolicyRow("4 - 999 days to departure:", "No Data"),
       ],
     );
   }
@@ -1151,9 +989,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           // valueColor: Color(0xFFF32323),
         ),
         SizedBox(height: 12.h),
-        _buildPolicyRow("4hrs - 4 days to departure:", "₹4,555"),
+        _buildPolicyRow("4hrs - 4 days to departure:", "No Data"),
         SizedBox(height: 12.h),
-        _buildPolicyRow("4 - 999 days to departure:", "₹4,555"),
+        _buildPolicyRow("4 - 999 days to departure:", "No Data"),
       ],
     );
   }
@@ -1223,6 +1061,66 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget promoRowModal(int index, String code, String amount, String about,
+      StateSetter setModalState) {
+    bool isApplied = appliedPromoIndex == index;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Image.asset('assets/images/promocode.png', height: 35),
+            SizedBox(width: 20),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(code,
+                    style: TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold)),
+                Text(amount,
+                    style: TextStyle(
+                        color: Color(0xFF138808), fontWeight: FontWeight.bold)),
+                Text(about,
+                    style: TextStyle(
+                        color: Color(0xFF909090),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9)),
+              ],
+            ),
+            Spacer(),
+            GestureDetector(
+              onTap: () {
+                setModalState(() {
+                  appliedPromoIndex = index; // update applied promo
+                });
+                setState(() {}); // optional: update main page if needed
+              },
+              child: Container(
+                width: 80,
+                height: 30,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  color: isApplied ? Color(0xFFF37023) : Colors.transparent,
+                  border: Border.all(color: Color(0xFFF37023)),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  isApplied ? "Applied" : "Apply",
+                  style: TextStyle(
+                    color: isApplied ? Colors.white : Color(0xFFF37023),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20),
+      ],
     );
   }
 }

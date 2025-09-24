@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:trvlus/utils/api_service.dart';
 
+import '../models/search_data.dart';
 import '../utils/constant.dart';
 import 'ConfirmTraveler.dart';
 import 'DotDivider.dart';
@@ -31,6 +33,10 @@ class MakePaymentScreen extends StatefulWidget {
   final String? airportName;
   final String? desairportName;
   final double? basefare;
+  final List<List<Segment>>? segments;
+  final List<Map<String, dynamic>>? initialData;
+  final String? resultindex;
+  final String? traceid;
 
   MakePaymentScreen(
       {required this.flight,
@@ -52,7 +58,11 @@ class MakePaymentScreen extends StatefulWidget {
       this.descityCode,
       this.stop,
       this.duration,
-      this.basefare});
+      this.basefare,
+      this.segments,
+      this.initialData,
+      this.resultindex,
+      this.traceid});
 
   @override
   _MakePaymentScreenState createState() => _MakePaymentScreenState();
@@ -67,6 +77,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
+    final passenger = widget.initialData;
+    print("passenger$passenger");
+    // final resultindex = widget.resultindex;
+    // final traceid = widget.traceid;
 
     final depDateformat = widget.depDate;
     DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
@@ -362,6 +376,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                               stop: widget.stop,
                               airportName: widget.airportName,
                               desairportName: widget.desairportName,
+                              segments: widget.segments,
                             ),
                           );
                         },
@@ -746,6 +761,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                 SizedBox(height: 5.h),
                 ElevatedButton(
                   onPressed: () {
+                    ApiService()
+                        .ticket(widget.resultindex ?? "", widget.traceid ?? "");
                     Navigator.push(
                         context,
                         MaterialPageRoute(

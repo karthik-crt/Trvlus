@@ -1009,7 +1009,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
             // Travle
             Container(
               margin: EdgeInsets.all(13),
-              padding: EdgeInsets.all(12),
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10), color: Colors.white),
               child: GestureDetector(
@@ -1173,7 +1173,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
             // FARE
             Container(
               margin: EdgeInsets.all(13),
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8.r),
@@ -1396,7 +1396,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
             // Support
             Container(
               margin: EdgeInsets.all(13),
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8.r),

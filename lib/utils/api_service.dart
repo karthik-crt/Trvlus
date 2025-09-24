@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/search_data.dart' as search;
 
@@ -109,6 +110,7 @@ class ApiBaseHelper {
     String params = "";
 
     var apiUrl = _baseUrl + url + params;
+    print("apiUrl$apiUrl");
     var headers = getMainHeaders();
     dynamic responseJson;
     try {
@@ -180,41 +182,251 @@ class ApiService {
   }
 
   final ApiBaseHelper _helper = ApiBaseHelper();
+  String? _tokenId; // will hold the token
+  String? get tokenId => _tokenId;
 
+  Future<String?> authenticate() async {
+    const authUrl =
+        "http://Sharedapi.tektravels.com/SharedData.svc/rest/Authenticate";
+
+    final authenticate = {
+      "ClientId": "ApiIntegrationNew",
+      "UserName": "trvlus",
+      "Password": "Trvlus@1234",
+      "EndUserIp": "192.168.11.120"
+    };
+    print("authenticate_api$authenticate");
+    print("authUrl$authUrl");
+
+    try {
+      final response = await Dio().post(authUrl, data: authenticate);
+      print("Authenticate response: ${response.data}");
+      _tokenId = response.data["TokenId"];
+      final pref_token = await SharedPreferences.getInstance();
+      print("prefs$pref_token");
+      await pref_token.setString('tokenId', _tokenId!);
+      return _tokenId;
+    } catch (e) {
+      print("❌ Authentication failed: $e");
+      rethrow;
+    }
+  }
+
+  // FARERULE
+
+  Future<Map<String, dynamic>> farerule(
+      String resultIndex, String traceid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tokenId = prefs.getString("tokenId");
+
+    if (tokenId == null) {
+      throw Exception("TokenId not found in SharedPreferences");
+    }
+
+    final fareruleBody = {
+      "EndUserIp": "192.168.11.58",
+      "TokenId": tokenId,
+      "TraceId": traceid,
+      "ResultIndex": resultIndex,
+    };
+    // print("farerule request: $fareruleBody");
+
+    final response = await _helper.post("FareRule", fareruleBody);
+    // print("farerule response${jsonEncode(response)}");
+    return response;
+  }
+
+  // FAREQUOTE
+  Future<Map<String, dynamic>> farequote(
+      String resultIndex, String traceid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tokenId = prefs.getString("tokenId");
+
+    if (tokenId == null) {
+      throw Exception("TokenId not found in SharedPreferences");
+    }
+
+    final farequoteBody = {
+      "EndUserIp": "192.168.11.58",
+      "TokenId": tokenId,
+      "TraceId": traceid,
+      "ResultIndex": resultIndex,
+    };
+    // print("FareQuote request: $farequoteBody");
+
+    final response = await _helper.post("FareQuote", farequoteBody);
+    // print("FareQuote response${jsonEncode(response)}");
+    return response;
+  }
+
+  // SSR
+  Future<Map<String, dynamic>> ssr(String resultIndex, String traceid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tokenId = prefs.getString("tokenId");
+
+    if (tokenId == null) {
+      throw Exception("TokenId not found in SharedPreferences");
+    }
+
+    final ssrBody = {
+      "EndUserIp": "192.168.11.58",
+      "TokenId": tokenId,
+      "TraceId": traceid,
+      "ResultIndex": resultIndex,
+    };
+    // print("SSR request: $ssrBody");
+
+    final response = await _helper.post("SSR", ssrBody);
+    print("SSR response${jsonEncode(response)}");
+    return response;
+  }
+
+  //HOMEPAGE DATE PICKER
+  Future<Map<String, dynamic>> getCalendarFare(
+      String origin, String destination) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("tokenId");
+
+    if (token == null) {
+      throw Exception("TokenId not found in SharedPreferences");
+    }
+
+    final body = {
+      'Origin': origin,
+      'Destination': destination,
+      // Add other required parameters here if needed
+    };
+
+    try {
+      final response = await _helper.post(
+        "GetCalendarFare",
+        body,
+      );
+
+      return response; // assuming Dio already decodes JSON
+    } catch (e) {
+      print("Error fetching calendar fare: $e");
+      throw Exception("Failed to fetch calendar fare");
+    }
+  }
+
+  Future<Map<String, dynamic>> ticket(
+      String resultIndex, String traceid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tokenId = prefs.getString("tokenId");
+
+    if (tokenId == null) {
+      throw Exception("TokenId not found in SharedPreferences");
+    }
+
+    final ticketBody = {
+      {
+        "PreferredCurrency": null,
+        "EndUserIp": "192.168.11.58",
+        "TokenId": tokenId,
+        "TraceId": traceid,
+        "ResultIndex": resultIndex,
+        "AgentReferenceNo": "sonam1234567890",
+        "Passengers": [
+          {
+            "Title": "Mr",
+            "FirstName": "OIRNEGRPN",
+            "LastName": "tbo",
+            "PaxType": 1,
+            "DateOfBirth": "1987-12-06T00:00:00",
+            "Gender": 1,
+            "PassportNo": "KJHHJKHKJH",
+            "PassportExpiry": "2025-12-06T00:00:00",
+            "AddressLine1": "123, Test",
+            "AddressLine2": "",
+            "Fare": {
+              "BaseFare": 550,
+              "Tax": 863,
+              "YQTax": 0.0,
+              "AdditionalTxnFeePub": 0.0,
+              "AdditionalTxnFeeOfrd": 0.0,
+              "OtherCharges": 0.0
+            },
+            "City": "Gurgaon",
+            "CountryCode": "IN",
+            "CountryName": "India",
+            "Nationality": "IN",
+            "ContactNo": "9879879877",
+            "Email": "harsh@tbtq.in",
+            "IsLeadPax": true,
+            "FFAirlineCode": "SG",
+            "FFNumber": "123",
+            "GSTCompanyAddress": "",
+            "GSTCompanyContactNumber": "",
+            "GSTCompanyName": "",
+            "GSTNumber": "",
+            "GSTCompanyEmail": ""
+          }
+        ]
+      }
+    };
+    print("ticketBody$ticketBody");
+    final response = await _helper.post("Ticket", ticketBody);
+    print("TICKET response${jsonEncode(response)}");
+    return response;
+  }
+
+  // SEARCHFLIGHT
   Future<search.SearchData> getSearchResult(
     String airportCode,
     String fromAirport,
     String toairportCode,
     String toAirport,
     String selectedDepDate,
+    String selectedReturnDate,
+    String selectedTripType,
   ) async {
-    print("Origin$airportCode");
-    print("Destination$toairportCode");
-    String formatted = selectedDepDate.toString().contains("PickerDateRange")
-        ? selectedDepDate.toString().substring(33, 43)
-        : selectedDepDate.toString();
+    final prefs = await SharedPreferences.getInstance();
+    final adult = prefs.getInt("adults") ?? 0;
+    final child = prefs.getInt("children") ?? 0;
+    final infant = prefs.getInt("infants") ?? 0;
 
-    print(formatted);
+    String formatted = selectedDepDate.toString().substring(0, 10);
+    int triptype = selectedTripType == "One way" ? 1 : 2;
+    String formattedReturn = selectedReturnDate.toString().substring(0, 10);
+    final prefToken = await SharedPreferences.getInstance();
 
     final params = {
       "EndUserIp": "192.168.0.2",
-      "TokenId": "7ebfe1ec-337f-46c8-b042-99ec84319719",
-      "AdultCount": "1",
-      "ChildCount": "0",
-      "InfantCount": "0",
+      "TokenId": prefToken.getString("tokenId"),
+      "AdultCount": adult,
+      "ChildCount": child,
+      "InfantCount": infant,
       "DirectFlight": "false",
       "OneStopFlight": "false",
-      "JourneyType": "1",
+      "JourneyType": triptype,
       "PreferredAirlines": null,
-      "Segments": [
-        {
-          "Origin": airportCode,
-          "Destination": toairportCode,
-          "FlightCabinClass": "1",
-          "PreferredDepartureTime": formatted + "T00: 00: 00",
-          "PreferredArrivalTime": "2025-09-27T00:00:00"
-        }
-      ],
+      "Segments": triptype == 1
+          ? [
+              {
+                "Origin": airportCode,
+                "Destination": toairportCode,
+                "FlightCabinClass": "1",
+                "PreferredDepartureTime": formatted + "T00:00:00",
+                "PreferredArrivalTime": formatted + "T00:00:00",
+              },
+            ]
+          : [
+              {
+                "Origin": airportCode,
+                "Destination": toairportCode,
+                "FlightCabinClass": "1",
+                "PreferredDepartureTime": formatted + "T00:00:00",
+                "PreferredArrivalTime": formatted + "T00:00:00",
+              },
+              {
+                "Origin": toairportCode,
+                "Destination": airportCode,
+                "FlightCabinClass": "1",
+                "PreferredDepartureTime": formattedReturn + "T00:00:00",
+                "PreferredArrivalTime": formattedReturn + "T00:00:00",
+              }
+            ],
       "Sources": null
     };
     print("params$params");

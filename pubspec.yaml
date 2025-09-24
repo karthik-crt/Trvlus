@@ -45,9 +45,14 @@ dependencies:
   encrypt: ^5.0.3
   crypto: ^3.0.3
   dotted_border: ^2.1.0
-  syncfusion_flutter_datepicker: ^30.2.5
   flutter_svg: ^2.2.0
-  image_picker: ^1.1.2   # use latest version
+  image_picker: ^1.1.2
+  calendar_date_picker2: ^2.0.1  # ✅ Keep only this one for scrollable datepicker
+  syncfusion_flutter_datepicker: ^30.2.5
+  get_storage: ^2.1.1
+  shared_preferences: ^2.1.1   # Or the latest version
+  share_plus: ^11.0.0
+
 
 
 

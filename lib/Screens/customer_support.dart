@@ -13,6 +13,7 @@ class _CustomerSupportState extends State<CustomerSupport> {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
+        backgroundColor: Color(0xFFF5F5F5),
         automaticallyImplyLeading: false,
         title: Row(
           children: [

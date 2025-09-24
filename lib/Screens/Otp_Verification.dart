@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../models/search_data.dart';
 import 'TravelerDetails.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -26,6 +27,9 @@ class OtpVerificationScreen extends StatefulWidget {
   final String? airportName;
   final String? desairportName;
   final double? basefare;
+  final List<List<Segment>>? segments;
+  final String? resultindex;
+  final String? traceid;
 
   const OtpVerificationScreen(
       {super.key,
@@ -48,7 +52,10 @@ class OtpVerificationScreen extends StatefulWidget {
       this.descityCode,
       this.stop,
       this.duration,
-      this.basefare});
+      this.basefare,
+      this.segments,
+      this.resultindex,
+      this.traceid});
 
   @override
   _OtpVerificationScreenState createState() => _OtpVerificationScreenState();
@@ -92,7 +99,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           stop: widget.stop,
           airportName: widget.airportName,
           desairportName: widget.desairportName,
-          basefare: widget.basefare));
+          basefare: widget.basefare,
+          segments: widget.segments,
+          resultindex: widget.resultindex,
+          traceid: widget.traceid));
     } else {
       print("Enter complete OTP");
     }

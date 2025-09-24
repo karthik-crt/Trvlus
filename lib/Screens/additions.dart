@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../models/ssr.dart';
 import 'Seat.dart';
 
 class Additions extends StatefulWidget {
@@ -20,11 +21,14 @@ class _AdditionsState extends State<Additions> {
   final int seatsPerRow = 4;
   final Set<String> selectedSeats = {};
 
+  late SsrData ssrData;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: Color(0xFFE8E8E8),
         appBar: AppBar(
+          backgroundColor: Color(0xFFE8E8E8),
           automaticallyImplyLeading: false,
           title: GestureDetector(
             onTap: () {},
@@ -34,7 +38,7 @@ class _AdditionsState extends State<Additions> {
                   height: 35,
                   width: 35,
                   decoration: BoxDecoration(
-                      shape: BoxShape.circle, color: Color(0xFFE8E8E8)),
+                      shape: BoxShape.circle, color: Colors.grey.shade300),
                   child: GestureDetector(
                       onTap: () {
                         Navigator.pop(context);
@@ -74,7 +78,10 @@ class _AdditionsState extends State<Additions> {
                               width: MediaQuery.sizeOf(context).width,
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(color: Colors.grey),
+                                  border: Border.all(
+                                      color: selectedindex == 0
+                                          ? Color(0xFFF37023)
+                                          : Colors.grey.shade300),
                                   color: selectedindex == 0
                                       ? Color(0xFFFFE7DA)
                                       : Colors.white),
@@ -82,10 +89,13 @@ class _AdditionsState extends State<Additions> {
                                 "Baggage",
                                 style: TextStyle(
                                     color: selectedindex == 0
-                                        ? Colors.orange
+                                        ? Color(0xFFF37023)
                                         : Colors.black),
                               ),
                             ))),
+                    SizedBox(
+                      width: 2,
+                    ),
                     Expanded(
                         child: GestureDetector(
                             onTap: () {
@@ -102,15 +112,21 @@ class _AdditionsState extends State<Additions> {
                                   color: selectedindex == 1
                                       ? Color(0xFFFFE7DA)
                                       : Colors.white,
-                                  border: Border.all(color: Colors.grey)),
+                                  border: Border.all(
+                                      color: selectedindex == 1
+                                          ? Color(0xFFF37023)
+                                          : Colors.grey.shade300)),
                               child: Text(
                                 "Seat",
                                 style: TextStyle(
                                     color: selectedindex == 1
-                                        ? Colors.orange
+                                        ? Color(0xFFF37023)
                                         : Colors.black),
                               ),
                             ))),
+                    SizedBox(
+                      width: 2,
+                    ),
                     Expanded(
                         child: GestureDetector(
                             onTap: () {
@@ -127,12 +143,15 @@ class _AdditionsState extends State<Additions> {
                                   color: selectedindex == 2
                                       ? Color(0xFFFFE7DA)
                                       : Colors.white,
-                                  border: Border.all(color: Colors.grey)),
+                                  border: Border.all(
+                                      color: selectedindex == 2
+                                          ? Color(0xFFF37023)
+                                          : Colors.grey.shade300)),
                               child: Text(
                                 "Meals",
                                 style: TextStyle(
                                     color: selectedindex == 2
-                                        ? Colors.orange
+                                        ? Color(0xFFF37023)
                                         : Colors.black),
                               ),
                             )))
@@ -143,11 +162,12 @@ class _AdditionsState extends State<Additions> {
             Container(
               padding: EdgeInsets.all(5),
               margin: EdgeInsets.all(12),
-              height: 50,
+              height: 60,
               decoration: BoxDecoration(
                   color: Color(0xFFF37023),
-                  borderRadius: BorderRadius.all(Radius.circular(15))),
+                  borderRadius: BorderRadius.all(Radius.circular(20))),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: () {
@@ -156,13 +176,14 @@ class _AdditionsState extends State<Additions> {
                       });
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 44),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 35, vertical: 10),
                       margin: EdgeInsets.all(5),
                       decoration: BoxDecoration(
                           color: selectedBaggage == 0
                               ? Colors.white
                               : Color(0xFFFFF37023),
-                          borderRadius: BorderRadius.all(Radius.circular(8))),
+                          borderRadius: BorderRadius.all(Radius.circular(15))),
                       child: Text(
                         "MAA-BLR",
                         style: TextStyle(
@@ -174,6 +195,14 @@ class _AdditionsState extends State<Additions> {
                       ),
                     ),
                   ),
+                  // Image.asset(
+                  //   "assets/images/Line.png",
+                  // ),
+                  Container(
+                    height: 50,
+                    width: 0.5,
+                    color: Colors.grey.shade200,
+                  ),
                   GestureDetector(
                     onTap: () {
                       setState(() {
@@ -181,13 +210,14 @@ class _AdditionsState extends State<Additions> {
                       });
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 40),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 35, vertical: 10),
                       margin: EdgeInsets.all(5),
                       decoration: BoxDecoration(
                           color: selectedBaggage == 1
                               ? Colors.white
                               : Color(0xFFFFF37023),
-                          borderRadius: BorderRadius.all(Radius.circular(8))),
+                          borderRadius: BorderRadius.all(Radius.circular(15))),
                       child: Text(
                         "BLR-MAA",
                         style: TextStyle(
