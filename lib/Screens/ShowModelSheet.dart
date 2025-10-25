@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FareBreakupSheet extends StatefulWidget {
-  const FareBreakupSheet({Key? key}) : super(key: key);
+  final double? basefare;
+  final double? tax;
+  final int? adultCount;
+  final int? childCount;
+  final int? infantCount;
+
+  FareBreakupSheet(
+      {this.basefare,
+      this.tax,
+      this.adultCount,
+      this.childCount,
+      this.infantCount});
 
   @override
   _FareBreakupSheetState createState() => _FareBreakupSheetState();
@@ -11,6 +22,14 @@ class FareBreakupSheet extends StatefulWidget {
 class _FareBreakupSheetState extends State<FareBreakupSheet> {
   @override
   Widget build(BuildContext context) {
+    final adultFare = (widget.adultCount ?? 0) * (widget.basefare ?? 0);
+    final childFare = (widget.childCount ?? 0) * (widget.basefare ?? 0);
+    final infantFare = (widget.infantCount ?? 0) * (widget.basefare ?? 0);
+    final tax = widget.tax ?? 0;
+
+    final total = adultFare + childFare + infantFare + tax; // ✅ now this works
+
+    print("total$total");
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -57,27 +76,31 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                       children: [
                         Text("Base fare",
                             style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: 15.sp,
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold)),
-                        Text("₹5,000",
+                        Text(widget.basefare.toString(),
                             style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFFF37023))),
                       ],
+                    ),
+                    SizedBox(
+                      height: 8,
                     ),
                     Column(
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Adults (1 X ₹5,000)",
+                            Text(
+                                "Adults (${widget.adultCount} X ₹${widget.basefare})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
                                 )),
-                            Text("₹5,000",
+                            Text("₹$adultFare",
                                 style: TextStyle(
                                     fontSize: 12.sp, color: Colors.grey)),
                           ],
@@ -86,12 +109,13 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("child (1 X ₹5,000)",
+                            Text(
+                                "Child (${widget.childCount} X ₹${widget.basefare})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
                                 )),
-                            Text("₹5,000",
+                            Text("₹$childFare",
                                 style: TextStyle(
                                     fontSize: 12.sp, color: Colors.grey)),
                           ],
@@ -100,12 +124,13 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Infant (1 X ₹5,000)",
+                            Text(
+                                "Infant (${widget.infantCount} X ₹${widget.basefare})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
                                 )),
-                            Text("₹5,000",
+                            Text("₹$infantFare",
                                 style: TextStyle(
                                     fontSize: 12.sp, color: Colors.grey)),
                           ],
@@ -119,7 +144,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                     fontSize: 14.sp,
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold)),
-                            Text("₹5,000",
+                            Text("₹$tax",
                                 style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -135,7 +160,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                     fontSize: 18.sp,
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold)),
-                            Text("₹5,000",
+                            Text("₹$total",
                                 style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.bold,

@@ -81,8 +81,11 @@ class FrontScreen extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40.w),
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Get.to(SearchFlightPage());
+                        // await ApiService().userAuthenticate();
+                        // await ApiService().flightAuthenticate();
+                        // await ApiService().authenticate();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFFF37023),

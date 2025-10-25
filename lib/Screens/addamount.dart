@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'WalletScreen.dart';
 
@@ -11,6 +12,14 @@ class Addamount extends StatefulWidget {
 
 class _AddamountState extends State<Addamount> {
   int? selectedFare;
+  final TextEditingController _amountController =
+      TextEditingController(); // ✅ Added controller
+
+  @override
+  void dispose() {
+    _amountController.dispose(); // cleanup
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +39,15 @@ class _AddamountState extends State<Addamount> {
                   return StatefulBuilder(
                     builder: (BuildContext context, StateSetter setModalState) {
                       return Container(
-                        padding: EdgeInsets.all(10),
-                        margin: EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.all(5),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
+                                const Text(
                                   "Add Amount Via",
                                   style: TextStyle(
                                       color: Colors.black, fontSize: 20),
@@ -54,17 +63,17 @@ class _AddamountState extends State<Addamount> {
                                 )
                               ],
                             ),
-                            SizedBox(height: 10),
-                            Text("Select Payment method"),
-                            SizedBox(height: 20),
+                            const SizedBox(height: 10),
+                            const Text("Select Payment method"),
+                            const SizedBox(height: 20),
 
                             // ✅ UPI
                             ListTile(
-                              title: Text("UPI"),
+                              title: const Text("UPI"),
                               trailing: Radio(
-                                activeColor: Color(0xFFF37023),
-                                visualDensity:
-                                    VisualDensity(horizontal: -1, vertical: -3),
+                                activeColor: const Color(0xFFF37023),
+                                visualDensity: const VisualDensity(
+                                    horizontal: -1, vertical: -3),
                                 value: 0,
                                 groupValue: localSelectedFare,
                                 onChanged: (value) {
@@ -82,11 +91,11 @@ class _AddamountState extends State<Addamount> {
 
                             // ✅ Credit cards
                             ListTile(
-                              title: Text("Credit cards"),
+                              title: const Text("Credit cards"),
                               trailing: Radio(
-                                activeColor: Color(0xFFF37023),
-                                visualDensity:
-                                    VisualDensity(horizontal: -1, vertical: -3),
+                                activeColor: const Color(0xFFF37023),
+                                visualDensity: const VisualDensity(
+                                    horizontal: -1, vertical: -3),
                                 value: 1,
                                 groupValue: localSelectedFare,
                                 onChanged: (value) {
@@ -104,11 +113,11 @@ class _AddamountState extends State<Addamount> {
 
                             // ✅ Debit cards
                             ListTile(
-                              title: Text("Debit cards"),
+                              title: const Text("Debit cards"),
                               trailing: Radio(
-                                activeColor: Color(0xFFF37023),
-                                visualDensity:
-                                    VisualDensity(horizontal: -1, vertical: -3),
+                                activeColor: const Color(0xFFF37023),
+                                visualDensity: const VisualDensity(
+                                    horizontal: -1, vertical: -3),
                                 value: 2,
                                 groupValue: localSelectedFare,
                                 onChanged: (value) {
@@ -126,11 +135,11 @@ class _AddamountState extends State<Addamount> {
 
                             // ✅ Internet Banking
                             ListTile(
-                              title: Text("Internet Banking"),
+                              title: const Text("Internet Banking"),
                               trailing: Radio(
-                                activeColor: Color(0xFFF37023),
-                                visualDensity:
-                                    VisualDensity(horizontal: -1, vertical: -3),
+                                activeColor: const Color(0xFFF37023),
+                                visualDensity: const VisualDensity(
+                                    horizontal: -1, vertical: -3),
                                 value: 3,
                                 groupValue: localSelectedFare,
                                 onChanged: (value) {
@@ -146,7 +155,7 @@ class _AddamountState extends State<Addamount> {
                               ),
                             ),
 
-                            Spacer(),
+                            const Spacer(),
 
                             // ✅ Confirm Button
                             Container(
@@ -154,16 +163,18 @@ class _AddamountState extends State<Addamount> {
                               width: MediaQuery.sizeOf(context).width,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(25),
-                                color: Color(0xFFF37023),
+                                color: const Color(0xFFF37023),
                               ),
                               child: GestureDetector(
                                 onTap: () {
                                   showModalBottomSheet(
-                                    shape: RoundedRectangleBorder(),
+                                    shape: const RoundedRectangleBorder(),
                                     context: context,
                                     builder: (BuildContext context) {
                                       return Container(
-                                        margin: EdgeInsets.all(10),
+                                        height: 280,
+                                        padding: const EdgeInsets.all(10),
+                                        margin: const EdgeInsets.all(5),
                                         child: Column(
                                           children: [
                                             Row(
@@ -176,46 +187,48 @@ class _AddamountState extends State<Addamount> {
                                                   },
                                                   child: Image.asset(
                                                     "assets/icon/Close.png",
-                                                    height: 20,
+                                                    height: 25,
                                                   ),
                                                 )
                                               ],
                                             ),
-                                            SizedBox(height: 15),
+                                            const SizedBox(height: 15),
                                             Image.asset(
-                                              "assets/icon/successpayment.png",
+                                              "assets/icon/successWallet.png",
                                               height: 50,
                                             ),
-                                            SizedBox(height: 15),
-                                            Text(
+                                            const SizedBox(height: 15),
+                                            const Text(
                                               "Amount Added!",
                                               style: TextStyle(
                                                   fontSize: 24,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold),
                                             ),
-                                            Spacer(),
-                                            Container(
-                                              height: 40,
-                                              width: MediaQuery.sizeOf(context)
-                                                  .width,
-                                              margin: EdgeInsets.all(10),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(25),
-                                                color: Colors.deepOrange,
-                                              ),
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const Wallet(),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Align(
+                                            const Spacer(),
+                                            GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const Wallet(),
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                height: 40,
+                                                width:
+                                                    MediaQuery.sizeOf(context)
+                                                        .width,
+                                                margin:
+                                                    const EdgeInsets.all(10),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(25),
+                                                  color: Colors.deepOrange,
+                                                ),
+                                                child: const Align(
                                                   alignment: Alignment.center,
                                                   child: Text(
                                                     "Done",
@@ -234,7 +247,7 @@ class _AddamountState extends State<Addamount> {
                                     },
                                   );
                                 },
-                                child: Align(
+                                child: const Align(
                                   alignment: Alignment.center,
                                   child: Text(
                                     "Confirm",
@@ -255,13 +268,13 @@ class _AddamountState extends State<Addamount> {
               );
             },
             child: Container(
-              margin: EdgeInsets.all(15),
-              padding: EdgeInsets.symmetric(vertical: 10),
+              margin: const EdgeInsets.all(15),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25),
-                color: Color(0xFFF37023),
+                color: const Color(0xFFF37023),
               ),
-              child: Align(
+              child: const Align(
                 alignment: Alignment.center,
                 child: Text(
                   "Confirm & pay",
@@ -276,7 +289,7 @@ class _AddamountState extends State<Addamount> {
         ),
       ),
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Add Amount To Wallet",
           style: TextStyle(fontSize: 16, color: Color(0xFF303030)),
         ),
@@ -285,16 +298,23 @@ class _AddamountState extends State<Addamount> {
         padding: const EdgeInsets.all(25.0),
         child: Column(
           children: [
+            // ✅ controlled TextField
             TextField(
+              controller: _amountController,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly, // only allow numbers
+              ],
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
               cursorColor: Colors.black,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: "Enter Amount",
+                // ✅ added ₹ directly in hint for center alignment
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey),
                 ),
@@ -304,9 +324,9 @@ class _AddamountState extends State<Addamount> {
                 hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            // Quick Amounts Row
+            // ✅ Quick Amounts Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -321,18 +341,25 @@ class _AddamountState extends State<Addamount> {
     );
   }
 
-  // helper widget for chips
+  // ✅ helper widget for chips
   Widget _amountChip(String text) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(25),
-        color: Colors.white,
-        border: Border.all(color: Colors.grey),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(color: Colors.black),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _amountController.text = text.replaceAll("₹", "₹"); // remove symbols
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          color: Colors.white,
+          border: Border.all(color: Colors.grey),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.black),
+        ),
       ),
     );
   }

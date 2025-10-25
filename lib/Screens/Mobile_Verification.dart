@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../controller/auth_controller.dart';
 import '../models/search_data.dart';
+import '../utils/api_service.dart';
 import 'Otp_Verification.dart';
 
 class MobileVerificationScreen extends StatefulWidget {
@@ -28,11 +29,18 @@ class MobileVerificationScreen extends StatefulWidget {
   final String? airportName;
   final String? desairportName;
   final double? basefare;
+  final double? tax;
   final List<List<Segment>>? segments;
   final String? resultindex;
   final String? traceid;
+  final Result? outboundFlight;
+  final Result? inboundFlight;
+  final String? total;
+  final int? adultCount;
+  final int? childCount;
+  final int? infantCount;
 
-  const MobileVerificationScreen(
+  MobileVerificationScreen(
       {super.key,
       required this.flight,
       required this.city,
@@ -56,7 +64,14 @@ class MobileVerificationScreen extends StatefulWidget {
       this.basefare,
       this.segments,
       this.resultindex,
-      this.traceid});
+      this.traceid,
+      this.outboundFlight,
+      this.inboundFlight,
+      this.total,
+      this.tax,
+      this.adultCount,
+      this.childCount,
+      this.infantCount});
 
   @override
   _MobileVerificationScreenState createState() =>
@@ -69,12 +84,11 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
   Country? _selectedCountry;
 
   final RegExp _mobileRegex = RegExp(r'^[1-9]\d{9}$');
+  String enteredMobileNumber = '';
 
   @override
   void initState() {
-    print("efe");
     var ell = widget.airlineName;
-    print("efrgfr$ell");
     super.initState();
     // Manually set default country to India
     _selectedCountry = Country(
@@ -101,8 +115,6 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
           authController.setMobileNumber(
             '+${country.phoneCode} ${authController.mobileNumber.value.replaceFirst(RegExp(r'^\+\d+\s?'), '')}',
           );
-          print("selected country");
-          print(_selectedCountry);
         });
       },
       countryListTheme: CountryListThemeData(
@@ -148,6 +160,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                   _mobileRegex.hasMatch(authController.mobileNumber.value)
                       ? ''
                       : 'Enter a valid 10-digit Indian mobile number';
+              print("errorText$errorText");
 
               return Row(
                 children: [
@@ -210,6 +223,10 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                         },
                         onChanged: (value) {
                           authController.setMobileNumber(value.trim());
+                          setState(() {
+                            enteredMobileNumber = value.trim();
+                          });
+                          print("Entered mobile number: $enteredMobileNumber");
                         },
                         style: TextStyle(color: Colors.black),
                         decoration: InputDecoration(
@@ -247,34 +264,45 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
               child: Obx(() {
                 bool isMobileValid =
                     _mobileRegex.hasMatch(authController.mobileNumber.value);
-
                 return ElevatedButton(
                   onPressed: isMobileValid
-                      ? () {
+                      ? () async {
+                          await ApiService().otpRequest(enteredMobileNumber);
+                          print(
+                              "Final entered mobile: ${authController.mobileNumber.value}");
                           Get.to(() => OtpVerificationScreen(
-                              flight: {},
-                              city: widget.city,
-                              destination: widget.destination,
-                              airlineName: widget.airlineName,
-                              airlineCode: widget.airlineCode,
-                              flightNumber: widget.flightNumber,
-                              cityName: widget.cityName,
-                              cityCode: widget.cityCode,
-                              descityName: widget.descityName,
-                              descityCode: widget.descityCode,
-                              depDate: widget.depDate,
-                              depTime: widget.depTime,
-                              arrDate: widget.arrDate,
-                              arrTime: widget.arrTime,
-                              duration: widget.duration,
-                              refundable: widget.refundable,
-                              stop: widget.stop,
-                              airportName: widget.airportName,
-                              desairportName: widget.desairportName,
-                              basefare: widget.basefare,
-                              segments: widget.segments,
-                              resultindex: widget.resultindex,
-                              traceid: widget.traceid));
+                                flight: {},
+                                mobileNumber: enteredMobileNumber,
+                                city: widget.city,
+                                destination: widget.destination,
+                                airlineName: widget.airlineName,
+                                airlineCode: widget.airlineCode,
+                                flightNumber: widget.flightNumber,
+                                cityName: widget.cityName,
+                                cityCode: widget.cityCode,
+                                descityName: widget.descityName,
+                                descityCode: widget.descityCode,
+                                depDate: widget.depDate,
+                                depTime: widget.depTime,
+                                arrDate: widget.arrDate,
+                                arrTime: widget.arrTime,
+                                duration: widget.duration,
+                                refundable: widget.refundable,
+                                stop: widget.stop,
+                                airportName: widget.airportName,
+                                desairportName: widget.desairportName,
+                                basefare: widget.basefare,
+                                segments: widget.segments,
+                                resultindex: widget.resultindex,
+                                traceid: widget.traceid,
+                                outboundFlight: widget.outboundFlight,
+                                inboundFlight: widget.inboundFlight,
+                                total: widget.total,
+                                tax: widget.tax,
+                                adultCount: widget.adultCount,
+                                childCount: widget.childCount,
+                                infantCount: widget.infantCount,
+                              ));
                         }
                       : null,
                   style: ElevatedButton.styleFrom(

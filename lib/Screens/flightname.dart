@@ -45217,7 +45217,13 @@ class _FlightnameState extends State<Flightname> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.from)),
+      backgroundColor: Color(0xFFE8E8E8),
+      appBar: AppBar(
+          backgroundColor: Color(0xFFE8E8E8),
+          title: Text(
+            widget.from,
+            style: TextStyle(color: Color(0xFF000000)),
+          )),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

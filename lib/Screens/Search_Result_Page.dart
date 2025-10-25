@@ -19,17 +19,23 @@ class FlightResultsPage extends StatefulWidget {
   String selectedDepDate;
   String selectedReturnDate;
   String selectedTripType;
+  int adultCount;
+  int? childCount;
+  int? infantCount;
 
-  FlightResultsPage({
-    Key? key,
-    required this.airportCode,
-    required this.fromAirport,
-    required this.toairportCode,
-    required this.toAirport,
-    required this.selectedDepDate,
-    required this.selectedReturnDate,
-    required this.selectedTripType,
-  }) : super(key: key);
+  FlightResultsPage(
+      {Key? key,
+      required this.airportCode,
+      required this.fromAirport,
+      required this.toairportCode,
+      required this.toAirport,
+      required this.selectedDepDate,
+      required this.selectedReturnDate,
+      required this.selectedTripType,
+      required this.adultCount,
+      this.childCount,
+      this.infantCount})
+      : super(key: key);
 
   @override
   _FlightResultsPageState createState() => _FlightResultsPageState();
@@ -41,10 +47,13 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   double _previousScrollPosition = 0.0;
   late SearchData searchData;
   bool isLoading = true;
+  List inbound = [];
+  List outbound = [];
 
   // String formatted = selectedDepDate.toString().substring(33, 44);
   int selectedindex = -1;
   int passengerCount = 0;
+  late String currencycode;
 
   getSearchData(
     String airportCode,
@@ -54,10 +63,15 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     String selectedDepDate,
     String selectedReturnDate,
     String selectedTripType,
+    int adultCount,
+    int? childCount,
+    int? infantCount,
   ) async {
     setState(() {
       isLoading = true;
     });
+    final prefs = await SharedPreferences.getInstance();
+    currencycode = await prefs.getString('selected_currency') ?? '';
     print("hellohellohellohello${widget.selectedTripType}");
     searchData = await ApiService().getSearchResult(
         airportCode,
@@ -66,17 +80,17 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         toAirport,
         selectedDepDate,
         selectedReturnDate,
-        selectedTripType);
+        selectedTripType,
+        adultCount,
+        childCount,
+        infantCount);
     print("searchDatasearchData${widget.selectedDepDate}");
-    int adult = 0;
-    int child = 0;
-    int infant = 0;
-    final prefs = await SharedPreferences.getInstance();
-    adult = prefs.getInt("adults") ?? 0;
-    child = prefs.getInt("children") ?? 0;
-    infant = prefs.getInt("infants") ?? 0;
 
-    passengerCount = adult + child + infant;
+    final adult = widget.adultCount;
+    final child = widget.childCount;
+    final infant = widget.infantCount;
+    passengerCount = adult + child! + infant!;
+    searchData.response.results.length > 2 ? "inbound" : "outbound";
 
     setState(() {
       isLoading = false;
@@ -85,6 +99,10 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
   @override
   void initState() {
+    final count = widget.adultCount.toString();
+    print("adultCount$count");
+    final countt = widget.childCount.toString();
+    print("childCount$countt");
     print('widget.airportCode$widget.airportCode');
     super.initState();
     _scrollController.addListener(() {
@@ -103,14 +121,16 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
       }
     });
     getSearchData(
-      widget.airportCode,
-      widget.fromAirport,
-      widget.toairportCode,
-      widget.toairportCode,
-      widget.selectedDepDate,
-      widget.selectedReturnDate,
-      widget.selectedTripType,
-    );
+        widget.airportCode,
+        widget.fromAirport,
+        widget.toairportCode,
+        widget.toairportCode,
+        widget.selectedDepDate,
+        widget.selectedReturnDate,
+        widget.selectedTripType,
+        widget.adultCount,
+        widget.childCount,
+        widget.infantCount);
   }
 
   @override
@@ -149,12 +169,14 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     },
   ];
 
-  // get resultindex => null;
-
-  // get traceid => null;
-
   String? resultIndex;
   String? traceId;
+  String? flightnumber;
+  String? origin;
+  String? basefare;
+  String? fareTax;
+  String? destination;
+  String? departureDate;
 
   @override
   Widget build(BuildContext context) {
@@ -178,641 +200,679 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
               ),
             ),
           )
-        : Scaffold(
-            backgroundColor: Colors.grey.shade200,
-            body: SingleChildScrollView(
-              controller: _scrollController,
-              child: Padding(
-                padding: EdgeInsets.only(top: 25.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.all(10),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                                // offset: Offset(0, 0.7),
-                                blurRadius: 3,
-                                color: Colors.grey.shade500)
-                          ]),
-                      child: Column(
-                        children: [
-                          Row(
+        : searchData.response.results.isNotEmpty
+            ? Scaffold(
+                backgroundColor: Colors.grey.shade200,
+                body: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 25.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: const Color(0xFFF37023),
+                              boxShadow: [
+                                BoxShadow(
+                                    blurRadius: 3, color: Colors.grey.shade500)
+                              ]),
+                          child: Column(
                             children: [
-                              GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Icon(Icons.arrow_back)),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                widget.selectedDepDate.contains("startDate")
-                                    ? widget.selectedDepDate.substring(33, 43)
-                                    : widget.selectedDepDate,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: 15),
-                              ),
-                              const Spacer(),
-                              SvgPicture.asset('assets/icon/edit.svg'),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text(
-                                  "Edit details",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 9,
-                          ),
-                          Row(
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              Row(
                                 children: [
-                                  Container(
-                                    child: Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 70,
-                                          child: Text(
-                                            maxLines: 3,
-                                            widget.fromAirport,
-                                            style: TextStyle(
-                                                overflow: TextOverflow.ellipsis,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                                fontSize: 15),
-                                          ),
+                                  GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.white),
+                                        child: Icon(
+                                          Icons.arrow_back,
+                                          color: Color(0xFFF37023),
                                         ),
-                                        SizedBox(
-                                          width: 2,
-                                        ),
-                                        Text(
-                                          widget.airportCode,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 10),
-                                        ),
-                                      ],
-                                    ),
+                                      )),
+                                  const SizedBox(
+                                    width: 10,
                                   ),
                                   Text(
-                                    // "Chennai Airport",
-                                    "",
+                                    widget.selectedDepDate.contains("startDate")
+                                        ? widget.selectedDepDate
+                                            .substring(33, 43)
+                                        : widget.selectedDepDate,
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 10),
+                                        color: Colors.white,
+                                        fontSize: 15),
+                                  ),
+                                  const Spacer(),
+                                  SvgPicture.asset(
+                                    'assets/icon/edit.svg',
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text(
+                                      "Edit details",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
                                   ),
                                 ],
                               ),
-                              const Spacer(),
-                              Image.asset(
-                                'assets/images/flightStop.png',
-                                color: Colors.deepOrange,
+                              const SizedBox(
+                                height: 9,
                               ),
-                              const Spacer(),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                              Row(
                                 children: [
-                                  Row(
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        widget.toAirport,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                            fontSize: 15),
+                                      Container(
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              maxLines: 3,
+                                              widget.fromAirport,
+                                              style: TextStyle(
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                  fontSize: 15),
+                                            ),
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Text(
+                                              widget.airportCode,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 10,
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      SizedBox(
-                                        width: 5,
-                                      ),
                                       Text(
-                                        widget.toairportCode,
+                                        // "Chennai Airport",
+                                        "",
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 10),
                                       ),
                                     ],
                                   ),
+                                  const Spacer(),
+                                  Image.asset(
+                                    'assets/images/flightStop.png',
+                                    color: Colors.white,
+                                  ),
+                                  const Spacer(),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            widget.toAirport,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                fontSize: 15),
+                                          ),
+                                          SizedBox(
+                                            width: 5,
+                                          ),
+                                          Text(
+                                            widget.toairportCode,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 10,
+                                                color: Colors.white),
+                                          ),
+                                        ],
+                                      ),
+                                      Text(
+                                        // "Hyderbad Airport",
+                                        "",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 10),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 4,
+                              ),
+                              DotDivider(
+                                dotSize: 1.h,
+                                spacing: 2.r,
+                                dotCount: 100,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Row(
+                                children: [
                                   Text(
-                                    // "Hyderbad Airport",
-                                    "",
+                                    "${passengerCount.toString()} Traveller",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 10),
+                                        color: Colors.white,
+                                        fontSize: 15),
                                   ),
+                                  Spacer(),
+                                  Text(
+                                    "Economy",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 15),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Icon(
+                                    Icons.stars,
+                                    color: Colors.white,
+                                  )
                                 ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(
-                            height: 4,
-                          ),
-                          DotDivider(
-                            dotSize: 1.h,
-                            spacing: 2.r,
-                            dotCount: 100,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "${passengerCount.toString()} Traveller",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: 15),
-                              ),
-                              Spacer(),
-                              Text(
-                                "Economy",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontSize: 15),
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Icon(
-                                Icons.stars,
-                                color: Colors.orange,
                               )
                             ],
-                          )
-                        ],
-                      ),
-                    ),
-                    DateScroller(),
-                    Container(
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      color: Colors.white,
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 20.w),
-                            child: RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: searchData.response.results[0].length
-                                        .toString(),
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.orange,
-                                    ),
-                                  ),
-                                  TextSpan(text: " "),
-                                  TextSpan(
-                                    text: "AVAILABLE FLIGHTS",
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
-                          SizedBox(width: 80.w),
-                          Container(
-                            height: 25.h,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(16)),
+                        ),
+                        // DateScroller(),
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 8.h),
+                          color: Colors.white,
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(left: 20.w),
+                                child: RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: searchData
+                                            .response.results[0].length
+                                            .toString(),
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                      TextSpan(text: " "),
+                                      TextSpan(
+                                        text: "AVAILABLE FLIGHTS",
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  builder: (context) {
-                                    return Container(
-                                      height: 620.h, // Fixed height
-                                      child: FilterBottomSheet(),
-                                    );
+                                ),
+                              ),
+                              SizedBox(width: 80.w),
+                              // Container(
+                              //   height: 25.h,
+                              //   child: ElevatedButton.icon(
+                              //     onPressed: () {
+                              //       showModalBottomSheet(
+                              //         context: context,
+                              //         isScrollControlled: true,
+                              //         shape: RoundedRectangleBorder(
+                              //           borderRadius: BorderRadius.vertical(
+                              //               top: Radius.circular(16)),
+                              //         ),
+                              //         builder: (context) {
+                              //           return Container(
+                              //             height: 620.h, // Fixed height
+                              //             child: FilterBottomSheet(),
+                              //           );
+                              //         },
+                              //       );
+                              //     },
+                              //     icon: Image.asset(
+                              //       'assets/images/Filter.png',
+                              //       alignment: Alignment.center,
+                              //       height: 12.h,
+                              //       width: 12.w,
+                              //     ),
+                              //     label: Text(
+                              //       "Filter",
+                              //       style: TextStyle(
+                              //         fontFamily: 'Inter',
+                              //         fontSize: 10.sp, // Reduced text size
+                              //         color: Color(0xFF606060),
+                              //       ),
+                              //     ),
+                              //     style: ElevatedButton.styleFrom(
+                              //       backgroundColor: Colors.grey.shade100,
+                              //       elevation: 3,
+                              //       shape: RoundedRectangleBorder(
+                              //         borderRadius: BorderRadius.circular(
+                              //             30.r), // Rounded corners
+                              //       ),
+                              //       padding: EdgeInsets.symmetric(
+                              //           vertical: 3.h, horizontal: 20.w),
+                              //     ),
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                        ),
+                        ...List.generate(searchData.response.results.length,
+                            (index) {
+                          return Column(
+                            children: [
+                              ...List.generate(
+                                  searchData.response.results[index].length,
+                                  (innerIndex) {
+                                int totalMinutes = searchData
+                                    .response
+                                    .results[index][innerIndex]
+                                    .segments
+                                    .first
+                                    .first
+                                    .duration;
+                                String hello = searchData
+                                    .response.results[index].length
+                                    .toString();
+                                print("helloworld$hello");
+                                int hours =
+                                    totalMinutes ~/ 60; // integer division
+                                int minutes = totalMinutes % 60; // remainder
+
+                                String formattedDuration =
+                                    "${hours}h ${minutes}m";
+
+                                // CALCULATING NO OF STOPS
+                                // int stops = searchData
+                                //         .response
+                                //         .results[index][innerIndex]
+                                //         .segments
+                                //         .first
+                                //         .length -
+                                //     1;
+                                // print("stops$stops");
+
+                                // LAYOVER DURATION CALCULATION
+                                // String segments = searchData
+                                //     .response
+                                //     .results[index][innerIndex]
+                                //     .segments
+                                //     .first
+                                //     .first
+                                //     .destination
+                                //     .arrTime
+                                //     .toString();
+                                //
+                                // List<Widget> segmentWidgets = [];
+                                //
+                                // for (int i = 0; i < segments.length - 1; i++) {
+                                //   // Arrival of current segment
+                                //   DateTime arrTime = DateTime.parse(
+                                //       segments[i][0]["Destination"]["ArrTime"]);
+                                //
+                                //   // Departure of next segment
+                                //   DateTime depTime = DateTime.parse(
+                                //       segments[i + 1]["Origin"]["DepTime"]);
+                                //
+                                //   // Layover duration
+                                //   Duration layover = depTime.difference(arrTime);
+                                //
+                                //   int hours = layover.inHours;
+                                //   int minutes = layover.inMinutes % 60;
+                                //
+                                //   // City where layover happens
+                                //   String layoverCity = searchData
+                                //       .response
+                                //       .results[index][innerIndex]
+                                //       .segments
+                                //       .first
+                                //       .first
+                                //       .destination
+                                //       .airport
+                                //       .airportName
+                                //       .toString();
+                                // }
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    print(
+                                        "hello$searchData.response.results[index][innerIndex].isExpanded");
+                                    setState(() {
+                                      searchData
+                                              .response
+                                              .results[index][innerIndex]
+                                              .isExpanded =
+                                          !searchData
+                                              .response
+                                              .results[index][innerIndex]
+                                              .isExpanded;
+                                      selectedindex = innerIndex;
+                                    });
                                   },
-                                );
-                              },
-                              icon: Image.asset(
-                                'assets/images/Filter.png',
-                                alignment: Alignment.center,
-                                height: 12.h,
-                                width: 12.w,
-                              ),
-                              label: Text(
-                                "Filter",
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 10.sp, // Reduced text size
-                                  color: Color(0xFF606060),
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.shade100,
-                                elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      30.r), // Rounded corners
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 3.h, horizontal: 20.w),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ...List.generate(searchData.response.results.length,
-                        (index) {
-                      return Column(
-                        children: [
-                          ...List.generate(
-                              searchData.response.results[index].length,
-                              (innerIndex) {
-                            int totalMinutes = searchData
-                                .response
-                                .results[index][innerIndex]
-                                .segments
-                                .first
-                                .first
-                                .duration;
-                            String hello = searchData
-                                .response.results[index].length
-                                .toString();
-                            print("helloworld$hello");
-                            int hours = totalMinutes ~/ 60; // integer division
-                            int minutes = totalMinutes % 60; // remainder
-
-                            String formattedDuration = "${hours}h ${minutes}m";
-
-                            // CALCULATING NO OF STOPS
-                            // int stops = searchData
-                            //         .response
-                            //         .results[index][innerIndex]
-                            //         .segments
-                            //         .first
-                            //         .length -
-                            //     1;
-                            // print("stops$stops");
-
-                            // LAYOVER DURATION CALCULATION
-                            // String segments = searchData
-                            //     .response
-                            //     .results[index][innerIndex]
-                            //     .segments
-                            //     .first
-                            //     .first
-                            //     .destination
-                            //     .arrTime
-                            //     .toString();
-                            //
-                            // List<Widget> segmentWidgets = [];
-                            //
-                            // for (int i = 0; i < segments.length - 1; i++) {
-                            //   // Arrival of current segment
-                            //   DateTime arrTime = DateTime.parse(
-                            //       segments[i][0]["Destination"]["ArrTime"]);
-                            //
-                            //   // Departure of next segment
-                            //   DateTime depTime = DateTime.parse(
-                            //       segments[i + 1]["Origin"]["DepTime"]);
-                            //
-                            //   // Layover duration
-                            //   Duration layover = depTime.difference(arrTime);
-                            //
-                            //   int hours = layover.inHours;
-                            //   int minutes = layover.inMinutes % 60;
-                            //
-                            //   // City where layover happens
-                            //   String layoverCity = searchData
-                            //       .response
-                            //       .results[index][innerIndex]
-                            //       .segments
-                            //       .first
-                            //       .first
-                            //       .destination
-                            //       .airport
-                            //       .airportName
-                            //       .toString();
-                            // }
-
-                            return GestureDetector(
-                              onTap: () {
-                                print(
-                                    "hello$searchData.response.results[index][innerIndex].isExpanded");
-                                setState(() {
-                                  searchData.response.results[index][innerIndex]
-                                          .isExpanded =
-                                      !searchData
-                                          .response
-                                          .results[index][innerIndex]
-                                          .isExpanded;
-                                  selectedindex = innerIndex;
-                                });
-                              },
-                              child: SingleChildScrollView(
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    left: 16.w,
-                                    right: 16.w,
-                                    bottom: 8.h,
-                                    top: 0.h,
-                                  ),
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.r)),
-                                    elevation: 2,
-                                    color: Colors.white,
-                                    // color: selectedindex == innerIndex
-                                    //     ? Colors.orange.shade50
-                                    //     : const Color(0xFFFFFFFF),
+                                  child: SingleChildScrollView(
                                     child: Padding(
-                                      padding: EdgeInsets.all(12.r),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
+                                      padding: EdgeInsets.only(
+                                        left: 16.w,
+                                        right: 16.w,
+                                        bottom: 8.h,
+                                        top: 0.h,
+                                      ),
+                                      child: Card(
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.r)),
+                                        elevation: 2,
+                                        color: Colors.white,
+                                        // color: selectedindex == innerIndex
+                                        //     ? Colors.orange.shade50
+                                        //     : const Color(0xFFFFFFFF),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(12.r),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              /*  Image.asset(
+                                              Row(
+                                                children: [
+                                                  /*  Image.asset(
                                                 flight["logo"], // Airline logo
                                                 height: 40.h,
                                                 width: 40.w,
                                               ),*/
-                                              SizedBox(width: 12.w),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
+                                                  SizedBox(width: 12.w),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
-                                                      ClipRRect(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        // adjust radius
-                                                        child: Image.asset(
-                                                          "assets/${searchData.response.results[index][innerIndex].segments.first.first.airline.airlineCode}.gif",
-                                                          fit: BoxFit.cover,
-                                                          height: 35,
-                                                          width: 35,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(
-                                                        width: 10,
-                                                      ),
-                                                      Container(
-                                                        width: 120,
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                                searchData
-                                                                    .response
-                                                                    .results[
-                                                                        index][
-                                                                        innerIndex]
-                                                                    .segments
-                                                                    .first
-                                                                    .first
-                                                                    .airline
-                                                                    .airlineName,
-                                                                style: TextStyle(
-                                                                    fontFamily:
-                                                                        'Inter',
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        14.sp)),
-                                                            RichText(
-                                                              text: TextSpan(
-                                                                text: searchData
-                                                                    .response
-                                                                    .results[
-                                                                        index][
-                                                                        innerIndex]
-                                                                    .airlineCode,
-                                                                style: Theme.of(
-                                                                        context)
-                                                                    .textTheme
-                                                                    .bodySmall
-                                                                    ?.copyWith(
-                                                                        color: Colors
-                                                                            .grey
-                                                                            .shade700),
-                                                                children: [
-                                                                  WidgetSpan(
-                                                                    child:
-                                                                        Padding(
-                                                                      padding: EdgeInsets.symmetric(
-                                                                          horizontal: 2
-                                                                              .w,
-                                                                          vertical:
-                                                                              4.h),
-                                                                      child:
-                                                                          Container(
-                                                                        width:
-                                                                            4.w,
-                                                                        height:
-                                                                            3.h,
-                                                                        decoration:
-                                                                            const BoxDecoration(
-                                                                          color:
-                                                                              Colors.grey,
-                                                                          shape:
-                                                                              BoxShape.circle,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  TextSpan(
-                                                                      text: searchData
-                                                                          .response
-                                                                          .results[
-                                                                              index]
-                                                                              [
-                                                                              innerIndex]
-                                                                          .segments
-                                                                          .first
-                                                                          .first
-                                                                          .airline
-                                                                          .flightNumber,
-                                                                      style: Theme.of(
-                                                                              context)
-                                                                          .textTheme
-                                                                          .headlineSmall
-                                                                          ?.copyWith(
-                                                                              fontSize: 12.sp,
-                                                                              color: Colors.grey),
-                                                                      children: [
-                                                                        WidgetSpan(
-                                                                          child:
-                                                                              Padding(
-                                                                            padding:
-                                                                                EdgeInsets.symmetric(horizontal: 2.w, vertical: 4.h),
-                                                                            child:
-                                                                                Container(
-                                                                              width: 4.w,
-                                                                              height: 3.h,
-                                                                              decoration: const BoxDecoration(
-                                                                                color: Colors.grey,
-                                                                                shape: BoxShape.circle,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ]),
-                                                                  TextSpan(
+                                                      Row(
+                                                        children: [
+                                                          ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                            // adjust radius
+                                                            child: Image.asset(
+                                                              "assets/${searchData.response.results[index][innerIndex].segments.first.first.airline.airlineCode}.gif",
+                                                              fit: BoxFit.cover,
+                                                              height: 35,
+                                                              width: 35,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          Container(
+                                                            width: 120,
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                    searchData
+                                                                        .response
+                                                                        .results[
+                                                                            index]
+                                                                            [
+                                                                            innerIndex]
+                                                                        .segments
+                                                                        .first
+                                                                        .first
+                                                                        .airline
+                                                                        .airlineName,
+                                                                    style: TextStyle(
+                                                                        fontFamily:
+                                                                            'Inter',
+                                                                        color:
+                                                                            Colors
+                                                                                .black,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .bold,
+                                                                        fontSize:
+                                                                            14.sp)),
+                                                                RichText(
+                                                                  text:
+                                                                      TextSpan(
                                                                     text: searchData
-                                                                            .response
-                                                                            .results
-                                                                            .first
-                                                                            .first
-                                                                            .isRefundable
-                                                                        ? "R"
-                                                                        : "NR",
+                                                                        .response
+                                                                        .results[
+                                                                            index]
+                                                                            [
+                                                                            innerIndex]
+                                                                        .airlineCode,
                                                                     style: Theme.of(
                                                                             context)
                                                                         .textTheme
-                                                                        .headlineSmall
+                                                                        .bodySmall
                                                                         ?.copyWith(
-                                                                          fontSize:
-                                                                              12.sp,
-                                                                          color:
-                                                                              primaryColor,
+                                                                            color:
+                                                                                Colors.grey.shade700),
+                                                                    children: [
+                                                                      WidgetSpan(
+                                                                        child:
+                                                                            Padding(
+                                                                          padding: EdgeInsets.symmetric(
+                                                                              horizontal: 2.w,
+                                                                              vertical: 4.h),
+                                                                          child:
+                                                                              Container(
+                                                                            width:
+                                                                                4.w,
+                                                                            height:
+                                                                                3.h,
+                                                                            decoration:
+                                                                                const BoxDecoration(
+                                                                              color: Colors.grey,
+                                                                              shape: BoxShape.circle,
+                                                                            ),
+                                                                          ),
                                                                         ),
+                                                                      ),
+                                                                      TextSpan(
+                                                                          text: searchData
+                                                                              .response
+                                                                              .results[index][
+                                                                                  innerIndex]
+                                                                              .segments
+                                                                              .first
+                                                                              .first
+                                                                              .airline
+                                                                              .flightNumber,
+                                                                          style: Theme.of(context)
+                                                                              .textTheme
+                                                                              .headlineSmall
+                                                                              ?.copyWith(fontSize: 12.sp, color: Colors.grey),
+                                                                          children: [
+                                                                            WidgetSpan(
+                                                                              child: Padding(
+                                                                                padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 4.h),
+                                                                                child: Container(
+                                                                                  width: 4.w,
+                                                                                  height: 3.h,
+                                                                                  decoration: const BoxDecoration(
+                                                                                    color: Colors.grey,
+                                                                                    shape: BoxShape.circle,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ]),
+                                                                      TextSpan(
+                                                                        text: searchData.response.results.first.first.isRefundable
+                                                                            ? "R"
+                                                                            : "NR",
+                                                                        style: Theme.of(context)
+                                                                            .textTheme
+                                                                            .headlineSmall
+                                                                            ?.copyWith(
+                                                                              fontSize: 12.sp,
+                                                                              color: primaryColor,
+                                                                            ),
+                                                                      ),
+                                                                    ],
                                                                   ),
-                                                                ],
-                                                              ),
-                                                            )
-                                                          ],
-                                                        ),
+                                                                )
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        // height: 2.h,
+                                                        width: 5,
                                                       ),
                                                     ],
                                                   ),
-                                                  SizedBox(
-                                                    // height: 2.h,
-                                                    width: 5,
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .end,
+                                                      children: [
+                                                        Text(
+                                                          "${currencycode} ${searchData.response.results[index][innerIndex].fare.publishedFare}",
+                                                          style: const TextStyle(
+                                                              decoration:
+                                                                  TextDecoration
+                                                                      .lineThrough,
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        Text(
+                                                          "${currencycode} ${searchData.response.results[index][innerIndex].fare.baseFare}",
+                                                          style: TextStyle(
+                                                              fontFamily:
+                                                                  'Inter',
+                                                              color:
+                                                                  primaryColor,
+                                                              fontSize: 16.sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        Text(
+                                                          // searchData
+                                                          //                 .response
+                                                          //                 .results[
+                                                          //                     index]
+                                                          //                     [
+                                                          //                     innerIndex]
+                                                          //                 .segments
+                                                          //                 .length -
+                                                          //             1 !=
+                                                          //         0
+                                                          //     ? "${hours}h ${minutes}m layover at ${searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName}"
+                                                          //     : "",
+                                                          searchData
+                                                                      .response
+                                                                      .results[
+                                                                          index]
+                                                                          [
+                                                                          innerIndex]
+                                                                      .segments
+                                                                      .first
+                                                                      .length ==
+                                                                  1
+                                                              ? ""
+                                                              : "${hours}h ${minutes}m layover at ${searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName}",
+                                                          textAlign:
+                                                              TextAlign.end,
+                                                          style: TextStyle(
+                                                            fontSize: 10.sp,
+                                                            color: Colors.red,
+                                                            // highlight layover
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        SizedBox(
+                                                          height: 2.h,
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ],
                                               ),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    Text(
-                                                      "₹${searchData.response.results[index][innerIndex].fare.publishedFare}",
-                                                      style: const TextStyle(
-                                                          decoration:
-                                                              TextDecoration
-                                                                  .lineThrough,
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    Text(
-                                                      "₹${searchData.response.results[index][innerIndex].fare.baseFare}",
-                                                      style: TextStyle(
-                                                          fontFamily: 'Inter',
-                                                          color: primaryColor,
-                                                          fontSize: 16.sp,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    Text(
-                                                      // searchData
-                                                      //                 .response
-                                                      //                 .results[
-                                                      //                     index]
-                                                      //                     [
-                                                      //                     innerIndex]
-                                                      //                 .segments
-                                                      //                 .length -
-                                                      //             1 !=
-                                                      //         0
-                                                      //     ? "${hours}h ${minutes}m layover at ${searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName}"
-                                                      //     : "",
-                                                      searchData
-                                                                  .response
-                                                                  .results[
-                                                                      index][
-                                                                      innerIndex]
-                                                                  .segments
-                                                                  .first
-                                                                  .length ==
-                                                              1
-                                                          ? ""
-                                                          : "${hours}h ${minutes}m layover at ${searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName}",
-                                                      textAlign: TextAlign.end,
-                                                      style: TextStyle(
-                                                        fontSize: 10.sp,
-                                                        color: Colors.red,
-                                                        // highlight layover
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      height: 2.h,
-                                                    ),
-                                                  ],
+                                              SizedBox(height: 8.h),
+                                              SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: DotDivider(
+                                                  dotSize: 1.h,
+                                                  spacing: 2.r,
+                                                  dotCount: 97,
+                                                  color: Colors.grey,
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 8.h),
-                                          SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: DotDivider(
-                                              dotSize: 1.h,
-                                              spacing: 2.r,
-                                              dotCount: 97,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                          SizedBox(height: 8.h),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                              SizedBox(height: 8.h),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
-                                                  Row(
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
+                                                      Row(
+                                                        children: [
+                                                          Text(
+                                                            searchData
+                                                                .response
+                                                                .results[index]
+                                                                    [innerIndex]
+                                                                .segments
+                                                                .first
+                                                                .first
+                                                                .origin
+                                                                .depTime
+                                                                .toLocal()
+                                                                .toString()
+                                                                .substring(
+                                                                    11, 16),
+                                                            style: TextStyle(
+                                                              fontSize: 14.sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 4.w),
+                                                        ],
+                                                      ),
                                                       Text(
                                                         searchData
                                                             .response
@@ -825,74 +885,79 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                             .depTime
                                                             .toLocal()
                                                             .toString()
-                                                            .substring(11, 16),
+                                                            .substring(0, 10),
                                                         style: TextStyle(
-                                                          fontSize: 14.sp,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black,
+                                                          fontSize: 12.sp,
+                                                          color: Colors.grey,
                                                         ),
                                                       ),
-                                                      SizedBox(width: 4.w),
                                                     ],
                                                   ),
-                                                  Text(
-                                                    searchData
-                                                        .response
-                                                        .results[index]
-                                                            [innerIndex]
-                                                        .segments
-                                                        .first
-                                                        .first
-                                                        .origin
-                                                        .depTime
-                                                        .toLocal()
-                                                        .toString()
-                                                        .substring(0, 10),
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                children: [
-                                                  Text(
-                                                    (searchData
-                                                                    .response
-                                                                    .results[
-                                                                        index][
-                                                                        innerIndex]
-                                                                    .segments
-                                                                    .first
-                                                                    .length -
-                                                                1) ==
-                                                            0
-                                                        ? "Non-Stop"
-                                                        : "${searchData.response.results[index][innerIndex].segments.first.length - 1} stop",
-                                                    style: TextStyle(
-                                                        fontSize: 12.sp),
-                                                  ),
-                                                  Image.asset(
-                                                      'assets/images/flightStop.png'),
-                                                  Text(
-                                                    "${hours}h ${minutes}m",
-                                                    style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.end,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
+                                                  Column(
                                                     children: [
+                                                      Text(
+                                                        (searchData
+                                                                        .response
+                                                                        .results[
+                                                                            index]
+                                                                            [
+                                                                            innerIndex]
+                                                                        .segments
+                                                                        .first
+                                                                        .length -
+                                                                    1) ==
+                                                                0
+                                                            ? "Non-Stop"
+                                                            : "${searchData.response.results[index][innerIndex].segments.first.length - 1} stop",
+                                                        style: TextStyle(
+                                                            fontSize: 12.sp),
+                                                      ),
+                                                      Image.asset(
+                                                          'assets/images/flightStop.png'),
+                                                      Text(
+                                                        "${hours}h ${minutes}m",
+                                                        style: TextStyle(
+                                                          fontSize: 12.sp,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
+                                                    children: [
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          Text(
+                                                            searchData
+                                                                .response
+                                                                .results[index]
+                                                                    [innerIndex]
+                                                                .segments
+                                                                .first
+                                                                .first
+                                                                .destination
+                                                                .arrTime
+                                                                .toLocal()
+                                                                .toString()
+                                                                .substring(
+                                                                    11, 16),
+                                                            style: TextStyle(
+                                                              fontSize: 14.sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 4.w),
+                                                        ],
+                                                      ),
                                                       Text(
                                                         searchData
                                                             .response
@@ -905,710 +970,650 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                             .arrTime
                                                             .toLocal()
                                                             .toString()
-                                                            .substring(11, 16),
+                                                            .substring(0, 10),
                                                         style: TextStyle(
-                                                          fontSize: 14.sp,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black,
-                                                        ),
+                                                            fontSize: 12.sp),
                                                       ),
-                                                      SizedBox(width: 4.w),
                                                     ],
-                                                  ),
-                                                  Text(
-                                                    searchData
-                                                        .response
-                                                        .results[index]
-                                                            [innerIndex]
-                                                        .segments
-                                                        .first
-                                                        .first
-                                                        .destination
-                                                        .arrTime
-                                                        .toLocal()
-                                                        .toString()
-                                                        .substring(0, 10),
-                                                    style: TextStyle(
-                                                        fontSize: 12.sp),
                                                   ),
                                                 ],
                                               ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Column(
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Row(
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
-                                                      Text(
-                                                        searchData
-                                                            .response
-                                                            .results[index]
-                                                                [innerIndex]
-                                                            .segments
-                                                            .first
-                                                            .first
-                                                            .origin
-                                                            .airport
-                                                            .cityName,
-                                                        style: TextStyle(
-                                                          fontSize: 16.sp,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black,
-                                                        ),
+                                                      Row(
+                                                        children: [
+                                                          Text(
+                                                            searchData
+                                                                .response
+                                                                .results[index]
+                                                                    [innerIndex]
+                                                                .segments
+                                                                .first
+                                                                .first
+                                                                .origin
+                                                                .airport
+                                                                .cityName,
+                                                            style: TextStyle(
+                                                              fontSize: 16.sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 4.w),
+                                                          Text(
+                                                            searchData
+                                                                .response
+                                                                .results[index]
+                                                                    [innerIndex]
+                                                                .segments
+                                                                .first
+                                                                .first
+                                                                .origin
+                                                                .airport
+                                                                .cityCode,
+                                                            style: TextStyle(
+                                                              fontSize: 12.sp,
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
-                                                      SizedBox(width: 4.w),
-                                                      Text(
-                                                        searchData
-                                                            .response
-                                                            .results[index]
-                                                                [innerIndex]
-                                                            .segments
-                                                            .first
-                                                            .first
-                                                            .origin
-                                                            .airport
-                                                            .cityCode,
-                                                        style: TextStyle(
-                                                          fontSize: 12.sp,
-                                                        ),
+                                                      const SizedBox(
+                                                        width: 100,
                                                       ),
                                                     ],
                                                   ),
-                                                  const SizedBox(
-                                                    width: 100,
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.end,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.end,
                                                     children: [
-                                                      Text(
-                                                        searchData
-                                                            .response
-                                                            .results[index]
-                                                                [innerIndex]
-                                                            .segments
-                                                            .first
-                                                            .last
-                                                            .destination
-                                                            .airport
-                                                            .cityName,
-                                                        style: TextStyle(
-                                                          fontSize: 16.sp,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black,
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 4.w),
-                                                      Text(
-                                                        searchData
-                                                            .response
-                                                            .results[index]
-                                                                [innerIndex]
-                                                            .segments
-                                                            .first
-                                                            .last
-                                                            .destination
-                                                            .airport
-                                                            .cityCode,
-                                                        style: TextStyle(
-                                                          fontSize: 12.sp,
-                                                        ),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          Text(
+                                                            searchData
+                                                                .response
+                                                                .results[index]
+                                                                    [innerIndex]
+                                                                .segments
+                                                                .first
+                                                                .last
+                                                                .destination
+                                                                .airport
+                                                                .cityName,
+                                                            style: TextStyle(
+                                                              fontSize: 16.sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 4.w),
+                                                          Text(
+                                                            searchData
+                                                                .response
+                                                                .results[index]
+                                                                    [innerIndex]
+                                                                .segments
+                                                                .first
+                                                                .last
+                                                                .destination
+                                                                .airport
+                                                                .cityCode,
+                                                            style: TextStyle(
+                                                              fontSize: 12.sp,
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
                                                     ],
                                                   ),
                                                 ],
                                               ),
-                                            ],
-                                          ),
-                                          const SizedBox(
-                                            height: 10,
-                                          ),
-                                          ...List.generate(
-                                              searchData
-                                                  .response
-                                                  .results[index][innerIndex]
-                                                  .segments
-                                                  .length, (segmentsindex) {
-                                            return searchData
-                                                        .response
-                                                        .results[index]
-                                                            [innerIndex]
-                                                        .isExpanded &&
-                                                    selectedindex == innerIndex
-                                                ? Column(
-                                                    children: [
-                                                      ...List.generate(
-                                                          searchData
-                                                              .response
-                                                              .results[index]
-                                                                  [innerIndex]
-                                                              .segments[
-                                                                  segmentsindex]
-                                                              .length,
-                                                          (segmentsindex) {
-                                                        return Container(
-                                                          margin: EdgeInsets
-                                                              .symmetric(
-                                                                  vertical: 5),
-                                                          height: 290,
-                                                          decoration: BoxDecoration(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                              color: const Color(
-                                                                  0xFFFFF4EF)),
-                                                          child: Column(
-                                                            children: [
-                                                              Container(
-                                                                height: 40,
-                                                                margin:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        10),
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        10),
-                                                                decoration: BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
+                                              ...List.generate(
+                                                  searchData
+                                                      .response
+                                                      .results[index]
+                                                          [innerIndex]
+                                                      .segments
+                                                      .length, (segmentsindex) {
+                                                return searchData
+                                                            .response
+                                                            .results[index]
+                                                                [innerIndex]
+                                                            .isExpanded &&
+                                                        selectedindex ==
+                                                            innerIndex
+                                                    ? Column(
+                                                        children: [
+                                                          ...List.generate(
+                                                              searchData
+                                                                  .response
+                                                                  .results[
+                                                                      index][
+                                                                      innerIndex]
+                                                                  .segments[
+                                                                      segmentsindex]
+                                                                  .length,
+                                                              (segmentsindex) {
+                                                            return Container(
+                                                              margin: EdgeInsets
+                                                                  .symmetric(
+                                                                      vertical:
+                                                                          5),
+                                                              height: 290,
+                                                              decoration: BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10),
+                                                                  color: const Color(
+                                                                      0xFFFFF4EF)),
+                                                              child: Column(
+                                                                children: [
+                                                                  Container(
+                                                                    height: 40,
+                                                                    margin:
+                                                                        const EdgeInsets
+                                                                            .all(
                                                                             10),
-                                                                    color: const Color(
-                                                                        0xFFFFE7DA)),
-                                                                child: Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                  children: [
-                                                                    Text(
-                                                                      searchData
-                                                                              .response
-                                                                              .results[index][
-                                                                                  innerIndex]
-                                                                              .segments
-                                                                              .first
-                                                                              .first
-                                                                              .supplierFareClass
-                                                                              .toString()
-                                                                              .isEmpty
-                                                                          ? "Publish Fare"
-                                                                          : searchData
-                                                                              .response
-                                                                              .results[index][innerIndex]
-                                                                              .segments
-                                                                              .first
-                                                                              .first
-                                                                              .supplierFareClass
-                                                                              .toString(),
-                                                                      style: TextStyle(
-                                                                          fontWeight: FontWeight
-                                                                              .bold,
-                                                                          fontSize:
-                                                                              16,
-                                                                          color:
-                                                                              Color(0xFF1C1E1D)),
-                                                                    ),
-                                                                    Text(
-                                                                      "₹${searchData.response.results[index][innerIndex].fare.offeredFare.toString().isEmpty ? " " : searchData.response.results[index][innerIndex].fare.offeredFare}",
-                                                                      style: TextStyle(
-                                                                          fontWeight: FontWeight
-                                                                              .bold,
-                                                                          fontSize:
-                                                                              16,
-                                                                          color:
-                                                                              Color(0xFFF37023)),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              Container(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        10),
-                                                                child: Column(
-                                                                  children: [
-                                                                    Row(
-                                                                      children: [
-                                                                        Image
-                                                                            .asset(
-                                                                          'assets/ssr/bag.png',
-                                                                          height:
-                                                                              16,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              100,
-                                                                          child:
-                                                                              Text(
-                                                                            "Cabin Bag",
-                                                                            style:
-                                                                                TextStyle(color: Colors.black, fontSize: 10),
-                                                                          ),
-                                                                        ),
-                                                                        Text(
-                                                                          searchData
-                                                                              .response
-                                                                              .results[index][innerIndex]
-                                                                              .segments
-                                                                              .first
-                                                                              .first
-                                                                              .cabinBaggage
-                                                                              .toString(),
-                                                                          style: TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontSize: 10),
-                                                                        )
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        Image
-                                                                            .asset(
-                                                                          'assets/ssr/checkin.png',
-                                                                          height:
-                                                                              16,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              100,
-                                                                          child:
-                                                                              Text(
-                                                                            "Check In",
-                                                                            style:
-                                                                                TextStyle(color: Colors.black, fontSize: 10),
-                                                                          ),
-                                                                        ),
-                                                                        Text(
-                                                                          searchData
-                                                                              .response
-                                                                              .results[index][innerIndex]
-                                                                              .segments
-                                                                              .first
-                                                                              .first
-                                                                              .baggage
-                                                                              .toString(),
-                                                                          style: TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontSize: 10),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        Image
-                                                                            .asset(
-                                                                          'assets/ssr/seat.png',
-                                                                          height:
-                                                                              16,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              100,
-                                                                          child:
-                                                                              Text(
-                                                                            "Seats",
-                                                                            style:
-                                                                                TextStyle(color: Colors.black, fontSize: 10),
-                                                                          ),
-                                                                        ),
-                                                                        const Text(
-                                                                          "Included",
-                                                                          style: TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontSize: 10),
-                                                                        )
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        Image
-                                                                            .asset(
-                                                                          'assets/ssr/meals.png',
-                                                                          height:
-                                                                              16,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              100,
-                                                                          child:
-                                                                              Text(
-                                                                            "Meals",
-                                                                            style:
-                                                                                TextStyle(color: Colors.black, fontSize: 10),
-                                                                          ),
-                                                                        ),
-                                                                        Text(
-                                                                          searchData.response.results[index][innerIndex].isFreeMealAvailable == 'true'
-                                                                              ? "Included"
-                                                                              : "Not Included",
-                                                                          style: TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontSize: 10),
-                                                                        )
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
-                                                                      children: [
-                                                                        Image
-                                                                            .asset(
-                                                                          'assets/ssr/cancel.png',
-                                                                          height:
-                                                                              16,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              100,
-                                                                          child:
-                                                                              Text(
-                                                                            "Cancellation",
-                                                                            style:
-                                                                                TextStyle(color: Colors.black, fontSize: 10),
-                                                                          ),
-                                                                        ),
-                                                                        Text(
-                                                                          searchData.response.results[index][innerIndex].miniFareRules.isEmpty
-                                                                              ? "Contact Cust.support"
-                                                                              // : searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details.isNotEmpty
-                                                                              //     ? "Chargable"
-                                                                              : "Not Chargable",
-                                                                          style: TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontSize: 10),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    Row(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            10),
+                                                                    decoration: BoxDecoration(
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(
+                                                                                10),
+                                                                        color: const Color(
+                                                                            0xFFFFE7DA)),
+                                                                    child: Row(
                                                                       mainAxisAlignment:
                                                                           MainAxisAlignment
-                                                                              .start,
+                                                                              .spaceBetween,
                                                                       children: [
-                                                                        Image
-                                                                            .asset(
-                                                                          'assets/ssr/date.png',
-                                                                          height:
-                                                                              16,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              10,
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              100,
-                                                                          child:
-                                                                              Text(
-                                                                            "Date Change",
-                                                                            style:
-                                                                                TextStyle(color: Colors.black, fontSize: 10),
-                                                                          ),
+                                                                        Text(
+                                                                          searchData.response.results[index][innerIndex].segments.first.first.supplierFareClass.toString().isEmpty
+                                                                              ? "Publish Fare"
+                                                                              : searchData.response.results[index][innerIndex].segments.first.first.supplierFareClass.toString(),
+                                                                          style: TextStyle(
+                                                                              fontWeight: FontWeight.bold,
+                                                                              fontSize: 16,
+                                                                              color: Color(0xFF1C1E1D)),
                                                                         ),
                                                                         Text(
-                                                                          searchData.response.results[index][innerIndex].miniFareRules.isEmpty
-                                                                              ? "Contact Cust.support"
-                                                                              : searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details.isNotEmpty
-                                                                                  ? "Chargable"
-                                                                                  : "",
+                                                                          "${currencycode} ${searchData.response.results[index][innerIndex].fare.baseFare.toString().isEmpty ? " " : searchData.response.results[index][innerIndex].fare.baseFare}",
                                                                           style: TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontSize: 10),
+                                                                              fontWeight: FontWeight.bold,
+                                                                              fontSize: 16,
+                                                                              color: Color(0xFFF37023)),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  Container(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            10),
+                                                                    child:
+                                                                        Column(
+                                                                      children: [
+                                                                        Row(
+                                                                          children: [
+                                                                            Image.asset(
+                                                                              'assets/ssr/bag.png',
+                                                                              height: 16,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 100,
+                                                                              child: Text(
+                                                                                "Cabin Bag",
+                                                                                style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                              ),
+                                                                            ),
+                                                                            Text(
+                                                                              searchData.response.results[index][innerIndex].segments.first.first.cabinBaggage.toString(),
+                                                                              style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            Image.asset(
+                                                                              'assets/ssr/checkin.png',
+                                                                              height: 16,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 100,
+                                                                              child: Text(
+                                                                                "Check In",
+                                                                                style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                              ),
+                                                                            ),
+                                                                            Text(
+                                                                              searchData.response.results[index][innerIndex].segments.first.first.baggage.toString(),
+                                                                              style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            Image.asset(
+                                                                              'assets/ssr/seat.png',
+                                                                              height: 16,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 100,
+                                                                              child: Text(
+                                                                                "Seats",
+                                                                                style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                              ),
+                                                                            ),
+                                                                            const Text(
+                                                                              "Included",
+                                                                              style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            Image.asset(
+                                                                              'assets/ssr/meals.png',
+                                                                              height: 16,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 100,
+                                                                              child: Text(
+                                                                                "Meals",
+                                                                                style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                              ),
+                                                                            ),
+                                                                            Text(
+                                                                              searchData.response.results[index][innerIndex].isFreeMealAvailable == 'true' ? "Included" : "Not Included",
+                                                                              style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            Image.asset(
+                                                                              'assets/ssr/cancel.png',
+                                                                              height: 16,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 100,
+                                                                              child: Text(
+                                                                                "Cancellation",
+                                                                                style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                              ),
+                                                                            ),
+                                                                            Text(
+                                                                              searchData.response.results[index][innerIndex].miniFareRules.isEmpty
+                                                                                  ? "Contact Cust.support"
+                                                                                  // : searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details.isNotEmpty
+                                                                                  //     ? "Chargable"
+                                                                                  : "Not Chargable",
+                                                                              style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              10,
+                                                                        ),
+                                                                        Row(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.start,
+                                                                          children: [
+                                                                            Image.asset(
+                                                                              'assets/ssr/date.png',
+                                                                              height: 16,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              width: 100,
+                                                                              child: Text(
+                                                                                "Date Change",
+                                                                                style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                              ),
+                                                                            ),
+                                                                            Text(
+                                                                              searchData.response.results[index][innerIndex].miniFareRules.isEmpty
+                                                                                  ? "Contact Cust.support"
+                                                                                  : searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details.isNotEmpty
+                                                                                      ? "Chargable"
+                                                                                      : "",
+                                                                              style: TextStyle(color: Colors.black, fontSize: 10),
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              20,
+                                                                        ),
+                                                                        GestureDetector(
+                                                                          onTap:
+                                                                              () async {
+                                                                            // await ApiService().farequote(searchData.response.results[index][innerIndex].resultIndex,
+                                                                            //     searchData.response.traceId);
+                                                                            // await ApiService().ssr(searchData.response.results[index][innerIndex].resultIndex,
+                                                                            //     searchData.response.traceId);
+
+                                                                            resultIndex =
+                                                                                searchData.response.results[index][innerIndex].resultIndex;
+                                                                            print("resultIndexresultIndex$resultIndex");
+                                                                            final prefs =
+                                                                                await SharedPreferences.getInstance();
+                                                                            final resultindex =
+                                                                                await prefs.setString('ResultIndex', resultIndex!);
+                                                                            print("resultindex$resultindex");
+
+                                                                            traceId =
+                                                                                searchData.response.traceId;
+                                                                            final prefstraceid =
+                                                                                await SharedPreferences.getInstance();
+                                                                            final traceid =
+                                                                                await prefstraceid.setString('TraceId', traceId!);
+                                                                            print("traceid$traceid");
+
+                                                                            flightnumber =
+                                                                                searchData.response.results[index][innerIndex].segments.first.first.airline.flightNumber;
+                                                                            final prefsflight =
+                                                                                await SharedPreferences.getInstance();
+                                                                            final flightNumber =
+                                                                                await prefsflight.setString('FlightNumber', flightnumber!);
+                                                                            print("flightNumber$flightNumber");
+
+                                                                            basefare =
+                                                                                searchData.response.results[index][innerIndex].fare.baseFare.toString();
+                                                                            final fare =
+                                                                                await SharedPreferences.getInstance();
+                                                                            final baseFare =
+                                                                                await fare.setString('BaseFare', basefare!);
+                                                                            fareTax =
+                                                                                searchData.response.results[index][innerIndex].fare.tax.toString();
+                                                                            print("fareTax$fareTax");
+                                                                            final tax =
+                                                                                await fare.setString('Tax', fareTax!);
+
+                                                                            origin =
+                                                                                searchData.response.origin;
+                                                                            final fromorigin =
+                                                                                await fare.setString('Origin', origin!);
+                                                                            print("origin$origin");
+                                                                            destination =
+                                                                                searchData.response.destination;
+                                                                            final todestination =
+                                                                                await fare.setString('Destination', destination!);
+                                                                            print("destination$destination");
+                                                                            departureDate =
+                                                                                searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(0, 10);
+                                                                            final depDate =
+                                                                                await fare.setString('depTime', departureDate!);
+                                                                            print("departureDate$departureDate");
+
+                                                                            Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                    builder: (context) => FlightDetailsPage(
+                                                                                          flight: const {},
+                                                                                          city: 'mdu',
+                                                                                          destination: 'chennai',
+                                                                                          airlineName: searchData.response.results[index][innerIndex].segments.first.first.airline.airlineName,
+                                                                                          airlineCode: searchData.response.results[index][innerIndex].segments.first.first.airline.airlineCode,
+                                                                                          airportName: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.airportName,
+                                                                                          desairportName: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.airportName,
+                                                                                          cityName: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.cityName,
+                                                                                          cityCode: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.cityCode,
+                                                                                          descityName: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName,
+                                                                                          descityCode: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityCode,
+                                                                                          flightNumber: searchData.response.results[index][innerIndex].segments.first.first.airline.flightNumber,
+                                                                                          depDate: searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(0, 10),
+                                                                                          depTime: searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(11, 16),
+                                                                                          refundable: searchData.response.results.first.first.isRefundable ? "R" : "NR",
+                                                                                          arrDate: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(0, 10),
+                                                                                          arrTime: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(11, 16),
+                                                                                          stop: (searchData.response.results[index][innerIndex].segments.first.length - 1) == 0 ? "Non-Stop" : "${searchData.response.results[index][innerIndex].segments.first.length - 1} stop",
+                                                                                          duration: "${hours}h ${minutes}m",
+                                                                                          cabinBaggage: searchData.response.results[index][innerIndex].segments.first.first.cabinBaggage,
+                                                                                          baggage: searchData.response.results[index][innerIndex].segments.first.first.baggage,
+                                                                                          // cancellation: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details,
+                                                                                          // journeypoint: searchData.response.results[index][innerIndex].miniFareRules[0].first.journeyPoints,
+                                                                                          basefare: searchData.response.results[index][innerIndex].fare.baseFare,
+                                                                                          tax: searchData.response.results[index][innerIndex].fare.tax,
+                                                                                          adultCount: widget.adultCount,
+                                                                                          childCount: widget.childCount,
+                                                                                          infantCount: widget.infantCount,
+                                                                                          segments: searchData.response.results[index][innerIndex].segments,
+                                                                                          // reissue: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details,
+                                                                                          resultindex: searchData.response.results[index][innerIndex].resultIndex,
+                                                                                          traceid: searchData.response.traceId,
+                                                                                          // outboundFlight: searchData.response.results[index][innerIndex],
+                                                                                          reissue: (() {
+                                                                                            try {
+                                                                                              if (searchData.response.results[index][innerIndex].miniFareRules.isNotEmpty) {
+                                                                                                return searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details ?? "No data";
+                                                                                              } else {
+                                                                                                return "No data";
+                                                                                              }
+                                                                                            } catch (e) {
+                                                                                              return "No data";
+                                                                                            }
+                                                                                          })(),
+                                                                                          journeypoint: (() {
+                                                                                            try {
+                                                                                              if (searchData.response.results[index][innerIndex].miniFareRules.isNotEmpty) {
+                                                                                                return searchData.response.results[index][innerIndex].miniFareRules[0].first.journeyPoints ?? "No data";
+                                                                                              } else {
+                                                                                                return "No data";
+                                                                                              }
+                                                                                            } catch (e) {
+                                                                                              return "No data";
+                                                                                            }
+                                                                                          })(),
+
+                                                                                          cancellation: (() {
+                                                                                            try {
+                                                                                              if (searchData.response.results[index][innerIndex].miniFareRules.isNotEmpty) {
+                                                                                                return searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details ?? "No data";
+                                                                                              } else {
+                                                                                                return "No data";
+                                                                                              }
+                                                                                            } catch (e) {
+                                                                                              return "No data";
+                                                                                            }
+                                                                                          })(),
+                                                                                        )));
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            height:
+                                                                                40,
+                                                                            width:
+                                                                                MediaQuery.sizeOf(context).width,
+                                                                            decoration:
+                                                                                BoxDecoration(
+                                                                              borderRadius: BorderRadius.circular(15),
+                                                                              color: const Color(0xFFF37023),
+                                                                            ),
+                                                                            alignment:
+                                                                                Alignment.center,
+                                                                            child:
+                                                                                const Text(
+                                                                              "Book Now",
+                                                                              style: TextStyle(color: Colors.white),
+                                                                            ),
+                                                                          ),
                                                                         )
                                                                       ],
                                                                     ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          20,
-                                                                    ),
-                                                                    GestureDetector(
-                                                                      onTap:
-                                                                          () async {
-                                                                        await ApiService().farerule(
-                                                                            searchData.response.results[index][innerIndex].resultIndex,
-                                                                            searchData.response.traceId);
-                                                                        await ApiService().farequote(
-                                                                            searchData.response.results[index][innerIndex].resultIndex,
-                                                                            searchData.response.traceId);
-                                                                        await ApiService().ssr(
-                                                                            searchData.response.results[index][innerIndex].resultIndex,
-                                                                            searchData.response.traceId);
-
-                                                                        resultIndex = searchData
-                                                                            .response
-                                                                            .results[index][innerIndex]
-                                                                            .resultIndex;
-                                                                        print(
-                                                                            "resultIndex$resultIndex");
-                                                                        final prefs =
-                                                                            await SharedPreferences.getInstance();
-                                                                        final resultindex = await prefs.setString(
-                                                                            'ResultIndex',
-                                                                            resultIndex!);
-                                                                        print(
-                                                                            "resultindex$resultindex");
-
-                                                                        traceId = searchData
-                                                                            .response
-                                                                            .traceId;
-                                                                        print(
-                                                                            "traceId$traceId");
-                                                                        final prefstraceid =
-                                                                            await SharedPreferences.getInstance();
-                                                                        final traceid = await prefstraceid.setString(
-                                                                            'TraceId',
-                                                                            traceId!);
-                                                                        print(
-                                                                            "traceid$traceid");
-
-                                                                        Navigator.push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => FlightDetailsPage(
-                                                                                      flight: const {},
-                                                                                      city: 'mdu',
-                                                                                      destination: 'chennai',
-                                                                                      airlineName: searchData.response.results[index][innerIndex].segments.first.first.airline.airlineName,
-                                                                                      airlineCode: searchData.response.results[index][innerIndex].segments.first.first.airline.airlineCode,
-                                                                                      airportName: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.airportName,
-                                                                                      desairportName: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.airportName,
-                                                                                      cityName: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.cityName,
-                                                                                      cityCode: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.cityCode,
-                                                                                      descityName: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName,
-                                                                                      descityCode: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityCode,
-                                                                                      flightNumber: searchData.response.results[index][innerIndex].segments.first.first.airline.flightNumber,
-                                                                                      depDate: searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(0, 10),
-                                                                                      depTime: searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(11, 16),
-                                                                                      refundable: searchData.response.results.first.first.isRefundable ? "R" : "NR",
-                                                                                      arrDate: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(0, 10),
-                                                                                      arrTime: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(11, 16),
-                                                                                      stop: (searchData.response.results[index][innerIndex].segments.first.length - 1) == 0 ? "Non-Stop" : "${searchData.response.results[index][innerIndex].segments.first.length - 1} stop",
-                                                                                      duration: "${hours}h ${minutes}m",
-                                                                                      cabinBaggage: searchData.response.results[index][innerIndex].segments.first.first.cabinBaggage,
-                                                                                      baggage: searchData.response.results[index][innerIndex].segments.first.first.baggage,
-                                                                                      // cancellation: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details,
-                                                                                      // journeypoint: searchData.response.results[index][innerIndex].miniFareRules[0].first.journeyPoints,
-                                                                                      basefare: searchData.response.results[index][innerIndex].fare.baseFare,
-                                                                                      segments: searchData.response.results[index][innerIndex].segments,
-                                                                                      // reissue: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details,
-                                                                                      resultindex: searchData.response.results[index][innerIndex].resultIndex,
-                                                                                      traceid: searchData.response.traceId,
-                                                                                      reissue: (() {
-                                                                                        try {
-                                                                                          if (searchData.response.results[index][innerIndex].miniFareRules.isNotEmpty) {
-                                                                                            return searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details ?? "No data";
-                                                                                          } else {
-                                                                                            return "No data";
-                                                                                          }
-                                                                                        } catch (e) {
-                                                                                          return "No data";
-                                                                                        }
-                                                                                      })(),
-                                                                                      journeypoint: (() {
-                                                                                        try {
-                                                                                          if (searchData.response.results[index][innerIndex].miniFareRules.isNotEmpty) {
-                                                                                            return searchData.response.results[index][innerIndex].miniFareRules[0].first.journeyPoints ?? "No data";
-                                                                                          } else {
-                                                                                            return "No data";
-                                                                                          }
-                                                                                        } catch (e) {
-                                                                                          return "No data";
-                                                                                        }
-                                                                                      })(),
-
-                                                                                      cancellation: (() {
-                                                                                        try {
-                                                                                          if (searchData.response.results[index][innerIndex].miniFareRules.isNotEmpty) {
-                                                                                            return searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details ?? "No data";
-                                                                                          } else {
-                                                                                            return "No data";
-                                                                                          }
-                                                                                        } catch (e) {
-                                                                                          return "No data";
-                                                                                        }
-                                                                                      })(),
-                                                                                    )));
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        height:
-                                                                            40,
-                                                                        width: MediaQuery.sizeOf(context)
-                                                                            .width,
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(15),
-                                                                          color:
-                                                                              const Color(0xFFF37023),
-                                                                        ),
-                                                                        alignment:
-                                                                            Alignment.center,
-                                                                        child:
-                                                                            GestureDetector(
-                                                                          onTap:
-                                                                              () {
-                                                                            print("Book Now");
-                                                                            print("CAbinBaggage${searchData.response.results[index][innerIndex].segments.first.first.cabinBaggage}");
-                                                                            // print("Cancellationnull ${searchData.response.results[index][innerIndex]}");
-                                                                            print("Cancellationfrom3 ${searchData.response.results[index][innerIndex].miniFareRules.isEmpty}");
-                                                                            // print("Cancellationfrom4 ${searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation' && rule.from.startsWith("4")).details}");
-
-                                                                            Navigator.push(context,
-                                                                                MaterialPageRoute(builder: (context) => FlightDetailsPage(flight: const {}, city: 'mdu', destination: 'chennai', segments: searchData.response.results[index][innerIndex].segments, airlineName: searchData.response.results[index][innerIndex].segments.first.first.airline.airlineName, airlineCode: searchData.response.results[index][innerIndex].segments.first.first.airline.airlineCode, basefare: searchData.response.results[index][innerIndex].fare.baseFare, airportName: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.airportName, desairportName: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.airportName, cityName: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.cityName, cityCode: searchData.response.results[index][innerIndex].segments.first.first.origin.airport.cityCode, descityName: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityName, descityCode: searchData.response.results[index][innerIndex].segments.first.last.destination.airport.cityCode, flightNumber: searchData.response.results[index][innerIndex].segments.first.first.airline.flightNumber, depDate: searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(0, 10), depTime: searchData.response.results[index][innerIndex].segments.first.first.origin.depTime.toLocal().toString().substring(11, 16), refundable: searchData.response.results.first.first.isRefundable ? "R" : "NR", arrDate: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(0, 10), arrTime: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(11, 16), stop: (searchData.response.results[index][innerIndex].segments.first.length - 1) == 0 ? "Non-Stop" : "${searchData.response.results[index][innerIndex].segments.first.length - 1} stop", duration: "${hours}h ${minutes}m", cabinBaggage: searchData.response.results[index][innerIndex].segments.first.first.cabinBaggage, baggage: searchData.response.results[index][innerIndex].segments.first.first.baggage, cancellation: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details, journeypoint: searchData.response.results[index][innerIndex].miniFareRules[0].first.journeyPoints, reissue: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details)));
-                                                                          },
-                                                                          child:
-                                                                              const Text(
-                                                                            "Book Now",
-                                                                            style:
-                                                                                TextStyle(color: Colors.white),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                              )
-                                                            ],
-                                                          ),
-                                                        );
-                                                      })
-                                                    ],
-                                                  )
-                                                : const SizedBox.shrink();
-                                          }),
-                                          Container(
-                                            height: 25,
-                                            padding: EdgeInsets.all(5),
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              color: Color(0xFFDAE5FF),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                SizedBox(
-                                                  width: 5,
+                                                                  )
+                                                                ],
+                                                              ),
+                                                            );
+                                                          })
+                                                        ],
+                                                      )
+                                                    : const SizedBox.shrink();
+                                              }),
+                                              Container(
+                                                height: 25,
+                                                padding: EdgeInsets.all(5),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  color: Color(0xFFDAE5FF),
                                                 ),
-                                                SvgPicture.asset(
-                                                  "assets/icon/promocode.svg",
-                                                  color: Color(0xFF5D89F0),
-                                                  height: 15,
-                                                  width: 20,
+                                                child: Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    SvgPicture.asset(
+                                                      "assets/icon/promocode.svg",
+                                                      color: Color(0xFF5D89F0),
+                                                      height: 15,
+                                                      width: 20,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    Text(
+                                                      "Flat 10% Off upto Rs.with trvlus coupon",
+                                                      style: TextStyle(
+                                                          fontSize: 10,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    )
+                                                  ],
                                                 ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                                Text(
-                                                  "Flat 10% Off upto Rs.with trvlus coupon",
-                                                  style: TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                )
-                                              ],
-                                            ),
-                                          )
-                                        ],
+                                              )
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          })
-                        ],
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-            floatingActionButton: AnimatedOpacity(
-              opacity: _isButtonVisible ? 1.0 : 0.0,
-              // opacity: 1.0,
-              duration: const Duration(milliseconds: 300),
-              child: SizedBox(
-                height: 45.h, // Reduced height
-                width: 50.w, // Reduced width
-                child: FloatingActionButton(
-                  onPressed: () {
-                    _scrollController.animateTo(
-                      0.0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
-                  },
-                  child: Icon(
-                    Icons.keyboard_arrow_up,
-                    size: 30.r, // Adjust the icon size to match the button size
-                    color: Colors.white,
+                                );
+                              })
+                            ],
+                          );
+                        }),
+                      ],
+                    ),
                   ),
-                  backgroundColor: const Color(0xFFF37023),
-                  shape: const CircleBorder(),
-                  elevation: 6,
                 ),
-              ),
-            ),
-          );
+                floatingActionButtonLocation:
+                    FloatingActionButtonLocation.endFloat,
+                floatingActionButton: AnimatedOpacity(
+                  opacity: _isButtonVisible ? 1.0 : 0.0,
+                  // opacity: 1.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: SizedBox(
+                    height: 45.h, // Reduced height
+                    width: 50.w, // Reduced width
+                    child: FloatingActionButton(
+                      onPressed: () {
+                        _scrollController.animateTo(
+                          0.0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                        );
+                      },
+                      child: Icon(
+                        Icons.keyboard_arrow_up,
+                        size: 30
+                            .r, // Adjust the icon size to match the button size
+                        color: Colors.white,
+                      ),
+                      backgroundColor: const Color(0xFFF37023),
+                      shape: const CircleBorder(),
+                      elevation: 6,
+                    ),
+                  ),
+                ),
+              )
+            : Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/icon/noFlight.png",
+                        height: 70,
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      SizedBox(
+                        width: 150,
+                        child: Text(
+                          "No flights are available for the selected date",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              );
   }
 }
 

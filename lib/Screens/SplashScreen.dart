@@ -19,7 +19,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.white,
     ));
@@ -52,7 +51,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (await shouldCallApi()) {
       String? authenticateData =
-          await ApiService().authenticate(); // Call the API
+          await ApiService().flightAuthenticate(); // Call the API
+      // await ApiService().userAuthenticate();
+
+      ///For GEtting agent token
       print("authenticateData: $authenticateData");
 
       await prefs.setInt(key, DateTime.now().millisecondsSinceEpoch);

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,6 +13,7 @@ import 'DotDivider.dart';
 import 'FlightDetailsPage.dart';
 import 'Search_Result_Page.dart';
 
+// Global variables (consider moving to state management if the app grows)
 String departureTime = "";
 String arrivalTime = "";
 String fare = "";
@@ -19,13 +22,12 @@ String inarrivalTime = "";
 int selectedBaggage = 0;
 String infare = "";
 double total = 0.0;
-String finaldepDateformat = "";
-String finalarrDateformat = "";
+String finalrounddepDateformat = "";
+String finalroundarrDateformat = "";
 
 class Localroundtrip extends StatefulWidget {
   String airportCode;
   String fromAirport;
-
   String toairportCode;
   String toAirport;
   String selectedDepDate;
@@ -50,13 +52,20 @@ class Localroundtrip extends StatefulWidget {
 class _LocalroundtripState extends State<Localroundtrip> {
   int selectedindex = 0;
   int selectedbuild = 0;
-
   bool _isButtonVisible = false;
   late SearchData searchData;
   bool isLoading = true;
   ScrollController _scrollController = ScrollController();
   List<Result> outbound = [];
   List<Result> inbound = [];
+  Result? selectedOutbound; // Track selected outbound flight
+  Result? selectedInbound;
+
+  late int adultCount;
+
+  int? childCount;
+
+  int? infantCount; // Track selected inbound flight
 
   getSearchData(
     String airportCode,
@@ -71,49 +80,52 @@ class _LocalroundtripState extends State<Localroundtrip> {
       isLoading = true;
     });
     searchData = await ApiService().getSearchResult(
-      airportCode,
-      fromAirport,
-      toairportCode,
-      toAirport,
-      selectedDepDate,
-      selectedReturnDate,
-      selectedTripType,
-    );
+        airportCode,
+        fromAirport,
+        toairportCode,
+        toAirport,
+        selectedDepDate,
+        selectedReturnDate,
+        selectedTripType,
+        adultCount,
+        childCount,
+        infantCount);
     outbound = searchData.response.results.first;
-    print("outbound${searchData.response.results.first.length}");
     inbound = searchData.response.results.last;
-    print("inbound${searchData.response.results.last.length}");
-    print(widget.selectedDepDate);
 
-    departureTime = outbound.first.segments.first.first.origin.depTime
-        .toString()
-        .substring(11, 16);
-
-    DateTime depDateTime = DateTime.parse(
-        outbound.first.segments.first.first.origin.depTime.toString());
-    print(depDateTime);
-    finaldepDateformat = DateFormat("dd MMM yy").format(depDateTime);
-    print("finaldepDateformat$finaldepDateformat");
-
-    arrivalTime = outbound.first.segments.last.last.destination.arrTime
-        .toString()
-        .substring(11, 16);
-    DateTime arrDateTime = DateTime.parse(
-        inbound.first.segments.last.last.destination.arrTime.toString());
-    finalarrDateformat = DateFormat("dd MMM yy").format(arrDateTime);
-    print("finalarrDateformat$finalarrDateformat");
-
-    fare = outbound.first.fare.baseFare.toString();
-
-    indepartureTime = inbound.first.segments.first.first.origin.depTime
-        .toString()
-        .substring(11, 16);
-    inarrivalTime = inbound.first.segments.last.last.destination.arrTime
-        .toString()
-        .substring(11, 16);
-    infare = inbound.first.fare.baseFare.toString();
-
-    total = double.parse(fare)! + double.parse(infare)!;
+// Set default selected flights
+    if (outbound.isNotEmpty) {
+      selectedOutbound = outbound.first;
+      departureTime = selectedOutbound!.segments.first.first.origin.depTime
+          .toString()
+          .substring(11, 16);
+      DateTime depDateTime = DateTime.parse(
+          selectedOutbound!.segments.first.first.origin.depTime.toString());
+      finalrounddepDateformat = DateFormat("dd MMM yy").format(depDateTime);
+      print('finalrounddepDateformat$finalrounddepDateformat');
+      arrivalTime = selectedOutbound!.segments.last.last.destination.arrTime
+          .toString()
+          .substring(11, 16);
+      DateTime arrDateTime = DateTime.parse(
+          selectedOutbound!.segments.first.first.origin.depTime.toString());
+      finalroundarrDateformat = DateFormat("dd MMM yy").format(arrDateTime);
+      print('finalroundarrDateformat$finalroundarrDateformat');
+      fare = selectedOutbound!.fare.baseFare.toString();
+    }
+    if (inbound.isNotEmpty) {
+      selectedInbound = inbound.first;
+      indepartureTime = selectedInbound!.segments.first.first.origin.depTime
+          .toString()
+          .substring(11, 16);
+      inarrivalTime = selectedInbound!.segments.last.last.destination.arrTime
+          .toString()
+          .substring(11, 16);
+      print('inarrivalTime$inarrivalTime');
+      infare = selectedInbound!.fare.baseFare.toString();
+    }
+    total = (fare.isNotEmpty && infare.isNotEmpty)
+        ? double.parse(fare) + double.parse(infare)
+        : 0.0;
 
     setState(() {
       isLoading = false;
@@ -123,7 +135,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
   @override
   void initState() {
     super.initState();
-
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
               ScrollDirection.forward &&
@@ -151,559 +162,594 @@ class _LocalroundtripState extends State<Localroundtrip> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 4,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // 👈 prevents full screen expansion
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "ONWARDS",
-                      style: TextStyle(
-                          color: Color(0xFF0F9374),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "${departureTime} - ${arrivalTime}",
-                      style: TextStyle(color: Color(0xFF909090)),
-                    ),
-                    Text(
-                      "₹${fare}",
-                      style: TextStyle(color: Color(0xFF606060)),
-                    )
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "RETURN",
-                      style: TextStyle(
-                          color: Color(0xFFD71A21),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "${indepartureTime} - ${inarrivalTime}",
-                      style: TextStyle(color: Color(0xFF909090)),
-                    ),
-                    Text(
-                      "₹${infare}",
-                      style: TextStyle(color: Color(0xFF606060)),
-                    )
-                  ],
-                ),
-                Column(
-                  children: [
-                    Text(
-                      "TOTAL PRICE",
-                      style: TextStyle(
-                          color: Color(0xFFD71A21),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "₹${total}",
-                      style: TextStyle(color: Color(0xFF606060), fontSize: 20),
-                    )
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => FlightDetailsPage(
-                              flight: const {},
-                              city: 'mdu',
-                              destination: 'maa',
-                              airlineName: 'airindia',
-                              cityName: 'madurai',
-                              cityCode: 'maa',
-                            )));
-              },
-              child: Container(
-                height: 50,
-                width: 400,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(25),
-                    color: Color(0xFFF37023)),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    "View Fare",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-      backgroundColor: Colors.grey.shade200,
-      appBar: AppBar(
-        backgroundColor: Colors.grey.shade200,
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(170),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.all(10),
-                // height: 170,
-                // width: 340,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Color(0xFFF37023),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 3,
-                      color: Colors.grey.shade500,
-                    )
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle, color: Colors.white),
-                            child: Icon(
-                              Icons.arrow_back,
-                              color: Color(0xFFF37023),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          "${finaldepDateformat.toString()} - ${finalarrDateformat.toString()}",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 14),
-                        ),
-                        Spacer(),
-                        SvgPicture.asset(
-                          'assets/icon/edit.svg',
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          "Edit details",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  widget.fromAirport,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontSize: 15),
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  widget.airportCode,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text("",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 10)),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Image.asset(
-                              "assets/icon/roundtripright.png",
-                              width: 25,
-                              height: 15,
-                            ),
-                            Image.asset(
-                              "assets/icon/roundtripline.png",
-                              width: 70,
-                              height: 15,
-                            ),
-                            Image.asset(
-                              "assets/icon/roundtripleft.png",
-                              width: 25,
-                              height: 15,
-                            )
-                          ],
-                        ),
-                        // Text("dfbdgb"),
-                        // Image.asset('assets/images/flightStop.png'),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  widget.toAirport,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontSize: 15),
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  widget.toairportCode,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text("",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 10)),
-                          ],
-                        ),
-                      ],
-                    ),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //   children: [
-                    //     Column(
-                    //       crossAxisAlignment: CrossAxisAlignment.start,
-                    //       children: [
-                    //         Row(
-                    //           children: [
-                    //             Text(
-                    //               widget.toAirport,
-                    //               style: TextStyle(
-                    //                   fontWeight: FontWeight.bold,
-                    //                   color: Colors.black,
-                    //                   fontSize: 15),
-                    //             ),
-                    //             SizedBox(width: 5),
-                    //             Text(
-                    //               widget.toairportCode,
-                    //               style: TextStyle(
-                    //                   fontWeight: FontWeight.bold,
-                    //                   fontSize: 10),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //         Text("",
-                    //             style: TextStyle(
-                    //                 fontWeight: FontWeight.bold, fontSize: 10)),
-                    //       ],
-                    //     ),
-                    //     Image.asset('assets/images/flightStop.png'),
-                    //     Column(
-                    //       crossAxisAlignment: CrossAxisAlignment.end,
-                    //       children: [
-                    //         Row(
-                    //           children: [
-                    //             Text(
-                    //               widget.fromAirport,
-                    //               style: TextStyle(
-                    //                   fontWeight: FontWeight.bold,
-                    //                   color: Colors.black,
-                    //                   fontSize: 15),
-                    //             ),
-                    //             SizedBox(width: 5),
-                    //             Text(
-                    //               widget.airportCode,
-                    //               style: TextStyle(
-                    //                   fontWeight: FontWeight.bold,
-                    //                   fontSize: 10),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //         Text("",
-                    //             style: TextStyle(
-                    //                 fontWeight: FontWeight.bold, fontSize: 10)),
-                    //       ],
-                    //     ),
-                    //   ],
-                    // ),
-                    // const SizedBox(height: 5),
-                    // DotDivider(
-                    //   dotSize: 1.h,
-                    //   spacing: 2.r,
-                    //   dotCount: 100,
-                    //   color: Colors.grey,
-                    // ),
-                    // SizedBox(height: 10),
-                    // const Row(
-                    //   children: [
-                    //     Text(
-                    //       "5 Traveller",
-                    //       style: TextStyle(
-                    //           fontWeight: FontWeight.bold,
-                    //           color: Colors.black,
-                    //           fontSize: 15),
-                    //     ),
-                    //     Spacer(),
-                    //     Text(
-                    //       "Economy",
-                    //       style: TextStyle(
-                    //           fontWeight: FontWeight.bold,
-                    //           color: Colors.black,
-                    //           fontSize: 15),
-                    //     ),
-                    //     SizedBox(width: 10),
-                    //     Icon(
-                    //       Icons.stars,
-                    //       color: Colors.orange,
-                    //     )
-                    //   ],
-                    // ),
-                  ],
-                ),
-              ),
-
-              // Second Orange Container (moved outside)
-              Container(
-                padding: EdgeInsets.all(5),
-                margin: EdgeInsets.all(12),
-                height: 60,
-                decoration: BoxDecoration(
+    return isLoading
+        ? Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
                     color: Color(0xFFF37023),
-                    borderRadius: BorderRadius.all(Radius.circular(15))),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedBaggage = 0;
-                        });
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 35, vertical: 10),
-                        margin: EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: selectedBaggage == 0
-                              ? Colors.white
-                              : Color(0xFFF37023),
-                          borderRadius: BorderRadius.all(Radius.circular(15)),
-                        ),
-                        child: Text(
-                          "${widget.airportCode} - ${widget.toairportCode}",
-                          style: TextStyle(
-                              color: selectedBaggage == 0
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 50,
-                      width: 0.5,
-                      color: Colors.grey.shade200,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedBaggage = 1;
-                        });
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 35, vertical: 10),
-                        margin: EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: selectedBaggage == 1
-                              ? Colors.white
-                              : Color(0xFFF37023),
-                          borderRadius: BorderRadius.all(Radius.circular(15)),
-                        ),
-                        child: Text(
-                          "${widget.toairportCode} - ${widget.airportCode}",
-                          style: TextStyle(
-                              color: selectedBaggage == 1
-                                  ? Colors.black
-                                  : Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView(
-              controller: _scrollController,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 8.h,
                   ),
-                  color: Colors.white,
-                  child: Row(
+                  SizedBox(height: 10),
+                  Text(
+                    "Loading...",
+                    style: TextStyle(color: Colors.black),
+                  )
+                ],
+              ),
+            ),
+          )
+        : Scaffold(
+            bottomNavigationBar: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.w),
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: outbound.length.toString(),
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                              TextSpan(text: " "),
-                              TextSpan(
-                                text: "AVAILABLE FLIGHTS",
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // SizedBox(width: 60.w),
-                      Container(
-                        height: 25.h,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(16)),
-                              ),
-                              builder: (context) {
-                                return Container(
-                                  height: 620.h, // Fixed height
-                                  child: FilterBottomSheet(),
-                                );
-                              },
-                            );
-                          },
-                          icon: Image.asset(
-                            'assets/images/Filter.png',
-                            alignment: Alignment.center,
-                            height: 12.h,
-                            width: 12.w,
-                          ),
-                          label: Text(
-                            "Filter",
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "ONWARDS",
                             style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 10.sp, // Reduced text size
-                              color: Color(0xFF606060),
-                            ),
+                                color: Color(0xFF0F9374),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade100,
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  30.r), // Rounded corners
-                            ),
-                            padding: EdgeInsets.symmetric(
-                                vertical: 3.h, horizontal: 20.w),
+                          Text(
+                            "${departureTime} - ${arrivalTime}",
+                            style: TextStyle(color: Color(0xFF909090)),
                           ),
-                        ),
+                          Text(
+                            "₹${fare}",
+                            style: TextStyle(color: Color(0xFF606060)),
+                          )
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "RETURN",
+                            style: TextStyle(
+                                color: Color(0xFFD71A21),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            "${indepartureTime} - ${inarrivalTime}",
+                            style: TextStyle(color: Color(0xFF909090)),
+                          ),
+                          Text(
+                            "₹${infare}",
+                            style: TextStyle(color: Color(0xFF606060)),
+                          )
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            "TOTAL PRICE",
+                            style: TextStyle(
+                                color: Color(0xFFD71A21),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            "₹${total}",
+                            style: TextStyle(
+                                color: Color(0xFF606060), fontSize: 20),
+                          )
+                        ],
                       ),
                     ],
                   ),
-                ),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount:
-                      selectedBaggage == 0 ? outbound.length : inbound.length,
-                  itemBuilder: (context, index) {
-                    final flight =
-                        selectedBaggage == 0 ? outbound[index] : inbound[index];
-
-                    int outBoundDuration = searchData.response.results.first
-                        .first.segments.first.first.duration;
-                    int hours = outBoundDuration ~/ 60; // integer division
-                    int minutes = outBoundDuration % 60;
-                    return FlightCard(
-                      flight: flight,
-                      hours: hours,
-                      minutes: minutes,
-                    );
-                  },
-                ),
-              ],
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    onTap: () {
+                      print("Total Amount$total");
+                      if (selectedOutbound != null && selectedInbound != null) {
+                        print('Navigating to FlightDetailsPage with:');
+                        print(
+                            'Outbound Flight: ${selectedOutbound!.segments.first.first.airline.airlineName} (${selectedOutbound!.segments.first.first.airline.flightNumber})');
+                        print(
+                            'Inbound Flight: ${selectedInbound!.segments.first.first.airline.airlineName} (${selectedInbound!.segments.first.first.airline.flightNumber})');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FlightDetailsPage(
+                                outboundFlight: selectedOutbound,
+                                inboundFlight: selectedInbound!,
+                                flight: {},
+                                city: '',
+                                destination: '',
+                                airlineName: '',
+                                cityName: '',
+                                cityCode: '',
+                                flightNumber: '',
+                                descityName: '',
+                                descityCode: '',
+                                depDate: '',
+                                depTime: '',
+                                arrDate: '',
+                                arrTime: '',
+                                duration: '',
+                                refundable: '',
+                                stop: '',
+                                airportName: '',
+                                desairportName: '',
+                                basefare: null,
+                                segments: null,
+                                resultindex: '',
+                                traceid: '',
+                                total: total.toString()),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                "Please select both outbound and inbound flights"),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      height: 50,
+                      width: 400,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(25),
+                          color: Color(0xFFF37023)),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          "View Fare",
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
-    );
+            backgroundColor: Colors.grey.shade200,
+            appBar: AppBar(
+              backgroundColor: Colors.grey.shade200,
+              bottom: PreferredSize(
+                preferredSize: Size.fromHeight(170),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Color(0xFFF37023),
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 3,
+                            color: Colors.grey.shade500,
+                          )
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white),
+                                  child: Icon(
+                                    Icons.arrow_back,
+                                    color: Color(0xFFF37023),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                "${finalrounddepDateformat.toString()} - ${finalroundarrDateformat.toString()}",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 14),
+                              ),
+                              Spacer(),
+                              SvgPicture.asset(
+                                'assets/icon/edit.svg',
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                "Edit details",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        widget.fromAirport,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: 15),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        widget.airportCode,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text("",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10)),
+                                ],
+                              ),
+                              Column(
+                                children: [
+                                  Image.asset(
+                                    "assets/icon/roundtripright.png",
+                                    width: 25,
+                                    height: 15,
+                                  ),
+                                  Image.asset(
+                                    "assets/icon/roundtripline.png",
+                                    width: 70,
+                                    height: 15,
+                                  ),
+                                  Image.asset(
+                                    "assets/icon/roundtripleft.png",
+                                    width: 25,
+                                    height: 15,
+                                  )
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        widget.toAirport,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: 15),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        widget.toairportCode,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text("",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.all(5),
+                      margin: EdgeInsets.all(12),
+                      height: 60,
+                      decoration: BoxDecoration(
+                          color: Color(0xFFF37023),
+                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedBaggage = 0;
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 35, vertical: 10),
+                              margin: EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: selectedBaggage == 0
+                                    ? Colors.white
+                                    : Color(0xFFF37023),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(15)),
+                              ),
+                              child: Text(
+                                "${widget.airportCode} - ${widget.toairportCode}",
+                                style: TextStyle(
+                                    color: selectedBaggage == 0
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 50,
+                            width: 0.5,
+                            color: Colors.grey.shade200,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedBaggage = 1;
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 35, vertical: 10),
+                              margin: EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: selectedBaggage == 1
+                                    ? Colors.white
+                                    : Color(0xFFF37023),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(15)),
+                              ),
+                              child: Text(
+                                "${widget.toairportCode} - ${widget.airportCode}",
+                                style: TextStyle(
+                                    color: selectedBaggage == 1
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              automaticallyImplyLeading: false,
+            ),
+            body: isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                    color: Color(0xFFF37023),
+                  ))
+                : ListView(
+                    controller: _scrollController,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8.h,
+                        ),
+                        color: Colors.white,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 20.w),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: (selectedBaggage == 0
+                                              ? outbound.length
+                                              : inbound.length)
+                                          .toString(),
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                    TextSpan(text: " "),
+                                    TextSpan(
+                                      text: "AVAILABLE FLIGHTS",
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: 25.h,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(16)),
+                                    ),
+                                    builder: (context) {
+                                      return Container(
+                                        height: 620.h,
+                                        child: FilterBottomSheet(),
+                                      );
+                                    },
+                                  );
+                                },
+                                icon: Image.asset(
+                                  'assets/images/Filter.png',
+                                  alignment: Alignment.center,
+                                  height: 12.h,
+                                  width: 12.w,
+                                ),
+                                label: Text(
+                                  "Filter",
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 10.sp,
+                                    color: Color(0xFF606060),
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey.shade100,
+                                  elevation: 3,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 3.h, horizontal: 20.w),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: selectedBaggage == 0
+                            ? outbound.length
+                            : inbound.length,
+                        itemBuilder: (context, index) {
+                          final flight = selectedBaggage == 0
+                              ? outbound[index]
+                              : inbound[index];
+                          int outBoundDuration =
+                              flight.segments.first.first.duration;
+                          int hours = outBoundDuration ~/ 60;
+                          int minutes = outBoundDuration % 60;
+                          return FlightCard(
+                            flight: flight,
+                            hours: hours,
+                            minutes: minutes,
+                            onFlightSelected: (selectedFlight) {
+                              setState(() {
+                                if (selectedBaggage == 0) {
+                                  selectedOutbound = selectedFlight;
+                                  departureTime = selectedFlight
+                                      .segments.first.first.origin.depTime
+                                      .toString()
+                                      .substring(11, 16);
+                                  arrivalTime = selectedFlight
+                                      .segments.last.last.destination.arrTime
+                                      .toString()
+                                      .substring(11, 16);
+                                  fare =
+                                      selectedFlight.fare.baseFare.toString();
+                                  print('Selected Outbound Flight:');
+                                  print(
+                                      'Airline: ${selectedFlight.segments.first.first.airline.airlineName}');
+                                  print(
+                                      'Flight Number: ${selectedFlight.segments.first.first.airline.flightNumber}');
+                                  print(
+                                      'Departure: ${selectedFlight.segments.first.first.origin.airport.cityName} ($departureTime)');
+                                  print(
+                                      'Arrival: ${selectedFlight.segments.last.last.destination.airport.cityName} ($arrivalTime)');
+                                  print(
+                                      'Fare: ₹${selectedFlight.fare.baseFare}');
+                                  print(
+                                      'Refundable: ${selectedFlight.isRefundable ? "Yes" : "No"}');
+                                  debugPrint(
+                                      "Full Outbound Flight JSON: ${jsonEncode(selectedFlight.toJson())}",
+                                      wrapWidth: 1500);
+                                } else {
+                                  selectedInbound = selectedFlight;
+                                  indepartureTime = selectedFlight
+                                      .segments.first.first.origin.depTime
+                                      .toString()
+                                      .substring(11, 16);
+                                  inarrivalTime = selectedFlight
+                                      .segments.last.last.destination.arrTime
+                                      .toString()
+                                      .substring(11, 16);
+                                  infare =
+                                      selectedFlight.fare.baseFare.toString();
+                                  print('Selected Inbound Flight:');
+                                  print(
+                                      'Airline: ${selectedFlight.segments.first.first.airline.airlineName}');
+                                  print(
+                                      'Flight Number: ${selectedFlight.segments.first.first.airline.flightNumber}');
+                                  print(
+                                      'Departure: ${selectedFlight.segments.first.first.origin.airport.cityName} ($indepartureTime)');
+                                  print(
+                                      'Arrival: ${selectedFlight.segments.last.last.destination.airport.cityName} ($inarrivalTime)');
+                                  print(
+                                      'Fare: ₹${selectedFlight.fare.baseFare}');
+                                  print(
+                                      'Refundable: ${selectedFlight.isRefundable ? "Yes" : "No"}');
+                                  debugPrint(
+                                      "Full Inbound Flight JSON: ${jsonEncode(selectedFlight.toJson())}",
+                                      wrapWidth: 1500);
+                                }
+                                total = (fare.isNotEmpty && infare.isNotEmpty)
+                                    ? double.parse(fare) + double.parse(infare)
+                                    : 0.0;
+                                print('Total Fare: ₹$total');
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+          );
   }
 }
 
 class FlightCard extends StatefulWidget {
   final Result flight;
-  final int hours; // Add hours parameter
+  final int hours;
   final int minutes;
+  final Function(Result) onFlightSelected;
 
   const FlightCard({
     super.key,
     required this.flight,
     required this.hours,
     required this.minutes,
+    required this.onFlightSelected,
   });
 
   @override
@@ -713,8 +759,6 @@ class FlightCard extends StatefulWidget {
 class _FlightCardState extends State<FlightCard> {
   bool isExpanded = false;
   int selectedFare = -1;
-
-  // int deration = widget.flight.segments.first.first.duration;
 
   @override
   Widget build(BuildContext context) {
@@ -729,39 +773,7 @@ class _FlightCardState extends State<FlightCard> {
         onTap: () {
           setState(() {
             isExpanded = !isExpanded;
-            // Check if the flight is from outbound (BLR to DEL) or inbound (DEL to BLR)
-            if (selectedBaggage == 0) {
-              // Outbound flight (BLR to DEL)
-              departureTime = widget.flight.segments.first.first.origin.depTime
-                  .toString()
-                  .substring(11, 16);
-              print("departureTime$departureTime");
-              print("selectedBaggage$selectedBaggage");
-              arrivalTime = widget
-                  .flight.segments.first.last.destination.arrTime
-                  .toString()
-                  .substring(11, 16);
-              fare = widget.flight.fare.baseFare.toString();
-              print("fare$fare");
-              // selectedBaggage = 1;
-            } else {
-              print("selectedBaggage$selectedBaggage");
-
-              // Inbound flight (DEL to BLR)
-              indepartureTime = widget
-                  .flight.segments.first.first.origin.depTime
-                  .toString()
-                  .substring(11, 16);
-              inarrivalTime = widget
-                  .flight.segments.last.last.destination.arrTime
-                  .toString()
-                  .substring(11, 16);
-              infare = widget.flight.fare.baseFare.toString();
-              print("infare$infare");
-            }
-
-            total = double.parse(fare)! + double.parse(infare)!;
-            print("total$total");
+            widget.onFlightSelected(widget.flight);
           });
         },
         child: Card(
@@ -789,9 +801,7 @@ class _FlightCardState extends State<FlightCard> {
                                 height: 50,
                               ),
                             ),
-                            const SizedBox(
-                              width: 10,
-                            ),
+                            const SizedBox(width: 10),
                             Container(
                               width: 120,
                               child: Column(
@@ -876,10 +886,7 @@ class _FlightCardState extends State<FlightCard> {
                             ),
                           ],
                         ),
-                        SizedBox(
-                          // height: 2.h,
-                          width: 5,
-                        ),
+                        SizedBox(width: 5),
                       ],
                     ),
                     Expanded(
@@ -907,13 +914,10 @@ class _FlightCardState extends State<FlightCard> {
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: Colors.red,
-                              // highlight layover
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(
-                            height: 2.h,
-                          ),
+                          SizedBox(height: 2.h),
                         ],
                       ),
                     ),
@@ -1033,7 +1037,6 @@ class _FlightCardState extends State<FlightCard> {
                               ),
                             ),
                             SizedBox(width: 4.w),
-                            // Text(searchData.response.results[index][innerIndex].airlineCode,
                             Text(
                               widget.flight.segments.first.first.origin.airport
                                   .cityCode,
@@ -1043,9 +1046,7 @@ class _FlightCardState extends State<FlightCard> {
                             ),
                           ],
                         ),
-                        const SizedBox(
-                          width: 100,
-                        ),
+                        const SizedBox(width: 100),
                       ],
                     ),
                     Column(
@@ -1077,9 +1078,7 @@ class _FlightCardState extends State<FlightCard> {
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: 5,
-                ),
+                SizedBox(height: 5),
                 isExpanded
                     ? GestureDetector(
                         onTap: () {
@@ -1090,11 +1089,8 @@ class _FlightCardState extends State<FlightCard> {
                         child: Column(
                           children: [
                             Container(
-                              margin: EdgeInsets.symmetric(
-                                vertical: 5,
-                              ),
+                              margin: EdgeInsets.symmetric(vertical: 5),
                               padding: EdgeInsets.all(5),
-                              // height: 320,
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   color: const Color(0xFFFFF4EF)),
@@ -1112,7 +1108,6 @@ class _FlightCardState extends State<FlightCard> {
                                         onChanged: (value) {
                                           setState(() {
                                             selectedFare = value!;
-                                            selectedBaggage = 1;
                                           });
                                         }),
                                   ),
@@ -1160,9 +1155,7 @@ class _FlightCardState extends State<FlightCard> {
                                               'assets/ssr/bag.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1181,18 +1174,14 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/checkin.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1211,18 +1200,14 @@ class _FlightCardState extends State<FlightCard> {
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/seat.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1240,18 +1225,14 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/meals.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1273,18 +1254,14 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/cancel.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1306,9 +1283,8 @@ class _FlightCardState extends State<FlightCard> {
                                                               rule.type ==
                                                               'Cancellation')
                                                           .toList();
-
                                                       if (rules.isEmpty) {
-                                                        return "Contact Cust.support"; // or "No Cancellation Policy"
+                                                        return "Contact Cust.support";
                                                       } else if (rules.first
                                                           .details.isNotEmpty) {
                                                         return "Chargable";
@@ -1322,9 +1298,7 @@ class _FlightCardState extends State<FlightCard> {
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.start,
@@ -1333,9 +1307,7 @@ class _FlightCardState extends State<FlightCard> {
                                               'assets/ssr/date.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1357,9 +1329,8 @@ class _FlightCardState extends State<FlightCard> {
                                                               rule.type ==
                                                               'Reissue')
                                                           .toList();
-
                                                       if (rules.isEmpty) {
-                                                        return "Contact Cust.support"; // or "No Cancellation Policy"
+                                                        return "Contact Cust.support";
                                                       } else if (rules.first
                                                           .details.isNotEmpty) {
                                                         return "Chargable";
@@ -1373,23 +1344,18 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 15,
-                                        ),
+                                        const SizedBox(height: 15),
                                       ],
                                     ),
                                   )
                                 ],
                               ),
                             ),
-                            SizedBox(
-                              height: 5,
-                            ),
+                            SizedBox(height: 5),
                             Container(
                               margin: EdgeInsets.symmetric(
                                   vertical: 5, horizontal: 5),
                               padding: EdgeInsets.all(5),
-                              // height: 320,
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   color: const Color(0xFFFFF4EF)),
@@ -1411,7 +1377,6 @@ class _FlightCardState extends State<FlightCard> {
                                         }),
                                   ),
                                   Container(
-                                    // height: 40,
                                     margin: const EdgeInsets.all(10),
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
@@ -1448,9 +1413,7 @@ class _FlightCardState extends State<FlightCard> {
                                               'assets/ssr/bag.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1468,18 +1431,14 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/checkin.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1497,18 +1456,14 @@ class _FlightCardState extends State<FlightCard> {
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/seat.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1526,18 +1481,14 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/meals.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1555,18 +1506,14 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
                                               'assets/ssr/cancel.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1584,9 +1531,7 @@ class _FlightCardState extends State<FlightCard> {
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
+                                        const SizedBox(height: 10),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.start,
@@ -1595,9 +1540,7 @@ class _FlightCardState extends State<FlightCard> {
                                               'assets/ssr/date.png',
                                               height: 16,
                                             ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
+                                            const SizedBox(width: 10),
                                             const SizedBox(
                                               width: 100,
                                               child: Text(
@@ -1615,9 +1558,7 @@ class _FlightCardState extends State<FlightCard> {
                                             )
                                           ],
                                         ),
-                                        const SizedBox(
-                                          height: 15,
-                                        ),
+                                        const SizedBox(height: 15),
                                       ],
                                     ),
                                   )
@@ -1628,9 +1569,7 @@ class _FlightCardState extends State<FlightCard> {
                         ),
                       )
                     : Container(),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Container(
                   height: 25,
                   padding: EdgeInsets.all(5),
@@ -1640,18 +1579,14 @@ class _FlightCardState extends State<FlightCard> {
                   ),
                   child: Row(
                     children: [
-                      SizedBox(
-                        width: 5,
-                      ),
+                      SizedBox(width: 5),
                       SvgPicture.asset(
                         "assets/icon/promocode.svg",
                         color: Color(0xFF5D89F0),
                         height: 15,
                         width: 20,
                       ),
-                      SizedBox(
-                        width: 10,
-                      ),
+                      SizedBox(width: 10),
                       Text(
                         "Flat 10% Off upto Rs.with trvlus coupon",
                         style: TextStyle(

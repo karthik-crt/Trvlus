@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/search_data.dart';
+import '../utils/api_service.dart';
 import 'TravelerDetails.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -27,11 +29,19 @@ class OtpVerificationScreen extends StatefulWidget {
   final String? airportName;
   final String? desairportName;
   final double? basefare;
+  final double? tax;
   final List<List<Segment>>? segments;
   final String? resultindex;
   final String? traceid;
+  final Result? outboundFlight;
+  final Result? inboundFlight;
+  final String? total;
+  final int? adultCount;
+  final int? childCount;
+  final int? infantCount;
+  final String? mobileNumber;
 
-  const OtpVerificationScreen(
+  OtpVerificationScreen(
       {super.key,
       required this.flight,
       required this.city,
@@ -55,7 +65,15 @@ class OtpVerificationScreen extends StatefulWidget {
       this.basefare,
       this.segments,
       this.resultindex,
-      this.traceid});
+      this.traceid,
+      this.outboundFlight,
+      this.inboundFlight,
+      this.total,
+      this.tax,
+      this.adultCount,
+      this.childCount,
+      this.infantCount,
+      this.mobileNumber});
 
   @override
   _OtpVerificationScreenState createState() => _OtpVerificationScreenState();
@@ -63,8 +81,8 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final List<TextEditingController> _otpControllers =
-      List.generate(4, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+      List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   @override
   void dispose() {
@@ -77,32 +95,46 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
-  void _verifyOtp() {
+  Future<void> _verifyOtp() async {
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
+      String otp = _otpControllers.map((c) => c.text).join();
+
+      // Calling VerifyOTP API
+      await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
       Get.to(() => TravelerDetailsPage(
-          flight: {},
-          city: widget.city,
-          destination: widget.destination,
-          airlineName: widget.airlineName,
-          airlineCode: widget.airlineCode,
-          flightNumber: widget.flightNumber,
-          cityName: widget.cityName,
-          cityCode: widget.cityCode,
-          descityName: widget.descityName,
-          descityCode: widget.descityCode,
-          depDate: widget.depDate,
-          depTime: widget.depTime,
-          arrDate: widget.arrDate,
-          arrTime: widget.arrTime,
-          duration: widget.duration,
-          refundable: widget.refundable,
-          stop: widget.stop,
-          airportName: widget.airportName,
-          desairportName: widget.desairportName,
-          basefare: widget.basefare,
-          segments: widget.segments,
-          resultindex: widget.resultindex,
-          traceid: widget.traceid));
+            flight: {},
+            city: widget.city,
+            destination: widget.destination,
+            airlineName: widget.airlineName,
+            airlineCode: widget.airlineCode,
+            flightNumber: widget.flightNumber,
+            cityName: widget.cityName,
+            cityCode: widget.cityCode,
+            descityName: widget.descityName,
+            descityCode: widget.descityCode,
+            depDate: widget.depDate,
+            depTime: widget.depTime,
+            arrDate: widget.arrDate,
+            arrTime: widget.arrTime,
+            duration: widget.duration,
+            refundable: widget.refundable,
+            stop: widget.stop,
+            airportName: widget.airportName,
+            desairportName: widget.desairportName,
+            basefare: widget.basefare,
+            segments: widget.segments,
+            resultindex: widget.resultindex,
+            traceid: widget.traceid,
+            outboundFlight: widget.outboundFlight,
+            inboundFlight: widget.inboundFlight,
+            total: widget.total,
+            tax: widget.tax,
+            adultCount: widget.adultCount,
+            childCount: widget.childCount,
+            infantCount: widget.infantCount,
+          ));
     } else {
       print("Enter complete OTP");
     }
@@ -160,7 +192,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(
-                4,
+                6,
                 (index) => SizedBox(
                   width: 50.w,
                   child: RawKeyboardListener(
@@ -195,12 +227,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          if (index < _otpControllers.length - 1) {
-                            FocusScope.of(context)
-                                .requestFocus(_focusNodes[index + 1]);
-                          }
+                        // Move to next field
+                        if (value.isNotEmpty &&
+                            index < _otpControllers.length - 1) {
+                          FocusScope.of(context)
+                              .requestFocus(_focusNodes[index + 1]);
                         }
+
+                        // ✅ Print current field value
+                        print("Digit ${index + 1}: $value");
+
+                        // ✅ Print full OTP (joined from all 4 fields)
+                        String currentOtp =
+                            _otpControllers.map((c) => c.text).join();
+                        print("Current OTP: $currentOtp");
                       },
                     ),
                   ),
@@ -209,14 +249,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
             SizedBox(height: 20.h),
             Center(
-              child: Text(
-                "Don't receive OTP? Resend in 30 s",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
+                // child: Text(
+                //   "Don't receive OTP? Resend in 30 s",
+                //   style: TextStyle(
+                //     fontSize: 14.sp,
+                //     color: Colors.grey[600],
+                //   ),
+                // ),
                 ),
-              ),
-            ),
             SizedBox(height: 60.h),
             Center(
               child: SizedBox(

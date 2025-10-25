@@ -1,14 +1,21 @@
-SearchData searchDataFromJson(Map<String, dynamic> str) =>
-    SearchData.fromJson(str);
+import 'dart:convert';
 
-class SearchData {
+FareQuotesData fareQuotesDataFromJson(Map<String, dynamic> json) =>
+    FareQuotesData.fromJson(json);
+
+class FareQuotesData {
   Response response;
 
-  SearchData({
+  FareQuotesData({
     required this.response,
   });
 
-  factory SearchData.fromJson(Map<String, dynamic> json) => SearchData(
+  factory FareQuotesData.fromRawJson(String str) =>
+      FareQuotesData.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
+  factory FareQuotesData.fromJson(Map<String, dynamic> json) => FareQuotesData(
         response: Response.fromJson(json["Response"]),
       );
 
@@ -18,46 +25,43 @@ class SearchData {
 }
 
 class Response {
-  int resultRecommendationType;
-  int responseStatus;
   Error error;
+  dynamic flightDetailChangeInfo;
+  bool isPriceChanged;
+  int responseStatus;
+  Results results;
   String traceId;
-  String origin;
-  String destination;
-  List<List<Result>> results;
 
   Response({
-    required this.resultRecommendationType,
-    required this.responseStatus,
     required this.error,
-    required this.traceId,
-    required this.origin,
-    required this.destination,
+    required this.flightDetailChangeInfo,
+    required this.isPriceChanged,
+    required this.responseStatus,
     required this.results,
+    required this.traceId,
   });
 
+  factory Response.fromRawJson(String str) =>
+      Response.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory Response.fromJson(Map<String, dynamic> json) => Response(
-        resultRecommendationType: json["ResultRecommendationType"],
-        responseStatus: json["ResponseStatus"],
         error: Error.fromJson(json["Error"]),
+        flightDetailChangeInfo: json["FlightDetailChangeInfo"],
+        isPriceChanged: json["IsPriceChanged"],
+        responseStatus: json["ResponseStatus"],
+        results: Results.fromJson(json["Results"] ?? {}),
         traceId: json["TraceId"],
-        origin: json["Origin"] ?? "",
-        destination: json["Destination"] ?? "",
-        results: json["Results"] != null
-            ? List<List<Result>>.from(json["Results"].map(
-                (x) => List<Result>.from(x.map((x) => Result.fromJson(x)))))
-            : [],
       );
 
   Map<String, dynamic> toJson() => {
-        "ResultRecommendationType": resultRecommendationType,
-        "ResponseStatus": responseStatus,
         "Error": error.toJson(),
+        "FlightDetailChangeInfo": flightDetailChangeInfo,
+        "IsPriceChanged": isPriceChanged,
+        "ResponseStatus": responseStatus,
+        "Results": results.toJson(),
         "TraceId": traceId,
-        "Origin": origin,
-        "Destination": destination,
-        "Results": List<dynamic>.from(
-            results.map((x) => List<dynamic>.from(x.map((x) => x.toJson())))),
       };
 }
 
@@ -70,6 +74,10 @@ class Error {
     required this.errorMessage,
   });
 
+  factory Error.fromRawJson(String str) => Error.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory Error.fromJson(Map<String, dynamic> json) => Error(
         errorCode: json["ErrorCode"],
         errorMessage: json["ErrorMessage"],
@@ -81,15 +89,14 @@ class Error {
       };
 }
 
-class Result {
+class Results {
   List<dynamic> fareInclusions;
-  dynamic firstNameFormat;
+  String firstNameFormat;
   bool isBookableIfSeatNotAvailable;
   bool isFreeMealAvailable;
   bool isHoldAllowedWithSsr;
   bool isHoldMandatoryWithSsr;
-  bool isUpsellAllowed;
-  dynamic lastNameFormat;
+  String lastNameFormat;
   String resultIndex;
   int source;
   bool isLcc;
@@ -101,30 +108,26 @@ class Result {
   bool gstAllowed;
   bool isCouponAppilcable;
   bool isGstMandatory;
-  String airlineRemark;
+  dynamic airlineRemark;
   bool isPassportFullDetailRequiredAtBook;
   String resultFareType;
   Fare fare;
   List<FareBreakdown> fareBreakdown;
   List<List<Segment>> segments;
-  String lastTicketDate;
-  String ticketAdvisory;
+  DateTime lastTicketDate;
+  dynamic ticketAdvisory;
   List<FareRule> fareRules;
-  PenaltyCharges penaltyCharges;
   String airlineCode;
   List<List<MiniFareRule>> miniFareRules;
   String validatingAirline;
-  ResultFareClassification fareClassification;
-  bool isExpanded;
 
-  Result({
+  Results({
     required this.fareInclusions,
     required this.firstNameFormat,
     required this.isBookableIfSeatNotAvailable,
     required this.isFreeMealAvailable,
     required this.isHoldAllowedWithSsr,
     required this.isHoldMandatoryWithSsr,
-    required this.isUpsellAllowed,
     required this.lastNameFormat,
     required this.resultIndex,
     required this.source,
@@ -146,63 +149,56 @@ class Result {
     required this.lastTicketDate,
     required this.ticketAdvisory,
     required this.fareRules,
-    required this.penaltyCharges,
     required this.airlineCode,
     required this.miniFareRules,
     required this.validatingAirline,
-    required this.fareClassification,
-    required this.isExpanded,
   });
 
-  factory Result.fromJson(Map<String, dynamic> json) => Result(
-      fareInclusions: List<dynamic>.from(json["FareInclusions"].map((x) => x)),
-      firstNameFormat: json["FirstNameFormat"],
-      isBookableIfSeatNotAvailable:
-          json["IsBookableIfSeatNotAvailable"] ?? false,
-      isFreeMealAvailable: json["IsFreeMealAvailable"] ?? false,
-      isHoldAllowedWithSsr: json["IsHoldAllowedWithSSR"] ?? false,
-      isHoldMandatoryWithSsr: json["IsHoldMandatoryWithSSR"],
-      isUpsellAllowed: json["IsUpsellAllowed"] ?? false,
-      lastNameFormat: json["LastNameFormat"] ?? "",
-      resultIndex: json["ResultIndex"],
-      source: json["Source"],
-      isLcc: json["IsLCC"],
-      isRefundable: json["IsRefundable"] ?? false,
-      isPanRequiredAtBook: json["IsPanRequiredAtBook"] ?? false,
-      isPanRequiredAtTicket: json["IsPanRequiredAtTicket"] ?? false,
-      isPassportRequiredAtBook: json["IsPassportRequiredAtBook"] ?? false,
-      isPassportRequiredAtTicket: json["IsPassportRequiredAtTicket"] ?? false,
-      gstAllowed: json["GSTAllowed"] ?? false,
-      isCouponAppilcable: json["IsCouponAppilcable"] ?? false,
-      isGstMandatory: json["IsGSTMandatory"] ?? false,
-      airlineRemark: json["AirlineRemark"] ?? "",
-      isPassportFullDetailRequiredAtBook:
-          json["IsPassportFullDetailRequiredAtBook"] ?? false,
-      resultFareType: json["ResultFareType"] ?? "",
-      fare: Fare.fromJson(json["Fare"] ?? {}),
-      fareBreakdown: List<FareBreakdown>.from(
-          json["FareBreakdown"].map((x) => FareBreakdown.fromJson(x))),
-      segments: List<List<Segment>>.from(json["Segments"]
-          .map((x) => List<Segment>.from(x.map((x) => Segment.fromJson(x))))),
-      lastTicketDate: json["LastTicketDate"] ?? "",
-      ticketAdvisory: json["TicketAdvisory"] ?? "",
-      fareRules: List<FareRule>.from(
-          json["FareRules"].map((x) => FareRule.fromJson(x))),
-      penaltyCharges: PenaltyCharges.fromJson(json["PenaltyCharges"] ?? {}),
-      airlineCode: json["AirlineCode"],
-      miniFareRules: json["MiniFareRules"] != null
-          ? List<List<MiniFareRule>>.from(
-              json["MiniFareRules"].map(
-                (x) => List<MiniFareRule>.from(
-                  x.map((x) => MiniFareRule.fromJson(x)),
-                ),
-              ),
-            )
-          : [],
-      validatingAirline: json["ValidatingAirline"] ?? "",
-      fareClassification:
-          ResultFareClassification.fromJson(json["FareClassification"] ?? {}),
-      isExpanded: false);
+  factory Results.fromRawJson(String str) => Results.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
+  factory Results.fromJson(Map<String, dynamic> json) => Results(
+        fareInclusions: json["FareInclusions"] != null
+            ? List<dynamic>.from(json["FareInclusions"].map((x) => x))
+            : [],
+        firstNameFormat: json["FirstNameFormat"] ?? "",
+        isBookableIfSeatNotAvailable:
+            json["IsBookableIfSeatNotAvailable"] ?? false,
+        isFreeMealAvailable: json["IsFreeMealAvailable"] ?? false,
+        isHoldAllowedWithSsr: json["IsHoldAllowedWithSSR"] ?? false,
+        isHoldMandatoryWithSsr: json["IsHoldMandatoryWithSSR"] ?? false,
+        lastNameFormat: json["LastNameFormat"] ?? "",
+        resultIndex: json["ResultIndex"] ?? "",
+        source: json["Source"] ?? 0,
+        isLcc: json["IsLCC"] ?? false,
+        isRefundable: json["IsRefundable"] ?? false,
+        isPanRequiredAtBook: json["IsPanRequiredAtBook"] ?? false,
+        isPanRequiredAtTicket: json["IsPanRequiredAtTicket"] ?? false,
+        isPassportRequiredAtBook: json["IsPassportRequiredAtBook"] ?? false,
+        isPassportRequiredAtTicket: json["IsPassportRequiredAtTicket"] ?? false,
+        gstAllowed: json["GSTAllowed"] ?? false,
+        isCouponAppilcable: json["IsCouponAppilcable"] ?? false,
+        isGstMandatory: json["IsGSTMandatory"] ?? false,
+        airlineRemark: json["AirlineRemark"] ?? "",
+        isPassportFullDetailRequiredAtBook:
+            json["IsPassportFullDetailRequiredAtBook"] ?? false,
+        resultFareType: json["ResultFareType"] ?? "",
+        fare: Fare.fromJson(json["Fare"] ?? {}),
+        fareBreakdown: List<FareBreakdown>.from(
+            json["FareBreakdown"].map((x) => FareBreakdown.fromJson(x))),
+        segments: List<List<Segment>>.from(json["Segments"]
+            .map((x) => List<Segment>.from(x.map((x) => Segment.fromJson(x))))),
+        lastTicketDate: DateTime.parse(json["LastTicketDate"]),
+        ticketAdvisory: json["TicketAdvisory"],
+        fareRules: List<FareRule>.from(
+            json["FareRules"].map((x) => FareRule.fromJson(x))),
+        airlineCode: json["AirlineCode"],
+        miniFareRules: List<List<MiniFareRule>>.from(json["MiniFareRules"].map(
+            (x) => List<MiniFareRule>.from(
+                x.map((x) => MiniFareRule.fromJson(x))))),
+        validatingAirline: json["ValidatingAirline"],
+      );
 
   Map<String, dynamic> toJson() => {
         "FareInclusions": List<dynamic>.from(fareInclusions.map((x) => x)),
@@ -211,7 +207,6 @@ class Result {
         "IsFreeMealAvailable": isFreeMealAvailable,
         "IsHoldAllowedWithSSR": isHoldAllowedWithSsr,
         "IsHoldMandatoryWithSSR": isHoldMandatoryWithSsr,
-        "IsUpsellAllowed": isUpsellAllowed,
         "LastNameFormat": lastNameFormat,
         "ResultIndex": resultIndex,
         "Source": source,
@@ -233,27 +228,26 @@ class Result {
             List<dynamic>.from(fareBreakdown.map((x) => x.toJson())),
         "Segments": List<dynamic>.from(
             segments.map((x) => List<dynamic>.from(x.map((x) => x.toJson())))),
-        "LastTicketDate": lastTicketDate,
+        "LastTicketDate": lastTicketDate.toIso8601String(),
         "TicketAdvisory": ticketAdvisory,
         "FareRules": List<dynamic>.from(fareRules.map((x) => x.toJson())),
-        "PenaltyCharges": penaltyCharges.toJson(),
         "AirlineCode": airlineCode,
         "MiniFareRules": List<dynamic>.from(miniFareRules
             .map((x) => List<dynamic>.from(x.map((x) => x.toJson())))),
         "ValidatingAirline": validatingAirline,
-        "FareClassification": fareClassification.toJson(),
       };
 }
 
 class Fare {
+  int serviceFeeDisplayType;
   String currency;
   double baseFare;
-  double tax;
+  int tax;
   List<ChargeBu> taxBreakup;
-  double yqTax;
-  double additionalTxnFeeOfrd;
+  int yqTax;
+  int additionalTxnFeeOfrd;
   double additionalTxnFeePub;
-  double pgCharge;
+  int pgCharge;
   double otherCharges;
   List<ChargeBu> chargeBu;
   double discount;
@@ -272,6 +266,7 @@ class Fare {
   double totalSpecialServiceCharges;
 
   Fare({
+    required this.serviceFeeDisplayType,
     required this.currency,
     required this.baseFare,
     required this.tax,
@@ -298,39 +293,51 @@ class Fare {
     required this.totalSpecialServiceCharges,
   });
 
+  factory Fare.fromRawJson(String str) => Fare.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory Fare.fromJson(Map<String, dynamic> json) => Fare(
-        currency: json["Currency"],
-        baseFare: json["BaseFare"].toDouble(),
-        tax: json["Tax"].toDouble(),
-        taxBreakup: List<ChargeBu>.from(
-            json["TaxBreakup"].map((x) => ChargeBu.fromJson(x))),
-        yqTax: json["YQTax"].toDouble(),
-        additionalTxnFeeOfrd: json["AdditionalTxnFeeOfrd"].toDouble(),
-        additionalTxnFeePub: json["AdditionalTxnFeePub"].toDouble(),
-        pgCharge: json["PGCharge"].toDouble(),
-        otherCharges: json["OtherCharges"].runtimeType != double
-            ? double.parse(json["OtherCharges"].toString())
-            : json["OtherCharges"] ?? 0.0,
-        chargeBu: List<ChargeBu>.from(
-            json["ChargeBU"].map((x) => ChargeBu.fromJson(x))),
-        discount: json["Discount"].toDouble(),
-        publishedFare: json["PublishedFare"].toDouble(),
-        commissionEarned: json["CommissionEarned"]?.toDouble(),
-        plbEarned: json["PLBEarned"].toDouble(),
-        incentiveEarned: json["IncentiveEarned"].toDouble(),
-        offeredFare: json["OfferedFare"]?.toDouble(),
-        tdsOnCommission: json["TdsOnCommission"]?.toDouble(),
-        tdsOnPlb: json["TdsOnPLB"].toDouble(),
-        tdsOnIncentive: json["TdsOnIncentive"].toDouble(),
-        serviceFee: json["ServiceFee"].toDouble(),
-        totalBaggageCharges: json["TotalBaggageCharges"].toDouble(),
-        totalMealCharges: json["TotalMealCharges"].toDouble(),
-        totalSeatCharges: json["TotalSeatCharges"].toDouble(),
+        serviceFeeDisplayType:
+            (json["ServiceFeeDisplayType"] as num?)?.toInt() ?? 0,
+        currency: json["Currency"] ?? "",
+        baseFare: (json["BaseFare"] as num?)?.toDouble() ?? 0,
+        tax: (json["Tax"] as num?)?.toInt() ?? 0,
+        taxBreakup: json["TaxBreakup"] != null
+            ? List<ChargeBu>.from(
+                json["TaxBreakup"].map((x) => ChargeBu.fromJson(x)))
+            : [],
+        yqTax: (json["YQTax"] as num?)?.toInt() ?? 0,
+        additionalTxnFeeOfrd:
+            (json["AdditionalTxnFeeOfrd"] as num?)?.toInt() ?? 0,
+        additionalTxnFeePub:
+            (json["AdditionalTxnFeePub"] as num?)?.toDouble() ?? 0,
+        pgCharge: (json["PGCharge"] as num?)?.toInt() ?? 0,
+        otherCharges: (json["OtherCharges"] as num?)?.toDouble() ?? 0,
+        chargeBu: json["ChargeBU"] != null
+            ? List<ChargeBu>.from(
+                json["ChargeBU"].map((x) => ChargeBu.fromJson(x)))
+            : [],
+        discount: (json["Discount"] as num?)?.toDouble() ?? 0,
+        publishedFare: (json["PublishedFare"] as num?)?.toDouble() ?? 0,
+        commissionEarned: (json["CommissionEarned"] as num?)?.toDouble() ?? 0,
+        plbEarned: (json["PLBEarned"] as num?)?.toDouble() ?? 0,
+        incentiveEarned: (json["IncentiveEarned"] as num?)?.toDouble() ?? 0,
+        offeredFare: (json["OfferedFare"] as num?)?.toDouble() ?? 0,
+        tdsOnCommission: (json["TdsOnCommission"] as num?)?.toDouble() ?? 0,
+        tdsOnPlb: (json["TdsOnPLB"] as num?)?.toDouble() ?? 0,
+        tdsOnIncentive: (json["TdsOnIncentive"] as num?)?.toDouble() ?? 0,
+        serviceFee: (json["ServiceFee"] as num?)?.toDouble() ?? 0,
+        totalBaggageCharges:
+            (json["TotalBaggageCharges"] as num?)?.toDouble() ?? 0,
+        totalMealCharges: (json["TotalMealCharges"] as num?)?.toDouble() ?? 0,
+        totalSeatCharges: (json["TotalSeatCharges"] as num?)?.toDouble() ?? 0,
         totalSpecialServiceCharges:
-            json["TotalSpecialServiceCharges"].toDouble(),
+            (json["TotalSpecialServiceCharges"] as num?)?.toDouble() ?? 0,
       );
 
   Map<String, dynamic> toJson() => {
+        "ServiceFeeDisplayType": serviceFeeDisplayType,
         "Currency": currency,
         "BaseFare": baseFare,
         "Tax": tax,
@@ -367,11 +374,16 @@ class ChargeBu {
     required this.value,
   });
 
+  factory ChargeBu.fromRawJson(String str) =>
+      ChargeBu.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory ChargeBu.fromJson(Map<String, dynamic> json) => ChargeBu(
         key: json["key"],
         value: json["value"].runtimeType != double
             ? double.parse(json["value"].toString())
-            : json["value"] ?? 0.0,
+            : json["value"] ?? 0,
       );
 
   Map<String, dynamic> toJson() => {
@@ -407,21 +419,26 @@ class FareBreakdown {
     required this.supplierReissueCharges,
   });
 
+  factory FareBreakdown.fromRawJson(String str) =>
+      FareBreakdown.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory FareBreakdown.fromJson(Map<String, dynamic> json) => FareBreakdown(
         currency: json["Currency"],
         passengerType: json["PassengerType"],
         passengerCount: json["PassengerCount"],
-        baseFare: json["BaseFare"],
-        tax: json["Tax"],
-        taxBreakUp: json["TaxBreakUp"] != null && json["TaxBreakUp"] is List
+        baseFare: (json["BaseFare"] as num).toInt(),
+        tax: (json["Tax"] as num).toInt(),
+        taxBreakUp: json["TaxBreakUp"] != null
             ? List<ChargeBu>.from(
                 json["TaxBreakUp"].map((x) => ChargeBu.fromJson(x)))
             : [],
-        yqTax: json["YQTax"],
-        additionalTxnFeeOfrd: json["AdditionalTxnFeeOfrd"],
-        additionalTxnFeePub: json["AdditionalTxnFeePub"].toDouble(),
-        pgCharge: json["PGCharge"],
-        supplierReissueCharges: json["SupplierReissueCharges"],
+        yqTax: (json["YQTax"] as num).toInt(),
+        additionalTxnFeeOfrd: (json["AdditionalTxnFeeOfrd"] as num).toInt(),
+        additionalTxnFeePub: json["AdditionalTxnFeePub"].toDouble() ?? 0,
+        pgCharge: (json["PGCharge"] as num).toInt(),
+        supplierReissueCharges: (json["SupplierReissueCharges"] as num).toInt(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -436,27 +453,6 @@ class FareBreakdown {
         "AdditionalTxnFeePub": additionalTxnFeePub,
         "PGCharge": pgCharge,
         "SupplierReissueCharges": supplierReissueCharges,
-      };
-}
-
-class ResultFareClassification {
-  String color;
-  String type;
-
-  ResultFareClassification({
-    required this.color,
-    required this.type,
-  });
-
-  factory ResultFareClassification.fromJson(Map<String, dynamic> json) =>
-      ResultFareClassification(
-        color: json["Color"] ?? "",
-        type: json["Type"] ?? "",
-      );
-
-  Map<String, dynamic> toJson() => {
-        "Color": color,
-        "Type": type,
       };
 }
 
@@ -480,6 +476,11 @@ class FareRule {
     required this.fareFamilyCode,
     required this.fareRuleIndex,
   });
+
+  factory FareRule.fromRawJson(String str) =>
+      FareRule.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
 
   factory FareRule.fromJson(Map<String, dynamic> json) => FareRule(
         origin: json["Origin"],
@@ -507,9 +508,9 @@ class FareRule {
 class MiniFareRule {
   String journeyPoints;
   String type;
-  dynamic from;
-  dynamic to;
-  dynamic unit;
+  String from;
+  String to;
+  String unit;
   String details;
   bool onlineReissueAllowed;
   bool onlineRefundAllowed;
@@ -524,6 +525,11 @@ class MiniFareRule {
     required this.onlineReissueAllowed,
     required this.onlineRefundAllowed,
   });
+
+  factory MiniFareRule.fromRawJson(String str) =>
+      MiniFareRule.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
 
   factory MiniFareRule.fromJson(Map<String, dynamic> json) => MiniFareRule(
         journeyPoints: json["JourneyPoints"] ?? "",
@@ -548,31 +554,11 @@ class MiniFareRule {
       };
 }
 
-class PenaltyCharges {
-  String reissueCharge;
-  String cancellationCharge;
-
-  PenaltyCharges({
-    required this.reissueCharge,
-    required this.cancellationCharge,
-  });
-
-  factory PenaltyCharges.fromJson(Map<String, dynamic> json) => PenaltyCharges(
-        reissueCharge: json["ReissueCharge"] ?? "",
-        cancellationCharge: json["CancellationCharge"] ?? "",
-      );
-
-  Map<String, dynamic> toJson() => {
-        "ReissueCharge": reissueCharge,
-        "CancellationCharge": cancellationCharge,
-      };
-}
-
 class Segment {
   String baggage;
   String cabinBaggage;
   int cabinClass;
-  dynamic supplierFareClass;
+  String supplierFareClass;
   int tripIndicator;
   int segmentIndicator;
   Airline airline;
@@ -584,15 +570,14 @@ class Segment {
   bool stopOver;
   String flightInfoIndex;
   String stopPoint;
-  String stopPointArrivalTime;
-  String stopPointDepartureTime;
+  DateTime stopPointArrivalTime;
+  DateTime stopPointDepartureTime;
   String craft;
   dynamic remark;
   bool isETicketEligible;
   String flightStatus;
   String status;
-  SegmentFareClassification fareClassification;
-  double accumulatedDuration;
+  FareClassification fareClassification;
 
   Segment({
     required this.baggage,
@@ -618,13 +603,16 @@ class Segment {
     required this.flightStatus,
     required this.status,
     required this.fareClassification,
-    required this.accumulatedDuration,
   });
 
+  factory Segment.fromRawJson(String str) => Segment.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory Segment.fromJson(Map<String, dynamic> json) => Segment(
-        baggage: json["Baggage"] ?? "",
-        cabinBaggage: json["CabinBaggage"] ?? "",
-        cabinClass: json["CabinClass"] ?? "",
+        baggage: json["Baggage"],
+        cabinBaggage: json["CabinBaggage"],
+        cabinClass: json["CabinClass"],
         supplierFareClass: json["SupplierFareClass"] ?? "",
         tripIndicator: json["TripIndicator"],
         segmentIndicator: json["SegmentIndicator"],
@@ -637,20 +625,15 @@ class Segment {
         stopOver: json["StopOver"],
         flightInfoIndex: json["FlightInfoIndex"],
         stopPoint: json["StopPoint"],
-        stopPointArrivalTime: json["StopPointArrivalTime"] ?? "",
-        stopPointDepartureTime: json["StopPointDepartureTime"] ?? "",
+        stopPointArrivalTime: DateTime.parse(json["StopPointArrivalTime"]),
+        stopPointDepartureTime: DateTime.parse(json["StopPointDepartureTime"]),
         craft: json["Craft"],
         remark: json["Remark"],
-        isETicketEligible: json["IsETicketEligible"],
+        isETicketEligible: json["IsETicketEligible"] ?? false,
         flightStatus: json["FlightStatus"],
         status: json["Status"],
-        fareClassification: SegmentFareClassification.fromJson(
-            json["FareClassification"] ?? {}),
-        accumulatedDuration: json['AccumulatedDuration'] != null
-            ? json["AccumulatedDuration"].runtimeType != double
-                ? double.parse(json['AccumulatedDuration'].toString())
-                : json['AccumulatedDuration'] ?? 0.0
-            : 0.0,
+        fareClassification:
+            FareClassification.fromJson(json["FareClassification"] ?? {}),
       );
 
   Map<String, dynamic> toJson() => {
@@ -669,15 +652,14 @@ class Segment {
         "StopOver": stopOver,
         "FlightInfoIndex": flightInfoIndex,
         "StopPoint": stopPoint,
-        "StopPointArrivalTime": stopPointArrivalTime,
-        "StopPointDepartureTime": stopPointDepartureTime,
+        "StopPointArrivalTime": stopPointArrivalTime.toIso8601String(),
+        "StopPointDepartureTime": stopPointDepartureTime.toIso8601String(),
         "Craft": craft,
         "Remark": remark,
         "IsETicketEligible": isETicketEligible,
         "FlightStatus": flightStatus,
         "Status": status,
         "FareClassification": fareClassification.toJson(),
-        "AccumulatedDuration": accumulatedDuration,
       };
 }
 
@@ -696,12 +678,16 @@ class Airline {
     required this.operatingCarrier,
   });
 
+  factory Airline.fromRawJson(String str) => Airline.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory Airline.fromJson(Map<String, dynamic> json) => Airline(
-        airlineCode: json["AirlineCode"],
-        airlineName: json["AirlineName"],
-        flightNumber: json["FlightNumber"],
-        fareClass: json["FareClass"],
-        operatingCarrier: json["OperatingCarrier"],
+        airlineCode: json["AirlineCode"] ?? "",
+        airlineName: json["AirlineName"] ?? "",
+        flightNumber: json["FlightNumber"] ?? "",
+        fareClass: json["FareClass"] ?? "",
+        operatingCarrier: json["OperatingCarrier"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -721,6 +707,11 @@ class Destination {
     required this.airport,
     required this.arrTime,
   });
+
+  factory Destination.fromRawJson(String str) =>
+      Destination.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
 
   factory Destination.fromJson(Map<String, dynamic> json) => Destination(
         airport: Airport.fromJson(json["Airport"]),
@@ -752,14 +743,18 @@ class Airport {
     required this.countryName,
   });
 
+  factory Airport.fromRawJson(String str) => Airport.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
   factory Airport.fromJson(Map<String, dynamic> json) => Airport(
-        airportCode: json["AirportCode"],
-        airportName: json["AirportName"],
-        terminal: json["Terminal"],
-        cityCode: json["CityCode"],
-        cityName: json["CityName"],
-        countryCode: json["CountryCode"],
-        countryName: json["CountryName"],
+        airportCode: json["AirportCode"] ?? "",
+        airportName: json["AirportName"] ?? "",
+        terminal: json["Terminal"] ?? "",
+        cityCode: json["CityCode"] ?? "",
+        cityName: json["CityName"] ?? "",
+        countryCode: json["CountryCode"] ?? "",
+        countryName: json["CountryName"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -773,16 +768,21 @@ class Airport {
       };
 }
 
-class SegmentFareClassification {
+class FareClassification {
   String type;
 
-  SegmentFareClassification({
+  FareClassification({
     required this.type,
   });
 
-  factory SegmentFareClassification.fromJson(Map<String, dynamic> json) =>
-      SegmentFareClassification(
-        type: json["Type"] ?? '',
+  factory FareClassification.fromRawJson(String str) =>
+      FareClassification.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
+  factory FareClassification.fromJson(Map<String, dynamic> json) =>
+      FareClassification(
+        type: json["Type"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -798,6 +798,10 @@ class Origin {
     required this.airport,
     required this.depTime,
   });
+
+  factory Origin.fromRawJson(String str) => Origin.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
 
   factory Origin.fromJson(Map<String, dynamic> json) => Origin(
         airport: Airport.fromJson(json["Airport"]),
