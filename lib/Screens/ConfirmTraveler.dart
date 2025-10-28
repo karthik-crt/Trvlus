@@ -118,7 +118,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         (pax ?? []).asMap().entries.map((entry) {
       int index = entry.key;
       passenger = entry.value;
-      print("passenger$passenger");
+      print("index$index");
+      print("passengerAdult$passenger");
       return {
         "type": "ADULT ${index + 1}",
         "name": "${passenger['Firstname']} ${passenger['lastname']}",
@@ -770,10 +771,14 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       Spacer(),
                       GestureDetector(
                         onTap: () {
+                          print("TRACEID${widget.traceid}");
+                          print("RESULTINDEX${widget.resultindex}");
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => Additions()));
+                                  builder: (context) => Additions(
+                                      traceid: widget.traceid,
+                                      resultindex: widget.resultindex)));
                         },
                         child: Text(
                           "+ ADD",
@@ -1198,7 +1203,11 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                   onPressed: () async {
                     // await ApiService().countryCode();
                     // await ApiService().commissionPercentage();
-                    print("passengerdetails$passenger");
+                    print("passengerdetailsAdults$pax");
+
+                    for (var i in passenger.entries) {
+                      print("loopPASSENGER${passenger[i]}");
+                    }
                     print("passengerdetailschild$childpassenger");
                     print("passengerInfant$infantpassenger");
 
@@ -1235,7 +1244,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                         adultCount: widget.adultCount,
                         childCount: widget.childCount,
                         infantCount: widget.infantCount,
-                        passenger: passenger,
+                        passenger: pax,
                         childpassenger: childpassenger,
                         infantpassenger: infantpassenger,
                       ),

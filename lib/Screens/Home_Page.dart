@@ -1327,153 +1327,219 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: false,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.zero, // Removes the rounded corners
       ),
-      builder: (BuildContext context) {
+      builder: (BuildContext modalContext) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter modalSetState) {
-            return Container(
-              height: 400.h,
-              child: Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Select Traveler & Class",
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 20.sp,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    const Divider(),
-                    SizedBox(height: 5.h),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Wrap(
-                        spacing: 5.w,
-                        runSpacing: 5.h,
+          builder: (BuildContext modalContext, StateSetter modalSetState) {
+            return Scaffold(
+              backgroundColor: Colors.white,
+              body: SizedBox(
+                height: 450.h,
+                child: Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          "Economy",
-                          "Premium Economy",
-                          "Business",
-                          "First Class",
-                        ].map((classType) {
-                          return ChoiceChip(
-                            label: Text(
-                              classType,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                color: travelClass == classType
-                                    ? Colors.orange
-                                    : Colors.black,
-                              ),
-                            ),
-                            selected: travelClass == classType,
-                            selectedColor: const Color(0xFFFFE7DA),
-                            backgroundColor: travelClass == classType
-                                ? const Color(0xFFFFE7DA)
-                                : Colors.white,
-                            shape: StadiumBorder(
-                              side: BorderSide(
-                                color: travelClass == classType
-                                    ? Colors.orange
-                                    : const Color(0xFFE6E6E6),
-                                width: 1.5
-                                    .w, // Border width scaled with ScreenUtil
-                              ),
-                            ),
-                            onSelected: (bool selected) {
-                              if (selected) {
-                                modalSetState(() {
-                                  travelClass = classType; // Update local state
-                                });
-                                setState(() {
-                                  travelClass = classType;
-                                });
-                              }
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    SizedBox(height: 5.h),
-                    const Divider(),
-                    SizedBox(height: 5.h),
-
-                    _buildCounterRow("Adults", "12 years and above", adults, (
-                      value,
-                    ) async {
-                      modalSetState(() => adults = value);
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setInt('adults', adults);
-                      setState(() => adults = value); // Update parent state
-                    }),
-                    _buildCounterRow(
-                      "Children",
-                      "Between 2 and 12 years",
-                      children,
-                      (value) async {
-                        modalSetState(() => children = value);
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setInt('children', children);
-                        print("childrenchildren$children");
-                        setState(() => children = value); // Update parent state
-                      },
-                    ),
-                    _buildCounterRow("Infants", "Below 2 years", infants, (
-                      value,
-                    ) async {
-                      modalSetState(() => infants = value);
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setInt('infants', infants);
-                      print("infantsinfants$infants");
-                      setState(() => infants = value); // Update parent state
-                    }),
-                    SizedBox(height: 20.h),
-                    Padding(
-                      padding: EdgeInsets.only(right: 10.w, left: 10.w),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF37023),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.r),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                        ),
-                        child: Center(
-                          child: Text(
-                            "Done",
+                          Text(
+                            "Select Traveler & Class",
                             style: TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 16.sp,
-                              color: Colors.white,
+                              fontSize: 20.sp,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+                      const Divider(),
+                      SizedBox(height: 5.h),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Wrap(
+                          spacing: 5.w,
+                          runSpacing: 5.h,
+                          children: [
+                            "Economy",
+                            "Premium Economy",
+                            "Business",
+                            "First Class",
+                          ].map((classType) {
+                            return ChoiceChip(
+                              label: Text(
+                                classType,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: travelClass == classType
+                                      ? Colors.orange
+                                      : Colors.black,
+                                ),
+                              ),
+                              selected: travelClass == classType,
+                              selectedColor: const Color(0xFFFFE7DA),
+                              backgroundColor: travelClass == classType
+                                  ? const Color(0xFFFFE7DA)
+                                  : Colors.white,
+                              shape: StadiumBorder(
+                                side: BorderSide(
+                                  color: travelClass == classType
+                                      ? Colors.orange
+                                      : const Color(0xFFE6E6E6),
+                                  width: 1.5
+                                      .w, // Border width scaled with ScreenUtil
+                                ),
+                              ),
+                              onSelected: (bool selected) {
+                                if (selected) {
+                                  modalSetState(() {
+                                    travelClass =
+                                        classType; // Update local state
+                                  });
+                                  setState(() {
+                                    travelClass = classType;
+                                  });
+                                }
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      SizedBox(height: 5.h),
+                      const Divider(),
+                      SizedBox(height: 5.h),
+
+                      _buildCounterRow(
+                        "Adults",
+                        "12 years and above",
+                        adults,
+                        (value) async {
+                          final totalCount = value + children + infants;
+                          if (totalCount <= 9) {
+                            modalSetState(() => adults = value);
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setInt('adults', adults);
+                            setState(() => adults = value);
+                          } else {
+                            ScaffoldMessenger.of(modalContext).showSnackBar(
+                              SnackBar(
+                                content: Text('Maximum 9 passengers allowed'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      _buildCounterRow(
+                        "Children",
+                        "Between 2 and 12 years",
+                        children,
+                        (value) async {
+                          final totalCount = adults + value + infants;
+
+                          if (totalCount <= 9) {
+                            modalSetState(() => children = value);
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setInt('children', children);
+                            print("childrenchildren$children");
+                            setState(
+                                () => children = value); // Update parent state
+                          } else {
+                            ScaffoldMessenger.of(modalContext).showSnackBar(
+                              SnackBar(
+                                content: Text('Maximum 9 passengers allowed'),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.all(16),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+
+                      _buildCounterRow(
+                        "Infants",
+                        "Below 2 years",
+                        infants,
+                        (value) async {
+                          final totalCount = adults + children + value;
+
+                          if (totalCount <= 9) {
+                            modalSetState(() => infants = value);
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setInt('infants', infants);
+                            print("infantsinfants$infants");
+                            setState(
+                                () => infants = value); // Update parent state
+                          } else {
+                            // ✅ Show SnackBar INSIDE the modal bottom sheet
+                            ScaffoldMessenger.of(modalContext).showSnackBar(
+                              SnackBar(
+                                content: Text('Maximum 9 passengers allowed'),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.all(16),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+
+                      SizedBox(height: 20.h),
+                      Padding(
+                        padding: EdgeInsets.only(right: 10.w, left: 10.w),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final totalCount = adults + children + infants;
+                            if (totalCount > 9) {
+                              ScaffoldMessenger.of(modalContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('Maximum 9 passengers allowed'),
+                                  backgroundColor: Colors.redAccent,
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: EdgeInsets.all(16),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF37023),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                          ),
+                          child: Center(
+                            child: Text(
+                              "Done",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 16.sp,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );

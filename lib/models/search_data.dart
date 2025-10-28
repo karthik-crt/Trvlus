@@ -412,7 +412,7 @@ class FareBreakdown {
         passengerType: json["PassengerType"],
         passengerCount: json["PassengerCount"],
         baseFare: json["BaseFare"],
-        tax: json["Tax"],
+        tax: (json["Tax"] as num).toInt(),
         taxBreakUp: json["TaxBreakUp"] != null && json["TaxBreakUp"] is List
             ? List<ChargeBu>.from(
                 json["TaxBreakUp"].map((x) => ChargeBu.fromJson(x)))

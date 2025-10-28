@@ -47,7 +47,7 @@ class MakePaymentScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final Map<String, dynamic>? passenger;
+  final List<Map<String, dynamic>>? passenger;
   final Map<String, dynamic>? childpassenger;
   final Map<String, dynamic>? infantpassenger;
 
@@ -114,6 +114,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       final finalarrDateformat =
           DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     }
+    print("payment${widget.passenger}");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),

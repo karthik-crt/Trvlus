@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'dart:convert';
+import 'dart:core';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -13,6 +13,7 @@ import '../models/bookinghistory.dart' as booking_history;
 import '../models/countrycode.dart' as country_code;
 import '../models/farequote.dart' as fareQuote;
 import '../models/farerule.dart' as fare;
+import '../models/getbookingdetailsid.dart' as bookinghistoryID;
 import '../models/search_data.dart' as search;
 import '../models/ssr.dart' as ssrdata;
 
@@ -25,8 +26,10 @@ class ApiBaseHelper {
     _navigatorKey = navigatorKey;
   }
 
+  List<Map<String, dynamic>> passengersList = [];
+
   // LOCAL IP
-  static const _baseUrl = 'http://192.168.0.6:8000/api/';
+  static const _baseUrl = 'http://192.168.0.11:8000/api/';
 
   // LIVE
   // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
@@ -53,7 +56,7 @@ class ApiBaseHelper {
 
       final iv = encrypt.IV(base64Decode(res['iv']));
       final encryptedData =
-          encrypt.Encrypted(base64Decode(res['encrypted_data']));
+      encrypt.Encrypted(base64Decode(res['encrypted_data']));
       final key = encrypt.Key.fromUtf8(secretKey);
 
       final encrypter = encrypt.Encrypter(
@@ -90,7 +93,8 @@ class ApiBaseHelper {
       case 500:
       default:
         throw FetchDataException(
-          'Error occurred while Communication with Server with StatusCode : ${response.statusCode}',
+          'Error occurred while Communication with Server with StatusCode : ${response
+              .statusCode}',
         );
     }
   }
@@ -101,7 +105,7 @@ class ApiBaseHelper {
     token = await getToken();
     if (token != null) {
       headers['Authorization'] =
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoyMDc1ODk0NjQ3LCJpYXQiOjE3NjA1MzQ2NDcsImp0aSI6IjdkYmVmZTk5NDk0ZDQ0N2ZhZWNmZjU2NDc2OTZjMGVjIiwidXNlcl9pZCI6MzZ9.TxFWyvZqr9M_GZpXQ_dorY2eGWsT8aGKefhLH6t9BZU';
+      'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoyMDc1ODk0NjQ3LCJpYXQiOjE3NjA1MzQ2NDcsImp0aSI6IjdkYmVmZTk5NDk0ZDQ0N2ZhZWNmZjU2NDc2OTZjMGVjIiwidXNlcl9pZCI6MzZ9.TxFWyvZqr9M_GZpXQ_dorY2eGWsT8aGKefhLH6t9BZU';
     }
     return headers;
   }
@@ -165,7 +169,7 @@ class ApiBaseHelper {
 
     dynamic responseJson;
     print("TICKET REQUEST");
-    debugPrint('bodybody $body', wrapWidth: 3000);
+    debugPrint('bodybody $body', wrapWidth: 4000);
     try {
       final response = await dio.post(
         apiUrl,
@@ -237,6 +241,8 @@ class ApiService {
   String? get tokenId => _tokenId;
 
   String? accessToken;
+
+  List<Map<String, dynamic>> passengersArray = [];
 
   // BACKEND CONNECTION
   // FLIGHTAUTHENTICATE
@@ -396,8 +402,8 @@ class ApiService {
   }
 
   // FAREQUOTE
-  Future<fareQuote.FareQuotesData> farequote(
-      String resultIndex, String traceid) async {
+  Future<fareQuote.FareQuotesData> farequote(String resultIndex,
+      String traceid) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     // final accessToken = prefs.getString("access_token");
@@ -459,10 +465,8 @@ class ApiService {
   }
 
   //HOMEPAGE DATE PICKER
-  Future<Map<String, dynamic>> getCalendarFare(
-    String origin,
-    String destination,
-  ) async {
+  Future<Map<String, dynamic>> getCalendarFare(String origin,
+      String destination,) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("tokenId");
 
@@ -503,30 +507,27 @@ class ApiService {
   }
 
   // TICKET
-  Future<Map<String, dynamic>> ticket(
-    String resultIndex,
-    String traceid,
-    flightNumber,
-    airlineName,
-    depTime,
-    depDate,
-    airportName,
-    arrTime,
-    arrDate,
-    desairportName,
-    duration,
-    airlineCode,
-    cityCode,
-    descityCode,
-    cityName,
-    descityName,
-    Map<String, dynamic> passenger,
-    Map<String, dynamic> childpassenger,
-  ) async {
+  Future<Map<String, dynamic>> ticket(String resultIndex,
+      String traceid,
+      flightNumber,
+      airlineName,
+      depTime,
+      depDate,
+      airportName,
+      arrTime,
+      arrDate,
+      desairportName,
+      duration,
+      airlineCode,
+      cityCode,
+      descityCode,
+      cityName,
+      descityName,
+      List<Map<String, dynamic>> passenger,
+      Map<String, dynamic> childpassenger,) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     final accessToken = prefs.getString("access_token");
-
     final savedResultIndex = prefs.getString("ResultIndex");
     final flightnumber = prefs.getString("FlightNumber");
     final fare = await SharedPreferences.getInstance();
@@ -541,44 +542,103 @@ class ApiService {
     // final depDate = fare.getString(
     //   'depTime',
     // );
-    print("fromorigin$fromorigin");
-    print("todestination$todestination");
-    print("passengeradult${passenger['Firstname']}");
-    print("passengeradult${passenger['lastname']}");
-    print("passengeradult${passenger['mobile']}");
-    print("passengeradult${passenger['Passport No']}");
-    print("passengeradult${passenger['email']}");
-    print("passengeradult${passenger['Date of Birth']}");
-    print("passengeradult${passenger['Expiry']}");
-    print("passengeradult${passenger['Nationality']}");
-    print("passengeradult${passenger['IssusingCountry']}");
-    print("passengeradult${passenger['gender']}");
 
-    final gender = passenger['gender'] == 'MALE' ? 1 : 2;
-    print("gender$gender");
+    // // GENDER
+    // final gender = passenger['gender'] == 'Mr' ? 1 : 2;
+    // print("gender$gender");
+    //
+    // // // DATEOFBIRTH FORMAT
+    // final dob = passenger['Date of Birth'];
+    // print("dateofbirth$dob");
+    // final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
+    // final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
+    // print("formattedDOB$formattedDOB");
+    //
+    // //EXPIRYDATE FORMAT
+    // final expiry = passenger['Expiry'];
+    // print("expiry$expiry");
+    // final parsedexpiryDate = DateFormat('dd-MM-yyyy').parse(expiry);
+    // final formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedexpiryDate);
+    // print("formattedExpiry$formattedExpiry");
+    //
+    // if (tokenId == null) {
+    //   throw Exception("TokenId not found in SharedPreferences");
+    // }
+    //
+    // /// 1️⃣ Passenger array
+    // final passengersArray = [
+    //   {
+    //     "Title": passenger['gender'],
+    //     "FirstName": passenger['Firstname'],
+    //     "LastName": passenger['lastname'],
+    //     "PaxType": 1,
+    //     "DateOfBirth": "${formattedDOB}T00:00:00",
+    //     "Gender": gender,
+    //     "PassportNo": passenger['Passport No'],
+    //     "PassportExpiry": "${formattedExpiry}T00:00:00",
+    //     "AddressLine1": "NA",
+    //     "AddressLine2": "",
+    //     "Fare": {
+    //       "BaseFare": baseFare,
+    //       "Tax": tax,
+    //       "YQTax": 0.0,
+    //       "AdditionalTxnFeePub": 0.0,
+    //       "AdditionalTxnFeeOfrd": 0.0,
+    //       "OtherCharges": 0.0
+    //     },
+    //     "City": "",
+    //     "CountryCode": "",
+    //     "CountryName": passenger['IssusingCountry'],
+    //     "Nationality": passenger['Nationality'],
+    //     "ContactNo": passenger['mobile'],
+    //     "Email": passenger['email'],
+    //     "IsLeadPax": true,
+    //     "FFAirlineCode": "",
+    //     "FFNumber": "",
+    //     "GSTCompanyAddress": "",
+    //     "GSTCompanyContactNumber": "",
+    //     "GSTCompanyName": "",
+    //     "GSTNumber": "",
+    //     "GSTCompanyEmail": ""
+    //   }
+    // ];
+    print("APICALLING$passenger");
+    var passengersArrayData = [];
+    for (var passenger in passenger) {
+      print("passengerTotal$passenger");
+      // GENDER
+      final gender = passenger['gender'] == 'Mr' ? 1 : 2;
+      print("gender$gender");
 
-    final dob = passenger['Date of Birth'];
-    print("dateofbirth$dob");
-    final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
-    final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
-    print("formattedDOB$formattedDOB");
+      // // DATEOFBIRTH FORMAT
+      final dob = passenger['Date of Birth'];
+      print("dateofbirth$dob");
+      final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
+      final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
+      print("formattedDOB$formattedDOB");
 
-    if (tokenId == null) {
-      throw Exception("TokenId not found in SharedPreferences");
-    }
+      //EXPIRYDATE FORMAT
+      final expiry = passenger['Expiry'];
+      print("expiry$expiry");
+      final parsedexpiryDate = DateFormat('dd-MM-yyyy').parse(expiry);
+      final formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedexpiryDate);
+      print("formattedExpiry$formattedExpiry");
 
-    /// 1️⃣ Passenger array
-    final passengersArray = [
-      {
-        "Title": "Mr",
+      if (tokenId == null) {
+        throw Exception("TokenId not found in SharedPreferences");
+      }
+
+      /// 1️⃣ Passenger array
+      passengersArrayData.add({
+        "Title": passenger['gender'],
         "FirstName": passenger['Firstname'],
         "LastName": passenger['lastname'],
         "PaxType": 1,
         "DateOfBirth": "${formattedDOB}T00:00:00",
-        "Gender": 1,
+        "Gender": gender,
         "PassportNo": passenger['Passport No'],
-        "PassportExpiry": "2025-12-06T00:00:00",
-        "AddressLine1": "",
+        "PassportExpiry": "${formattedExpiry}T00:00:00",
+        "AddressLine1": "NA",
         "AddressLine2": "",
         "Fare": {
           "BaseFare": baseFare,
@@ -588,8 +648,8 @@ class ApiService {
           "AdditionalTxnFeeOfrd": 0.0,
           "OtherCharges": 0.0
         },
-        "City": "",
-        "CountryCode": "",
+        "City": "NA",
+        "CountryCode": "NA",
         "CountryName": passenger['IssusingCountry'],
         "Nationality": passenger['Nationality'],
         "ContactNo": passenger['mobile'],
@@ -602,39 +662,40 @@ class ApiService {
         "GSTCompanyName": "",
         "GSTNumber": "",
         "GSTCompanyEmail": ""
-      }
-    ];
-    if (childpassenger != null && childpassenger.isNotEmpty) {
-      passengersArray.add({
-        "Title": "Master",
-        "FirstName": childpassenger['Firstname'],
-        "LastName": childpassenger['lastname'],
-        "PaxType": 3, // child
-        "DateOfBirth": childpassenger['DateOfBirth'] ?? "",
-        "Gender": childpassenger['gender'],
-        "PassportNo": childpassenger['PassportNo'] ?? "",
-        "PassportExpiry": childpassenger['Expiry'] ?? "",
-        "AddressLine1": "123, Test",
-        "AddressLine2": "",
-        "Fare": {
-          "BaseFare": baseFare, // or child-specific fare
-          "Tax": tax,
-          "YQTax": 0.0,
-          "AdditionalTxnFeePub": 0.0,
-          "AdditionalTxnFeeOfrd": 0.0,
-          "OtherCharges": 0.0
-        },
-        "City": "Gurgaon",
-        "CountryCode": "IN",
-        "CountryName": "India",
-        "Nationality": "IN",
-        "ContactNo": "9879879877",
-        "Email": "childemail@tbtq.in",
-        "IsLeadPax": false,
       });
     }
 
-    debugPrint("passengersArray$passengersArray", wrapWidth: 3000);
+    // if (childpassenger != null && childpassenger.isNotEmpty) {
+    //   passengersArray.add({
+    //     "Title": "Master",
+    //     "FirstName": childpassenger['Firstname'],
+    //     "LastName": childpassenger['lastname'],
+    //     "PaxType": 3, // child
+    //     "DateOfBirth": childpassenger['DateOfBirth'] ?? "",
+    //     "Gender": childpassenger['gender'],
+    //     "PassportNo": childpassenger['PassportNo'] ?? "",
+    //     "PassportExpiry": childpassenger['Expiry'] ?? "",
+    //     "AddressLine1": "123, Test",
+    //     "AddressLine2": "",
+    //     "Fare": {
+    //       "BaseFare": baseFare, // or child-specific fare
+    //       "Tax": tax,
+    //       "YQTax": 0.0,
+    //       "AdditionalTxnFeePub": 0.0,
+    //       "AdditionalTxnFeeOfrd": 0.0,
+    //       "OtherCharges": 0.0
+    //     },
+    //     "City": "Gurgaon",
+    //     "CountryCode": "IN",
+    //     "CountryName": "India",
+    //     "Nationality": "IN",
+    //     "ContactNo": "9879879877",
+    //     "Email": "childemail@tbtq.in",
+    //     "IsLeadPax": false,
+    //   });
+    // }
+
+    debugPrint("passengersArray$passengersArrayData", wrapWidth: 3000);
     final journeyList = [
       {
         "Arrival": arrDate,
@@ -664,13 +725,13 @@ class ApiService {
       "PreferredCurrency": null,
       "ResultIndex": savedResultIndex,
       "AgentReferenceNo": "sonam1234567890",
-      "Passengers": passengersArray,
+      "Passengers": passengersArrayData,
       "TokenId": tokenId,
       "TraceId": traceid,
       "app_reference": "appRef123", // replace with your actual value
       "SequenceNumber": "0",
       "result_token": "resultToken123", // replace with actual value
-      "passenger_details": passengersArray,
+      "passenger_details": passengersArrayData,
       "wallet_retake_params": {}, // fill as per your app
       "wallet_update_params": {}, // fill as per your app
       "user": 6, // replace with actual value
@@ -684,7 +745,7 @@ class ApiService {
       "cabin_adult": "Economy",
       "reissue_charge": 0,
       "cancellation_charge": 0,
-      "totalpassengers": passengersArray.length,
+      "totalpassengers": passengersArrayData.length,
       "base_price": baseFare,
       "tax": tax,
       "agentbalance": 0.0,
@@ -699,7 +760,7 @@ class ApiService {
     };
 
     // debugPrint("ticketBody: $ticketBody");
-    debugPrint("confirmBookingParams: $confirmBookingParams", wrapWidth: 2000);
+    debugPrint("confirmBookingParams: $confirmBookingParams", wrapWidth: 3100);
 
     /// 4️⃣ API call
     final response = await _helper.post(
@@ -725,7 +786,7 @@ class ApiService {
     print("bookingHistoryBody request: $bookingHistoryBody");
 
     final response = await _helper.get(
-      "ticketsearch?fromdate=2025-10-16&todate=2025-10-22&userid=6&mobile=1",
+      "ticketsearch?fromdate=2025-10-16&todate=2025-10-25&userid=6&mobile=1",
     );
     final bookings = response['data']; // List of bookings
     printFullResponse("bookings$bookings");
@@ -750,18 +811,16 @@ class ApiService {
   }
 
   // SEARCHFLIGHT
-  Future<search.SearchData> getSearchResult(
-    String airportCode,
-    String fromAirport,
-    String toairportCode,
-    String toAirport,
-    String selectedDepDate,
-    String selectedReturnDate,
-    String selectedTripType,
-    int adultCount,
-    int? childCount,
-    int? infantCount,
-  ) async {
+  Future<search.SearchData> getSearchResult(String airportCode,
+      String fromAirport,
+      String toairportCode,
+      String toAirport,
+      String selectedDepDate,
+      String selectedReturnDate,
+      String selectedTripType,
+      int adultCount,
+      int? childCount,
+      int? infantCount,) async {
     final prefs = await SharedPreferences.getInstance();
     final adult = adultCount;
     final child = childCount;
@@ -786,30 +845,30 @@ class ApiService {
       "PreferredAirlines": null,
       "Segments": triptype == 1
           ? [
-              {
-                "Origin": airportCode,
-                "Destination": toairportCode,
-                "FlightCabinClass": "1",
-                "PreferredDepartureTime": formatted + "T00:00:00",
-                "PreferredArrivalTime": formatted + "T00:00:00",
-              },
-            ]
+        {
+          "Origin": airportCode,
+          "Destination": toairportCode,
+          "FlightCabinClass": "1",
+          "PreferredDepartureTime": formatted + "T00:00:00",
+          "PreferredArrivalTime": formatted + "T00:00:00",
+        },
+      ]
           : [
-              {
-                "Origin": airportCode,
-                "Destination": toairportCode,
-                "FlightCabinClass": "1",
-                "PreferredDepartureTime": formatted + "T00:00:00",
-                "PreferredArrivalTime": formatted + "T00:00:00",
-              },
-              {
-                "Origin": toairportCode,
-                "Destination": airportCode,
-                "FlightCabinClass": "1",
-                "PreferredDepartureTime": formattedReturn + "T00:00:00",
-                "PreferredArrivalTime": formattedReturn + "T00:00:00",
-              }
-            ],
+        {
+          "Origin": airportCode,
+          "Destination": toairportCode,
+          "FlightCabinClass": "1",
+          "PreferredDepartureTime": formatted + "T00:00:00",
+          "PreferredArrivalTime": formatted + "T00:00:00",
+        },
+        {
+          "Origin": toairportCode,
+          "Destination": airportCode,
+          "FlightCabinClass": "1",
+          "PreferredDepartureTime": formattedReturn + "T00:00:00",
+          "PreferredArrivalTime": formattedReturn + "T00:00:00",
+        }
+      ],
       "Sources": null
     };
     print("params$params");
@@ -839,14 +898,16 @@ class ApiService {
 //   return response;
 // }
 
-//   BookingHistory
-  Future<country_code.Countrycode> getbookingHsitory() async {
+//   GET BookingHistory BY ID
+  Future<bookinghistoryID.Getbookingdetailsid> getbookingdetailHistory(
+      id) async {
     final response = await _helper.get(
-      "countryCode",
+      "ticketbooking?id=$id",
     );
 
-    print("COUNTRYCODE response${jsonEncode(response)}");
-    return country_code.countrycodeFromJson(response);
+    debugPrint("bookinghistoryID response${jsonEncode(response)}",
+        wrapWidth: 4000);
+    return bookinghistoryID.getbookingdetailsidFromJson(response);
   }
 
   //  ADDSTATUS
@@ -1229,8 +1290,8 @@ class ApiService {
 // }
 }
 
-Map<String, dynamic> decodeBase64Response(
-    Map<String, dynamic> res, String secretKey) {
+Map<String, dynamic> decodeBase64Response(Map<String, dynamic> res,
+    String secretKey) {
   try {
     // Parse Base64 IV
     final ivBytes = base64Decode(res['iv']);

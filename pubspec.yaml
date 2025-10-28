@@ -52,6 +52,8 @@ dependencies:
   get_storage: ^2.1.1
   shared_preferences: ^2.1.1   # Or the latest version
   share_plus: ^11.0.0
+  connectivity_plus: ^4.0.2
+
 
 
 
@@ -87,6 +89,7 @@ flutter:
   assets:
     - assets/images/
     - assets/
+    - assets/flag/
     - assets/ssr/
     - assets/icon/
 

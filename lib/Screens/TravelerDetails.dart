@@ -1196,6 +1196,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 SizedBox(height: 5.h),
                 ElevatedButton(
                   onPressed: () {
+                    print("adultTravelers$adultTravelers");
                     Get.to(
                       () => ConfirmTravelerDetails(
                         flight: {},
@@ -1481,7 +1482,7 @@ class AddTravelerPage extends StatefulWidget {
 }
 
 class _AddTravelerPageState extends State<AddTravelerPage> {
-  String selectedGender = "MALE";
+  String selectedGender = "Mr";
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final mobileController = TextEditingController();
@@ -1583,24 +1584,33 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
             Row(
               children: [
                 GenderStatus(
-                  label: "MALE",
-                  isSelected: selectedGender == "MALE",
+                  label: "Mr",
+                  isSelected: selectedGender == "Mr",
                   onTap: () {
                     setState(() {
-                      selectedGender = "MALE";
+                      selectedGender = "Mr";
                     });
                   },
                 ),
                 SizedBox(width: 4.w),
                 GenderStatus(
-                  label: "FEMALE",
-                  isSelected: selectedGender == "FEMALE",
+                  label: "Mrs",
+                  isSelected: selectedGender == "Mrs",
                   onTap: () {
                     setState(() {
-                      selectedGender = "FEMALE";
+                      selectedGender = "Mrs";
                     });
                   },
                 ),
+                GenderStatus(
+                  label: "Ms",
+                  isSelected: selectedGender == "Ms",
+                  onTap: () {
+                    setState(() {
+                      selectedGender = "Ms";
+                    });
+                  },
+                )
               ],
             ),
             SizedBox(height: 10.h),
@@ -1630,9 +1640,13 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
               // keyboardType: TextInputType.phone,
             ),
             _buildTextField(
-                label: 'Expiry Date*',
-                hintText: 'Text here',
-                controller: expiryController),
+              label: 'Expiry Date*',
+              hintText: 'Text here',
+              controller: expiryController,
+              readOnly: true,
+              onTap: () => _expiryDate(
+                  context), // This was missing! Now it triggers the picker.
+            ),
             _buildDropdownField(
               'Nationality *',
               selectedNationality,

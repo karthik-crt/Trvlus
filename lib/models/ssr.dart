@@ -200,7 +200,7 @@ class MealDynamic {
   final int wayType;
   final String code;
   final String description;
-  final String? airlineDescription;
+  final String airlineDescription;
   final int quantity;
   final String currency;
   final double price;

@@ -1,12 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../models/ssr.dart';
+import '../utils/api_service.dart';
 import 'Seat.dart';
 
 class Additions extends StatefulWidget {
-  const Additions({super.key});
+  final String? traceid;
+  final String? resultindex;
+
+  const Additions({super.key, this.traceid, this.resultindex});
 
   @override
   State<Additions> createState() => _AdditionsState();
@@ -22,225 +28,258 @@ class _AdditionsState extends State<Additions> {
   final Set<String> selectedSeats = {};
 
   late SsrData ssrData;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getssrdata();
+  }
+
+  getssrdata() async {
+    setState(() {
+      isLoading = true;
+      print("beforeOutput");
+    });
+    print(widget.traceid);
+    print(widget.resultindex);
+    ssrData =
+        await ApiService().ssr(widget.resultindex ?? "", widget.traceid ?? "");
+    print("ssrDATA: ${jsonEncode(ssrData)}");
+
+    setState(() {
+      isLoading = false;
+      print("AferOutput");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: Color(0xFFE8E8E8),
-        appBar: AppBar(
-          backgroundColor: Color(0xFFE8E8E8),
-          automaticallyImplyLeading: false,
-          title: GestureDetector(
-            onTap: () {},
-            child: Row(
-              children: [
-                Container(
-                  height: 35,
-                  width: 35,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle, color: Colors.grey.shade300),
-                  child: GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Icon(Icons.arrow_back)),
-                ),
-                SizedBox(
-                  width: 15,
-                ),
-                Text(
-                  "Additions",
-                  style: TextStyle(fontSize: 20),
-                )
-              ],
-            ),
-          ),
-        ),
-        body: Column(
-          children: [
-            SizedBox(
-              height: 50.h,
-              child: Container(
-                margin: EdgeInsets.all(10),
+    final ddr = widget.traceid;
+
+    return isLoading
+        ? Center(
+            child: CircularProgressIndicator(),
+          )
+        : Scaffold(
+            backgroundColor: Color(0xFFE8E8E8),
+            appBar: AppBar(
+              backgroundColor: Color(0xFFE8E8E8),
+              automaticallyImplyLeading: false,
+              title: GestureDetector(
+                onTap: () {},
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                        child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedindex = 0;
-                              });
-                            },
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: MediaQuery.sizeOf(context).height,
-                              width: MediaQuery.sizeOf(context).width,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                      color: selectedindex == 0
-                                          ? Color(0xFFF37023)
-                                          : Colors.grey.shade300),
-                                  color: selectedindex == 0
-                                      ? Color(0xFFFFE7DA)
-                                      : Colors.white),
-                              child: Text(
-                                "Baggage",
-                                style: TextStyle(
-                                    color: selectedindex == 0
-                                        ? Color(0xFFF37023)
-                                        : Colors.black),
-                              ),
-                            ))),
-                    SizedBox(
-                      width: 2,
+                    Container(
+                      height: 35,
+                      width: 35,
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle, color: Colors.grey.shade300),
+                      child: GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: Icon(Icons.arrow_back)),
                     ),
-                    Expanded(
-                        child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedindex = 1;
-                              });
-                            },
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: MediaQuery.sizeOf(context).height,
-                              width: MediaQuery.sizeOf(context).width,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  color: selectedindex == 1
-                                      ? Color(0xFFFFE7DA)
-                                      : Colors.white,
-                                  border: Border.all(
-                                      color: selectedindex == 1
-                                          ? Color(0xFFF37023)
-                                          : Colors.grey.shade300)),
-                              child: Text(
-                                "Seat",
-                                style: TextStyle(
-                                    color: selectedindex == 1
-                                        ? Color(0xFFF37023)
-                                        : Colors.black),
-                              ),
-                            ))),
                     SizedBox(
-                      width: 2,
+                      width: 15,
                     ),
-                    Expanded(
-                        child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedindex = 2;
-                              });
-                            },
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: MediaQuery.sizeOf(context).height,
-                              width: MediaQuery.sizeOf(context).width,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  color: selectedindex == 2
-                                      ? Color(0xFFFFE7DA)
-                                      : Colors.white,
-                                  border: Border.all(
-                                      color: selectedindex == 2
-                                          ? Color(0xFFF37023)
-                                          : Colors.grey.shade300)),
-                              child: Text(
-                                "Meals",
-                                style: TextStyle(
-                                    color: selectedindex == 2
-                                        ? Color(0xFFF37023)
-                                        : Colors.black),
-                              ),
-                            )))
+                    Text(
+                      "Additions",
+                      style: TextStyle(fontSize: 20),
+                    )
                   ],
                 ),
               ),
             ),
-            Container(
-              padding: EdgeInsets.all(5),
-              margin: EdgeInsets.all(12),
-              height: 60,
-              decoration: BoxDecoration(
-                  color: Color(0xFFF37023),
-                  borderRadius: BorderRadius.all(Radius.circular(20))),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedBaggage = 0;
-                      });
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 35, vertical: 10),
-                      margin: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          color: selectedBaggage == 0
-                              ? Colors.white
-                              : Color(0xFFFFF37023),
-                          borderRadius: BorderRadius.all(Radius.circular(15))),
-                      child: Text(
-                        "MAA-BLR",
-                        style: TextStyle(
-                            color: selectedBaggage == 0
-                                ? Colors.black
-                                : Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15),
-                      ),
+            body: Column(
+              children: [
+                SizedBox(
+                  height: 50.h,
+                  child: Container(
+                    margin: EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                            child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedindex = 0;
+                                  });
+                                },
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: MediaQuery.sizeOf(context).height,
+                                  width: MediaQuery.sizeOf(context).width,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(
+                                          color: selectedindex == 0
+                                              ? Color(0xFFF37023)
+                                              : Colors.grey.shade300),
+                                      color: selectedindex == 0
+                                          ? Color(0xFFFFE7DA)
+                                          : Colors.white),
+                                  child: Text(
+                                    "Baggage",
+                                    style: TextStyle(
+                                        color: selectedindex == 0
+                                            ? Color(0xFFF37023)
+                                            : Colors.black),
+                                  ),
+                                ))),
+                        SizedBox(
+                          width: 2,
+                        ),
+                        Expanded(
+                            child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedindex = 1;
+                                  });
+                                },
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: MediaQuery.sizeOf(context).height,
+                                  width: MediaQuery.sizeOf(context).width,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: selectedindex == 1
+                                          ? Color(0xFFFFE7DA)
+                                          : Colors.white,
+                                      border: Border.all(
+                                          color: selectedindex == 1
+                                              ? Color(0xFFF37023)
+                                              : Colors.grey.shade300)),
+                                  child: Text(
+                                    "Seat",
+                                    style: TextStyle(
+                                        color: selectedindex == 1
+                                            ? Color(0xFFF37023)
+                                            : Colors.black),
+                                  ),
+                                ))),
+                        SizedBox(
+                          width: 2,
+                        ),
+                        Expanded(
+                            child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedindex = 2;
+                                  });
+                                },
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: MediaQuery.sizeOf(context).height,
+                                  width: MediaQuery.sizeOf(context).width,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: selectedindex == 2
+                                          ? Color(0xFFFFE7DA)
+                                          : Colors.white,
+                                      border: Border.all(
+                                          color: selectedindex == 2
+                                              ? Color(0xFFF37023)
+                                              : Colors.grey.shade300)),
+                                  child: Text(
+                                    "Meals",
+                                    style: TextStyle(
+                                        color: selectedindex == 2
+                                            ? Color(0xFFF37023)
+                                            : Colors.black),
+                                  ),
+                                )))
+                      ],
                     ),
                   ),
-                  // Image.asset(
-                  //   "assets/images/Line.png",
-                  // ),
-                  Container(
-                    height: 50,
-                    width: 0.5,
-                    color: Colors.grey.shade200,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedBaggage = 1;
-                      });
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 35, vertical: 10),
-                      margin: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          color: selectedBaggage == 1
-                              ? Colors.white
-                              : Color(0xFFFFF37023),
-                          borderRadius: BorderRadius.all(Radius.circular(15))),
-                      child: Text(
-                        "BLR-MAA",
-                        style: TextStyle(
-                            color: selectedBaggage == 1
-                                ? Colors.black
-                                : Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15),
+                ),
+                Container(
+                  padding: EdgeInsets.all(5),
+                  margin: EdgeInsets.all(12),
+                  height: 60,
+                  decoration: BoxDecoration(
+                      color: Color(0xFFF37023),
+                      borderRadius: BorderRadius.all(Radius.circular(20))),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedBaggage = 0;
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 35, vertical: 10),
+                          margin: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                              color: selectedBaggage == 0
+                                  ? Colors.white
+                                  : Color(0xFFFFF37023),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                          child: Text(
+                            "MAA-BLR",
+                            style: TextStyle(
+                                color: selectedBaggage == 0
+                                    ? Colors.black
+                                    : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15),
+                          ),
+                        ),
                       ),
-                    ),
+                      // Image.asset(
+                      //   "assets/images/Line.png",
+                      // ),
+                      Container(
+                        height: 50,
+                        width: 0.5,
+                        color: Colors.grey.shade200,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedBaggage = 1;
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 35, vertical: 10),
+                          margin: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                              color: selectedBaggage == 1
+                                  ? Colors.white
+                                  : Color(0xFFFFF37023),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                          child: Text(
+                            "BLR-MAA",
+                            style: TextStyle(
+                                color: selectedBaggage == 1
+                                    ? Colors.black
+                                    : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            selectedindex == 0
-                ? buildBaggage()
-                : selectedindex == 1
-                    ? buildseat()
-                    : selectedindex == 2
-                        ? buildmeals()
-                        : Container(),
-          ],
-        ));
+                ),
+                selectedindex == 0
+                    ? buildBaggage()
+                    : selectedindex == 1
+                        ? buildseat()
+                        : selectedindex == 2
+                            ? buildmeals()
+                            : Container(),
+              ],
+            ));
   }
 
   buildBaggage() {
@@ -557,197 +596,25 @@ class _AdditionsState extends State<Additions> {
                   Text("Items"),
                 ],
               ),
-              Row(
-                children: [
-                  Text(
-                    "Water Bottle",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Water Bottle",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(Icons.check_box_outline_blank)
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Sandwich",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "meals",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Water Bottle",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Water Bottle",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Water Bottle",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Water Bottle",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Text(
-                    "₹50",
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Icon(
-                    Icons.check_box,
-                    color: Color(0xFFF37023),
-                  )
-                ],
-              ),
+              ...List.generate(ssrData.response.mealDynamic.length, (index) {
+                return Column(
+                  children: [
+                    ...List.generate(ssrData.response.mealDynamic[index].length,
+                        (innerindex) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(ssrData.response.mealDynamic[index][innerindex]
+                              .airlineDescription),
+                          Text(ssrData
+                              .response.mealDynamic[index][innerindex].price
+                              .toString()),
+                        ],
+                      );
+                    })
+                  ],
+                );
+              })
             ],
           ),
         ),

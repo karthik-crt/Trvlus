@@ -20,7 +20,7 @@ class Afterpayment extends StatefulWidget {
   final String? descityCode;
   final String cityName;
   final String? descityName;
-  final Map<String, dynamic>? passenger;
+  final List<Map<String, dynamic>>? passenger;
   final Map<String, dynamic>? childpassenger;
   final Map<String, dynamic>? infantpassenger;
 
@@ -80,6 +80,7 @@ class _AfterpaymentState extends State<Afterpayment> {
     final cityName = widget.cityName;
     final descityName = widget.descityName;
     final passenger = widget.passenger;
+    print("passengerADULT$passenger");
     final childpassenger = widget.childpassenger;
     final infantpassenger = widget.infantpassenger;
 
@@ -104,11 +105,11 @@ class _AfterpaymentState extends State<Afterpayment> {
       descityCode,
       cityName,
       descityName,
-      passenger as Map<String, dynamic>? ?? {},
+      widget.passenger ?? [],
       childpassenger as Map<String, dynamic>? ?? {},
       // infantpassenger as Map<String, dynamic>? ?? {},
     );
-    print(widget.passenger?['Firstname']);
+    // print(widget.passenger?['Firstname']);
 
     setState(() {
       isLoading = false;
@@ -119,6 +120,7 @@ class _AfterpaymentState extends State<Afterpayment> {
   @override
   void initState() {
     getSearchData();
+    print('passengerdetailsall${widget.passenger}');
     super.initState();
   }
 

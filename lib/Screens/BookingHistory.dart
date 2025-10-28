@@ -384,10 +384,14 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                           InkWell(
                             splashColor: Colors.white,
                             onTap: () {
+                              print("Booking ID${booking.id}");
+                              var bookingID = booking.id;
+                              print("bookingID$bookingID");
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const Ticketdetails(),
+                                  builder: (context) =>
+                                      Ticketdetails(id: bookingID),
                                 ),
                               );
                             },
