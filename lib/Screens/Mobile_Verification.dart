@@ -35,14 +35,29 @@ class MobileVerificationScreen extends StatefulWidget {
   final String? traceid;
   final Result? outboundFlight;
   final Result? inboundFlight;
+  final String? outresultindex;
+  final String? outdepDate;
+  final String? outdepTime;
+  final String? outarrDate;
+  final String? outarrTime;
+  final String? indepDate;
+  final String? indepTime;
+  final String? inarrDate;
+  final String? inarrTime;
+  final String? inresultindex;
   final String? total;
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final bool? isLLC;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
 
   MobileVerificationScreen(
       {super.key,
       required this.flight,
+      required this.outBoundData,
+      required this.inBoundData,
       required this.city,
       required this.destination,
       required this.airlineName,
@@ -69,9 +84,20 @@ class MobileVerificationScreen extends StatefulWidget {
       this.inboundFlight,
       this.total,
       this.tax,
+      this.outresultindex,
+      this.inresultindex,
       this.adultCount,
       this.childCount,
-      this.infantCount});
+      this.infantCount,
+      this.isLLC,
+      this.outdepDate,
+      this.outdepTime,
+      this.outarrDate,
+      this.outarrTime,
+      this.indepDate,
+      this.indepTime,
+      this.inarrDate,
+      this.inarrTime});
 
   @override
   _MobileVerificationScreenState createState() =>
@@ -299,9 +325,22 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                 inboundFlight: widget.inboundFlight,
                                 total: widget.total,
                                 tax: widget.tax,
+                                outresultindex: widget.outresultindex,
+                                inresultindex: widget.inresultindex,
                                 adultCount: widget.adultCount,
                                 childCount: widget.childCount,
                                 infantCount: widget.infantCount,
+                                isLLC: widget.isLLC,
+                                outdepDate: widget.outdepDate,
+                                outdepTime: widget.outdepTime,
+                                outarrDate: widget.outarrDate,
+                                outarrTime: widget.outarrTime,
+                                indepDate: widget.indepDate,
+                                indepTime: widget.indepTime,
+                                inarrDate: widget.inarrDate,
+                                inarrTime: widget.inarrTime,
+                                outBoundData: widget.outBoundData,
+                                inBoundData: widget.inBoundData,
                               ));
                         }
                       : null,

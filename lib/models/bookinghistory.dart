@@ -269,7 +269,7 @@ class JourneyList {
     arrival = json['Arrival'] ?? '';
     baggage = json['Baggage'] ?? '';
     depature = json['Depature'] ?? '';
-    duration = json['duration'] ?? '';
+    duration = json['duration']?.toString() ?? '';
     noofstop = json['noofstop'] ?? 0;
     toCityName = json['ToCityName'] ?? '';
     arrivalTime = json['ArrivalTime'] ?? '';

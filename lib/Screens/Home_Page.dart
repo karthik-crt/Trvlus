@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -12,6 +13,7 @@ import 'package:trvlus/Screens/ProfilePage.dart';
 import '../utils/api_service.dart';
 import 'NotificationScreen.dart';
 import 'Search_Result_Page.dart';
+import 'WalletScreen.dart';
 import 'flightname.dart';
 import 'localroundtrip.dart';
 
@@ -149,9 +151,6 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
           margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
           child: ElevatedButton(
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              final storedadult = prefs.getInt("adults");
-              print("storedadult$storedadult");
               // format departure date once
               String formattedDate = DateFormat(
                 "yyyy-MM-dd",
@@ -194,6 +193,9 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                       selectedDepDate: formattedDate,
                       selectedReturnDate: formattedReturnDate ?? "",
                       selectedTripType: selectedTripType,
+                      adultCount: adults.toString(),
+                      childCount: children.toString(),
+                      infantCount: infants.toString(),
                     ),
                   ),
                 );
@@ -274,37 +276,37 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
         ),
         actions: [
           // Price Tag
-          // GestureDetector(
-          //   onTap: () {
-          //     Get.to(
-          //       const Wallet(),
-          //       duration: const Duration(milliseconds: 600),
-          //     );
-          //   },
-          //   child: Stack(
-          //     alignment: Alignment.center,
-          //     children: [
-          //       Image.asset("assets/images/Group_1.png"),
-          //       Padding(
-          //         padding: EdgeInsets.only(right: 40.w, bottom: 15.h),
-          //         child: Container(
-          //           padding: EdgeInsets.symmetric(
-          //             horizontal: 6.w,
-          //             vertical: 2.h,
-          //           ),
-          //           decoration: BoxDecoration(
-          //             color: const Color(0xFFF37003),
-          //             borderRadius: BorderRadius.circular(12.r),
-          //           ),
-          //           child: Text(
-          //             '₹0',
-          //             style: TextStyle(color: Colors.white, fontSize: 9.sp),
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
+          GestureDetector(
+            onTap: () {
+              Get.to(
+                const Wallet(),
+                duration: const Duration(milliseconds: 600),
+              );
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset("assets/images/Group_1.png"),
+                Padding(
+                  padding: EdgeInsets.only(right: 40.w, bottom: 15.h),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 2.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF37003),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      '₹0',
+                      style: TextStyle(color: Colors.white, fontSize: 9.sp),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           // Notification Icon
           Padding(
             padding: EdgeInsets.only(right: 16.w),
@@ -344,22 +346,22 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                     ),
                   ),
                   SizedBox(width: 0.02.sw),
-                  // Expanded(
-                  //     child: TripTypeButton(
-                  //       label: "Round trip",
-                  //       isSelected: selectedTripType == "Round trip",
-                  //       onTap: () {
-                  //         setState(() {
-                  //           selectedTripType = "Round trip";
-                  //           if (selectedDepatureDate != null) {
-                  //             returnDate = selectedDepatureDate!.add(
-                  //               const Duration(days: 1),
-                  //             );
-                  //           }
-                  //         });
-                  //       },
-                  //     ),
-                  //     ),
+                  Expanded(
+                    child: TripTypeButton(
+                      label: "Round trip",
+                      isSelected: selectedTripType == "Round trip",
+                      onTap: () {
+                        setState(() {
+                          selectedTripType = "Round trip";
+                          if (selectedDepatureDate != null) {
+                            returnDate = selectedDepatureDate!.add(
+                              const Duration(days: 1),
+                            );
+                          }
+                        });
+                      },
+                    ),
+                  ),
                   SizedBox(width: 0.02.sw),
                 ],
               ),
@@ -468,68 +470,68 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                   ),
                   // Text("Return on$returnDate"),
                   SizedBox(width: 0.02.sw),
-                  // Expanded(
-                  //   child: selectedTripType == "Round trip"
-                  //       ? DatePickerField(
-                  //           label: "Return on",
-                  //           selectedDate: returnDate,
-                  //           // selectedDepatureDate
-                  //           //     ?.add(const Duration(days: 1)),
-                  //           onDateChanged: (date) {
-                  //             setState(() {
-                  //               returnDate = date;
-                  //               // returnDate = date;
-                  //               print("returnDateDate$returnDate");
-                  //             });
-                  //           },
-                  //           firstDate: selectedDepatureDate != null
-                  //               ? selectedDepatureDate!.add(
-                  //                   const Duration(days: 1),
-                  //                 )
-                  //               : DateTime.now().add(const Duration(days: 1)),
-                  //           selectedTripType: selectedTripType,
-                  //         )
-                  //       : GestureDetector(
-                  //           onTap: () {
-                  //             setState(() {
-                  //               selectedTripType = "Round trip";
-                  //               print("selectedTripTypeR$selectedTripType");
-                  //               print(
-                  //                   "selete departure date $selectedDepatureDate");
-                  //
-                  //               if (selectedDepatureDate != null) {
-                  //                 returnDate = selectedDepatureDate!.add(
-                  //                   const Duration(days: 1),
-                  //                 );
-                  //                 print("returnDatehelo$returnDate");
-                  //               }
-                  //             });
-                  //           },
-                  //           child: Container(
-                  //             margin: const EdgeInsets.only(top: 8),
-                  //             height: 63,
-                  //             width: 156,
-                  //             child: DottedBorder(
-                  //               color: Colors.orange,
-                  //               strokeWidth: 1.5,
-                  //               dashPattern: [4, 4],
-                  //               borderType: BorderType.RRect,
-                  //               radius: const Radius.circular(8),
-                  //               child: const Align(
-                  //                 alignment: Alignment.center,
-                  //                 child: Text(
-                  //                   "+ Add Round Trip",
-                  //                   style: TextStyle(
-                  //                     color: Colors.orange,
-                  //                     fontSize: 16,
-                  //                     fontWeight: FontWeight.bold,
-                  //                   ),
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),
-                  // ),
+                  Expanded(
+                    child: selectedTripType == "Round trip"
+                        ? DatePickerField(
+                            label: "Return on",
+                            selectedDate: returnDate,
+                            // selectedDepatureDate
+                            //     ?.add(const Duration(days: 1)),
+                            onDateChanged: (date) {
+                              setState(() {
+                                returnDate = date;
+                                // returnDate = date;
+                                print("returnDateDate$returnDate");
+                              });
+                            },
+                            firstDate: selectedDepatureDate != null
+                                ? selectedDepatureDate!.add(
+                                    const Duration(days: 1),
+                                  )
+                                : DateTime.now().add(const Duration(days: 1)),
+                            selectedTripType: selectedTripType,
+                          )
+                        : GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedTripType = "Round trip";
+                                print("selectedTripTypeR$selectedTripType");
+                                print(
+                                    "selete departure date $selectedDepatureDate");
+
+                                if (selectedDepatureDate != null) {
+                                  returnDate = selectedDepatureDate!.add(
+                                    const Duration(days: 1),
+                                  );
+                                  print("returnDatehelo$returnDate");
+                                }
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(top: 8),
+                              height: 63,
+                              width: 156,
+                              child: DottedBorder(
+                                color: Colors.orange,
+                                strokeWidth: 1.5,
+                                dashPattern: [4, 4],
+                                borderType: BorderType.RRect,
+                                radius: const Radius.circular(8),
+                                child: const Align(
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    "+ Add Round Trip",
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
                 ],
               ),
               SizedBox(height: 16.h),
@@ -1335,9 +1337,50 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
         return StatefulBuilder(
           builder: (BuildContext modalContext, StateSetter modalSetState) {
             return Scaffold(
+              bottomNavigationBar: SingleChildScrollView(
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(right: 10.w, left: 10.w, bottom: 10.h),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final totalCount = adults + children + infants;
+                      if (totalCount > 9) {
+                        ScaffoldMessenger.of(modalContext).showSnackBar(
+                          SnackBar(
+                            content: Text('Maximum 9 passengers allowed'),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                            margin: EdgeInsets.all(16),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF37023),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Done",
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               backgroundColor: Colors.white,
               body: SizedBox(
-                height: 450.h,
+                height: 400.h,
                 child: Padding(
                   padding: EdgeInsets.all(16.w),
                   child: Column(
@@ -1499,45 +1542,7 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
                         },
                       ),
 
-                      SizedBox(height: 20.h),
-                      Padding(
-                        padding: EdgeInsets.only(right: 10.w, left: 10.w),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final totalCount = adults + children + infants;
-                            if (totalCount > 9) {
-                              ScaffoldMessenger.of(modalContext).showSnackBar(
-                                SnackBar(
-                                  content: Text('Maximum 9 passengers allowed'),
-                                  backgroundColor: Colors.redAccent,
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: EdgeInsets.all(16),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            } else {
-                              Navigator.pop(context);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF37023),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 12.h),
-                          ),
-                          child: Center(
-                            child: Text(
-                              "Done",
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 16.sp,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      // SizedBox(height: 10.h),
                     ],
                   ),
                 ),

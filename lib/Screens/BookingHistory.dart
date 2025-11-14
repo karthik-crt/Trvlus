@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:trvlus/Screens/ticketdetails.dart';
 import 'package:trvlus/models/bookinghistory.dart';
 import 'package:trvlus/utils/api_service.dart';
@@ -9,6 +10,7 @@ import 'package:trvlus/utils/api_service.dart';
 import '../models/addstatus.dart';
 import 'DotDivider.dart';
 import 'Home_Page.dart';
+import 'notification_service.dart';
 
 class BookingHistoryPage extends StatefulWidget {
   @override
@@ -109,8 +111,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                   final booking = bookingHistory.data[index];
                   print("BOOKING HISTORY");
                   print(booking.passengerDetails.length);
-                  print(booking.passengerDetails.first.baggage.length);
-                  print(booking.passengerDetails.first.baggage);
+                  // print(booking.passengerDetails.first.baggage.length);
+                  // print(booking.passengerDetails.first.baggage);
                   final create = booking.createdAt;
                   final date = DateTime.parse(create);
                   createdDate = DateFormat('dd MMM, yyyy').format(date);
@@ -139,7 +141,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                           Row(
                             children: [
                               Image.asset(
-                                "assets/${booking.passengerDetails.first.baggage.first.AirlineCode ?? ""}.gif",
+                                "assets/${booking.journeyList.first.operatorCode ?? ""}.gif",
                                 fit: BoxFit.cover,
                                 height: 35,
                                 width: 35,
@@ -148,14 +150,17 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    booking.journeyList.first.operatorName ??
-                                        "",
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.sp,
-                                      color: Colors.black,
+                                  SizedBox(
+                                    width: 100,
+                                    child: Text(
+                                      booking.journeyList.first.operatorName ??
+                                          "",
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14.sp,
+                                        color: Colors.black,
+                                      ),
                                     ),
                                   ),
                                   RichText(
@@ -193,8 +198,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                 ],
                               ),
                               SizedBox(width: 45.w),
-                              Image.asset("assets/images/Line.png"),
-                              const Spacer(),
+                              // Image.asset("assets/images/Line.png"),
+                              // const Spacer(),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
@@ -470,12 +475,16 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               _buildActionButton(
                                 imagePath: "assets/icon/download.svg",
                                 label: "Download\nE-ticket",
-                                onTap: () {
-                                  // Navigator.push(
-                                  //   context,
-                                  //   MaterialPageRoute(
-                                  //       // builder: (context) => const Ticket()),
-                                  // );
+                                onTap: () async {
+                                  var bookingID = booking.bookingId.toString();
+                                  var pnr = booking.pnr.toString();
+                                  print("DOWNLOAD API CALLING");
+
+                                  await ApiService()
+                                      .downloadTicket(bookingID, pnr);
+
+                                  NotificationService.showDownloadNotification(
+                                      "ticket_$bookingID.pdf");
                                 },
                               ),
                               _buildActionButton(
@@ -488,12 +497,20 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               _buildActionButton(
                                 imagePath: "assets/icon/invoice.svg",
                                 label: "Download\nInvoice",
-                                onTap: () {
+                                onTap: () async {
+                                  var bookingID = booking.bookingId.toString();
+                                  var pnr = booking.pnr.toString();
+                                  await ApiService()
+                                      .downloadInvoice(bookingID, pnr);
                                   print("Download Invoice tapped");
+
+                                  NotificationService.showDownloadNotification(
+                                      "invoice_$bookingID.pdf");
                                 },
                               ),
                             ],
                           ),
+
                           SizedBox(height: 10.h),
                           Column(
                             children: [
@@ -847,6 +864,14 @@ Widget _buildTextField1(
       ],
     ),
   );
+}
+
+Future<bool> requestStoragePermission() async {
+  var status = await Permission.storage.status;
+  if (!status.isGranted) {
+    status = await Permission.storage.request();
+  }
+  return status.isGranted;
 }
 
 Widget _buildActionButton({

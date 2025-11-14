@@ -7,7 +7,7 @@ class SsrData {
 
   factory SsrData.fromJson(Map<String, dynamic> json) {
     return SsrData(
-      response: ResponseData.fromJson(json['Response']),
+      response: ResponseData.fromJson(json['Response'] ?? ""),
     );
   }
 
@@ -164,7 +164,7 @@ class Baggage {
   factory Baggage.fromJson(Map<String, dynamic> json) {
     return Baggage(
       airlineCode: json['AirlineCode'],
-      flightNumber: json['FlightNumber'],
+      flightNumber: json['FlightNumber'] ?? "",
       wayType: json['WayType'],
       code: json['Code'],
       description: json['Description'],

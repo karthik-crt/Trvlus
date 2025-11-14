@@ -76,7 +76,7 @@ class _CustomerSupportState extends State<CustomerSupport> {
               children: [
                 Text("Mobile"),
                 Text(
-                  "54632 78945",
+                  "82482 77899",
                   style: TextStyle(
                       color: Color(0xFF303030), fontWeight: FontWeight.bold),
                 )

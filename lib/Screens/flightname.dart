@@ -13,6 +13,7 @@ class Flightname extends StatefulWidget {
 
 class _FlightnameState extends State<Flightname> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode(); // 👈 create focus node
 
   // Sample airport data (replace with full list later)
   final List<Map<String, String>> airports = [
@@ -45182,6 +45183,10 @@ class _FlightnameState extends State<Flightname> {
     super.initState();
     // Initially show first 3 suggestions
     filteredAirports = airports.take(3).toList();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
   }
 
   void _searchAirports(String query) {
@@ -45231,6 +45236,8 @@ class _FlightnameState extends State<Flightname> {
             TextFormField(
               style: TextStyle(color: Colors.black),
               controller: _controller,
+              focusNode: _focusNode,
+              // 👈 attach focus node
               onChanged: _searchAirports,
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
@@ -45239,7 +45246,7 @@ class _FlightnameState extends State<Flightname> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.blue, width: 2),
+                  borderSide: BorderSide(color: Color(0xFFF37023), width: 1.5),
                 ),
                 suffixIcon: Icon(Icons.search),
                 hintText: 'Search airport',

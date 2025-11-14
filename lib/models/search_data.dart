@@ -698,7 +698,7 @@ class Airline {
 
   factory Airline.fromJson(Map<String, dynamic> json) => Airline(
         airlineCode: json["AirlineCode"],
-        airlineName: json["AirlineName"],
+        airlineName: json["AirlineName"] ?? "",
         flightNumber: json["FlightNumber"],
         fareClass: json["FareClass"],
         operatingCarrier: json["OperatingCarrier"],

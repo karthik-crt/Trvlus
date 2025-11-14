@@ -43,21 +43,38 @@ class MakePaymentScreen extends StatefulWidget {
   final String? traceid;
   final Result? outboundFlight;
   final Result? inboundFlight;
+  final String? outresultindex;
+  final String? inresultindex;
   final String? total;
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final bool? isLLC;
   final List<Map<String, dynamic>>? passenger;
-  final Map<String, dynamic>? childpassenger;
-  final Map<String, dynamic>? infantpassenger;
+  final List<Map<String, dynamic>>? childpassenger;
+  final List<Map<String, dynamic>>? infantpassenger;
+  final String? outdepDate;
+  final String? outdepTime;
+  final String? outarrDate;
+  final String? outarrTime;
+  final String? indepDate;
+  final String? indepTime;
+  final String? inarrDate;
+  final String? inarrTime;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
+  Map<String, dynamic> meal;
 
   MakePaymentScreen(
       {required this.flight,
+      required this.outBoundData,
+      required this.inBoundData,
       required this.city,
       required this.destination,
       required this.airlineName,
       required this.cityName,
       required this.cityCode,
+      required this.meal,
       this.airlineCode,
       this.airportName,
       this.desairportName,
@@ -78,6 +95,8 @@ class MakePaymentScreen extends StatefulWidget {
       this.traceid,
       this.outboundFlight,
       this.inboundFlight,
+      this.outresultindex,
+      this.inresultindex,
       this.total,
       this.tax,
       this.adultCount,
@@ -85,7 +104,16 @@ class MakePaymentScreen extends StatefulWidget {
       this.infantCount,
       this.passenger,
       this.childpassenger,
-      this.infantpassenger});
+      this.infantpassenger,
+      this.isLLC,
+      this.outdepDate,
+      this.outdepTime,
+      this.outarrDate,
+      this.outarrTime,
+      this.indepDate,
+      this.indepTime,
+      this.inarrDate,
+      this.inarrTime});
 
   @override
   _MakePaymentScreenState createState() => _MakePaymentScreenState();
@@ -102,9 +130,12 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     final destination = widget.destination;
     final passenger = widget.flightNumber ?? "";
     print("passenger$passenger");
+    print("MAKEPAYMENT");
+    print("meal${widget.meal}");
+
     // final resultindex = widget.resultindex;
     // final traceid = widget.traceid;
-    if (widget.depDate == null) {
+    if (widget.depDate != null) {
       final depDateformat = widget.depDate;
       DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
       final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
@@ -114,7 +145,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       final finalarrDateformat =
           DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     }
-    print("payment${widget.passenger}");
+    print(
+        "payment${widget.passenger} ${widget.childpassenger} ${widget.infantpassenger}");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -984,7 +1016,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                   onPressed: () async {
                     final prefs = await SharedPreferences.getInstance();
                     prefs.getString("ResultIndex");
-
+                    print("ISLLC${widget.isLLC}");
                     // await ApiService().ticket();
                     Navigator.push(
                         context,
@@ -1004,9 +1036,19 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                   descityCode: widget.descityCode,
                                   cityName: widget.cityName,
                                   descityName: widget.descityName,
+                                  outboundFlight: widget.outboundFlight,
+                                  inboundFlight: widget.inboundFlight,
+                                  outresultindex: widget.outresultindex,
+                                  inresultindex: widget.inresultindex,
                                   passenger: widget.passenger,
                                   childpassenger: widget.childpassenger,
                                   infantpassenger: widget.infantpassenger,
+                                  basefare: widget.basefare,
+                                  tax: widget.tax,
+                                  isLLC: widget.isLLC,
+                                  outBoundData: widget.outBoundData,
+                                  inBoundData: widget.inBoundData,
+                                  meal: widget.meal,
                                 )));
                     // Get.to(MakePaymentScreen(
                     //   flight: flight,

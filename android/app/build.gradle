@@ -32,10 +32,15 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 
 android {
     namespace "com.booking.trvlus"
-    compileSdkVersion flutter.compileSdkVersion
-    ndkVersion flutter.ndkVersion
+    compileSdkVersion 35
+
+
+    // ✅ Use NDK 28.1 (supports 16KB memory page size)
+    ndkVersion "28.1.13356709"
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
+
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -51,9 +56,23 @@ android {
     defaultConfig {
         applicationId "com.booking.trvlus"
         minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
+        targetSdkVersion 35
+//        targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+//        // ✅ Add this block to support 16 KB memory page size
+        ndk {
+            // Only build for arm64-v8a (required for 16KB)
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    // ✅ Ensure modern packaging for native libs
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging false
+        }
     }
 
     signingConfigs {
@@ -85,5 +104,6 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

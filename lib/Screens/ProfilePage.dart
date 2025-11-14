@@ -14,9 +14,7 @@ import 'package:trvlus/Screens/tearmsandcondition.dart';
 import '../models/countrycode.dart';
 import '../utils/api_service.dart';
 import 'BookingHistory.dart';
-import 'EditProfile.dart';
 import 'NotificationScreen.dart';
-import 'countryCode.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -96,8 +94,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   SliverAppBar(
                     backgroundColor: Colors.white,
                     centerTitle: true,
-                    toolbarHeight: 280.h,
-                    // toolbarHeight: 10.h,
+                    // toolbarHeight: 280.h,
+                    toolbarHeight: 60.h,
                     automaticallyImplyLeading: false,
                     flexibleSpace: FlexibleSpaceBar(
                       centerTitle: true,
@@ -134,253 +132,253 @@ class _ProfilePageState extends State<ProfilePage> {
                                       Theme.of(context).textTheme.headlineLarge,
                                 ),
                                 Spacer(),
-                                GestureDetector(
-                                    onTap: () {
-                                      Get.back();
-                                      Get.to(SearchFlightPage());
-                                    },
-                                    child: Icon(Icons.close)),
+                                // GestureDetector(
+                                //     onTap: () {
+                                //       Get.back();
+                                //       Get.to(SearchFlightPage());
+                                //     },
+                                //     child: Icon(Icons.close)),
                               ],
                             ),
                             SizedBox(
                               height: 5.h,
                             ),
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.symmetric(vertical: 0),
-                              decoration: BoxDecoration(
-                                  /* gradient: LinearGradient(
-                        colors: [Colors.orange.shade200, Colors.orange.shade100],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),*/
-                                  ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      GestureDetector(
-                                        // onTap: () {
-                                        //   // Open a bottom sheet for camera/gallery choice
-                                        //   showModalBottomSheet(
-                                        //     context: context,
-                                        //     builder: (context) {
-                                        //       return Wrap(
-                                        //         children: [
-                                        //           ListTile(
-                                        //             leading:
-                                        //                 Icon(Icons.photo_library),
-                                        //             title: Text('Pick from Gallery'),
-                                        //             onTap: () {
-                                        //               Navigator.pop(context);
-                                        //               _pickImage(ImageSource.gallery);
-                                        //             },
-                                        //           ),
-                                        //           ListTile(
-                                        //             leading: Icon(Icons.camera_alt),
-                                        //             title: Text('Take a Photo'),
-                                        //             onTap: () {
-                                        //               Navigator.pop(context);
-                                        //               _pickImage(ImageSource.camera);
-                                        //             },
-                                        //           ),
-                                        //         ],
-                                        //       );
-                                        //     },
-                                        //   );
-                                        // },
-                                        child: Container(
-                                          height: 65.h,
-                                          width: 58.w,
-                                          child: CircleAvatar(
-                                            radius: 25.r,
-                                            // backgroundImage: _image != null
-                                            //     ? FileImage(_image!) as ImageProvider
-                                            //     : AssetImage("assets/profile.png"),
-                                            child: Icon(Icons.person),
-                                            backgroundColor: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        left: 40.w,
-                                        top: 30.h,
-                                        child: Image.asset(
-                                            "assets/images/EditProfile.png"),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 10.h),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const countryCode()));
-                                    },
-                                    child: Text(
-                                      "Tessa Vivek",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 18.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black),
-                                    ),
-                                  ),
-                                  SizedBox(height: 10.h),
-                                  Text(
-                                    "1234567895",
-                                    style: TextStyle(
-                                        fontSize: 12.sp, color: Colors.grey),
-                                  ),
-                                  SizedBox(height: 10.h),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 7.w),
-                                      GestureDetector(
-                                        onTap: () async {
-                                          final selected =
-                                              await showModalBottomSheet<
-                                                  Map<String, String>>(
-                                            context: context,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(5),
-                                                topRight: Radius.circular(5),
-                                              ),
-                                            ),
-                                            builder: (BuildContext context) {
-                                              return const countryCode(
-                                                  type: "country");
-                                            },
-                                          );
-
-                                          if (selected != null) {
-                                            print(
-                                                "Selected Country Map: $selected");
-
-                                            setState(() {
-                                              _selectedCountry =
-                                                  selected["name"]!;
-                                              _selectedFlag = selected["flag"]!;
-                                              _selectedcurrency = selected[
-                                                  "currency"]!; // ✅ updates currency too
-                                            });
-
-                                            final prefs =
-                                                await SharedPreferences
-                                                    .getInstance();
-                                            await prefs.setString(
-                                                'selected_country',
-                                                _selectedCountry);
-                                            await prefs.setString(
-                                                'selected_flag', _selectedFlag);
-                                            await prefs.setString(
-                                                'selected_currency',
-                                                _selectedcurrency);
-                                          }
-                                        },
-                                        child: Row(
-                                          children: [
-                                            Image.asset(
-                                              'assets/flag/$_selectedCountry.png',
-                                              width: 20,
-                                              height: 20,
-                                            ),
-                                            SizedBox(width: 5),
-                                            Text(
-                                              _selectedCountry,
-                                              style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 14.sp),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(width: 7.w),
-                                      const Text("|"),
-                                      SizedBox(width: 8.w),
-                                      GestureDetector(
-                                        onTap: () async {
-                                          final selectedCurrency =
-                                              await showModalBottomSheet<
-                                                  Map<String, String>>(
-                                            context: context,
-                                            shape: const RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(5),
-                                                topRight: Radius.circular(5),
-                                              ),
-                                            ),
-                                            builder: (BuildContext context) {
-                                              return const countryCode(); // type defaults to currency
-                                            },
-                                          );
-
-                                          if (selectedCurrency != null) {
-                                            setState(() {
-                                              _selectedCountry = selectedCurrency[
-                                                  "name"]!; // optional: if you want country update too
-                                              _selectedFlag =
-                                                  selectedCurrency["flag"]!;
-                                              _selectedcurrency = selectedCurrency[
-                                                  "currency"]!; // ✅ extract string
-                                            });
-
-                                            final prefs =
-                                                await SharedPreferences
-                                                    .getInstance();
-                                            await prefs.setString(
-                                                'selected_country',
-                                                _selectedCountry);
-                                            await prefs.setString(
-                                                'selected_flag', _selectedFlag);
-                                            await prefs.setString(
-                                                'selected_currency',
-                                                _selectedcurrency);
-                                            print(
-                                                "Saved selected currency: $_selectedcurrency");
-                                          }
-                                        },
-                                        child: Text(
-                                          _selectedcurrency ??
-                                              "Select Currency",
-                                          style: TextStyle(
-                                              fontSize: 14.sp,
-                                              color: Colors.black),
-                                        ),
-                                      ),
-                                      SizedBox(width: 10.w),
-                                      Image.asset(
-                                          "assets/images/TraingleBlack.png"),
-                                    ],
-                                  ),
-                                  SizedBox(height: 15.h),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Get.to(EditProfilePage());
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFFF37023),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      "Edit Profile",
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontFamily: 'Inter',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            //       Container(
+                            //         width: double.infinity,
+                            //         padding: EdgeInsets.symmetric(vertical: 0),
+                            //         decoration: BoxDecoration(
+                            //             /* gradient: LinearGradient(
+                            //   colors: [Colors.orange.shade200, Colors.orange.shade100],
+                            //   begin: Alignment.topCenter,
+                            //   end: Alignment.bottomCenter,
+                            // ),*/
+                            //             ),
+                            //         child: Column(
+                            //           crossAxisAlignment: CrossAxisAlignment.center,
+                            //           children: [
+                            //             Stack(
+                            //               clipBehavior: Clip.none,
+                            //               children: [
+                            //                 GestureDetector(
+                            //                   // onTap: () {
+                            //                   //   // Open a bottom sheet for camera/gallery choice
+                            //                   //   showModalBottomSheet(
+                            //                   //     context: context,
+                            //                   //     builder: (context) {
+                            //                   //       return Wrap(
+                            //                   //         children: [
+                            //                   //           ListTile(
+                            //                   //             leading:
+                            //                   //                 Icon(Icons.photo_library),
+                            //                   //             title: Text('Pick from Gallery'),
+                            //                   //             onTap: () {
+                            //                   //               Navigator.pop(context);
+                            //                   //               _pickImage(ImageSource.gallery);
+                            //                   //             },
+                            //                   //           ),
+                            //                   //           ListTile(
+                            //                   //             leading: Icon(Icons.camera_alt),
+                            //                   //             title: Text('Take a Photo'),
+                            //                   //             onTap: () {
+                            //                   //               Navigator.pop(context);
+                            //                   //               _pickImage(ImageSource.camera);
+                            //                   //             },
+                            //                   //           ),
+                            //                   //         ],
+                            //                   //       );
+                            //                   //     },
+                            //                   //   );
+                            //                   // },
+                            //                   child: Container(
+                            //                     height: 65.h,
+                            //                     width: 58.w,
+                            //                     child: CircleAvatar(
+                            //                       radius: 25.r,
+                            //                       // backgroundImage: _image != null
+                            //                       //     ? FileImage(_image!) as ImageProvider
+                            //                       //     : AssetImage("assets/profile.png"),
+                            //                       child: Icon(Icons.person),
+                            //                       backgroundColor: Colors.white,
+                            //                     ),
+                            //                   ),
+                            //                 ),
+                            //                 Positioned(
+                            //                   left: 40.w,
+                            //                   top: 30.h,
+                            //                   child: Image.asset(
+                            //                       "assets/images/EditProfile.png"),
+                            //                 ),
+                            //               ],
+                            //             ),
+                            //             SizedBox(height: 10.h),
+                            //             GestureDetector(
+                            //               onTap: () {
+                            //                 Navigator.push(
+                            //                     context,
+                            //                     MaterialPageRoute(
+                            //                         builder: (context) =>
+                            //                             const countryCode()));
+                            //               },
+                            //               child: Text(
+                            //                 "Tessa Vivek",
+                            //                 style: TextStyle(
+                            //                     fontFamily: 'Inter',
+                            //                     fontSize: 18.sp,
+                            //                     fontWeight: FontWeight.bold,
+                            //                     color: Colors.black),
+                            //               ),
+                            //             ),
+                            //             SizedBox(height: 10.h),
+                            //             Text(
+                            //               "1234567895",
+                            //               style: TextStyle(
+                            //                   fontSize: 12.sp, color: Colors.grey),
+                            //             ),
+                            //             SizedBox(height: 10.h),
+                            //             Row(
+                            //               mainAxisAlignment: MainAxisAlignment.center,
+                            //               children: [
+                            //                 SizedBox(width: 7.w),
+                            //                 GestureDetector(
+                            //                   onTap: () async {
+                            //                     final selected =
+                            //                         await showModalBottomSheet<
+                            //                             Map<String, String>>(
+                            //                       context: context,
+                            //                       shape: const RoundedRectangleBorder(
+                            //                         borderRadius: BorderRadius.only(
+                            //                           topLeft: Radius.circular(5),
+                            //                           topRight: Radius.circular(5),
+                            //                         ),
+                            //                       ),
+                            //                       builder: (BuildContext context) {
+                            //                         return const countryCode(
+                            //                             type: "country");
+                            //                       },
+                            //                     );
+                            //
+                            //                     if (selected != null) {
+                            //                       print(
+                            //                           "Selected Country Map: $selected");
+                            //
+                            //                       setState(() {
+                            //                         _selectedCountry =
+                            //                             selected["name"]!;
+                            //                         _selectedFlag = selected["flag"]!;
+                            //                         _selectedcurrency = selected[
+                            //                             "currency"]!; // ✅ updates currency too
+                            //                       });
+                            //
+                            //                       final prefs =
+                            //                           await SharedPreferences
+                            //                               .getInstance();
+                            //                       await prefs.setString(
+                            //                           'selected_country',
+                            //                           _selectedCountry);
+                            //                       await prefs.setString(
+                            //                           'selected_flag', _selectedFlag);
+                            //                       await prefs.setString(
+                            //                           'selected_currency',
+                            //                           _selectedcurrency);
+                            //                     }
+                            //                   },
+                            //                   child: Row(
+                            //                     children: [
+                            //                       Image.asset(
+                            //                         'assets/flag/$_selectedCountry.png',
+                            //                         width: 20,
+                            //                         height: 20,
+                            //                       ),
+                            //                       SizedBox(width: 5),
+                            //                       Text(
+                            //                         _selectedCountry,
+                            //                         style: TextStyle(
+                            //                             color: Colors.black,
+                            //                             fontSize: 14.sp),
+                            //                       ),
+                            //                     ],
+                            //                   ),
+                            //                 ),
+                            //                 SizedBox(width: 7.w),
+                            //                 const Text("|"),
+                            //                 SizedBox(width: 8.w),
+                            //                 GestureDetector(
+                            //                   onTap: () async {
+                            //                     final selectedCurrency =
+                            //                         await showModalBottomSheet<
+                            //                             Map<String, String>>(
+                            //                       context: context,
+                            //                       shape: const RoundedRectangleBorder(
+                            //                         borderRadius: BorderRadius.only(
+                            //                           topLeft: Radius.circular(5),
+                            //                           topRight: Radius.circular(5),
+                            //                         ),
+                            //                       ),
+                            //                       builder: (BuildContext context) {
+                            //                         return const countryCode(); // type defaults to currency
+                            //                       },
+                            //                     );
+                            //
+                            //                     if (selectedCurrency != null) {
+                            //                       setState(() {
+                            //                         _selectedCountry = selectedCurrency[
+                            //                             "name"]!; // optional: if you want country update too
+                            //                         _selectedFlag =
+                            //                             selectedCurrency["flag"]!;
+                            //                         _selectedcurrency = selectedCurrency[
+                            //                             "currency"]!; // ✅ extract string
+                            //                       });
+                            //
+                            //                       final prefs =
+                            //                           await SharedPreferences
+                            //                               .getInstance();
+                            //                       await prefs.setString(
+                            //                           'selected_country',
+                            //                           _selectedCountry);
+                            //                       await prefs.setString(
+                            //                           'selected_flag', _selectedFlag);
+                            //                       await prefs.setString(
+                            //                           'selected_currency',
+                            //                           _selectedcurrency);
+                            //                       print(
+                            //                           "Saved selected currency: $_selectedcurrency");
+                            //                     }
+                            //                   },
+                            //                   child: Text(
+                            //                     _selectedcurrency ??
+                            //                         "Select Currency",
+                            //                     style: TextStyle(
+                            //                         fontSize: 14.sp,
+                            //                         color: Colors.black),
+                            //                   ),
+                            //                 ),
+                            //                 SizedBox(width: 10.w),
+                            //                 Image.asset(
+                            //                     "assets/images/TraingleBlack.png"),
+                            //               ],
+                            //             ),
+                            //             SizedBox(height: 15.h),
+                            //             ElevatedButton(
+                            //               onPressed: () {
+                            //                 Get.to(EditProfilePage());
+                            //               },
+                            //               style: ElevatedButton.styleFrom(
+                            //                 backgroundColor: Color(0xFFF37023),
+                            //                 shape: RoundedRectangleBorder(
+                            //                   borderRadius: BorderRadius.circular(10),
+                            //                 ),
+                            //               ),
+                            //               child: Text(
+                            //                 "Edit Profile",
+                            //                 style: TextStyle(
+                            //                   fontSize: 12.sp,
+                            //                   fontFamily: 'Inter',
+                            //                 ),
+                            //               ),
+                            //             ),
+                            //           ],
+                            //         ),
+                            //       ),
                           ],
                         ),
                       )),

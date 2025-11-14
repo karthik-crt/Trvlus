@@ -21,6 +21,8 @@ import 'TravelerDetails.dart';
 
 class FlightDetailsPage extends StatefulWidget {
   final Map<String, dynamic> flight;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
   final String city;
   final String destination;
   final String airlineName;
@@ -29,13 +31,22 @@ class FlightDetailsPage extends StatefulWidget {
   final String? flightNumber;
   final String? depDate;
   final String? depTime;
-  final String? refundable;
+  final String? outdepDate;
+  final String? outdepTime;
+  final String? indepDate;
+  final String? indepTime;
   final String? arrDate;
   final String? arrTime;
+  final String? outarrDate;
+  final String? outarrTime;
+  final String? inarrDate;
+  final String? inarrTime;
   final String? descityName;
+  final String? refundable;
   final String? descityCode;
   final String? airlineCode;
   final String? stop;
+  final bool? isLLC;
   final String? duration;
   final String? airportName;
   final String? desairportName;
@@ -47,6 +58,8 @@ class FlightDetailsPage extends StatefulWidget {
   final double? basefare;
   final List<List<Segment>>? segments;
   final String? resultindex;
+  final String? outresultindex;
+  final String? inresultindex;
   final String? traceid;
   final Result? outboundFlight;
   final Result? inboundFlight;
@@ -58,6 +71,8 @@ class FlightDetailsPage extends StatefulWidget {
 
   FlightDetailsPage(
       {required this.flight,
+      required this.outBoundData,
+      required this.inBoundData,
       required this.city,
       required this.destination,
       required this.airlineName,
@@ -74,8 +89,17 @@ class FlightDetailsPage extends StatefulWidget {
       this.arrTime,
       this.descityName,
       this.descityCode,
+      this.outdepDate,
+      this.outdepTime,
+      this.outarrDate,
+      this.outarrTime,
+      this.indepDate,
+      this.indepTime,
+      this.inarrDate,
+      this.inarrTime,
       this.stop,
       this.duration,
+      this.isLLC,
       this.cabinBaggage,
       this.baggage,
       this.cancellation,
@@ -85,6 +109,8 @@ class FlightDetailsPage extends StatefulWidget {
       this.tax,
       this.segments,
       this.resultindex,
+      this.outresultindex,
+      this.inresultindex,
       this.traceid,
       this.outboundFlight,
       this.inboundFlight,
@@ -109,12 +135,41 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     setState(() {
       isLoading = true;
     });
-    fare = await ApiService()
-        .farerule(widget.resultindex ?? "", widget.traceid ?? "");
-    fareQuote = await ApiService()
-        .farequote(widget.resultindex ?? "", widget.traceid ?? "");
-    ssrdata =
-        await ApiService().ssr(widget.resultindex ?? "", widget.traceid ?? "");
+    print("FLIGHTDETAILPAGE");
+    print(widget.outBoundData['basefare']);
+    print(widget.outBoundData['cityName']);
+    print(widget.outBoundData['cityCode']);
+    print(widget.outBoundData['descityName']);
+    print(widget.outBoundData['descityCode']);
+
+    // print(widget.outboundFlight!.segments.first.first.origin.depTime);
+    // ROUNDTRIP
+    if (widget.outboundFlight != null && widget.inboundFlight != null) {
+      fare = await ApiService()
+          .farerule(widget.outresultindex ?? "", widget.traceid ?? "");
+      fare = await ApiService()
+          .farerule(widget.inresultindex ?? "", widget.traceid ?? "");
+      fareQuote = await ApiService()
+          .farequote(widget.outresultindex ?? "", widget.traceid ?? "");
+      fareQuote = await ApiService()
+          .farequote(widget.inresultindex ?? "", widget.traceid ?? "");
+      ssrdata = await ApiService()
+          .ssr(widget.outresultindex ?? "", widget.traceid ?? "");
+      ssrdata = await ApiService()
+          .ssr(widget.inresultindex ?? "", widget.traceid ?? "");
+    }
+    // ONEWAY
+    else {
+      fare = await ApiService()
+          .farerule(widget.resultindex ?? "", widget.traceid ?? "");
+      print("fare$fare");
+      fareQuote = await ApiService()
+          .farequote(widget.resultindex ?? "", widget.traceid ?? "");
+      print("fareQuote$fareQuote");
+      ssrdata = await ApiService()
+          .ssr(widget.resultindex ?? "", widget.traceid ?? "");
+      print("ssrdata$ssrdata");
+    }
     setState(() {
       isLoading = false;
     });
@@ -160,6 +215,17 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   adultCount: widget.adultCount,
                   childCount: widget.childCount,
                   infantCount: widget.infantCount,
+                  isLLC: widget.isLLC,
+                  outdepDate: widget.outdepDate,
+                  outdepTime: widget.outdepTime,
+                  outarrDate: widget.outarrDate,
+                  outarrTime: widget.outarrTime,
+                  indepDate: widget.indepDate,
+                  indepTime: widget.indepTime,
+                  inarrDate: widget.inarrDate,
+                  inarrTime: widget.inarrTime,
+                  outBoundData: widget.outBoundData,
+                  inBoundData: widget.inBoundData,
                 )),
       );
     } else {
@@ -180,6 +246,8 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final total = widget.total;
+    final llc = widget.isLLC;
+    print("LLLLLLCCCCC$llc");
     print("totaltotal$total");
     print(
         "heloooooo${widget.adultCount} ${widget.childCount} ${widget.infantCount}");
@@ -1079,7 +1147,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       margin: EdgeInsets.all(5),
                       padding: EdgeInsets.all(10),
                       height: 70,
-                      width: 320,
+                      width: MediaQuery.sizeOf(context).width,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(7),
                           color: Colors.white,
@@ -1177,13 +1245,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                                                 promoRowModal(
                                                     1,
                                                     "TRVLUS10",
-                                                    "₹3,200 save",
+                                                    "₹4,555 save",
                                                     "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
                                                     setModalState),
                                                 promoRowModal(
                                                     2,
                                                     "TRVLUS11",
-                                                    "₹2,100 save",
+                                                    "₹4,555 save",
                                                     "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
                                                     setModalState),
                                                 SizedBox(height: 20),
@@ -1335,9 +1403,22 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             inboundFlight: widget.inboundFlight,
                             total: widget.total,
                             tax: widget.tax,
+                            outresultindex: widget.outresultindex,
+                            inresultindex: widget.inresultindex,
                             adultCount: widget.adultCount,
                             childCount: widget.infantCount,
                             infantCount: widget.infantCount,
+                            isLLC: widget.isLLC,
+                            outdepDate: widget.outdepDate,
+                            outdepTime: widget.outdepTime,
+                            outarrDate: widget.outarrDate,
+                            outarrTime: widget.outarrTime,
+                            indepDate: widget.indepDate,
+                            indepTime: widget.indepTime,
+                            inarrDate: widget.inarrDate,
+                            inarrTime: widget.inarrTime,
+                            outBoundData: widget.outBoundData,
+                            inBoundData: widget.inBoundData,
                           ));
                         },
                         style: ElevatedButton.styleFrom(

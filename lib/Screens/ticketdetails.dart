@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -23,6 +25,13 @@ class _TicketdetailsState extends State<Ticketdetails> {
   bool istravel = false;
   bool isLoading = false;
   late Getbookingdetailsid bookingdetailsid;
+  int adultCount = 0;
+  int childCount = 0;
+  int infantCount = 0;
+
+  double adultFare = 0;
+  double childFare = 0;
+  double infantFare = 0;
 
   @override
   void initState() {
@@ -38,10 +47,42 @@ class _TicketdetailsState extends State<Ticketdetails> {
       isLoading = true;
     });
     bookingdetailsid = await ApiService().getbookingdetailHistory(widget.id);
+    // final adultCount =
+    //     int.parse(bookingdetailsid.data.first.totalpassengers.toString());
+    final fare = double.parse(bookingdetailsid
+        .data.first.passengerDetails.first.fare.BaseFare
+        .toString());
+    print('fare$fare');
+    adultFare = adultCount * fare;
+    print("TOTAL COUNT $adultFare");
     setState(() {
       isLoading = false;
     });
-  } //h
+    passengerCount();
+  }
+
+  passengerCount() {
+    for (var booking in bookingdetailsid.data) {
+      for (var passenger in booking.passengerDetails) {
+        final baseFare = double.parse(passenger.fare.BaseFare.toString());
+
+        if (passenger.PaxType == 1) {
+          adultCount++;
+          print("ADULTCOUNT$adultCount");
+          adultFare += baseFare;
+          print("ADULTCOUNT$adultFare");
+        } else if (passenger.PaxType == 2) {
+          childCount++;
+          childFare += baseFare;
+          print("ADULTCOUNT$childFare");
+        } else if (passenger.PaxType == 3) {
+          infantCount++;
+          infantFare += baseFare;
+          print("ADULTCOUNT$infantFare");
+        }
+      }
+    }
+  }
 
   Widget _buildSectionCard(String title, List<Widget> content) {
     return Container(
@@ -1139,59 +1180,50 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     SizedBox(
                                       height: 5,
                                     ),
-                                    Container(
-                                      // width: 300,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          color: Color(0xFFE6E6E6)),
-                                      child: Row(
-                                        children: [
-                                          SvgPicture.asset(
-                                            "assets/icon/adult.svg",
-                                            height: 15,
-                                            width: 15,
-                                          ),
-                                          Text(
-                                            bookingdetailsid
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount: bookingdetailsid
+                                          .data.first.passengerDetails.length,
+                                      itemBuilder: (context, index) {
+                                        final passenger = bookingdetailsid
+                                            .data.first.passengerDetails[index];
+                                        if (bookingdetailsid
                                                 .data
                                                 .first
-                                                .passengerDetails
-                                                .first
-                                                .FirstName,
-                                            style:
-                                                TextStyle(color: Colors.black),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    Container(
-                                      // width: 300,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          color: Color(0xFFE6E6E6)),
-                                      child: Row(
-                                        children: [
-                                          SvgPicture.asset(
-                                            "assets/icon/adult.svg",
-                                            height: 15,
-                                            width: 15,
-                                          ),
-                                          Text(
-                                            "UserName here",
-                                            style:
-                                                TextStyle(color: Colors.black),
-                                          )
-                                        ],
-                                      ),
+                                                .passengerDetails[index]
+                                                .PaxType ==
+                                            1)
+                                          return Column(
+                                            children: [
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 10),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  color: Color(0xFFE6E6E6),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      "assets/icon/adult.svg",
+                                                      height: 15,
+                                                      width: 15,
+                                                    ),
+                                                    Text(
+                                                      '${passenger.FirstName} ${passenger.LastName}',
+                                                      style: TextStyle(
+                                                          color: Colors.black),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              SizedBox(height: 10),
+                                            ],
+                                          );
+                                      },
                                     ),
                                     SizedBox(
                                       height: 5,
@@ -1203,54 +1235,115 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     SizedBox(
                                       height: 5,
                                     ),
-                                    Container(
-                                      // width: 300,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          color: Color(0xFFE6E6E6)),
-                                      child: Row(
-                                        children: [
-                                          SvgPicture.asset(
-                                            "assets/icon/child.svg",
-                                            height: 15,
-                                            width: 15,
-                                          ),
-                                          Text(
-                                            "UserName here",
-                                            style:
-                                                TextStyle(color: Colors.black),
-                                          )
-                                        ],
-                                      ),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount: bookingdetailsid
+                                          .data.first.passengerDetails
+                                          .where((p) => p.PaxType == 2)
+                                          .length,
+                                      itemBuilder: (context, index) {
+                                        final passengerList = bookingdetailsid
+                                            .data.first.passengerDetails;
+                                        final childPassengers = passengerList
+                                            .where((p) => p.PaxType == 2)
+                                            .toList();
+
+                                        final passenger = childPassengers[
+                                            index]; // 👈 Access each child passenger
+
+                                        print(
+                                            'childPassengers: ${jsonEncode(childPassengers)}');
+
+                                        return Column(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 10, vertical: 10),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                color: Color(0xFFE6E6E6),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  SvgPicture.asset(
+                                                    "assets/icon/child.svg",
+                                                    height: 15,
+                                                    width: 15,
+                                                  ),
+                                                  Text(
+                                                    '${passenger.FirstName} ${passenger.LastName}',
+                                                    style: TextStyle(
+                                                        color: Colors.black),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+                                          ],
+                                        );
+                                      },
                                     ),
                                     SizedBox(
                                       height: 10,
                                     ),
-                                    Container(
-                                      // width: 300,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 10),
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          color: Color(0xFFE6E6E6)),
-                                      child: Row(
-                                        children: [
-                                          SvgPicture.asset(
-                                            "assets/icon/child.svg",
-                                            height: 15,
-                                            width: 15,
-                                          ),
-                                          Text(
-                                            "UserName here",
-                                            style:
-                                                TextStyle(color: Colors.black),
-                                          )
-                                        ],
-                                      ),
+                                    Text(
+                                      "INFANT",
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount: bookingdetailsid
+                                          .data.first.passengerDetails
+                                          .where((p) => p.PaxType == 3)
+                                          .length,
+                                      itemBuilder: (context, index) {
+                                        final passengerList = bookingdetailsid
+                                            .data.first.passengerDetails;
+                                        final infantPassengers = passengerList
+                                            .where((p) => p.PaxType == 3)
+                                            .toList();
+
+                                        final passenger = infantPassengers[
+                                            index]; // 👈 Access each child passenger
+
+                                        print(
+                                            'infantPassengers: ${jsonEncode(infantPassengers)}');
+
+                                        return Column(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 10, vertical: 10),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                color: Color(0xFFE6E6E6),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  SvgPicture.asset(
+                                                    "assets/icon/child.svg",
+                                                    height: 15,
+                                                    width: 15,
+                                                  ),
+                                                  Text(
+                                                    '${passenger.FirstName} ${passenger.LastName}',
+                                                    style: TextStyle(
+                                                        color: Colors.black),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+                                          ],
+                                        );
+                                      },
                                     ),
                                   ],
                                 )
@@ -1322,7 +1415,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text("Base fare",
+                                            Text("Base Fare",
                                                 style: TextStyle(
                                                     fontSize: 14.sp,
                                                     color: Colors.black,
@@ -1341,13 +1434,29 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                                "Adults(${bookingdetailsid.data.first.checkinAdult} X ₹${bookingdetailsid.data.first.passengerDetails.first.fare.BaseFare})",
+                                                "Adults($adultCount X ₹$adultFare)",
                                                 style: TextStyle(
                                                   fontSize: 12.sp,
                                                   color: Colors.grey,
                                                 )),
+                                            Text("₹$adultFare",
+                                                style: TextStyle(
+                                                    fontSize: 12.sp,
+                                                    color: Colors.grey)),
+                                          ],
+                                        ),
+                                        SizedBox(height: 3.h),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
                                             Text(
-                                                "₹${bookingdetailsid.data.first.passengerDetails.first.fare.BaseFare}",
+                                                "Child ($childCount X ₹$childFare))",
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  color: Colors.grey,
+                                                )),
+                                            Text("₹$childFare",
                                                 style: TextStyle(
                                                     fontSize: 12.sp,
                                                     color: Colors.grey)),
@@ -1358,28 +1467,13 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text("child (1 X ₹5,000)",
+                                            Text(
+                                                "Infant ($infantCount X ₹$infantFare))",
                                                 style: TextStyle(
                                                   fontSize: 12.sp,
                                                   color: Colors.grey,
                                                 )),
-                                            Text("₹5,000",
-                                                style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    color: Colors.grey)),
-                                          ],
-                                        ),
-                                        SizedBox(height: 3.h),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text("Infant (1 X ₹5,000)",
-                                                style: TextStyle(
-                                                  fontSize: 12.sp,
-                                                  color: Colors.grey,
-                                                )),
-                                            Text("₹5,000",
+                                            Text("₹$infantFare",
                                                 style: TextStyle(
                                                     fontSize: 12.sp,
                                                     color: Colors.grey)),
@@ -1575,7 +1669,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     children: [
                                       Text("Mobile"),
                                       Text(
-                                        "54632 78945",
+                                        bookingdetailsid.data.first
+                                            .passengerDetails.first.ContactNo,
                                         style: TextStyle(
                                             color: Color(0xFF303030),
                                             fontWeight: FontWeight.bold),
@@ -1588,7 +1683,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     children: [
                                       Text("Email"),
                                       Text(
-                                        "trvlus@gmail.com",
+                                        bookingdetailsid.data.first
+                                            .passengerDetails.first.Email,
                                         style: TextStyle(
                                             color: Color(0xFF303030),
                                             fontWeight: FontWeight.bold),

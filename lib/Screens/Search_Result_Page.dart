@@ -202,133 +202,86 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
           )
         : searchData.response.results.isNotEmpty
             ? Scaffold(
-                backgroundColor: Colors.grey.shade200,
-                body: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 25.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.all(10),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: const Color(0xFFF37023),
-                              boxShadow: [
-                                BoxShadow(
-                                    blurRadius: 3, color: Colors.grey.shade500)
-                              ]),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.white),
-                                        child: Icon(
-                                          Icons.arrow_back,
-                                          color: Color(0xFFF37023),
-                                        ),
-                                      )),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    widget.selectedDepDate.contains("startDate")
-                                        ? widget.selectedDepDate
-                                            .substring(33, 43)
-                                        : widget.selectedDepDate,
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 15),
-                                  ),
-                                  const Spacer(),
-                                  SvgPicture.asset(
-                                    'assets/icon/edit.svg',
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  GestureDetector(
+                appBar: AppBar(
+                    automaticallyImplyLeading: false,
+                    bottom: PreferredSize(
+                      preferredSize: Size.fromHeight(100),
+                      child: Container(
+                        margin: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFFF37023),
+                            boxShadow: [
+                              BoxShadow(
+                                  blurRadius: 3, color: Colors.grey.shade500)
+                            ]),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                GestureDetector(
                                     onTap: () {
                                       Navigator.pop(context);
                                     },
-                                    child: const Text(
-                                      "Edit details",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
                                           color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(
-                                height: 9,
-                              ),
-                              Row(
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        child: Row(
-                                          children: [
-                                            Text(
-                                              maxLines: 3,
-                                              widget.fromAirport,
-                                              style: TextStyle(
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                  fontSize: 15),
-                                            ),
-                                            SizedBox(
-                                              width: 5,
-                                            ),
-                                            Text(
-                                              widget.airportCode,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 10,
-                                                  color: Colors.white),
-                                            ),
-                                          ],
-                                        ),
+                                      child: Icon(
+                                        Icons.arrow_back,
+                                        color: Color(0xFFF37023),
                                       ),
-                                      Text(
-                                        // "Chennai Airport",
-                                        "",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 10),
-                                      ),
-                                    ],
+                                    )),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text(
+                                  widget.selectedDepDate.contains("startDate")
+                                      ? widget.selectedDepDate.substring(33, 43)
+                                      : widget.selectedDepDate,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: 15),
+                                ),
+                                const Spacer(),
+                                SvgPicture.asset(
+                                  'assets/icon/edit.svg',
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text(
+                                    "Edit details",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
                                   ),
-                                  const Spacer(),
-                                  Image.asset(
-                                    'assets/images/flightStop.png',
-                                    color: Colors.white,
-                                  ),
-                                  const Spacer(),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Row(
+                                ),
+                              ],
+                            ),
+                            const SizedBox(
+                              height: 9,
+                            ),
+                            Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      child: Row(
                                         children: [
                                           Text(
-                                            widget.toAirport,
+                                            maxLines: 3,
+                                            widget.fromAirport,
                                             style: TextStyle(
+                                                overflow: TextOverflow.ellipsis,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.white,
                                                 fontSize: 15),
@@ -337,7 +290,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                             width: 5,
                                           ),
                                           Text(
-                                            widget.toairportCode,
+                                            widget.airportCode,
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 10,
@@ -345,58 +298,107 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                           ),
                                         ],
                                       ),
-                                      Text(
-                                        // "Hyderbad Airport",
-                                        "",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 10),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(
-                                height: 4,
-                              ),
-                              DotDivider(
-                                dotSize: 1.h,
-                                spacing: 2.r,
-                                dotCount: 100,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    "${passengerCount.toString()} Traveller",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 15),
-                                  ),
-                                  Spacer(),
-                                  Text(
-                                    "Economy",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 15),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Icon(
-                                    Icons.stars,
-                                    color: Colors.white,
-                                  )
-                                ],
-                              )
-                            ],
-                          ),
+                                    ),
+                                    Text(
+                                      // "Chennai Airport",
+                                      "",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                Image.asset(
+                                  'assets/images/flightStop.png',
+                                  color: Colors.white,
+                                ),
+                                const Spacer(),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          widget.toAirport,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontSize: 15),
+                                        ),
+                                        SizedBox(
+                                          width: 5,
+                                        ),
+                                        Text(
+                                          widget.toairportCode,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10,
+                                              color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      // "Hyderbad Airport",
+                                      "",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(
+                              height: 4,
+                            ),
+                            DotDivider(
+                              dotSize: 1.h,
+                              spacing: 2.r,
+                              dotCount: 100,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  "${passengerCount.toString()} Traveller",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: 15),
+                                ),
+                                Spacer(),
+                                Text(
+                                  "Economy",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: 15),
+                                ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Icon(
+                                  Icons.stars,
+                                  color: Colors.white,
+                                )
+                              ],
+                            )
+                          ],
                         ),
+                      ),
+                    )),
+                backgroundColor: Colors.grey.shade200,
+                body: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 2.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         // DateScroller(),
                         Container(
                           padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -620,7 +622,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                             // adjust radius
                                                             child: Image.asset(
                                                               "assets/${searchData.response.results[index][innerIndex].segments.first.first.airline.airlineCode}.gif",
-                                                              fit: BoxFit.cover,
+                                                              fit: BoxFit.fill,
                                                               height: 35,
                                                               width: 35,
                                                             ),
@@ -1428,6 +1430,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                           arrTime: searchData.response.results[index][innerIndex].segments.first.first.destination.arrTime.toLocal().toString().substring(11, 16),
                                                                                           stop: (searchData.response.results[index][innerIndex].segments.first.length - 1) == 0 ? "Non-Stop" : "${searchData.response.results[index][innerIndex].segments.first.length - 1} stop",
                                                                                           duration: "${hours}h ${minutes}m",
+                                                                                          isLLC: searchData.response.results[index][innerIndex].isLcc,
                                                                                           cabinBaggage: searchData.response.results[index][innerIndex].segments.first.first.cabinBaggage,
                                                                                           baggage: searchData.response.results[index][innerIndex].segments.first.first.baggage,
                                                                                           // cancellation: searchData.response.results[index][innerIndex].miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details,
@@ -1476,6 +1479,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                               return "No data";
                                                                                             }
                                                                                           })(),
+                                                                                          outBoundData: {},
+                                                                                          inBoundData: {},
                                                                                         )));
                                                                           },
                                                                           child:

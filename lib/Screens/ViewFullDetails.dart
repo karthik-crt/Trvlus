@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -5,9 +7,6 @@ import 'package:intl/intl.dart';
 import '../models/search_data.dart';
 import '../utils/constant.dart';
 import 'DotDivider.dart';
-
-int selectedBaggage = 0;
-late final bool outboundFlight;
 
 class Viewfulldetails extends StatefulWidget {
   final Map<String, dynamic> flight;
@@ -62,6 +61,10 @@ class Viewfulldetails extends StatefulWidget {
 }
 
 class _ViewfulldetailsState extends State<Viewfulldetails> {
+  int selectedBaggage = 0;
+  late final bool outboundFlight;
+  late final bool inboundFlight;
+
   @override
   Widget build(BuildContext context) {
     // final flight =
@@ -70,12 +73,12 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
     //     .outboundFlight!.segments.first.first.destination.airport.cityCode;
     // print("flightflight$flight");
     // print("flight1flight1$flight1");
-    // final city = widget.city;
-    // final destination = widget.destination;
-    // final sights = widget.stop;
-    // print(sights);
-    // final segments = jsonEncode(widget.segments);
-    // print("fullsegments$segments");
+    final city = widget.city;
+    final destination = widget.destination;
+    final sights = widget.stop;
+    print(sights);
+    final segments = jsonEncode(widget.segments);
+    print("fullsegments$segments");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),

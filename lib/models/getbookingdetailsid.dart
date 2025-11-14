@@ -139,9 +139,9 @@ class Data {
     commisionPercentageAmount =
         (json['commision_percentage_amount'] as num).toInt();
     status = json['status'];
-    passengerBreakup = List.from(json['passenger_breakup'])
-        .map((e) => PassengerBreakup.fromJson(e))
-        .toList();
+    // passengerBreakup = List.from(json['passenger_breakup'] ?? [])
+    //     .map((e) => PassengerBreakup.fromJson(e))
+    //     .toList();
     reissueCharge = json['reissue_charge'];
     cancellationCharge = json['cancellation_charge'];
     invoiceNo = json['invoiceNo'];
@@ -278,38 +278,39 @@ class PassengerDetails {
     PaxId = json['PaxId'];
     Title = json['Title'];
     Gender = json['Gender'];
-    ticket = Ticket.fromJson(json['Ticket']);
-    baggage =
-        List.from(json['Baggage']).map((e) => Baggage.fromJson(e)).toList();
+    ticket = Ticket.fromJson(json['Ticket'] ?? {});
+    baggage = List.from(json['Baggage'] ?? {})
+        .map((e) => Baggage.fromJson(e))
+        .toList();
     PaxType = json['PaxType'];
     FFNumber = json['FFNumber'] ?? "";
     LastName = json['LastName'];
     ContactNo = json['ContactNo'];
     FirstName = json['FirstName'];
-    GSTNumber = json['GSTNumber'];
+    GSTNumber = json['GSTNumber'] ?? "";
     IsLeadPax = json['IsLeadPax'];
     PassportNo = json['PassportNo'];
     CountryCode = json['CountryCode'];
-    CountryName = json['CountryName'];
+    CountryName = json['CountryName'] ?? "";
     DateOfBirth = json['DateOfBirth'];
     Nationality = json['Nationality'];
     AddressLine1 = json['AddressLine1'];
     FFAirlineCode = json['FFAirlineCode'] ?? "";
     IsPANRequired = json['IsPANRequired'];
     barcodeDetails = BarcodeDetails.fromJson(json['BarcodeDetails']);
-    GSTCompanyName = json['GSTCompanyName'];
-    PassportExpiry = json['PassportExpiry'];
+    GSTCompanyName = json['GSTCompanyName'] ?? "";
+    PassportExpiry = json['PassportExpiry'] ?? "";
     documentDetails = List.from(json['DocumentDetails'])
         .map((e) => DocumentDetails.fromJson(e))
         .toList();
-    GSTCompanyEmail = json['GSTCompanyEmail'];
+    GSTCompanyEmail = json['GSTCompanyEmail'] ?? "";
     GuardianDetails = null;
-    GSTCompanyAddress = json['GSTCompanyAddress'];
+    GSTCompanyAddress = json['GSTCompanyAddress'] ?? "";
     IsPassportRequired = json['IsPassportRequired'];
     segmentAdditionalInfo = List.from(json['SegmentAdditionalInfo'])
         .map((e) => SegmentAdditionalInfo.fromJson(e))
         .toList();
-    GSTCompanyContactNumber = json['GSTCompanyContactNumber'];
+    GSTCompanyContactNumber = json['GSTCompanyContactNumber'] ?? "";
   }
 
   Map<String, dynamic> toJson() {
@@ -418,19 +419,19 @@ class Fare {
     Currency = json['Currency'];
     Discount = (json['Discount'] as num).toDouble();
     PGCharge = json['PGCharge'];
-    TdsOnPLB = json['TdsOnPLB'];
-    PLBEarned = json['PLBEarned'];
+    TdsOnPLB = json['TdsOnPLB'].toDouble();
+    PLBEarned = json['PLBEarned'].toDouble();
     ServiceFee = json['ServiceFee'];
     taxBreakup = List.from(json['TaxBreakup'])
         .map((e) => TaxBreakup.fromJson(e))
         .toList();
-    OfferedFare = json['OfferedFare'];
-    OtherCharges = json['OtherCharges'];
-    PublishedFare = json['PublishedFare'];
-    TdsOnIncentive = json['TdsOnIncentive'];
-    IncentiveEarned = json['IncentiveEarned'];
-    TdsOnCommission = json['TdsOnCommission'];
-    CommissionEarned = json['CommissionEarned'];
+    OfferedFare = (json['OfferedFare'] as num).toDouble();
+    OtherCharges = json['OtherCharges'].toDouble();
+    PublishedFare = json['PublishedFare'].toDouble();
+    TdsOnIncentive = json['TdsOnIncentive'].toDouble();
+    IncentiveEarned = json['IncentiveEarned'].toDouble();
+    TdsOnCommission = json['TdsOnCommission'].toDouble();
+    CommissionEarned = json['CommissionEarned'].toDouble();
     TotalMealCharges = (json['TotalMealCharges'] as num).toDouble();
     TotalSeatCharges = (json['TotalSeatCharges'] as num).toDouble();
     AdditionalTxnFeePub = (json['AdditionalTxnFeePub'] as num).toDouble();
@@ -540,9 +541,9 @@ class Ticket {
   late final String ServiceFeeDisplayType;
 
   Ticket.fromJson(Map<String, dynamic> json) {
-    Status = json['Status'];
-    Remarks = json['Remarks'];
-    TicketId = json['TicketId'];
+    Status = json['Status'] ?? "";
+    Remarks = json['Remarks'] ?? "";
+    TicketId = json['TicketId'] ?? "";
     IssueDate = json['IssueDate'];
     TicketType = json['TicketType'];
     TicketNumber = json['TicketNumber'];
@@ -804,7 +805,7 @@ class JourneyList {
     Arrival = json['Arrival'];
     Baggage = json['Baggage'];
     Depature = json['Depature'];
-    duration = json['duration'];
+    duration = json['duration']?.toString() ?? '';
     noofstop = json['noofstop'];
     ToCityName = json['ToCityName'];
     ArrivalTime = json['ArrivalTime'];
@@ -911,19 +912,19 @@ class Price {
     Currency = json['Currency'];
     Discount = (json['Discount'] as num).toInt();
     PGCharge = json['PGCharge'];
-    TdsOnPLB = json['TdsOnPLB'];
-    PLBEarned = json['PLBEarned'];
+    TdsOnPLB = (json['TdsOnPLB'] as num).toDouble();
+    PLBEarned = (json['PLBEarned'] as num).toDouble();
     ServiceFee = json['ServiceFee'];
     taxBreakup = List.from(json['TaxBreakup'])
         .map((e) => TaxBreakup.fromJson(e))
         .toList();
     OfferedFare = json['OfferedFare'];
-    OtherCharges = json['OtherCharges'];
-    PublishedFare = json['PublishedFare'];
-    TdsOnIncentive = json['TdsOnIncentive'];
-    IncentiveEarned = json['IncentiveEarned'];
-    TdsOnCommission = json['TdsOnCommission'];
-    CommissionEarned = json['CommissionEarned'];
+    OtherCharges = json['OtherCharges'].toDouble();
+    PublishedFare = (json['PublishedFare'] as num).toDouble();
+    TdsOnIncentive = (json['TdsOnIncentive'] as num).toDouble();
+    IncentiveEarned = (json['IncentiveEarned'] as num).toDouble();
+    TdsOnCommission = (json['TdsOnCommission'] as num).toDouble();
+    CommissionEarned = (json['CommissionEarned'] as num).toDouble();
     TotalMealCharges = (json['TotalMealCharges'] as num).toInt();
     TotalSeatCharges = (json['TotalSeatCharges'] as num).toInt();
     AdditionalTxnFeePub = (json['AdditionalTxnFeePub'] as num).toInt();

@@ -35,15 +35,30 @@ class OtpVerificationScreen extends StatefulWidget {
   final String? traceid;
   final Result? outboundFlight;
   final Result? inboundFlight;
+  final String? outresultindex;
+  final String? inresultindex;
   final String? total;
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
   final String? mobileNumber;
+  final bool? isLLC;
+  final String? outdepDate;
+  final String? outdepTime;
+  final String? outarrDate;
+  final String? outarrTime;
+  final String? indepDate;
+  final String? indepTime;
+  final String? inarrDate;
+  final String? inarrTime;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
 
   OtpVerificationScreen(
       {super.key,
       required this.flight,
+      required this.outBoundData,
+      required this.inBoundData,
       required this.city,
       required this.destination,
       required this.airlineName,
@@ -68,12 +83,23 @@ class OtpVerificationScreen extends StatefulWidget {
       this.traceid,
       this.outboundFlight,
       this.inboundFlight,
+      this.outresultindex,
+      this.inresultindex,
       this.total,
       this.tax,
       this.adultCount,
       this.childCount,
       this.infantCount,
-      this.mobileNumber});
+      this.mobileNumber,
+      this.isLLC,
+      this.outdepDate,
+      this.outdepTime,
+      this.outarrDate,
+      this.outarrTime,
+      this.indepDate,
+      this.indepTime,
+      this.inarrDate,
+      this.inarrTime});
 
   @override
   _OtpVerificationScreenState createState() => _OtpVerificationScreenState();
@@ -129,11 +155,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             traceid: widget.traceid,
             outboundFlight: widget.outboundFlight,
             inboundFlight: widget.inboundFlight,
+            outresultindex: widget.outresultindex,
+            inresultindex: widget.inresultindex,
             total: widget.total,
             tax: widget.tax,
             adultCount: widget.adultCount,
             childCount: widget.childCount,
             infantCount: widget.infantCount,
+            isLLC: widget.isLLC,
+            outdepDate: widget.outdepDate,
+            outdepTime: widget.outdepTime,
+            outarrDate: widget.outarrDate,
+            outarrTime: widget.outarrTime,
+            indepDate: widget.indepDate,
+            indepTime: widget.indepTime,
+            inarrDate: widget.inarrDate,
+            inarrTime: widget.inarrTime,
+            outBoundData: widget.outBoundData,
+            inBoundData: widget.inBoundData,
           ));
     } else {
       print("Enter complete OTP");

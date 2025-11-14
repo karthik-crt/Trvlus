@@ -40,13 +40,28 @@ class TravelerDetailsPage extends StatefulWidget {
   final String? traceid;
   final Result? outboundFlight;
   final Result? inboundFlight;
+  final String? outresultindex;
+  final String? inresultindex;
   final String? total;
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final bool? isLLC;
+  final String? outdepDate;
+  final String? outdepTime;
+  final String? outarrDate;
+  final String? outarrTime;
+  final String? indepDate;
+  final String? indepTime;
+  final String? inarrDate;
+  final String? inarrTime;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
 
   TravelerDetailsPage(
       {required this.flight,
+      required this.outBoundData,
+      required this.inBoundData,
       required this.city,
       required this.destination,
       required this.airlineName,
@@ -71,11 +86,22 @@ class TravelerDetailsPage extends StatefulWidget {
       this.traceid,
       this.outboundFlight,
       this.inboundFlight,
+      this.outresultindex,
+      this.inresultindex,
       this.total,
       this.tax,
       this.adultCount,
       this.childCount,
-      this.infantCount});
+      this.infantCount,
+      this.isLLC,
+      this.outdepDate,
+      this.outdepTime,
+      this.outarrDate,
+      this.outarrTime,
+      this.indepDate,
+      this.indepTime,
+      this.inarrDate,
+      this.inarrTime});
 
   @override
   _TravelerDetailsPageState createState() => _TravelerDetailsPageState();
@@ -95,12 +121,19 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    print("TRAVELERSDETAIL");
+    print(widget.outBoundData['basefare']);
+    print(widget.outBoundData['cityName']);
+    print(widget.outBoundData['cityCode']);
+    print(widget.outBoundData['descityName']);
+    print(widget.outBoundData['descityCode']);
+    print("ISLLC${widget.isLLC}");
     final flight = widget.flight;
     final childCount = widget.childCount;
     final infantCount = widget.infantCount;
     print("childCount$childCount");
     print("infantCount$infantCount");
-    if (widget.depTime == null) {
+    if (widget.depTime != null) {
       final depDateformat = widget.depDate;
       print("sfrgfrg$depDateformat");
       DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
@@ -679,6 +712,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                   basefare: widget.basefare,
                                   segments: widget.segments,
                                   initialData: traveler,
+                                  travelerType: 'adult',
                                 ),
                               );
                               if (result != null) {
@@ -699,66 +733,84 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
             }),
             GestureDetector(
               onTap: () async {
-                print("adultTravelers$adultTravelers");
-                // if (widget.adultCount == 1 && adultTravelers.length >= 1) {
-                //   showDialog(
-                //     context: context,
-                //     builder: (context) => AlertDialog(
-                //       title: const Text("Alert"),
-                //       content:
-                //           const Text("You have already selected an adult."),
-                //       actions: [
-                //         TextButton(
-                //           onPressed: () => Navigator.pop(context),
-                //           child: const Text("OK"),
-                //         ),
-                //       ],
-                //     ),
-                //   );
-                //   return; // stop further navigation
-                // }
-                var result = await Get.to(
-                  () => AddTravelerPage(
-                    flight: flight,
-                    city: widget.city,
-                    destination: widget.destination,
-                    airlineName: widget.airlineName,
-                    airlineCode: widget.airlineCode,
-                    flightNumber: widget.flightNumber,
-                    cityName: widget.cityName,
-                    cityCode: widget.cityCode,
-                    descityName: widget.descityName,
-                    descityCode: widget.descityCode,
-                    depDate: widget.depDate,
-                    depTime: widget.depTime,
-                    arrDate: widget.arrDate,
-                    arrTime: widget.arrTime,
-                    duration: widget.duration,
-                    refundable: widget.refundable,
-                    stop: widget.stop,
-                    airportName: widget.airportName,
-                    desairportName: widget.desairportName,
-                    basefare: widget.basefare,
-                    segments: widget.segments,
-                  ),
-                );
-                if (result != null) {
-                  setState(() {
-                    adultTravelers.add(result);
-                  });
+                print("adultTravelers: $adultTravelers");
+                final maxAdults = widget.adultCount?.toInt() ?? 0;
+                print("Max Adults: $maxAdults");
+
+                // ✅ Check if we can still add new adults
+                if (adultTravelers.length < maxAdults) {
+                  // Go to add new traveler
+                  var result = await Get.to(
+                    () => AddTravelerPage(
+                      flight: flight,
+                      city: widget.city,
+                      destination: widget.destination,
+                      airlineName: widget.airlineName,
+                      airlineCode: widget.airlineCode,
+                      flightNumber: widget.flightNumber,
+                      cityName: widget.cityName,
+                      cityCode: widget.cityCode,
+                      descityName: widget.descityName,
+                      descityCode: widget.descityCode,
+                      depDate: widget.depDate,
+                      depTime: widget.depTime,
+                      arrDate: widget.arrDate,
+                      arrTime: widget.arrTime,
+                      duration: widget.duration,
+                      refundable: widget.refundable,
+                      stop: widget.stop,
+                      airportName: widget.airportName,
+                      desairportName: widget.desairportName,
+                      basefare: widget.basefare,
+                      segments: widget.segments,
+                      travelerType: 'adult',
+                    ),
+                  );
+
+                  if (result != null) {
+                    setState(() {
+                      adultTravelers.add(result);
+                    });
+                  }
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 22, vertical: 5),
+                      title: Text(
+                        'Limit Exceeded',
+                        style:
+                            TextStyle(color: Colors.deepOrange, fontSize: 18),
+                      ),
+                      content: Text(
+                        'You can add only $maxAdults adult passenger(s).',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
                 }
               },
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                width: MediaQuery.sizeOf(context).width,
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Color(0xFFF37023))),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFF37023)),
+                ),
                 child: Text(
                   '+ ADD NEW ADULT',
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFF37023),
+                    color: const Color(0xFFF37023),
                   ),
                 ),
               ),
@@ -877,6 +929,11 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             Spacer(),
                             GestureDetector(
                               onTap: () async {
+                                final maxChild =
+                                    widget.childCount?.toInt() ?? 0;
+                                print("Max Adults: $maxChild");
+
+                                // ✅ Check if we can still add new adults
                                 var result = await Get.to(
                                   () => AddTravelerPage(
                                     flight: flight,
@@ -901,6 +958,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                     basefare: widget.basefare,
                                     segments: widget.segments,
                                     initialData: traveler,
+                                    travelerType: 'child',
                                   ),
                                 );
                                 if (result != null) {
@@ -921,39 +979,67 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
               }),
               GestureDetector(
                 onTap: () async {
-                  var result = await Get.to(
-                    () => AddTravelerPage(
-                      flight: flight,
-                      city: widget.city,
-                      destination: widget.destination,
-                      airlineName: widget.airlineName,
-                      airlineCode: widget.airlineCode,
-                      flightNumber: widget.flightNumber,
-                      cityName: widget.cityName,
-                      cityCode: widget.cityCode,
-                      descityName: widget.descityName,
-                      descityCode: widget.descityCode,
-                      depDate: widget.depDate,
-                      depTime: widget.depTime,
-                      arrDate: widget.arrDate,
-                      arrTime: widget.arrTime,
-                      duration: widget.duration,
-                      refundable: widget.refundable,
-                      stop: widget.stop,
-                      airportName: widget.airportName,
-                      desairportName: widget.desairportName,
-                      basefare: widget.basefare,
-                      segments: widget.segments,
-                    ),
-                  );
-                  if (result != null) {
-                    setState(() {
-                      childTravelers.add(result);
-                    });
+                  final maxChild = widget.childCount?.toInt() ?? 0;
+                  print("Max Adults: $maxChild");
+
+                  // ✅ Check if we can still add new adults
+                  if (childTravelers.length < maxChild) {
+                    var result = await Get.to(
+                      () => AddTravelerPage(
+                        flight: flight,
+                        city: widget.city,
+                        destination: widget.destination,
+                        airlineName: widget.airlineName,
+                        airlineCode: widget.airlineCode,
+                        flightNumber: widget.flightNumber,
+                        cityName: widget.cityName,
+                        cityCode: widget.cityCode,
+                        descityName: widget.descityName,
+                        descityCode: widget.descityCode,
+                        depDate: widget.depDate,
+                        depTime: widget.depTime,
+                        arrDate: widget.arrDate,
+                        arrTime: widget.arrTime,
+                        duration: widget.duration,
+                        refundable: widget.refundable,
+                        stop: widget.stop,
+                        airportName: widget.airportName,
+                        desairportName: widget.desairportName,
+                        basefare: widget.basefare,
+                        segments: widget.segments,
+                        travelerType: 'child',
+                      ),
+                    );
+                    if (result != null) {
+                      setState(() {
+                        childTravelers.add(result);
+                      });
+                    }
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text(
+                          'Limit Exceeded',
+                          style: TextStyle(color: Colors.deepOrange),
+                        ),
+                        content: Text(
+                          'You can add only $maxChild child passenger(s).',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
                   }
                 },
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                  width: MediaQuery.sizeOf(context).width,
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Color(0xFFF37023))),
@@ -967,17 +1053,15 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 16.h),
             ],
+            SizedBox(height: 16.h),
 
 // Infant Travelers (same as child)
             if (widget.infantCount! > 0) ...[
               Row(
                 children: [
                   Image.asset("assets/images/Infant.png"),
-                  SizedBox(
-                    width: 10,
-                  ),
+                  SizedBox(width: 10),
                   Text(
                     'INFANT(<2 Yrs)',
                     style: TextStyle(
@@ -987,8 +1071,10 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                     ),
                   ),
                   Spacer(),
-                  Text('${widget.infantCount} added',
-                      style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
+                  Text(
+                    '${widget.infantCount} added',
+                    style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                  ),
                 ],
               ),
               SizedBox(height: 10.h),
@@ -1001,7 +1087,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                     Card(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r)),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
                       elevation: 2,
                       child: Padding(
                         padding: EdgeInsets.symmetric(
@@ -1026,36 +1113,64 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             Spacer(),
                             GestureDetector(
                               onTap: () async {
-                                var result = await Get.to(
-                                  () => AddTravelerPage(
-                                    flight: flight,
-                                    city: widget.city,
-                                    destination: widget.destination,
-                                    airlineName: widget.airlineName,
-                                    airlineCode: widget.airlineCode,
-                                    flightNumber: widget.flightNumber,
-                                    cityName: widget.cityName,
-                                    cityCode: widget.cityCode,
-                                    descityName: widget.descityName,
-                                    descityCode: widget.descityCode,
-                                    depDate: widget.depDate,
-                                    depTime: widget.depTime,
-                                    arrDate: widget.arrDate,
-                                    arrTime: widget.arrTime,
-                                    duration: widget.duration,
-                                    refundable: widget.refundable,
-                                    stop: widget.stop,
-                                    airportName: widget.airportName,
-                                    desairportName: widget.desairportName,
-                                    basefare: widget.basefare,
-                                    segments: widget.segments,
-                                    initialData: traveler,
-                                  ),
-                                );
-                                if (result != null) {
-                                  setState(() {
-                                    infantTravelers[index] = result;
-                                  });
+                                final maxInfant =
+                                    widget.infantCount?.toInt() ?? 0;
+                                print("Max Adults: $maxInfant");
+                                if (infantTravelers.length < maxInfant) {
+                                  var result = await Get.to(
+                                    () => AddTravelerPage(
+                                      flight: flight,
+                                      city: widget.city,
+                                      destination: widget.destination,
+                                      airlineName: widget.airlineName,
+                                      airlineCode: widget.airlineCode,
+                                      flightNumber: widget.flightNumber,
+                                      cityName: widget.cityName,
+                                      cityCode: widget.cityCode,
+                                      descityName: widget.descityName,
+                                      descityCode: widget.descityCode,
+                                      depDate: widget.depDate,
+                                      depTime: widget.depTime,
+                                      arrDate: widget.arrDate,
+                                      arrTime: widget.arrTime,
+                                      duration: widget.duration,
+                                      refundable: widget.refundable,
+                                      stop: widget.stop,
+                                      airportName: widget.airportName,
+                                      desairportName: widget.desairportName,
+                                      basefare: widget.basefare,
+                                      segments: widget.segments,
+                                      initialData: traveler,
+                                      travelerType: 'infant',
+                                    ),
+                                  );
+                                  if (result != null) {
+                                    setState(() {
+                                      infantTravelers[index] = result;
+                                    });
+                                  }
+                                } else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text(
+                                        'Limit Exceeded',
+                                        style:
+                                            TextStyle(color: Colors.deepOrange),
+                                      ),
+                                      content: Text(
+                                        'You can add only $maxInfant child passenger(s).',
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('OK'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
                                 }
                               },
                               child: Icon(Icons.edit, color: Color(0xFFF37023)),
@@ -1093,6 +1208,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                       desairportName: widget.desairportName,
                       basefare: widget.basefare,
                       segments: widget.segments,
+                      travelerType: 'infant',
                     ),
                   );
                   if (result != null) {
@@ -1104,9 +1220,11 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 child: Container(
                   alignment: Alignment.center,
                   padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                  width: MediaQuery.sizeOf(context).width,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Color(0xFFF37023))),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Color(0xFFF37023)),
+                  ),
                   child: Text(
                     '+ ADD NEW INFANT',
                     style: TextStyle(
@@ -1117,7 +1235,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   ),
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -1197,6 +1315,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 ElevatedButton(
                   onPressed: () {
                     print("adultTravelers$adultTravelers");
+                    print(widget.isLLC);
                     Get.to(
                       () => ConfirmTravelerDetails(
                         flight: {},
@@ -1222,15 +1341,29 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         segments: widget.segments,
                         initialData: adultTravelers,
                         childData: childTravelers,
+                        infantData: infantTravelers,
                         resultindex: widget.resultindex,
                         traceid: widget.traceid,
                         outboundFlight: widget.outboundFlight,
                         inboundFlight: widget.inboundFlight,
+                        outresultindex: widget.outresultindex,
+                        inresultindex: widget.outresultindex,
                         total: widget.total,
                         tax: widget.tax,
                         adultCount: widget.adultCount,
                         childCount: widget.childCount,
                         infantCount: widget.infantCount,
+                        isLLC: widget.isLLC,
+                        outdepDate: widget.outdepDate,
+                        outdepTime: widget.outdepTime,
+                        outarrDate: widget.outarrDate,
+                        outarrTime: widget.outarrTime,
+                        indepDate: widget.indepDate,
+                        indepTime: widget.indepTime,
+                        inarrDate: widget.inarrDate,
+                        inarrTime: widget.inarrTime,
+                        outBoundData: widget.outBoundData,
+                        inBoundData: widget.inBoundData,
                       ),
                     );
                   },
@@ -1451,6 +1584,7 @@ class AddTravelerPage extends StatefulWidget {
   final double? basefare;
   final List<List<Segment>>? segments;
   final Map<String, dynamic>? initialData;
+  final String? travelerType;
 
   AddTravelerPage({
     required this.flight,
@@ -1475,6 +1609,7 @@ class AddTravelerPage extends StatefulWidget {
     this.basefare,
     this.segments,
     this.initialData,
+    this.travelerType,
   });
 
   @override
@@ -1500,15 +1635,83 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
   List<String> IssusingCountry = <String>['India', 'Saudi', 'Malaysian', 'USA'];
   DateTime? selectedDate;
 
-  Future<void> _selectDate(BuildContext context) async {
+  late List<String> genderOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    // Determine gender options based on traveler type
+    if (widget.travelerType == 'child' || widget.travelerType == 'infant') {
+      genderOptions = ['Mstr', 'Ms'];
+    } else {
+      genderOptions = ['Mr', 'Mrs', 'Ms'];
+    }
+
+    if (widget.initialData != null) {
+      print(widget.initialData!['gender']);
+      print(widget.initialData!['Firstname']);
+      print(widget.initialData!['lastname']);
+      print("pass${widget.initialData!['Passport No']}");
+      print("mobile${widget.initialData!['mobile']}");
+      print("email${widget.initialData!['email']}");
+      print("birth${widget.initialData!['Date of Birth']}");
+      print("expiry${widget.initialData!['Expiry']}");
+
+      selectedGender = widget.initialData!['gender'] ?? genderOptions.first;
+      firstNameController.text = widget.initialData!['Firstname'];
+      lastNameController.text = widget.initialData!['lastname'];
+      passportNoController.text = widget.initialData!['Passport No'];
+      mobileController.text = widget.initialData!['mobile'];
+      emailController.text = widget.initialData!['email'];
+      dateController.text = widget.initialData!['Date of Birth'] ?? '';
+      expiryController.text = widget.initialData!['Expiry'] ?? '';
+      requireWheelchair = widget.initialData!['wheelchair'];
+    } else {
+      // Set default gender based on options
+      selectedGender = genderOptions.first;
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context, String travelerType) async {
+    final now = DateTime.now();
+
+    DateTime firstDate;
+    DateTime lastDate;
+    DateTime initialDate;
+
+    if (widget.travelerType == "adult") {
+      print("ADULTSSSSS");
+      // Adult: 12+ years
+      lastDate = DateTime(now.year - 12, now.month, now.day);
+      firstDate = DateTime(1900);
+      initialDate = lastDate;
+    } else if (widget.travelerType == "child") {
+      print("CHILDSSSS");
+      // Child: between 2 and 12 years
+      lastDate = DateTime(now.year - 2, now.month, now.day);
+      firstDate = DateTime(now.year - 12, now.month, now.day);
+      initialDate = DateTime(now.year - 6, now.month, now.day);
+    } else if (widget.travelerType == "infant") {
+      print("INFANTSSS");
+      // Infant: below 2 years
+      lastDate = now;
+      firstDate = DateTime(now.year - 2, now.month, now.day);
+      initialDate = DateTime(now.year - 1, now.month, now.day);
+    } else {
+      // Default (if not specified)
+      firstDate = DateTime(1900);
+      lastDate = now;
+      initialDate = lastDate;
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
-    print("psicked date$picked");
-    if (picked != null && picked != selectedDate) {
+
+    if (picked != null) {
       setState(() {
         selectedDate = picked;
         dateController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
@@ -1529,31 +1732,6 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
         selectedDate = picked;
         expiryController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
       });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialData != null) {
-      print(widget.initialData!['gender']);
-      print(widget.initialData!['Firstname']);
-      print(widget.initialData!['lastname']);
-      print("pass${widget.initialData!['Passport No']}");
-      print("mobile${widget.initialData!['mobile']}");
-      print("email${widget.initialData!['email']}");
-      print("birth${widget.initialData!['Date of Birth']}");
-      print("expiry${widget.initialData!['Expiry']}");
-
-      selectedGender = widget.initialData!['gender'];
-      firstNameController.text = widget.initialData!['Firstname'];
-      lastNameController.text = widget.initialData!['lastname'];
-      passportNoController.text = widget.initialData!['Passport No'];
-      mobileController.text = widget.initialData!['mobile'];
-      emailController.text = widget.initialData!['email'];
-      dateController.text = widget.initialData!['Date of Birth'] ?? '';
-      expiryController.text = widget.initialData!['Expiry'] ?? '';
-      requireWheelchair = widget.initialData!['wheelchair'];
     }
   }
 
@@ -1582,36 +1760,20 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
             SizedBox(height: 10.h),
             SizedBox(height: 10.h),
             Row(
-              children: [
-                GenderStatus(
-                  label: "Mr",
-                  isSelected: selectedGender == "Mr",
-                  onTap: () {
-                    setState(() {
-                      selectedGender = "Mr";
-                    });
-                  },
-                ),
-                SizedBox(width: 4.w),
-                GenderStatus(
-                  label: "Mrs",
-                  isSelected: selectedGender == "Mrs",
-                  onTap: () {
-                    setState(() {
-                      selectedGender = "Mrs";
-                    });
-                  },
-                ),
-                GenderStatus(
-                  label: "Ms",
-                  isSelected: selectedGender == "Ms",
-                  onTap: () {
-                    setState(() {
-                      selectedGender = "Ms";
-                    });
-                  },
-                )
-              ],
+              children: genderOptions
+                  .map((gender) => Padding(
+                        padding: EdgeInsets.only(right: 4.w),
+                        child: GenderStatus(
+                          label: gender,
+                          isSelected: selectedGender == gender,
+                          onTap: () {
+                            setState(() {
+                              selectedGender = gender;
+                            });
+                          },
+                        ),
+                      ))
+                  .toList(),
             ),
             SizedBox(height: 10.h),
             _buildTextField(
@@ -1630,7 +1792,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
               controller: dateController,
               readOnly: true,
               // important for date picker
-              onTap: () => _selectDate(context),
+              onTap: () => _selectDate(context, widget.travelerType ?? ""),
             ),
             _buildTextField(
               label: 'Passport No',
