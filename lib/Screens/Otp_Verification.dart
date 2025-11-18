@@ -124,11 +124,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Future<void> _verifyOtp() async {
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
       String otp = _otpControllers.map((c) => c.text).join();
-
       // Calling VerifyOTP API
       await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
+      print(widget.outresultindex);
+      print(widget.inresultindex);
       Get.to(() => TravelerDetailsPage(
             flight: {},
             city: widget.city,
@@ -155,8 +156,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             traceid: widget.traceid,
             outboundFlight: widget.outboundFlight,
             inboundFlight: widget.inboundFlight,
-            outresultindex: widget.outresultindex,
-            inresultindex: widget.inresultindex,
             total: widget.total,
             tax: widget.tax,
             adultCount: widget.adultCount,
@@ -173,6 +172,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             inarrTime: widget.inarrTime,
             outBoundData: widget.outBoundData,
             inBoundData: widget.inBoundData,
+            outresultindex: widget.outresultindex,
+            inresultindex: widget.inresultindex,
           ));
     } else {
       print("Enter complete OTP");

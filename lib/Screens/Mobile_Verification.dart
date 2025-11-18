@@ -74,7 +74,6 @@ class MobileVerificationScreen extends StatefulWidget {
       this.arrTime,
       this.descityName,
       this.descityCode,
-      this.stop,
       this.duration,
       this.basefare,
       this.segments,
@@ -86,6 +85,7 @@ class MobileVerificationScreen extends StatefulWidget {
       this.tax,
       this.outresultindex,
       this.inresultindex,
+      this.stop,
       this.adultCount,
       this.childCount,
       this.infantCount,
@@ -253,6 +253,8 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                             enteredMobileNumber = value.trim();
                           });
                           print("Entered mobile number: $enteredMobileNumber");
+                          print(widget.outresultindex);
+                          print(widget.inresultindex);
                         },
                         style: TextStyle(color: Colors.black),
                         decoration: InputDecoration(
@@ -296,6 +298,8 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                           await ApiService().otpRequest(enteredMobileNumber);
                           print(
                               "Final entered mobile: ${authController.mobileNumber.value}");
+                          print(widget.outresultindex);
+                          print(widget.inresultindex);
                           Get.to(() => OtpVerificationScreen(
                                 flight: {},
                                 mobileNumber: enteredMobileNumber,
@@ -325,8 +329,6 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                 inboundFlight: widget.inboundFlight,
                                 total: widget.total,
                                 tax: widget.tax,
-                                outresultindex: widget.outresultindex,
-                                inresultindex: widget.inresultindex,
                                 adultCount: widget.adultCount,
                                 childCount: widget.childCount,
                                 infantCount: widget.infantCount,
@@ -341,6 +343,8 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                 inarrTime: widget.inarrTime,
                                 outBoundData: widget.outBoundData,
                                 inBoundData: widget.inBoundData,
+                                outresultindex: widget.outresultindex,
+                                inresultindex: widget.inresultindex,
                               ));
                         }
                       : null,

@@ -37,6 +37,7 @@ class FlightDetailsPage extends StatefulWidget {
   final String? indepTime;
   final String? arrDate;
   final String? arrTime;
+  final String? stop;
   final String? outarrDate;
   final String? outarrTime;
   final String? inarrDate;
@@ -45,7 +46,6 @@ class FlightDetailsPage extends StatefulWidget {
   final String? refundable;
   final String? descityCode;
   final String? airlineCode;
-  final String? stop;
   final bool? isLLC;
   final String? duration;
   final String? airportName;
@@ -87,6 +87,7 @@ class FlightDetailsPage extends StatefulWidget {
       this.refundable,
       this.arrDate,
       this.arrTime,
+      this.stop,
       this.descityName,
       this.descityCode,
       this.outdepDate,
@@ -97,7 +98,6 @@ class FlightDetailsPage extends StatefulWidget {
       this.indepTime,
       this.inarrDate,
       this.inarrTime,
-      this.stop,
       this.duration,
       this.isLLC,
       this.cabinBaggage,
@@ -136,15 +136,22 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       isLoading = true;
     });
     print("FLIGHTDETAILPAGE");
-    print(widget.outBoundData['basefare']);
-    print(widget.outBoundData['cityName']);
-    print(widget.outBoundData['cityCode']);
-    print(widget.outBoundData['descityName']);
-    print(widget.outBoundData['descityCode']);
+    print(widget.stop);
+    // print(widget.outBoundData['basefare']);
+    // print(widget.outBoundData['cityName']);
+    // print(widget.outBoundData['cityCode']);
+    // print(widget.outBoundData['descityName']);
+    // print(widget.outBoundData['descityCode']);
+    print("RESULTINDEWXXXX");
+    print(widget.resultindex);
+    print(widget.outresultindex);
+    print(widget.inresultindex);
+    print(widget.outBoundData);
+    print(widget.inBoundData);
 
-    // print(widget.outboundFlight!.segments.first.first.origin.depTime);
     // ROUNDTRIP
-    if (widget.outboundFlight != null && widget.inboundFlight != null) {
+    if (widget.outresultindex != null && widget.inresultindex != null) {
+      print("ROUNDTRIPoutBoundDatainBoundData");
       fare = await ApiService()
           .farerule(widget.outresultindex ?? "", widget.traceid ?? "");
       fare = await ApiService()
@@ -160,6 +167,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     }
     // ONEWAY
     else {
+      print("ONEWAY");
       fare = await ApiService()
           .farerule(widget.resultindex ?? "", widget.traceid ?? "");
       print("fare$fare");
@@ -1374,6 +1382,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () {
+                          print("RESULTINDEX");
+                          print(widget.outresultindex);
+                          print(widget.inresultindex);
                           checkLoginStatus();
                           Get.to(MobileVerificationScreen(
                             flight: flight,
@@ -1403,8 +1414,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             inboundFlight: widget.inboundFlight,
                             total: widget.total,
                             tax: widget.tax,
-                            outresultindex: widget.outresultindex,
-                            inresultindex: widget.inresultindex,
                             adultCount: widget.adultCount,
                             childCount: widget.infantCount,
                             infantCount: widget.infantCount,
@@ -1419,6 +1428,8 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             inarrTime: widget.inarrTime,
                             outBoundData: widget.outBoundData,
                             inBoundData: widget.inBoundData,
+                            outresultindex: widget.outresultindex,
+                            inresultindex: widget.inresultindex,
                           ));
                         },
                         style: ElevatedButton.styleFrom(

@@ -122,6 +122,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   @override
   Widget build(BuildContext context) {
     print("TRAVELERSDETAIL");
+    print(widget.stop);
+    print(widget.outBoundData['outresultindex']);
     print(widget.outBoundData['basefare']);
     print(widget.outBoundData['cityName']);
     print(widget.outBoundData['cityCode']);
@@ -1316,6 +1318,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   onPressed: () {
                     print("adultTravelers$adultTravelers");
                     print(widget.isLLC);
+                    print(widget.outresultindex);
+                    print(widget.inresultindex);
                     Get.to(
                       () => ConfirmTravelerDetails(
                         flight: {},
@@ -1346,8 +1350,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         traceid: widget.traceid,
                         outboundFlight: widget.outboundFlight,
                         inboundFlight: widget.inboundFlight,
-                        outresultindex: widget.outresultindex,
-                        inresultindex: widget.outresultindex,
                         total: widget.total,
                         tax: widget.tax,
                         adultCount: widget.adultCount,
@@ -1364,6 +1366,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         inarrTime: widget.inarrTime,
                         outBoundData: widget.outBoundData,
                         inBoundData: widget.inBoundData,
+                        outresultindex: widget.outresultindex,
+                        inresultindex: widget.inresultindex,
                       ),
                     );
                   },

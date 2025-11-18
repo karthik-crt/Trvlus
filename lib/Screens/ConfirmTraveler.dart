@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../models/farequote.dart' as farequote;
+import '../models/farerule.dart';
 import '../models/search_data.dart';
 import '../models/ssr.dart';
 import '../utils/api_service.dart';
@@ -125,6 +127,9 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
   Map<String, dynamic> meal = {};
 
   late SsrData ssrData;
+  late farequote.FareQuotesData fareQuote;
+  late FareRuleData farerule;
+  late SsrData inssrData;
   bool isLoading = true;
 
   @override
@@ -139,22 +144,36 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       isLoading = true;
       print("beforeOutput");
     });
-    print("CONFIRMTRAVELER");
-    print(widget.outdepDate);
-    print(widget.outdepTime);
-    print(widget.outarrDate);
-    print(widget.outarrTime);
-    print(widget.indepDate);
-    print(widget.indepTime);
-    print(widget.inarrDate);
-    print(widget.inarrTime);
-    print(widget.traceid);
+    print("CONFIRMTRAVELERRR");
+    print(widget.stop);
     print(widget.resultindex);
-    ssrData =
-        await ApiService().ssr(widget.resultindex ?? "", widget.traceid ?? "");
-    debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
-    final helo = ssrData.response;
-    debugPrint("RESPONSESSRDTAA${jsonEncode(helo)}", wrapWidth: 1500);
+    print("klklggggg");
+    print(widget.outBoundData);
+    print("klkl");
+    print(widget.inBoundData);
+    print(widget.outBoundData);
+    if (widget.outBoundData['outresultindex'] != null &&
+        widget.inBoundData['inresultindex'] != null) {
+      print(widget.outresultindex);
+      farerule = (await ApiService().farerule(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? ""));
+      farerule = (await ApiService().farerule(
+          widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? ""));
+      fareQuote = await ApiService().farequote(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      fareQuote = await ApiService().farequote(
+          widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+      ssrData = await ApiService().ssr(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      ssrData = await ApiService()
+          .ssr(widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+    } else {
+      ssrData = await ApiService()
+          .ssr(widget.resultindex ?? "", widget.traceid ?? "");
+      debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
+      final helo = ssrData.response;
+      debugPrint("RESPONSESSRDTAA${jsonEncode(helo)}", wrapWidth: 1500);
+    }
 
     setState(() {
       isLoading = false;
@@ -896,8 +915,16 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                                   widget.childCount ?? 0,
                                               infantCount:
                                                   widget.infantCount ?? 0,
+                                              outBoundData: widget.outBoundData,
+                                              inBoundData: widget.inBoundData,
+                                              inresultindex:
+                                                  widget.inresultindex,
+                                              outresultindex:
+                                                  widget.outresultindex,
                                             )));
                                 print("valuevaluevalue");
+                                print(widget.outresultindex);
+                                print(widget.inresultindex);
                                 print(value);
                                 meal = value["meal"];
                               },
@@ -955,6 +982,13 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                                 adultCount: widget.adultCount,
                                                 childCount: widget.childCount,
                                                 infantCount: widget.infantCount,
+                                                outBoundData:
+                                                    widget.outBoundData,
+                                                inBoundData: widget.inBoundData,
+                                                inresultindex:
+                                                    widget.inresultindex,
+                                                outresultindex:
+                                                    widget.outresultindex,
                                               )));
                                 },
                                 child: Text(
@@ -1011,6 +1045,13 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                                 adultCount: widget.adultCount,
                                                 childCount: widget.childCount,
                                                 infantCount: widget.infantCount,
+                                                outBoundData:
+                                                    widget.outBoundData,
+                                                inBoundData: widget.inBoundData,
+                                                inresultindex:
+                                                    widget.inresultindex,
+                                                outresultindex:
+                                                    widget.outresultindex,
                                               )));
                                 },
                                 child: Text(

@@ -1406,6 +1406,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                             final depDate =
                                                                                 await fare.setString('depTime', departureDate!);
                                                                             print("departureDate$departureDate");
+                                                                            print("resulttttt${searchData.response.results[index][innerIndex].resultIndex}");
 
                                                                             Navigator.push(
                                                                                 context,

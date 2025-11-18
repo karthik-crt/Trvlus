@@ -46,7 +46,9 @@ class Localroundtrip extends StatefulWidget {
     required this.selectedDepDate,
     required this.selectedReturnDate,
     required this.selectedTripType,
-    required this.adultCount, required this.childCount, required this.infantCount});
+    required this.adultCount,
+    required this.childCount,
+    required this.infantCount});
 
   @override
   State<Localroundtrip> createState() => _LocalroundtripState();
@@ -65,7 +67,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
   Result? selectedInbound;
 
   int adultCount = adults;
-
 
   int childCount = children;
 
@@ -426,6 +427,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
                     "inresultindex": selectedInbound?.resultIndex,
                     "traceid": searchData.response.traceId,
                     "total": total.toString(),
+                    "IsLCC": selectedInbound?.isLcc,
                   };
                   print(
                       "inBoundDatatraceid${searchData.response.traceId}");
@@ -893,6 +895,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
                               .destination.airport.cityName} ($arrivalTime)');
                       print(
                           'Fare: ₹${selectedFlight.fare.baseFare}');
+                      print('Fare: ₹${selectedFlight.isLcc}');
                       print(
                           'Refundable: ${selectedFlight.isRefundable
                               ? "Yes"
@@ -920,6 +923,8 @@ class _LocalroundtripState extends State<Localroundtrip> {
                       print(
                           'Flight Number: ${selectedFlight.segments.first.first
                               .airline.flightNumber}');
+                      print(
+                          'Flight Number: ${selectedFlight.isLcc}');
                       print(
                           'Departure: ${selectedFlight.segments.first.first
                               .origin.airport.cityName} ($indepartureTime)');

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../models/farequote.dart' as farequote;
+import '../models/farerule.dart';
+import '../models/search_data.dart';
 import '../models/ssr.dart';
 import '../utils/api_service.dart';
 import 'Seat.dart';
@@ -14,15 +17,26 @@ class Additions extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
+  final Result? outboundFlight;
+  final Result? inboundFlight;
+  final String? outresultindex;
+  final String? inresultindex;
 
-  const Additions({
-    super.key,
-    this.traceid,
-    this.resultindex,
-    this.adultCount,
-    this.childCount,
-    this.infantCount,
-  });
+  const Additions(
+      {super.key,
+      this.traceid,
+      this.resultindex,
+      this.adultCount,
+      this.childCount,
+      this.infantCount,
+      required this.outBoundData,
+      required this.inBoundData,
+      this.outresultindex,
+      this.inresultindex,
+      this.outboundFlight,
+      this.inboundFlight});
 
   @override
   State<Additions> createState() => _AdditionsState();
@@ -38,9 +52,55 @@ class _AdditionsState extends State<Additions> {
   final Set<String> selectedSeats = {};
 
   late SsrData ssrData;
+  late SsrData inssrData;
+  late farequote.FareQuotesData fareQuote;
+  late FareRuleData fare;
   bool isLoading = true;
   int selectedPassengerType = 0; // 0 - Adult, 1 - Child
-  Map<String, dynamic> selectedMealData = {};
+  Map<String, Map<String, dynamic>> selectedMealData = {};
+  bool isOutbound = true;
+
+  void storeSelectedMeal(
+      String route, int paxType, dynamic meal, int passengerIndex) {
+    String passengerType = paxType == 0
+        ? "Adult"
+        : paxType == 1
+            ? "Child"
+            : "Infant";
+
+    if (passengerType == "Infant") return;
+
+    // Unique key: "Adult 1", "Child 2", etc.
+    String passengerKey = "$passengerType ${passengerIndex + 1}";
+
+    // Initialize route if not exists
+    selectedMealData.putIfAbsent(route, () => {});
+
+    // Initialize passenger array if not exists
+    selectedMealData[route]!.putIfAbsent(passengerKey, () => []);
+
+    // Remove any existing meal for this passenger on this route
+    selectedMealData[route]![passengerKey]
+        ?.removeWhere((m) => m["Code"] == meal.code);
+
+    // Add the new meal
+    selectedMealData[route]![passengerKey].add({
+      "AirlineCode": meal.airlineCode,
+      "FlightNumber": meal.flightNumber,
+      "WayType": meal.wayType,
+      "Code": meal.code,
+      "Description": meal.description,
+      "AirlineDescription": meal.airlineDescription,
+      "Quantity": 1,
+      "Currency": meal.currency,
+      "Price": meal.price,
+      "Origin": meal.origin,
+      "Destination": meal.destination,
+    });
+
+    setState(() {});
+    print("Selected Meals: ${jsonEncode(selectedMealData)}");
+  }
 
   @override
   void initState() {
@@ -56,11 +116,29 @@ class _AdditionsState extends State<Additions> {
     });
     print(widget.traceid);
     print(widget.resultindex);
-    print("ADULTCOUNT${widget.adultCount}");
-
-    ssrData =
-        await ApiService().ssr(widget.resultindex ?? "", widget.traceid ?? "");
-    debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
+    print("ADULTCOUNTADULTCOUNT${widget.adultCount}");
+    print(widget.outBoundData);
+    print(widget.inresultindex);
+    if (widget.outBoundData['outresultindex'] != null &&
+        widget.inBoundData['inresultindex'] != null) {
+      fare = (await ApiService().farerule(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? ""));
+      fare = (await ApiService().farerule(
+          widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? ""));
+      fareQuote = await ApiService().farequote(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      fareQuote = await ApiService().farequote(
+          widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+      ssrData = await ApiService().ssr(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      print(ssrData.response.mealDynamic);
+      inssrData = await ApiService()
+          .ssr(widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+    } else {
+      ssrData = await ApiService()
+          .ssr(widget.resultindex ?? "", widget.traceid ?? "");
+      debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
+    }
 
     setState(() {
       isLoading = false;
@@ -320,7 +398,35 @@ class _AdditionsState extends State<Additions> {
                                 ssrData.response!.mealDynamic != null &&
                                 ssrData.response!.mealDynamic.isNotEmpty &&
                                 selectedindex == 2)
-                            ? buildmeals()
+                            ? Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                isOutbound = true;
+                                              });
+                                            },
+                                            child: Text("Outbound")),
+                                        if (widget.inBoundData != null)
+                                          GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  isOutbound = false;
+                                                });
+                                              },
+                                              child: Text("Inbound")),
+                                      ],
+                                    ),
+                                    buildmeals(isOutbound ? ssrData : inssrData)
+                                  ],
+                                ),
+                              )
                             : const SizedBox(),
               ],
             ));
@@ -607,16 +713,16 @@ class _AdditionsState extends State<Additions> {
     );
   }
 
-  buildmeals() {
+  buildmeals(SsrData data) {
     // 🥗 Check if mealDynamic data is available
-    if (ssrData.response == null ||
-        ssrData.response.mealDynamic == null ||
-        ssrData.response.mealDynamic.isEmpty) {
+    if (data.response == null ||
+        data.response.mealDynamic == null ||
+        data.response.mealDynamic.isEmpty) {
       return const SizedBox(); // 🔹 Don't display meals section
     }
 
     // 🥗 Group meals by Origin-Destination
-    final meals = ssrData.response.mealDynamic.expand((x) => x).toList();
+    final meals = data.response.mealDynamic.expand((x) => x).toList();
 
     // ✅ If still empty, skip rendering
     if (meals.isEmpty) {
@@ -631,9 +737,8 @@ class _AdditionsState extends State<Additions> {
 
     final routes = groupedMeals.keys.toList();
 
-    // ✅ Ensure safe index
     if (routes.isEmpty) {
-      return const SizedBox(); // nothing to render
+      return const SizedBox();
     }
 
     if (selectedbuild >= routes.length) selectedbuild = 0;
@@ -665,10 +770,14 @@ class _AdditionsState extends State<Additions> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: List.generate(routes.length, (index) {
                         final route = routes[index];
+                        String passengerType =
+                            selectedPassengerType == 0 ? "Adult" : "Child";
+                        String passengerKey = "$passengerType ${index + 1}";
                         return GestureDetector(
                           onTap: () {
                             setState(() {
                               selectedbuild = index;
+                              print("helloselectedbuild$selectedbuild");
                             });
                           },
                           child: Container(
@@ -719,6 +828,7 @@ class _AdditionsState extends State<Additions> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // ADULT
               GestureDetector(
                 onTap: () {
                   setState(() {
@@ -744,6 +854,8 @@ class _AdditionsState extends State<Additions> {
                   ),
                 ),
               ),
+
+              // CHILD
               if (widget.childCount! > 0)
                 GestureDetector(
                   onTap: () {
@@ -770,6 +882,42 @@ class _AdditionsState extends State<Additions> {
                     ),
                   ),
                 ),
+
+              // INFANT  ✅ ADD THIS BLOCK
+              if (widget.infantCount! > 0)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedPassengerType = 2;
+                    });
+
+                    // SHOW MESSAGE WHEN INFANT CLICKED
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Meals are not available for infants."),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                      color: selectedPassengerType == 2
+                          ? const Color(0xFFF37023)
+                          : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "Infant",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
 
@@ -781,10 +929,18 @@ class _AdditionsState extends State<Additions> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: List.generate(
-                  selectedPassengerType == 0
-                      ? widget.adultCount! // 🧍 dynamic adult count
-                      : widget.childCount!, // 🧒 dynamic child count
-                  (index) => Container(
+                    selectedPassengerType == 0
+                        ? widget.adultCount!
+                        : selectedPassengerType == 1
+                            ? widget.childCount!
+                            : 0, // INFANT → 0 meals
+
+                    (index) {
+                  String passengerType =
+                      selectedPassengerType == 0 ? "Adult" : "Child";
+                  String passengerKey = "$passengerType ${index + 1}";
+
+                  return Container(
                     width: MediaQuery.of(context).size.width * 0.85,
                     margin: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 10),
@@ -823,22 +979,28 @@ class _AdditionsState extends State<Additions> {
                         Flexible(
                           child: SingleChildScrollView(
                             child: Column(
-                              children: routes.isNotEmpty &&
-                                      groupedMeals
-                                          .containsKey(routes[selectedbuild])
-                                  ? groupedMeals[routes[selectedbuild]]!
+                              children: selectedPassengerType == 2
+                                  ? [
+                                      /* infant message */
+                                    ]
+                                  : groupedMeals[routes[selectedbuild]]!
                                       .map((meal) {
                                       final isMandatory = meal.code == "NoMeal";
-                                      String passengerKey =
+                                      final currentRoute =
+                                          routes[selectedbuild];
+                                      final passengerType =
                                           selectedPassengerType == 0
-                                              ? "Adult ${index + 1}"
-                                              : "Child ${index + 1}";
+                                              ? "Adult"
+                                              : "Child";
+                                      final passengerKey =
+                                          "$passengerType ${index + 1}";
 
                                       bool isChecked =
-                                          selectedMealData[passengerKey]
-                                                  ?['Code'] ==
-                                              meal.code;
-                                      print("HELLOWORLDDD ${jsonEncode(meal)}");
+                                          selectedMealData[currentRoute]
+                                                      ?[passengerKey]
+                                                  ?.any((m) =>
+                                                      m["Code"] == meal.code) ??
+                                              false;
 
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -850,7 +1012,7 @@ class _AdditionsState extends State<Additions> {
                                             Expanded(
                                               flex: 5,
                                               child: Text(
-                                                meal.airlineDescription.isEmpty
+                                                meal.description.isEmpty
                                                     ? "No Meal"
                                                     : meal.airlineDescription,
                                                 maxLines: 2,
@@ -872,76 +1034,68 @@ class _AdditionsState extends State<Additions> {
                                                       ? FontWeight.w600
                                                       : FontWeight.normal,
                                                 ),
-                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                             const SizedBox(width: 5),
-                                            StatefulBuilder(
-                                              builder: (context, setState) {
-                                                return Transform.scale(
-                                                  scale: 0.9,
-                                                  child: Checkbox(
-                                                    value: isMandatory
-                                                        ? true
-                                                        : isChecked,
-                                                    onChanged: isMandatory
-                                                        ? null
-                                                        : (value) {
-                                                            setState(() {
-                                                              isChecked =
-                                                                  value!;
-                                                              if (isChecked) {
-                                                                selectedMealData[
-                                                                    passengerKey] = {
-                                                                  'AirlineCode':
-                                                                      meal.airlineCode,
-                                                                  'FlightNumber':
-                                                                      meal.flightNumber,
-                                                                  'WayType': meal
-                                                                      .wayType,
-                                                                  'Code':
-                                                                      meal.code,
-                                                                  'Description':
-                                                                      meal.description,
-                                                                  'AirlineDescription':
-                                                                      meal.airlineDescription,
-                                                                  'Quantity': meal
-                                                                      .quantity,
-                                                                  'Currency': meal
-                                                                      .currency,
-                                                                  'Price': meal
-                                                                      .price,
-                                                                  'Origin': meal
-                                                                      .origin,
-                                                                  'Destination':
-                                                                      meal.destination,
-                                                                };
-                                                              } else {
-                                                                selectedMealData
-                                                                    .remove(
-                                                                        passengerKey);
-                                                              }
+                                            Transform.scale(
+                                              scale: 0.9,
+                                              child: Checkbox(
+                                                value: isMandatory
+                                                    ? true
+                                                    : isChecked,
+                                                onChanged: isMandatory
+                                                    ? null
+                                                    : (value) {
+                                                        final route =
+                                                            '${meal.origin}-${meal.destination}';
+                                                        final paxType =
+                                                            selectedPassengerType;
 
-                                                              print(
-                                                                  "🧾 Selected Meals: ${jsonEncode(selectedMealData)}");
-                                                            });
-                                                          },
-                                                  ),
-                                                );
-                                              },
+                                                        if (value!) {
+                                                          // 🔥 Allow only ONE meal per passenger
+                                                          selectedMealData[
+                                                                      route]?[
+                                                                  passengerKey]
+                                                              ?.clear();
+
+                                                          storeSelectedMeal(
+                                                              route,
+                                                              paxType,
+                                                              meal,
+                                                              index);
+                                                        } else {
+                                                          selectedMealData[
+                                                                      route]?[
+                                                                  passengerKey]
+                                                              ?.removeWhere((m) =>
+                                                                  m["Code"] ==
+                                                                  meal.code);
+                                                          if (selectedMealData[
+                                                                          route]
+                                                                      ?[
+                                                                      passengerKey]
+                                                                  ?.isEmpty ==
+                                                              true) {
+                                                            selectedMealData[
+                                                                    route]?[
+                                                                passengerKey] = [];
+                                                          }
+                                                        }
+                                                        setState(() {});
+                                                      },
+                                              ),
                                             ),
                                           ],
                                         ),
                                       );
-                                    }).toList()
-                                  : [],
+                                    }).toList(),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
+                  );
+                }),
               ),
             ),
           ),

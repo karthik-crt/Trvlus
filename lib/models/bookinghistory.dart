@@ -270,7 +270,7 @@ class JourneyList {
     baggage = json['Baggage'] ?? '';
     depature = json['Depature'] ?? '';
     duration = json['duration']?.toString() ?? '';
-    noofstop = json['noofstop'] ?? 0;
+    noofstop = int.tryParse(json['noofstop']?.toString() ?? '0') ?? 0;
     toCityName = json['ToCityName'] ?? '';
     arrivalTime = json['ArrivalTime'] ?? '';
     layOverTime = json['LayOverTime'] ?? '';

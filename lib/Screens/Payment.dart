@@ -131,6 +131,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     final passenger = widget.flightNumber ?? "";
     print("passenger$passenger");
     print("MAKEPAYMENT");
+    print(widget.stop);
     print("meal${widget.meal}");
 
     // final resultindex = widget.resultindex;
@@ -1018,6 +1019,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                     prefs.getString("ResultIndex");
                     print("ISLLC${widget.isLLC}");
                     // await ApiService().ticket();
+                    print("ADULTCHILD${widget.meal}");
                     Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1049,6 +1051,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                   outBoundData: widget.outBoundData,
                                   inBoundData: widget.inBoundData,
                                   meal: widget.meal,
+                                  stop: widget.stop,
                                 )));
                     // Get.to(MakePaymentScreen(
                     //   flight: flight,
