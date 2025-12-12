@@ -11,7 +11,8 @@ class Countrycode {
   late final List<Data> data;
 
   Countrycode.fromJson(Map<String, dynamic> json) {
-    statusCode = json['statusCode'];
+    statusCode:
+    json["statusCode"].toString(); // ✅ FIX
     data = List.from(json['data']).map((e) => Data.fromJson(e)).toList();
   }
 

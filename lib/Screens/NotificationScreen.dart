@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../utils/api_service.dart';
+
 class NotificationScreen extends StatefulWidget {
   @override
   _NotificationScreenState createState() => _NotificationScreenState();
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
+  bool isLoading = false;
+
+  privacyPolicy() async {
+    setState(() {
+      isLoading = true;
+    });
+    await ApiService().privacyPolicy();
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    privacyPolicy();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

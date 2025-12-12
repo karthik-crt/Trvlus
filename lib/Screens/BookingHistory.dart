@@ -47,7 +47,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
     super.initState();
     // TODO: implement initState
     getBookingData();
-    print("fvgrgtgt");
   }
 
   getBookingData() async {
@@ -55,8 +54,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
       isLoading = true;
     });
     bookingHistory = await ApiService().bookingHistory();
-    cancelReasonData = await ApiService().addStatus();
-    selectCancelReason = cancelReasonData.data.first.id.toString();
+    // cancelReasonData = await ApiService().addStatus();
+    // selectCancelReason = cancelReasonData.data.first.id.toString();
     setState(() {
       isLoading = false;
     });
@@ -103,649 +102,705 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
           ? Center(
               child: CircularProgressIndicator(),
             )
-          : Padding(
-              padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 16.h),
-              child: ListView.builder(
-                itemCount: bookingHistory.data.length,
-                itemBuilder: (context, index) {
-                  final booking = bookingHistory.data[index];
-                  print("BOOKING HISTORY");
-                  print(booking.passengerDetails.length);
-                  // print(booking.passengerDetails.first.baggage.length);
-                  // print(booking.passengerDetails.first.baggage);
-                  final create = booking.createdAt;
-                  final date = DateTime.parse(create);
-                  createdDate = DateFormat('dd MMM, yyyy').format(date);
-                  // FOR PAST DATE REMOVE
-                  print(booking.journeyList.first.depature);
-                  String depatureStr =
-                      booking.journeyList.first.depature; // "22 Oct 25"
-                  DateTime bookingDate = parseBookingDate(depatureStr);
-                  print("bookingDatebookingDate$bookingDate");
-                  DateTime today = DateTime.now();
-                  DateTime todayDateOnly =
-                      DateTime(today.year, today.month, today.day);
-                  return Card(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    elevation: 2,
-                    margin: EdgeInsets.only(bottom: 16.h),
-                    child: Padding(
-                      padding: EdgeInsets.all(12.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ✈️ Flight Header
-                          Row(
+          : (bookingHistory.data == null || bookingHistory.data!.isEmpty)
+              ? Center(
+                  child: Text(
+                    "No Records Found!",
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Inter',
+                        fontSize: 16.sp),
+                  ),
+                )
+              : Padding(
+                  padding:
+                      EdgeInsets.only(left: 16.w, right: 16.w, bottom: 16.h),
+                  child: ListView.builder(
+                    itemCount: bookingHistory.data.length,
+                    itemBuilder: (context, index) {
+                      final booking = bookingHistory.data[index];
+                      print("BOOKING HISTORY");
+                      print("HISTORY BOOKING HISTORY");
+                      print(booking.passengerDetails.length);
+                      print(booking.journeyList.first.noofstop);
+                      // print(booking.passengerDetails.first.baggage.length);
+                      // print(booking.passengerDetails.first.baggage);
+                      final create = booking.createdAt;
+                      final date = DateTime.parse(create);
+                      createdDate = DateFormat('dd MMM, yyyy').format(date);
+                      // FOR PAST DATE REMOVE
+                      String depatureStr =
+                          booking.journeyList.first.depature; // "22 Oct 25"
+                      DateTime bookingDate = parseBookingDate(depatureStr);
+                      print("bookingDatebookingDate$bookingDate");
+                      DateTime today = DateTime.now();
+                      DateTime todayDateOnly =
+                          DateTime(today.year, today.month, today.day);
+                      return Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        elevation: 2,
+                        margin: EdgeInsets.only(bottom: 16.h),
+                        child: Padding(
+                          padding: EdgeInsets.all(12.w),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Image.asset(
-                                "assets/${booking.journeyList.first.operatorCode ?? ""}.gif",
-                                fit: BoxFit.cover,
-                                height: 35,
-                                width: 35,
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              // ✈️ Flight Header
+                              Row(
                                 children: [
-                                  SizedBox(
-                                    width: 100,
-                                    child: Text(
-                                      booking.journeyList.first.operatorName ??
-                                          "",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14.sp,
-                                        color: Colors.black,
-                                      ),
-                                    ),
+                                  Image.asset(
+                                    "assets/${booking.journeyList.first.operatorCode ?? ""}.gif",
+                                    fit: BoxFit.cover,
+                                    height: 35,
+                                    width: 35,
                                   ),
-                                  RichText(
-                                    text: TextSpan(
-                                      text: booking
-                                          .journeyList.first.operatorCode,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                              color: Colors.grey.shade700),
-                                      children: [
-                                        TextSpan(
-                                          text: booking
-                                              .journeyList.first.flightNumber,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall
-                                              ?.copyWith(
-                                                  fontSize: 12.sp,
-                                                  color: Colors.orange),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        width: 100,
+                                        child: Text(
+                                          booking.journeyList.first
+                                                  .operatorName ??
+                                              "",
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.sp,
+                                            color: Colors.black,
+                                          ),
                                         ),
-                                        TextSpan(
-                                          text: " NR",
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
+                                          text: booking
+                                              .journeyList.first.operatorCode,
                                           style: Theme.of(context)
                                               .textTheme
-                                              .headlineSmall
+                                              .bodySmall
                                               ?.copyWith(
-                                                  fontSize: 12.sp,
-                                                  color: Colors.orange),
+                                                  color: Colors.grey.shade700),
+                                          children: [
+                                            TextSpan(
+                                              text: booking.journeyList.first
+                                                  .flightNumber,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headlineSmall
+                                                  ?.copyWith(
+                                                      fontSize: 12.sp,
+                                                      color: Colors.orange),
+                                            ),
+                                            TextSpan(
+                                              text: " NR",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headlineSmall
+                                                  ?.copyWith(
+                                                      fontSize: 12.sp,
+                                                      color: Colors.orange),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(width: 45.w),
+                                  // Image.asset("assets/images/Line.png"),
+                                  // const Spacer(),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Economy Class",
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12.sp,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 6.w),
+                                          Image.asset("assets/images/star.png"),
+                                        ],
+                                      ),
+                                      Text(
+                                        "",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                                color: Colors.grey.shade700),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8.h),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: DotDivider(
+                                  dotSize: 1.h,
+                                  spacing: 2.r,
+                                  dotCount: 97,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+
+                              // 🏙️ Route Info
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            booking
+                                                .journeyList.first.fromCityName,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            booking.journeyList.first
+                                                .fromAirportCode,
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        width: 100,
+                                        child: Text(
+                                          booking.journeyList.first
+                                              .fromAirportName,
+                                          style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey),
+                                        ),
+                                      ),
+                                      // Text(
+                                      //   "Terminal 3",
+                                      //   style: TextStyle(
+                                      //       fontSize: 12.sp, color: Colors.grey),
+                                      // ),
+                                    ],
+                                  ),
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            booking
+                                                .journeyList.first.toCityName,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            booking.journeyList.first
+                                                .toAirportCode,
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        width: 100,
+                                        child: Text(
+                                          textAlign: TextAlign.end,
+                                          booking
+                                              .journeyList.first.toAirportName,
+                                          style: TextStyle(fontSize: 12.sp),
+                                        ),
+                                      ),
+                                      // Text(
+                                      //   "Terminal 1",
+                                      //   style: TextStyle(fontSize: 12.sp),
+                                      // ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 5),
+
+                              // 🕓 Timing Row
+                              Container(
+                                margin: EdgeInsets.all(5),
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  color: const Color(0xFFFFF4EE),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          booking
+                                              .journeyList.first.depatureTime,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          booking.journeyList.first.depature,
+                                          style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
+                                    Column(
+                                      children: [
+                                        Text(booking.journeyList.first.duration,
+                                            style: TextStyle(fontSize: 12.sp)),
+                                        Image.asset(
+                                            'assets/images/flightDetails.png'),
+                                        Text(
+                                            booking.journeyList.first.noofstop
+                                                .toString(),
+                                            style: TextStyle(fontSize: 12.sp)),
+                                      ],
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          booking.journeyList.last.arrivalTime,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          booking.journeyList.last.arrival,
+                                          style: TextStyle(fontSize: 12.sp),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                              SizedBox(width: 45.w),
-                              // Image.asset("assets/images/Line.png"),
-                              // const Spacer(),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Economy Class",
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12.sp,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(width: 6.w),
-                                      Image.asset("assets/images/star.png"),
-                                    ],
-                                  ),
-                                  Text(
-                                    "",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.grey.shade700),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8.h),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DotDivider(
-                              dotSize: 1.h,
-                              spacing: 2.r,
-                              dotCount: 97,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
 
-                          // 🏙️ Route Info
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        booking.journeyList.first.fromCityName,
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        booking
-                                            .journeyList.first.fromAirportCode,
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: 100,
-                                    child: Text(
-                                      booking.journeyList.first.fromAirportName,
-                                      style: TextStyle(
-                                          fontSize: 12.sp, color: Colors.grey),
-                                    ),
-                                  ),
-                                  // Text(
-                                  //   "Terminal 3",
-                                  //   style: TextStyle(
-                                  //       fontSize: 12.sp, color: Colors.grey),
-                                  // ),
-                                ],
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        booking.journeyList.first.toCityName,
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        booking.journeyList.first.toAirportCode,
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: 100,
-                                    child: Text(
-                                      textAlign: TextAlign.end,
-                                      booking.journeyList.first.toAirportName,
-                                      style: TextStyle(fontSize: 12.sp),
-                                    ),
-                                  ),
-                                  // Text(
-                                  //   "Terminal 1",
-                                  //   style: TextStyle(fontSize: 12.sp),
-                                  // ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 5),
-
-                          // 🕓 Timing Row
-                          Container(
-                            margin: EdgeInsets.all(5),
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color: const Color(0xFFFFF4EE),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      booking.journeyList.first.depatureTime,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    Text(
-                                      booking.journeyList.first.depature,
-                                      style: TextStyle(
-                                          fontSize: 12.sp, color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Text(booking.journeyList.first.duration,
-                                        style: TextStyle(fontSize: 12.sp)),
-                                    Image.asset(
-                                        'assets/images/flightDetails.png'),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      booking.journeyList.last.arrivalTime,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    Text(
-                                      booking.journeyList.last.arrival,
-                                      style: TextStyle(fontSize: 12.sp),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // 🧾 PNR, Reference & Booking Status
-                          InkWell(
-                            splashColor: Colors.white,
-                            onTap: () {
-                              print("Booking ID${booking.id}");
-                              var bookingID = booking.id;
-                              print("bookingID$bookingID");
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      Ticketdetails(id: bookingID),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("Airline PNR",
-                                        style: TextStyle(fontSize: 12.sp)),
-                                    Text(
-                                      booking.pnr ?? "",
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8.h),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("Reference Number",
-                                        style: TextStyle(fontSize: 12.sp)),
-                                    Text(
-                                      booking.appReference ?? "",
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 8.h),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("Booking Status",
-                                        style: TextStyle(fontSize: 12.sp)),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 10.w, vertical: 5.h),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFDEF6DB),
-                                        borderRadius:
-                                            BorderRadius.circular(15.r),
-                                      ),
-                                      child: Text(
-                                        (booking.status ?? "CONFIRMEDD")
-                                            .toUpperCase(),
-                                        style: TextStyle(
-                                          color: const Color(0xFF138808),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 10.sp,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 10.h),
-
-                          // 🎟 Action Buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildActionButton(
-                                imagePath: "assets/icon/download.svg",
-                                label: "Download\nE-ticket",
-                                onTap: () async {
-                                  var bookingID = booking.bookingId.toString();
-                                  var pnr = booking.pnr.toString();
-                                  print("DOWNLOAD API CALLING");
-
-                                  await ApiService()
-                                      .downloadTicket(bookingID, pnr);
-
-                                  NotificationService.showDownloadNotification(
-                                      "ticket_$bookingID.pdf");
-                                },
-                              ),
-                              _buildActionButton(
-                                imagePath: "assets/icon/email.svg",
-                                label: "Email\nE-ticket",
+                              // 🧾 PNR, Reference & Booking Status
+                              InkWell(
+                                splashColor: Colors.white,
                                 onTap: () {
-                                  print("Email E-ticket tapped");
-                                },
-                              ),
-                              _buildActionButton(
-                                imagePath: "assets/icon/invoice.svg",
-                                label: "Download\nInvoice",
-                                onTap: () async {
-                                  var bookingID = booking.bookingId.toString();
-                                  var pnr = booking.pnr.toString();
-                                  await ApiService()
-                                      .downloadInvoice(bookingID, pnr);
-                                  print("Download Invoice tapped");
-
-                                  NotificationService.showDownloadNotification(
-                                      "invoice_$bookingID.pdf");
-                                },
-                              ),
-                            ],
-                          ),
-
-                          SizedBox(height: 10.h),
-                          Column(
-                            children: [
-                              if (booking.verifystatus == "1")
-                                Container(
-                                  padding: const EdgeInsets.all(5),
-                                  height: 55,
-                                  width: 300,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: const Color(0xFFFFE9DD),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    booking.cancel_description != null &&
-                                            booking
-                                                .cancel_description!.isNotEmpty
-                                        ? booking.cancel_description!
-                                        : "Requested for cancellation on $createdDate.\nYou will get a confirmation by our team shortly.",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
+                                  print("Booking ID${booking.id}");
+                                  var bookingID = booking.id;
+                                  print("bookingID$bookingID");
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          Ticketdetails(id: bookingID),
                                     ),
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Airline PNR",
+                                            style: TextStyle(fontSize: 12.sp)),
+                                        Text(
+                                          booking.pnr ?? "",
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Reference Number",
+                                            style: TextStyle(fontSize: 12.sp)),
+                                        Text(
+                                          booking.appReference ?? "",
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Booking Status",
+                                            style: TextStyle(fontSize: 12.sp)),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10.w, vertical: 5.h),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFDEF6DB),
+                                            borderRadius:
+                                                BorderRadius.circular(15.r),
+                                          ),
+                                          child: Text(
+                                            (booking.status ?? "CONFIRMEDD")
+                                                .toUpperCase(),
+                                            style: TextStyle(
+                                              color: const Color(0xFF138808),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: 10.h),
+
+                              // 🎟 Action Buttons
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildActionButton(
+                                    imagePath: "assets/icon/download.svg",
+                                    label: "Download\nE-ticket",
+                                    onTap: () async {
+                                      var bookingID =
+                                          booking.bookingId.toString();
+                                      var pnr = booking.pnr.toString();
+                                      print("DOWNLOAD API CALLING");
+
+                                      await ApiService()
+                                          .downloadTicket(bookingID, pnr);
+
+                                      NotificationService
+                                          .showDownloadNotification(
+                                              "ticket_$bookingID.pdf");
+                                    },
                                   ),
-                                ),
-                            ],
-                          ),
+                                  _buildActionButton(
+                                    imagePath: "assets/icon/email.svg",
+                                    label: "Email\nE-ticket",
+                                    onTap: () {
+                                      print("Email E-ticket tapped");
+                                    },
+                                  ),
+                                  _buildActionButton(
+                                    imagePath: "assets/icon/invoice.svg",
+                                    label: "Download\nInvoice",
+                                    onTap: () async {
+                                      var bookingID =
+                                          booking.bookingId.toString();
+                                      var pnr = booking.pnr.toString();
+                                      await ApiService()
+                                          .downloadInvoice(bookingID, pnr);
+                                      print("Download Invoice tapped");
 
-                          SizedBox(height: 10.h),
+                                      NotificationService
+                                          .showDownloadNotification(
+                                              "invoice_$bookingID.pdf");
+                                    },
+                                  ),
+                                ],
+                              ),
 
-                          // 🔸 Change Request Row
-                          if (!bookingDate.isBefore(todayDateOnly))
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  "Want to change request?",
-                                  style: TextStyle(
-                                      fontSize: 12, color: Color(0xFF606060)),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    showModalBottomSheet<void>(
-                                      backgroundColor: const Color(0xFFF5F5F5),
-                                      context: context,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(7),
+                              SizedBox(height: 10.h),
+                              Column(
+                                children: [
+                                  if (booking.verifystatus == "1")
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      height: 55,
+                                      width: 300,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: const Color(0xFFFFE9DD),
                                       ),
-                                      clipBehavior: Clip.antiAlias,
-                                      builder: (BuildContext context) {
-                                        return StatefulBuilder(
-                                          builder: (BuildContext context,
-                                              StateSetter setModalState) {
-                                            return Padding(
-                                              padding: MediaQuery.viewInsetsOf(
-                                                  context),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.all(20),
-                                                child: SizedBox(
-                                                  height: 400,
-                                                  child: SingleChildScrollView(
-                                                    child: Column(
-                                                      children: [
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        booking.cancel_description != null &&
+                                                booking.cancel_description!
+                                                    .isNotEmpty
+                                            ? booking.cancel_description!
+                                            : "Requested for cancellation on $createdDate.\nYou will get a confirmation by our team shortly.",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                              SizedBox(height: 10.h),
+
+                              // 🔸 Change Request Row
+                              if (!bookingDate.isBefore(todayDateOnly))
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      "Want to change request?",
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF606060)),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        showModalBottomSheet<void>(
+                                          backgroundColor:
+                                              const Color(0xFFF5F5F5),
+                                          context: context,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(7),
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          builder: (BuildContext context) {
+                                            return StatefulBuilder(
+                                              builder: (BuildContext context,
+                                                  StateSetter setModalState) {
+                                                return Padding(
+                                                  padding:
+                                                      MediaQuery.viewInsetsOf(
+                                                          context),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            20),
+                                                    child: SizedBox(
+                                                      height: 400,
+                                                      child:
+                                                          SingleChildScrollView(
+                                                        child: Column(
                                                           children: [
-                                                            Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
                                                               children: [
-                                                                const Text(
-                                                                  "Change Request",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontSize:
-                                                                        20,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .black,
-                                                                  ),
+                                                                Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    const Text(
+                                                                      "Change Request",
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontSize:
+                                                                            20,
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                    ),
+                                                                    Text(
+                                                                        "PNR: ${booking.pnr}"),
+                                                                  ],
                                                                 ),
-                                                                Text(
-                                                                    "PNR: ${booking.pnr}"),
+                                                                GestureDetector(
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                  child: Image
+                                                                      .asset(
+                                                                    "assets/icon/Close.png",
+                                                                    height: 25,
+                                                                  ),
+                                                                )
                                                               ],
                                                             ),
-                                                            GestureDetector(
-                                                              onTap: () {
-                                                                Navigator.pop(
-                                                                    context);
-                                                              },
-                                                              child:
-                                                                  Image.asset(
-                                                                "assets/icon/Close.png",
-                                                                height: 25,
-                                                              ),
-                                                            )
-                                                          ],
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 15),
-                                                        _buildDropdownField(
-                                                          'Select',
-                                                          selectCancelReason,
-                                                          cancelReasonData,
-                                                          (value) {
-                                                            setModalState(() {
-                                                              selectCancelReason =
-                                                                  value!;
-                                                              print(
-                                                                  "selectCancelReason$selectCancelReason");
-                                                            });
-                                                          },
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 5),
-                                                        _buildTextField1(
-                                                          label: 'Remarks *',
-                                                          hintText: 'Text here',
-                                                          controller:
-                                                              remarkController,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 50),
-                                                        Container(
-                                                          height: 50,
-                                                          width:
-                                                              MediaQuery.sizeOf(
-                                                                      context)
-                                                                  .width,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        20),
-                                                            color: const Color(
-                                                                0xFFF37023),
-                                                          ),
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child:
-                                                              GestureDetector(
-                                                            onTap: () async {
-                                                              String remark =
-                                                                  remarkController
-                                                                      .text
-                                                                      .trim(); // get the text
-                                                              print(
-                                                                  "User typed remark: $remark");
-                                                              // print("hellooo${booking.verifystatus});
-                                                              // Check if user selected a reason
-                                                              if (selectCancelReason ==
-                                                                      null ||
-                                                                  selectCancelReason!
-                                                                      .isEmpty) {
-                                                                // Show error message
-                                                                setState(() {
-                                                                  showError =
-                                                                      true;
+                                                            const SizedBox(
+                                                                height: 15),
+                                                            _buildDropdownField(
+                                                              'Select',
+                                                              selectCancelReason,
+                                                              cancelReasonData,
+                                                              (value) {
+                                                                setModalState(
+                                                                    () {
+                                                                  selectCancelReason =
+                                                                      value!;
+                                                                  print(
+                                                                      "selectCancelReason$selectCancelReason");
                                                                 });
-                                                                return; // Stop further execution
-                                                              }
+                                                              },
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 5),
+                                                            _buildTextField1(
+                                                              label:
+                                                                  'Remarks *',
+                                                              hintText:
+                                                                  'Text here',
+                                                              controller:
+                                                                  remarkController,
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 50),
+                                                            Container(
+                                                              height: 50,
+                                                              width: MediaQuery
+                                                                      .sizeOf(
+                                                                          context)
+                                                                  .width,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            20),
+                                                                color: const Color(
+                                                                    0xFFF37023),
+                                                              ),
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              child:
+                                                                  GestureDetector(
+                                                                onTap:
+                                                                    () async {
+                                                                  String
+                                                                      remark =
+                                                                      remarkController
+                                                                          .text
+                                                                          .trim(); // get the text
+                                                                  print(
+                                                                      "User typed remark: $remark");
+                                                                  // print("hellooo${booking.verifystatus});
+                                                                  // Check if user selected a reason
+                                                                  if (selectCancelReason ==
+                                                                          null ||
+                                                                      selectCancelReason!
+                                                                          .isEmpty) {
+                                                                    // Show error message
+                                                                    setState(
+                                                                        () {
+                                                                      showError =
+                                                                          true;
+                                                                    });
+                                                                    return; // Stop further execution
+                                                                  }
 
-                                                              // Reset error if a reason is selected
-                                                              setState(() {
-                                                                showError =
-                                                                    false;
-                                                              });
+                                                                  // Reset error if a reason is selected
+                                                                  setState(() {
+                                                                    showError =
+                                                                        false;
+                                                                  });
 
-                                                              // Call API
-                                                              await ApiService().cancelRequest(
-                                                                  pnr: booking
-                                                                      .pnr,
-                                                                  appref: booking
-                                                                      .appReference,
-                                                                  bookingID: booking
-                                                                      .bookingId,
-                                                                  status: booking
-                                                                      .status,
-                                                                  remark:
-                                                                      remark,
-                                                                  selectCancelReason:
-                                                                      selectCancelReason
-                                                                  // reason: selectCancelReason, // pass selected reason
-                                                                  );
+                                                                  // Call API
+                                                                  await ApiService().cancelRequest(
+                                                                      pnr: booking
+                                                                          .pnr,
+                                                                      appref: booking
+                                                                          .appReference,
+                                                                      bookingID:
+                                                                          booking
+                                                                              .bookingId,
+                                                                      status: booking
+                                                                          .status,
+                                                                      remark:
+                                                                          remark,
+                                                                      selectCancelReason:
+                                                                          selectCancelReason
+                                                                      // reason: selectCancelReason, // pass selected reason
+                                                                      );
 
-                                                              Navigator.pop(
-                                                                  context);
-                                                            },
-                                                            child: const Text(
-                                                              "Send",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 20,
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                  "Send",
+                                                                  style:
+                                                                      TextStyle(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    fontSize:
+                                                                        20,
+                                                                  ),
+                                                                ),
                                                               ),
                                                             ),
-                                                          ),
+                                                          ],
                                                         ),
-                                                      ],
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
+                                                );
+                                              },
                                             );
                                           },
                                         );
                                       },
-                                    );
-                                  },
-                                  child: const Text(
-                                    "Change Request",
-                                    style: TextStyle(
-                                      color: Color(0xFFF37023),
-                                      fontSize: 17,
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: Color(0xFFF37023),
+                                      child: const Text(
+                                        "Change Request",
+                                        style: TextStyle(
+                                          color: Color(0xFFF37023),
+                                          fontSize: 17,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: Color(0xFFF37023),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                            )
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+                                  ],
+                                )
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
     );
   }
 

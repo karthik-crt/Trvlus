@@ -9,9 +9,10 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/ProfilePage.dart';
+import 'package:trvlus/Screens/roundtrip.dart';
 
+import '../models/search_data.dart';
 import '../utils/api_service.dart';
-import 'NotificationScreen.dart';
 import 'Search_Result_Page.dart';
 import 'WalletScreen.dart';
 import 'flightname.dart';
@@ -50,6 +51,8 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   String travelClass = "Economy";
   int selectedIndex = -1;
   int departureIndex = -1;
+  bool isLoading = false;
+  late SearchData searchData;
 
   // State variables for From and To fields
   String fromAirport = "Delhi";
@@ -69,6 +72,45 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
 
       toAirport = tempAirport;
       toairportCode = tempCode;
+    });
+  }
+
+  getSearchData() async {
+    setState(() {
+      isLoading = true;
+    });
+    String formattedDate = DateFormat(
+      "yyyy-MM-dd",
+    ).format(selectedDepatureDate!);
+    print("formattedDate$formattedDate");
+
+    String? formattedReturnDate;
+    if (selectedReturnDate != null) {
+      formattedReturnDate = DateFormat(
+        "yyyy-MM-dd",
+      ).format(selectedReturnDate!);
+      print("heloooooooo$formattedReturnDate");
+    }
+
+    // String date = selectedReturnDate.toString().substring(0, 10);
+    print("datedate$date");
+    final prefs = await SharedPreferences.getInstance();
+    searchData = await ApiService().getSearchResult(
+        airportCode,
+        fromAirport,
+        toairportCode,
+        toAirport,
+        formattedDate,
+        formattedReturnDate ?? "",
+        selectedTripType,
+        adults!,
+        children,
+        infants);
+
+    searchData.response.results.length > 2 ? "inbound" : "outbound";
+
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -96,6 +138,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     print("token$response");
 
     final searchResults = response['Response']['SearchResults'] as List;
+    print("searchResults$searchResults");
 
     // convert to map
     fareMap.clear();
@@ -151,12 +194,19 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
           margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
           child: ElevatedButton(
             onPressed: () async {
+              final data = await getSearchData();
+              // final dataset = searchData
+              //     .response.results.first.first.segments.length
+              //     .toString();
+              // print("finaldataset$dataset");
               // format departure date once
               String formattedDate = DateFormat(
                 "yyyy-MM-dd",
               ).format(selectedDepatureDate!);
+              print("formattedDate$selectedReturnDate");
 
               String? formattedReturnDate;
+              print("formattedReturnDate$formattedReturnDate");
               if (selectedReturnDate != null) {
                 formattedReturnDate = DateFormat(
                   "yyyy-MM-dd",
@@ -168,20 +218,22 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => FlightResultsPage(
-                      airportCode: airportCode,
-                      fromAirport: fromAirport,
-                      toairportCode: toairportCode,
-                      toAirport: toAirport,
-                      selectedDepDate: formattedDate,
-                      selectedReturnDate: formattedDate,
-                      selectedTripType: selectedTripType,
-                      adultCount: adults,
-                      childCount: children,
-                      infantCount: infants,
-                    ),
+                        airportCode: airportCode,
+                        fromAirport: fromAirport,
+                        toairportCode: toairportCode,
+                        toAirport: toAirport,
+                        selectedDepDate: formattedDate,
+                        selectedReturnDate: formattedReturnDate ?? "",
+                        selectedTripType: selectedTripType,
+                        adultCount: adults,
+                        childCount: children,
+                        infantCount: infants,
+                        searchData: searchData),
                   ),
                 );
-              } else {
+              } else if (searchData
+                      .response.results.first.first.segments.length ==
+                  1) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -199,6 +251,26 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                     ),
                   ),
                 );
+              } else {
+                print("INTERNATIONAL ROUNDTRIP");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Roundtrip(
+                      airportCode: airportCode,
+                      selectedReturnDate: formattedReturnDate ?? "",
+                      selectedDepDate: formattedDate,
+                      search: searchData,
+                      toAirport: toAirport,
+                      fromAirport: fromAirport,
+                      toairportCode: toairportCode,
+                      selectedTripType: selectedTripType,
+                      adultCount: adults,
+                      childCount: children,
+                      infantCount: infants,
+                    ),
+                  ),
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -209,15 +281,19 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
               padding: EdgeInsets.symmetric(vertical: 0.02.sh),
             ),
             child: Center(
-              child: Text(
-                "Search Flights",
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16.sp,
-                  color: Colors.white,
-                ),
-              ),
+              child: isLoading
+                  ? CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                  : Text(
+                      "Search Flights",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -312,7 +388,16 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
             padding: EdgeInsets.only(right: 16.w),
             child: GestureDetector(
               onTap: () {
-                Get.to(NotificationScreen());
+                // Get.to(Roundtrip(
+                //   airportCode: '',
+                //   selectedReturnDate: '',
+                //   selectedDepDate: '',
+                //   toAirport: '',
+                //   fromAirport: '',
+                //   toairportCode: '',
+                //   selectedTripType: '',
+                //   adultCount: 1, search: '',
+                // ));
                 // Get.to(const Network());
               },
               child: Image.asset("assets/images/Bell_1.png"),

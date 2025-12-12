@@ -249,7 +249,7 @@ class JourneyList {
   late final String baggage;
   late final String depature;
   late final String duration;
-  late final int noofstop;
+  late final String noofstop;
   late final String toCityName;
   late final String arrivalTime;
   late final String layOverTime;
@@ -270,7 +270,7 @@ class JourneyList {
     baggage = json['Baggage'] ?? '';
     depature = json['Depature'] ?? '';
     duration = json['duration']?.toString() ?? '';
-    noofstop = int.tryParse(json['noofstop']?.toString() ?? '0') ?? 0;
+    noofstop = json['noofstop'] != null ? json['noofstop'].toString() : "0";
     toCityName = json['ToCityName'] ?? '';
     arrivalTime = json['ArrivalTime'] ?? '';
     layOverTime = json['LayOverTime'] ?? '';

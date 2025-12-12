@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/search_data.dart';
 import '../utils/api_service.dart';
@@ -36,6 +35,8 @@ class Afterpayment extends StatefulWidget {
   final Map<String, dynamic> outBoundData;
   final Map<String, dynamic> inBoundData;
   final Map<String, dynamic>? meal;
+  final String? resultindex;
+  final String? traceid;
 
   final String? outdepDate;
   final String? outdepTime;
@@ -46,45 +47,50 @@ class Afterpayment extends StatefulWidget {
   final String? inarrDate;
   final String? inarrTime;
 
-  const Afterpayment(
-      {Key? key,
-      this.flightNumber,
-      required this.airlineName,
-      required this.outBoundData,
-      required this.inBoundData,
-      required this.meal,
-      this.depDate,
-      this.depTime,
-      this.arrDate,
-      this.arrTime,
-      this.duration,
-      this.airportName,
-      this.desairportName,
-      this.airlineCode,
-      required this.cityCode,
-      this.descityCode,
-      required this.cityName,
-      this.descityName,
-      this.stop,
-      this.outboundFlight,
-      this.inboundFlight,
-      this.outresultindex,
-      this.inresultindex,
-      this.basefare,
-      this.tax,
-      this.passenger,
-      this.childpassenger,
-      this.infantpassenger,
-      this.isLLC,
-      this.outdepDate,
-      this.outdepTime,
-      this.outarrDate,
-      this.outarrTime,
-      this.indepDate,
-      this.indepTime,
-      this.inarrDate,
-      this.inarrTime})
-      : super(key: key);
+  final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
+
+  const Afterpayment({
+    Key? key,
+    this.flightNumber,
+    required this.airlineName,
+    required this.outBoundData,
+    required this.inBoundData,
+    required this.meal,
+    this.depDate,
+    this.depTime,
+    this.arrDate,
+    this.arrTime,
+    this.duration,
+    this.airportName,
+    this.desairportName,
+    this.airlineCode,
+    required this.cityCode,
+    this.descityCode,
+    required this.cityName,
+    this.descityName,
+    this.stop,
+    this.outboundFlight,
+    this.inboundFlight,
+    this.outresultindex,
+    this.inresultindex,
+    this.basefare,
+    this.tax,
+    this.passenger,
+    this.childpassenger,
+    this.infantpassenger,
+    this.isLLC,
+    this.segmentsJson,
+    this.outdepDate,
+    this.outdepTime,
+    this.outarrDate,
+    this.outarrTime,
+    this.indepDate,
+    this.indepTime,
+    this.inarrDate,
+    this.inarrTime,
+    this.resultindex,
+    this.traceid,
+  }) : super(key: key);
 
   @override
   State<Afterpayment> createState() => _AfterpaymentState();
@@ -100,12 +106,17 @@ class _AfterpaymentState extends State<Afterpayment> {
   // TICKET API CALLING
   getSearchData() async {
     print("TICKET API CALLING");
+    print("segmentsJsonsegmentsJson${widget.segmentsJson}");
     print(widget.stop);
     print(widget.isLLC);
+    print(widget.resultindex);
+    print(widget.traceid);
 
-    final prefs = await SharedPreferences.getInstance();
-    final resultIndex = prefs.getString("ResultIndex");
-    final traceid = prefs.getString("TraceId");
+    // final prefs = await SharedPreferences.getInstance();
+    // final resultIndex = prefs.getString("ResultIndex");
+    // final traceid = prefs.getString("TraceId");
+    final resultIndex = widget.resultindex;
+    final traceid = widget.traceid;
 
     final flightNumber = widget.flightNumber ?? "";
     final airlineName = widget.airlineName;
@@ -125,6 +136,7 @@ class _AfterpaymentState extends State<Afterpayment> {
     final childpassenger = widget.childpassenger ?? [];
     final infantpassenger = widget.infantpassenger ?? [];
     final Map<String, dynamic> meal = widget.meal ?? {};
+    final journeyList = widget.segmentsJson ?? "";
 
     setState(() {
       isLoading = true;
@@ -145,29 +157,31 @@ class _AfterpaymentState extends State<Afterpayment> {
       print("ROUNDTRIP");
       if (widget.outBoundData['IsLCC'] == true) {
         searchData = await ApiService().ticket(
-            widget.outBoundData['outresultindex'],
-            widget.outBoundData['traceid'],
-            widget.outBoundData['flightNumber'],
-            widget.outBoundData['airlineName'],
-            widget.outBoundData['outdepTime'],
-            widget.outBoundData['outdepDate'],
-            widget.outBoundData['airportName'],
-            widget.outBoundData['outarrTime'],
-            widget.outBoundData['outarrDate'],
-            widget.outBoundData['desairportName'],
-            widget.outBoundData['duration'],
-            widget.outBoundData['airlineCode'],
-            widget.outBoundData['cityCode'],
-            widget.outBoundData['descityCode'],
-            widget.outBoundData['cityName'],
-            widget.outBoundData['descityName'],
-            widget.outBoundData['basefare'],
-            widget.outBoundData['tax'],
-            passenger,
-            childpassenger,
-            infantpassenger,
-            meal,
-            "");
+          widget.outBoundData['outresultindex'],
+          widget.outBoundData['traceid'],
+          widget.outBoundData['flightNumber'],
+          widget.outBoundData['airlineName'],
+          widget.outBoundData['outdepTime'],
+          widget.outBoundData['outdepDate'],
+          widget.outBoundData['airportName'],
+          widget.outBoundData['outarrTime'],
+          widget.outBoundData['outarrDate'],
+          widget.outBoundData['desairportName'],
+          widget.outBoundData['duration'],
+          widget.outBoundData['airlineCode'],
+          widget.outBoundData['cityCode'],
+          widget.outBoundData['descityCode'],
+          widget.outBoundData['cityName'],
+          widget.outBoundData['descityName'],
+          widget.outBoundData['basefare'],
+          widget.outBoundData['tax'],
+          passenger,
+          childpassenger,
+          infantpassenger,
+          meal,
+          "",
+          "",
+        );
       } else {
         searchData = await ApiService().holdTicket(
           widget.outBoundData['outresultindex'],
@@ -192,6 +206,8 @@ class _AfterpaymentState extends State<Afterpayment> {
           childpassenger,
           infantpassenger,
           meal,
+          "",
+          "",
         );
 
         final pnr =
@@ -214,29 +230,31 @@ class _AfterpaymentState extends State<Afterpayment> {
       print("searchDataROUNDTRIP$searchData");
       if (widget.inBoundData['IsLCC'] == true) {
         searchData = await ApiService().ticket(
-            widget.inBoundData['inresultindex'],
-            widget.inBoundData['traceid'],
-            widget.inBoundData['flightNumber'],
-            widget.inBoundData['airlineName'],
-            widget.inBoundData['indepTime'],
-            widget.inBoundData['indepDate'],
-            widget.inBoundData['airportName'],
-            widget.inBoundData['inarrTime'],
-            widget.inBoundData['inarrDate'],
-            widget.inBoundData['desairportName'],
-            widget.inBoundData['duration'],
-            widget.inBoundData['airlineCode'],
-            widget.inBoundData['cityCode'],
-            widget.inBoundData['descityCode'],
-            widget.inBoundData['cityName'],
-            widget.inBoundData['descityName'],
-            widget.inBoundData['basefare'],
-            widget.inBoundData['tax'],
-            passenger,
-            childpassenger,
-            infantpassenger,
-            meal,
-            "");
+          widget.inBoundData['inresultindex'],
+          widget.inBoundData['traceid'],
+          widget.inBoundData['flightNumber'],
+          widget.inBoundData['airlineName'],
+          widget.inBoundData['indepTime'],
+          widget.inBoundData['indepDate'],
+          widget.inBoundData['airportName'],
+          widget.inBoundData['inarrTime'],
+          widget.inBoundData['inarrDate'],
+          widget.inBoundData['desairportName'],
+          widget.inBoundData['duration'],
+          widget.inBoundData['airlineCode'],
+          widget.inBoundData['cityCode'],
+          widget.inBoundData['descityCode'],
+          widget.inBoundData['cityName'],
+          widget.inBoundData['descityName'],
+          widget.inBoundData['basefare'],
+          widget.inBoundData['tax'],
+          passenger,
+          childpassenger,
+          infantpassenger,
+          meal,
+          "",
+          "",
+        );
         print("searchDataINBOUNDROUNDTRIP$searchData");
       } else {
         searchData = await ApiService().holdTicket(
@@ -262,11 +280,13 @@ class _AfterpaymentState extends State<Afterpayment> {
           childpassenger,
           infantpassenger,
           meal,
+          "",
+          "",
         );
 
         pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        bookingId = (searchData?["data"]?["Response"]?["Response"]
-                    ?["BookingId"])
+        bookingId =
+            (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
                 ?.toString() ??
             "0";
         final api = searchData;
@@ -280,88 +300,99 @@ class _AfterpaymentState extends State<Afterpayment> {
         await ApiService().ticketInvoice(pnr, bookingId.toString(), traceid);
       }
     } else {
+      // ONEWAY
       if (widget.isLLC == true) {
+        print(widget.segmentsJson);
+        print("widgetjourneyList");
         final depTime = widget.depTime;
-        final depDate = DateFormat("dd MMM yy").format(
-          DateTime.parse(widget.depDate.toString()),
-        );
+        final depDate = DateFormat(
+          "dd MMM yy",
+        ).format(DateTime.parse(widget.depDate.toString()));
 
         final arrTime = widget.arrTime;
-        final arrDate = DateFormat("dd MMM yy").format(
-          DateTime.parse(widget.arrDate.toString()),
-        );
+        final arrDate = DateFormat(
+          "dd MMM yy",
+        ).format(DateTime.parse(widget.arrDate.toString()));
         searchData = await ApiService().ticket(
-            resultIndex!,
-            traceid!,
-            flightNumber,
-            airlineName,
-            depTime,
-            depDate,
-            airportName,
-            arrTime,
-            arrDate,
-            desairportName,
-            duration,
-            airlineCode,
-            cityCode,
-            descityCode,
-            cityName,
-            descityName,
-            baseFare,
-            tax,
-            passenger,
-            childpassenger,
-            infantpassenger,
-            meal,
-            stop);
+          resultIndex!,
+          traceid!,
+          flightNumber,
+          airlineName,
+          depTime,
+          depDate,
+          airportName,
+          arrTime,
+          arrDate,
+          desairportName,
+          duration,
+          airlineCode,
+          cityCode,
+          descityCode,
+          cityName,
+          descityName,
+          baseFare,
+          tax,
+          passenger,
+          childpassenger,
+          infantpassenger,
+          meal,
+          stop,
+          journeyList,
+        );
         setState(() {
           pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-          bookingId = (searchData?["data"]?["Response"]?["Response"]
-                      ?["BookingId"])
+          bookingId =
+              (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
                   ?.toString() ??
               "0";
           statusMessage = (searchData?["statusMessage"]);
         });
       } else {
+        // HOLD-->Ticket
         final depTime = widget.depTime;
-        final depDate = DateFormat("dd MMM yy").format(
-          DateTime.parse(widget.depDate.toString()),
-        );
+        final depDate = DateFormat(
+          "dd MMM yy",
+        ).format(DateTime.parse(widget.depDate.toString()));
 
         final arrTime = widget.arrTime;
-        final arrDate = DateFormat("dd MMM yy").format(
-          DateTime.parse(widget.arrDate.toString()),
-        );
+        final arrDate = DateFormat(
+          "dd MMM yy",
+        ).format(DateTime.parse(widget.arrDate.toString()));
         print("HOLD TICKET BOOKING");
         searchData = await ApiService().holdTicket(
-            resultIndex!,
-            traceid!,
-            flightNumber,
-            airlineName,
-            depTime,
-            depDate,
-            airportName,
-            arrTime,
-            arrDate,
-            desairportName,
-            duration,
-            airlineCode,
-            cityCode,
-            descityCode,
-            cityName,
-            descityName,
-            baseFare,
-            tax,
-            passenger,
-            childpassenger,
-            infantpassenger,
-            meal);
+          resultIndex!,
+          traceid!,
+          flightNumber,
+          airlineName,
+          depTime,
+          depDate,
+          airportName,
+          arrTime,
+          arrDate,
+          desairportName,
+          duration,
+          airlineCode,
+          cityCode,
+          descityCode,
+          cityName,
+          descityName,
+          baseFare,
+          tax,
+          passenger,
+          childpassenger,
+          infantpassenger,
+          meal,
+          stop,
+          journeyList,
+        );
 
         setState(() {
           pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-          bookingId = (searchData?["data"]?["Response"]?["Response"]
-                  ?["BookingId"]) ??
-              0;
+          bookingId =
+              (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
+                  ?.toString() ??
+              "0";
+
           statusMessage = (searchData?["statusMessage"]);
         });
 
@@ -400,16 +431,12 @@ class _AfterpaymentState extends State<Afterpayment> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    color: Color(0xFFF37023),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
+                  CircularProgressIndicator(color: Color(0xFFF37023)),
+                  SizedBox(height: 10),
                   Text(
                     "Checking Payment Status...",
                     style: TextStyle(color: Colors.black),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -418,24 +445,26 @@ class _AfterpaymentState extends State<Afterpayment> {
             floatingActionButton: GestureDetector(
               onTap: () {
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => BookingHistoryPage()));
+                  context,
+                  MaterialPageRoute(builder: (context) => BookingHistoryPage()),
+                );
               },
               child: Container(
                 height: 50,
                 width: MediaQuery.sizeOf(context).width * 0.9,
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(25),
-                    color: Color(0xFFF37023)),
+                  borderRadius: BorderRadius.circular(25),
+                  color: Color(0xFFF37023),
+                ),
                 child: Align(
                   alignment: Alignment.center,
                   child: Text(
                     "Go To My Booking",
                     style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -449,10 +478,7 @@ class _AfterpaymentState extends State<Afterpayment> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     // crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.construction,
-                        size: 50,
-                      ),
+                      Icon(Icons.construction, size: 50),
                       // Image.asset(
                       //   "assets/icon/left.png",
                       //   height: 200,
@@ -470,20 +496,19 @@ class _AfterpaymentState extends State<Afterpayment> {
                       // )
                     ],
                   ),
-                  SizedBox(
-                    height: 25,
-                  ),
+                  SizedBox(height: 25),
                   Text(
                     "This is a test payment.\nPayment integration will be live soon.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text("PNR : $pnr"),
                   Text("BOOKINGID : $bookingId"),
-                  Text("statusMessage :$statusMessage")
+                  Text("statusMessage :$statusMessage"),
 
                   // Text(
                   //   "Payment Successfull",

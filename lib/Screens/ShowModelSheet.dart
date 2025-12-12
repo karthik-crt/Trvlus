@@ -7,13 +7,27 @@ class FareBreakupSheet extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final double? adultfare;
+  final double? childfare;
+  final double? infantfare;
+  final double? adultTax;
+  final double? childTax;
+  final double? infantTax;
+  final double? total;
 
   FareBreakupSheet(
       {this.basefare,
       this.tax,
       this.adultCount,
       this.childCount,
-      this.infantCount});
+      this.infantCount,
+      this.adultfare,
+      this.childfare,
+      this.infantfare,
+      this.adultTax,
+      this.childTax,
+      this.infantTax,
+      this.total});
 
   @override
   _FareBreakupSheetState createState() => _FareBreakupSheetState();
@@ -22,14 +36,26 @@ class FareBreakupSheet extends StatefulWidget {
 class _FareBreakupSheetState extends State<FareBreakupSheet> {
   @override
   Widget build(BuildContext context) {
-    final adultFare = (widget.adultCount ?? 0) * (widget.basefare ?? 0);
-    final childFare = (widget.childCount ?? 0) * (widget.basefare ?? 0);
-    final infantFare = (widget.infantCount ?? 0) * (widget.basefare ?? 0);
+    print("VIEW FARE FULL DETAIL");
+    // final adultFare = (widget.adultCount ?? 0) * (widget.basefare ?? 0);
+    // final childFare = (widget.childCount ?? 0) * (widget.basefare ?? 0);
+    // final infantFare = (widget.infantCount ?? 0) * (widget.basefare ?? 0);
     final tax = widget.tax ?? 0;
+    // print("totaltotal$total");
 
-    final total = adultFare + childFare + infantFare + tax; // ✅ now this works
-
-    print("total$total");
+    final adultFare = widget.adultfare;
+    final childFare = widget.childfare;
+    final infantFare = widget.infantfare;
+    final adulttax = widget.adultTax;
+    final childtax = widget.childTax;
+    final infanttax = widget.infantTax;
+    final taxtotal = tax;
+    final overalltotal = widget.total;
+    print("overalltotal$overalltotal");
+    final total =
+        adultFare! + childFare! + infantFare! + taxtotal; // ✅ now this works
+    print("totall$total");
+    print("taxtotal$taxtotal");
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -95,7 +121,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                                "Adults (${widget.adultCount} X ₹${widget.basefare})",
+                                "Adults (${widget.adultCount} X ₹${widget.adultfare})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
@@ -110,7 +136,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                                "Child (${widget.childCount} X ₹${widget.basefare})",
+                                "Child (${widget.childCount} X ₹${widget.childfare})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
@@ -125,7 +151,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                                "Infant (${widget.infantCount} X ₹${widget.basefare})",
+                                "Infant (${widget.infantCount} X ₹${widget.infantfare})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
@@ -160,7 +186,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                     fontSize: 18.sp,
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold)),
-                            Text("₹$total",
+                            Text("₹$overalltotal",
                                 style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.bold,

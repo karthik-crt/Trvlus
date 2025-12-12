@@ -31,6 +31,7 @@ class OtpVerificationScreen extends StatefulWidget {
   final double? basefare;
   final double? tax;
   final List<List<Segment>>? segments;
+  final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
   final String? resultindex;
   final String? traceid;
   final Result? outboundFlight;
@@ -79,6 +80,7 @@ class OtpVerificationScreen extends StatefulWidget {
       this.duration,
       this.basefare,
       this.segments,
+      this.segmentsJson,
       this.resultindex,
       this.traceid,
       this.outboundFlight,
@@ -124,8 +126,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Future<void> _verifyOtp() async {
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
       String otp = _otpControllers.map((c) => c.text).join();
+      print("segmentsJsonsegmentsJson${widget.segmentsJson}");
       // Calling VerifyOTP API
-      await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
+      final verifyOTP =
+          await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
+      print("VERIFY$verifyOTP");
+      print("traceidtraceid${widget.traceid}");
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
       print(widget.outresultindex);
@@ -174,6 +180,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             inBoundData: widget.inBoundData,
             outresultindex: widget.outresultindex,
             inresultindex: widget.inresultindex,
+            segmentsJson: widget.segmentsJson,
           ));
     } else {
       print("Enter complete OTP");

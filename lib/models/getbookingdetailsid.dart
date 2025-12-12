@@ -292,7 +292,7 @@ class PassengerDetails {
     PassportNo = json['PassportNo'];
     CountryCode = json['CountryCode'];
     CountryName = json['CountryName'] ?? "";
-    DateOfBirth = json['DateOfBirth'];
+    DateOfBirth = json['DateOfBirth'] ?? "";
     Nationality = json['Nationality'];
     AddressLine1 = json['AddressLine1'];
     FFAirlineCode = json['FFAirlineCode'] ?? "";
@@ -532,7 +532,7 @@ class Ticket {
 
   late final String Status;
   late final String Remarks;
-  late final int TicketId;
+  late final String TicketId;
   late final String IssueDate;
   late final String TicketType;
   late final String TicketNumber;
@@ -543,13 +543,13 @@ class Ticket {
   Ticket.fromJson(Map<String, dynamic> json) {
     Status = json['Status'] ?? "";
     Remarks = json['Remarks'] ?? "";
-    TicketId = json['TicketId'] ?? "";
-    IssueDate = json['IssueDate'];
-    TicketType = json['TicketType'];
-    TicketNumber = json['TicketNumber'];
-    ConjunctionNumber = json['ConjunctionNumber'];
-    ValidatingAirline = json['ValidatingAirline'];
-    ServiceFeeDisplayType = json['ServiceFeeDisplayType'];
+    TicketId = json['TicketId'].toString();
+    IssueDate = json['IssueDate'] ?? "";
+    TicketType = json['TicketType'] ?? "";
+    TicketNumber = json['TicketNumber'] ?? "";
+    ConjunctionNumber = json['ConjunctionNumber'] ?? "";
+    ValidatingAirline = json['ValidatingAirline'] ?? "";
+    ServiceFeeDisplayType = json['ServiceFeeDisplayType'] ?? "";
   }
 
   Map<String, dynamic> toJson() {
@@ -698,7 +698,7 @@ class DocumentDetails {
     DocumentNumber = json['DocumentNumber'];
     DocumentTypeId = json['DocumentTypeId'];
     ResultFareType = json['ResultFareType'];
-    DocumentExpiryDate = json['DocumentExpiryDate'];
+    DocumentExpiryDate = json['DocumentExpiryDate'] ?? "";
   }
 
   Map<String, dynamic> toJson() {
@@ -806,7 +806,7 @@ class JourneyList {
     Baggage = json['Baggage'];
     Depature = json['Depature'];
     duration = json['duration']?.toString() ?? '';
-    noofstop = json['noofstop'];
+    noofstop = int.tryParse(json['noofstop'].toString()) ?? 0;
     ToCityName = json['ToCityName'];
     ArrivalTime = json['ArrivalTime'];
     LayOverTime = json['LayOverTime'];

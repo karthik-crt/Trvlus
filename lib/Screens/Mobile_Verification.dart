@@ -31,6 +31,7 @@ class MobileVerificationScreen extends StatefulWidget {
   final double? basefare;
   final double? tax;
   final List<List<Segment>>? segments;
+  final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
   final String? resultindex;
   final String? traceid;
   final Result? outboundFlight;
@@ -77,6 +78,7 @@ class MobileVerificationScreen extends StatefulWidget {
       this.duration,
       this.basefare,
       this.segments,
+      this.segmentsJson,
       this.resultindex,
       this.traceid,
       this.outboundFlight,
@@ -112,9 +114,13 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
   final RegExp _mobileRegex = RegExp(r'^[1-9]\d{9}$');
   String enteredMobileNumber = '';
 
+  final FocusNode _mobileFocus = FocusNode();
+
   @override
   void initState() {
     var ell = widget.airlineName;
+    print("segmentsJsonsegmentsJson${widget.segmentsJson}");
+
     super.initState();
     // Manually set default country to India
     _selectedCountry = Country(
@@ -129,6 +135,9 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
       displayName: '',
       displayNameNoCountryCode: '',
     );
+    Future.delayed(Duration(milliseconds: 300), () {
+      FocusScope.of(context).requestFocus(_mobileFocus);
+    });
   }
 
   void _openCountryPicker() {
@@ -187,6 +196,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                       ? ''
                       : 'Enter a valid 10-digit Indian mobile number';
               print("errorText$errorText");
+              print("traceidtraceid${widget.traceid}");
 
               return Row(
                 children: [
@@ -240,6 +250,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                             Border.all(color: Colors.grey[300]!, width: 1.0),
                       ),
                       child: TextFormField(
+                        focusNode: _mobileFocus,
                         controller: _mobileController,
                         validator: (value) {
                           if (value != null && !_mobileRegex.hasMatch(value)) {
@@ -345,6 +356,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                 inBoundData: widget.inBoundData,
                                 outresultindex: widget.outresultindex,
                                 inresultindex: widget.inresultindex,
+                                segmentsJson: widget.segmentsJson,
                               ));
                         }
                       : null,

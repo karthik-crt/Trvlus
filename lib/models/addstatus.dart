@@ -13,7 +13,7 @@ class CancelReasonData {
   late final List<Data> data;
 
   CancelReasonData.fromJson(Map<String, dynamic> json) {
-    statusCode = json['statusCode'];
+    statusCode = json['statusCode'] ?? "";
     statusMessage = json['statusMessage'];
     data = List.from(json['data']).map((e) => Data.fromJson(e)).toList();
   }

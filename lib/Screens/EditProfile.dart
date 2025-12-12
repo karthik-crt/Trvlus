@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:trvlus/utils/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   @override
@@ -118,8 +119,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ],
             ),
             SizedBox(height: 20.h),
-            _buildTextField1(label: 'First name *', hintText: 'Text here'),
-            _buildTextField1(label: 'Last name *', hintText: 'Text here'),
+            _buildTextField1(
+              label: 'First name *',
+              hintText: 'Text here',
+              controller: firstNameController,
+            ),
+            _buildTextField1(
+              label: 'Last name *',
+              hintText: 'Text here',
+              controller: lastNameController,
+            ),
             _buildTextField1(
                 label: 'Date of birth *',
                 hintText: 'Text here',
@@ -139,8 +148,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
             SizedBox(
               height: 10.h,
             ),
-            _buildTextField1(label: 'Mobile *', hintText: 'Text here'),
-            _buildTextField1(label: 'Email *', hintText: 'Text here'),
+            _buildTextField1(
+                label: 'Mobile *',
+                hintText: 'Text here',
+                controller: mobileController),
+            _buildTextField1(
+                label: 'Email *',
+                hintText: 'Text here',
+                controller: emailController),
             SizedBox(
               height: 10.h,
             ),
@@ -236,7 +251,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(left: 10.w, bottom: 15.h, right: 10.w),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () async {
+            final firstname = firstNameController.text;
+            final lastname = lastNameController.text;
+            final email = emailController.text;
+            final mobile = mobileController.text;
+            final dob = dateController.text;
+            String fixDate(String inputDate) {
+              DateTime parsed = DateFormat("dd-MM-yyyy").parse(dob);
+              return DateFormat("yyyy-MM-dd").format(parsed);
+            }
+
+            final date = fixDate(dob);
+            print("date$date");
+
+            print("dob$dob");
+            await ApiService()
+                .profileupdate(firstname, lastname, email, mobile, date);
+            Navigator.pop(context);
+          },
           style: ElevatedButton.styleFrom(
             minimumSize: Size(double.infinity, 40.h),
             backgroundColor: Color(0xFFF37023),

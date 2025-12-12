@@ -610,7 +610,7 @@ class Segment {
   String toRawJson() => json.encode(toJson());
 
   factory Segment.fromJson(Map<String, dynamic> json) => Segment(
-        baggage: json["Baggage"],
+        baggage: json["Baggage"] ?? "",
         cabinBaggage: json["CabinBaggage"],
         cabinClass: json["CabinClass"],
         supplierFareClass: json["SupplierFareClass"] ?? "",

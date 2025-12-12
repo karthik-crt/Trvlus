@@ -79,6 +79,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
     print(sights);
     final segments = jsonEncode(widget.segments);
     print("fullsegments$segments");
+    print("airlinecode${widget.airlineCode}");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -416,6 +417,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                           SizedBox(
                                             width: 100,
                                             child: Text(
+                                              textAlign: TextAlign.end,
                                               widget
                                                   .segments![index][innerIndex]
                                                   .destination

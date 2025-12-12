@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:trvlus/Screens/price_alert_controller.dart';
 
+import '../models/farequote.dart' as farequote;
 import '../models/search_data.dart';
+import '../utils/api_service.dart';
 import '../utils/constant.dart';
 import 'ConfirmTraveler.dart';
 import 'DotDivider.dart';
@@ -12,6 +17,7 @@ import 'ViewFullDetails.dart';
 
 String finaldepDateformat = '';
 String finalarrDateformat = '';
+double totalFare = 0;
 
 class TravelerDetailsPage extends StatefulWidget {
   final Map<String, dynamic> flight;
@@ -36,6 +42,7 @@ class TravelerDetailsPage extends StatefulWidget {
   final double? basefare;
   final double? tax;
   final List<List<Segment>>? segments;
+  final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
   final String? resultindex;
   final String? traceid;
   final Result? outboundFlight;
@@ -82,6 +89,7 @@ class TravelerDetailsPage extends StatefulWidget {
       this.duration,
       this.basefare,
       this.segments,
+      this.segmentsJson,
       this.resultindex,
       this.traceid,
       this.outboundFlight,
@@ -118,26 +126,163 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   List<Map<String, dynamic>> traveler = [];
   List<Map<String, dynamic>> childtraveler = [];
   List<Map<String, dynamic>> infanttraveler = [];
+  late farequote.FareQuotesData fareQuote;
+  late farequote.FareQuotesData infareQuote;
+  bool isLoading = true;
+  bool isPassportRequiredAtTicket = false;
+  bool isPassportFullDetailRequiredAtBook = false;
+  double totalBaseFare = 0;
+  double totalTax = 0;
+  double overallFare = 0;
+  double inbaseFare = 0;
+  double intax = 0;
+  int totaladultCount = 0;
+  int totalchildCount = 0;
+  int totalinfantCount = 0;
+  double adultFare = 0;
+  double childFare = 0;
+  double infantFare = 0;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getfarequotedata();
+  }
+
+  getfarequotedata() async {
+    setState(() {
+      isLoading = true;
+      print("beforeOutput");
+    });
+    if (widget.outBoundData['outresultindex'] != null &&
+        widget.inBoundData['inresultindex'] != null) {
+      print(widget.outresultindex);
+      fareQuote = await ApiService().farequote(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      infareQuote = await ApiService().farequote(
+          widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+    } else {
+      print("ONEWAYfareQuote");
+      fareQuote = await ApiService()
+          .farequote(widget.resultindex ?? "", widget.traceid ?? "");
+      debugPrint("ssrDATA: ${jsonEncode(fareQuote)}", wrapWidth: 4500);
+      final helo = fareQuote.response;
+      final ticket =
+          fareQuote.response.results.isPassportRequiredAtTicket ?? false;
+      print("TICKETREQUIRES$ticket");
+      final passportticket =
+          fareQuote.response.results.isPassportFullDetailRequiredAtBook ??
+              false;
+      isPassportFullDetailRequiredAtBook = passportticket;
+
+      isPassportRequiredAtTicket = ticket;
+
+      debugPrint("RESPONSESSRDTAA${jsonEncode(helo)}", wrapWidth: 1500);
+      // PRICEALERT
+      var farequote = fareQuote.response.results.fare.publishedFare;
+      print("farequotefarequote$farequote");
+      var isPriceChanged = fareQuote.response.isPriceChanged;
+      print("isPriceChangedisPriceChanged$isPriceChanged");
+
+      Get.find<PriceAlertController>().checkFare(
+        farequote,
+        isPriceChanged,
+      );
+    }
+    // FARECALCULATION
+    final fareBreakdown = fareQuote.response.results.fareBreakdown;
+    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
+    final baseFare = fareQuote.response.results.fare.baseFare;
+    final tax = fareQuote.response.results.fare.tax.toDouble();
+
+    double adultBase = 0, adultTax = 0;
+    double childBase = 0, childTax = 0;
+    double infantBase = 0, infantTax = 0;
+    int adultCount = 0, childCount = 0;
+    int infantCount = 0;
+    // INBOUNDFARE
+    double inadultBase = 0, inadultTax = 0;
+    double inchildBase = 0, inchildTax = 0;
+    double ininfantBase = 0, ininfantTax = 0;
+    int inadultCount = 0, inchildCount = 0;
+    int ininfantCount = 0;
+
+    for (var item in fareBreakdown) {
+      if (item.passengerType == 1) {
+        adultBase = item.baseFare.toDouble();
+        adultTax = item.tax.toDouble();
+        adultCount = item.passengerCount.toInt();
+      } else if (item.passengerType == 2) {
+        childBase = item.baseFare.toDouble();
+        childTax = item.tax.toDouble();
+        childCount = item.passengerCount.toInt();
+      } else if (item.passengerType == 3) {
+        infantBase = item.baseFare.toDouble();
+        infantTax = item.tax.toDouble();
+        infantCount = item.passengerCount.toInt();
+      }
+    }
+    // INBOUNDFARE
+    if (widget.inBoundData['inresultindex'] != null) {
+      final infareBreakdown = infareQuote.response.results.fareBreakdown;
+      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
+      inbaseFare = infareQuote.response.results.fare.baseFare;
+      print("inbaseFare$inbaseFare");
+      intax = infareQuote.response.results.fare.tax.toDouble();
+      for (var item in infareBreakdown) {
+        if (item.passengerType == 1) {
+          inadultBase = item.baseFare.toDouble();
+          inadultTax = item.tax.toDouble();
+          inadultCount = item.passengerCount.toInt();
+        } else if (item.passengerType == 2) {
+          inchildBase = item.baseFare.toDouble();
+          inchildTax = item.tax.toDouble();
+          inchildCount = item.passengerCount.toInt();
+        } else if (item.passengerType == 3) {
+          ininfantBase = item.baseFare.toDouble();
+          ininfantTax = item.tax.toDouble();
+          ininfantCount = item.passengerCount.toInt();
+        }
+      }
+    }
+    setState(() {
+      print("TRAVELERDERAILS");
+      isLoading = false;
+      totalBaseFare = baseFare + inbaseFare;
+      print("totalFare$totalFare");
+      totalTax = tax + intax;
+      print("totalTax$totalTax");
+      overallFare = totalBaseFare + totalTax;
+      totaladultCount = adultCount + inadultCount;
+      totalchildCount = childCount + inchildCount;
+      totalinfantCount = infantCount + ininfantCount;
+      adultFare = adultBase + inadultBase;
+      childFare = childBase + inchildBase;
+      infantFare = infantBase + ininfantBase;
+      print("overallFare$overallFare");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        backgroundColor: Color(0xFFF5F5F5),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFF37023),
+          ),
+        ),
+      );
+    }
     print("TRAVELERSDETAIL");
-    print(widget.stop);
-    print(widget.outBoundData['outresultindex']);
-    print(widget.outBoundData['basefare']);
-    print(widget.outBoundData['cityName']);
-    print(widget.outBoundData['cityCode']);
-    print(widget.outBoundData['descityName']);
-    print(widget.outBoundData['descityCode']);
-    print("ISLLC${widget.isLLC}");
+    print("segmentsJson${widget.segmentsJson}");
     final flight = widget.flight;
     final childCount = widget.childCount;
     final infantCount = widget.infantCount;
-    print("childCount$childCount");
-    print("infantCount$infantCount");
     if (widget.depTime != null) {
       final depDateformat = widget.depDate;
-      print("sfrgfrg$depDateformat");
       DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(depDateformat!);
       final finaldepDateformat = DateFormat("EEE,dd MMM yy").format(parsedDate);
       final arrDateformat = widget.arrDate;
@@ -167,303 +312,469 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.segments != null) ...[
-              Card(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r)),
-                elevation: 2,
-                child: Padding(
-                  padding: EdgeInsets.all(12.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            // adjust radius
-                            child: Image.asset(
-                              "assets/${widget.airlineCode ?? ""}.gif",
-                              fit: BoxFit.cover,
-                              height: 35,
-                              width: 35,
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Container(
-                            width: 100,
-                            child: Column(
+              if (widget.segments!.length >= 2)
+                Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r)),
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(12.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 8.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  widget.airlineName ?? "",
-                                  style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14.sp,
-                                      color: Colors.black),
+                                Row(
+                                  children: [
+                                    Text(
+                                      widget.segments!.first.first.origin
+                                          .airport.cityName,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    Text(
+                                      widget.segments!.first.first.origin
+                                          .airport.cityCode,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                RichText(
-                                  text: TextSpan(
-                                    text: widget.airlineCode ?? "",
-                                    // first text
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                    // base style
-                                    children: [
-                                      TextSpan(text: " "),
-                                      TextSpan(
-                                        text: widget.flightNumber ?? "",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                                color: Colors.grey.shade700),
-                                      ),
-                                      TextSpan(text: " "),
-                                      TextSpan(
-                                        text: " ${widget.refundable ?? ""}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineSmall
-                                            ?.copyWith(
-                                              fontSize: 12.sp,
-                                              color: primaryColor,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Image.asset(
+                                  "assets/icon/roundtripright.png",
+                                  width: 25,
+                                  height: 15,
+                                  color: Colors.deepOrange,
+                                ),
+                                Image.asset(
+                                  "assets/icon/roundtripline.png",
+                                  width: 70,
+                                  height: 15,
+                                  color: Colors.grey,
+                                ),
+                                Image.asset(
+                                  "assets/icon/roundtripleft.png",
+                                  width: 25,
+                                  height: 15,
+                                  color: Colors.deepOrange,
                                 )
                               ],
                             ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      widget.segments!.first.last.destination
+                                          .airport.cityName,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    Text(
+                                      widget.segments!.first.last.destination
+                                          .airport.cityCode,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5.h),
+                        SizedBox(height: 8.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DotDivider(
+                            dotSize: 1.h, // Adjust size
+                            spacing: 2.r, // Adjust spacing
+                            dotCount: 97, // Adjust number of dots
+                            color: Colors.grey, // Adjust color
                           ),
-                          const Spacer(),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        ),
+                        SizedBox(height: 8.h),
+                        GestureDetector(
+                          onTap: () {
+                            Get.to(
+                              () => Viewfulldetails(
+                                flight: {},
+                                city: widget.city,
+                                destination: widget.destination,
+                                airlineName: widget.airlineName,
+                                airlineCode: widget.airlineCode,
+                                flightNumber: widget.flightNumber,
+                                cityName: widget.cityName,
+                                cityCode: widget.cityCode,
+                                descityName: widget.descityName,
+                                descityCode: widget.descityCode,
+                                depDate: widget.depDate,
+                                depTime: widget.depTime,
+                                arrDate: widget.arrDate,
+                                arrTime: widget.arrTime,
+                                duration: widget.duration,
+                                refundable: widget.refundable,
+                                stop: widget.stop,
+                                airportName: widget.airportName,
+                                desairportName: widget.desairportName,
+                                segments: widget.segments,
+                                inboundFlight: widget.inboundFlight,
+                                outboundFlight: widget.outboundFlight,
+                              ),
+                            );
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Row(
+                              Text(
+                                'View full details',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Color(0xFFF37023),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Padding(
+                                  padding: EdgeInsets.only(top: 4.h),
+                                  child:
+                                      Image.asset("assets/images/Traingle.png"))
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r)),
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(12.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              // adjust radius
+                              child: Image.asset(
+                                "assets/${widget.airlineCode ?? ""}.gif",
+                                fit: BoxFit.cover,
+                                height: 35,
+                                width: 35,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Container(
+                              width: 100,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Economy Class",
+                                    widget.airlineName ?? "",
                                     style: TextStyle(
                                         fontFamily: 'Inter',
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 12.sp,
+                                        fontSize: 14.sp,
                                         color: Colors.black),
                                   ),
-                                  SizedBox(
-                                    width: 6.w,
-                                  ),
-                                  SizedBox(
-                                    height: 4.h,
-                                  ),
-                                  Image.asset("assets/images/star.png")
+                                  RichText(
+                                    text: TextSpan(
+                                      text: widget.airlineCode ?? "",
+                                      // first text
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                      // base style
+                                      children: [
+                                        TextSpan(text: " "),
+                                        TextSpan(
+                                          text: widget.flightNumber ?? "",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                  color: Colors.grey.shade700),
+                                        ),
+                                        TextSpan(text: " "),
+                                        TextSpan(
+                                          text: " ${widget.refundable ?? ""}",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineSmall
+                                              ?.copyWith(
+                                                fontSize: 12.sp,
+                                                color: primaryColor,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
                                 ],
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
-                      SizedBox(height: 8.h),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DotDivider(
-                          dotSize: 1.h, // Adjust size
-                          spacing: 2.r, // Adjust spacing
-                          dotCount: 97, // Adjust number of dots
-                          color: Colors.grey, // Adjust color
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    widget.depTime ?? "",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                ],
-                              ),
-                              //SizedBox(height: 4.h),
-                              Text(
-                                DateFormat("dd MMM yy").format(
-                                  DateTime.parse(widget.depDate.toString()),
-                                ),
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              Text(widget.stop ?? "",
-                                  style: TextStyle(fontSize: 12.sp)),
-                              Image.asset('assets/images/flightColor.png'),
-                              Text(
-                                widget.duration ?? "",
-                                style: TextStyle(
-                                    fontFamily: 'Inter', fontSize: 12.sp),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    widget.arrTime ?? "",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                ],
-                              ),
-                              Text(
-                                DateFormat("dd MMM yy").format(
-                                  DateTime.parse(widget.arrDate.toString()),
-                                ),
-                                style: TextStyle(fontSize: 12.sp),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 5.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    widget.cityName,
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    widget.cityCode,
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 4.h),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    widget.descityName ?? "",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    widget.descityCode ?? "",
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.h),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DotDivider(
-                          dotSize: 1.h, // Adjust size
-                          spacing: 2.r, // Adjust spacing
-                          dotCount: 97, // Adjust number of dots
-                          color: Colors.grey, // Adjust color
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      GestureDetector(
-                        onTap: () {
-                          Get.to(
-                            () => Viewfulldetails(
-                              flight: flight,
-                              city: widget.city,
-                              destination: widget.destination,
-                              airlineName: widget.airlineName,
-                              airlineCode: widget.airlineCode,
-                              flightNumber: widget.flightNumber,
-                              cityName: widget.cityName,
-                              cityCode: widget.cityCode,
-                              descityName: widget.descityName,
-                              descityCode: widget.descityCode,
-                              depDate: widget.depDate,
-                              depTime: widget.depTime,
-                              arrDate: widget.arrDate,
-                              arrTime: widget.arrTime,
-                              duration: widget.duration,
-                              refundable: widget.refundable,
-                              stop: widget.stop,
-                              airportName: widget.airportName,
-                              desairportName: widget.desairportName,
-                              segments: widget.segments,
-                            ),
-                          );
-                        }, // Action to execute on tap
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'View full details',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                color: Color(0xFFF37023),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.sp,
                               ),
                             ),
-                            // const SizedBox(width: 5),
-                            // Padding(
-                            // padding: EdgeInsets.only(top: 2.h),
-                            // child: Image.asset("assets/images/Traingle.png"))
+                            const Spacer(),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Economy Class",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12.sp,
+                                          color: Colors.black),
+                                    ),
+                                    SizedBox(
+                                      width: 6.w,
+                                    ),
+                                    SizedBox(
+                                      height: 4.h,
+                                    ),
+                                    Image.asset("assets/images/star.png")
+                                  ],
+                                ),
+                              ],
+                            )
                           ],
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 8.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DotDivider(
+                            dotSize: 1.h, // Adjust size
+                            spacing: 2.r, // Adjust spacing
+                            dotCount: 97, // Adjust number of dots
+                            color: Colors.grey, // Adjust color
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      widget.depTime ?? "",
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                  ],
+                                ),
+                                //SizedBox(height: 4.h),
+                                Text(
+                                  DateFormat("dd MMM yy").format(
+                                    DateTime.parse(widget.depDate.toString()),
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Text(widget.stop ?? "",
+                                    style: TextStyle(fontSize: 12.sp)),
+                                Image.asset('assets/images/flightColor.png'),
+                                Text(
+                                  widget.duration ?? "",
+                                  style: TextStyle(
+                                      fontFamily: 'Inter', fontSize: 12.sp),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      widget.arrTime ?? "",
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                  ],
+                                ),
+                                Text(
+                                  DateFormat("dd MMM yy").format(
+                                    DateTime.parse(widget.arrDate.toString()),
+                                  ),
+                                  style: TextStyle(fontSize: 12.sp),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      widget.cityName,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      widget.cityCode,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4.h),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      widget.descityName ?? "",
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      widget.descityCode ?? "",
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DotDivider(
+                            dotSize: 1.h, // Adjust size
+                            spacing: 2.r, // Adjust spacing
+                            dotCount: 97, // Adjust number of dots
+                            color: Colors.grey, // Adjust color
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        GestureDetector(
+                          onTap: () {
+                            Get.to(
+                              () => Viewfulldetails(
+                                flight: flight,
+                                city: widget.city,
+                                destination: widget.destination,
+                                airlineName: widget.airlineName,
+                                airlineCode: widget.airlineCode,
+                                flightNumber: widget.flightNumber,
+                                cityName: widget.cityName,
+                                cityCode: widget.cityCode,
+                                descityName: widget.descityName,
+                                descityCode: widget.descityCode,
+                                depDate: widget.depDate,
+                                depTime: widget.depTime,
+                                arrDate: widget.arrDate,
+                                arrTime: widget.arrTime,
+                                duration: widget.duration,
+                                refundable: widget.refundable,
+                                stop: widget.stop,
+                                airportName: widget.airportName,
+                                desairportName: widget.desairportName,
+                                segments: widget.segments,
+                              ),
+                            );
+                          }, // Action to execute on tap
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'View full details',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: Color(0xFFF37023),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                              // const SizedBox(width: 5),
+                              // Padding(
+                              // padding: EdgeInsets.only(top: 2.h),
+                              // child: Image.asset("assets/images/Traingle.png"))
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ] else ...[
               Card(
                 color: Colors.white,
@@ -673,7 +984,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                       child: Row(
                         children: [
                           Text(
-                            '${traveler['Firstname']} ${traveler['lastname']}',
+                            '${traveler['gender']} ${traveler['Firstname']} ${traveler['lastname']}',
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
@@ -715,6 +1026,10 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                   segments: widget.segments,
                                   initialData: traveler,
                                   travelerType: 'adult',
+                                  isPassportRequiredAtTicket:
+                                      isPassportRequiredAtTicket,
+                                  isPassportFullDetailRequiredAtBook:
+                                      isPassportFullDetailRequiredAtBook,
                                 ),
                               );
                               if (result != null) {
@@ -733,90 +1048,94 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 ],
               );
             }),
-            GestureDetector(
-              onTap: () async {
-                print("adultTravelers: $adultTravelers");
-                final maxAdults = widget.adultCount?.toInt() ?? 0;
-                print("Max Adults: $maxAdults");
+            if (adultTravelers.length < (widget.adultCount?.toInt() ?? 0))
+              GestureDetector(
+                onTap: () async {
+                  print("adultTravelers: $adultTravelers");
+                  final maxAdults = widget.adultCount?.toInt() ?? 0;
+                  print("Max Adults: $maxAdults");
 
-                // ✅ Check if we can still add new adults
-                if (adultTravelers.length < maxAdults) {
-                  // Go to add new traveler
-                  var result = await Get.to(
-                    () => AddTravelerPage(
-                      flight: flight,
-                      city: widget.city,
-                      destination: widget.destination,
-                      airlineName: widget.airlineName,
-                      airlineCode: widget.airlineCode,
-                      flightNumber: widget.flightNumber,
-                      cityName: widget.cityName,
-                      cityCode: widget.cityCode,
-                      descityName: widget.descityName,
-                      descityCode: widget.descityCode,
-                      depDate: widget.depDate,
-                      depTime: widget.depTime,
-                      arrDate: widget.arrDate,
-                      arrTime: widget.arrTime,
-                      duration: widget.duration,
-                      refundable: widget.refundable,
-                      stop: widget.stop,
-                      airportName: widget.airportName,
-                      desairportName: widget.desairportName,
-                      basefare: widget.basefare,
-                      segments: widget.segments,
-                      travelerType: 'adult',
-                    ),
-                  );
+                  // ✅ Check if we can still add new adults
+                  if (adultTravelers.length < maxAdults) {
+                    // Go to add new traveler
+                    var result = await Get.to(
+                      () => AddTravelerPage(
+                        flight: flight,
+                        city: widget.city,
+                        destination: widget.destination,
+                        airlineName: widget.airlineName,
+                        airlineCode: widget.airlineCode,
+                        flightNumber: widget.flightNumber,
+                        cityName: widget.cityName,
+                        cityCode: widget.cityCode,
+                        descityName: widget.descityName,
+                        descityCode: widget.descityCode,
+                        depDate: widget.depDate,
+                        depTime: widget.depTime,
+                        arrDate: widget.arrDate,
+                        arrTime: widget.arrTime,
+                        duration: widget.duration,
+                        refundable: widget.refundable,
+                        stop: widget.stop,
+                        airportName: widget.airportName,
+                        desairportName: widget.desairportName,
+                        basefare: widget.basefare,
+                        segments: widget.segments,
+                        travelerType: 'adult',
+                        isPassportRequiredAtTicket: isPassportRequiredAtTicket,
+                        isPassportFullDetailRequiredAtBook:
+                            isPassportFullDetailRequiredAtBook,
+                      ),
+                    );
 
-                  if (result != null) {
-                    setState(() {
-                      adultTravelers.add(result);
-                    });
-                  }
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 22, vertical: 5),
-                      title: Text(
-                        'Limit Exceeded',
-                        style:
-                            TextStyle(color: Colors.deepOrange, fontSize: 18),
-                      ),
-                      content: Text(
-                        'You can add only $maxAdults adult passenger(s).',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
+                    if (result != null) {
+                      setState(() {
+                        adultTravelers.add(result);
+                      });
+                    }
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 22, vertical: 5),
+                        title: Text(
+                          'Limit Exceeded',
+                          style:
+                              TextStyle(color: Colors.deepOrange, fontSize: 18),
                         ),
-                      ],
+                        content: Text(
+                          'You can add only $maxAdults adult passenger(s).',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                  width: MediaQuery.sizeOf(context).width,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFF37023)),
+                  ),
+                  child: Text(
+                    '+ ADD NEW ADULT',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFF37023),
                     ),
-                  );
-                }
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
-                width: MediaQuery.sizeOf(context).width,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFF37023)),
-                ),
-                child: Text(
-                  '+ ADD NEW ADULT',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFF37023),
                   ),
                 ),
               ),
-            ),
             SizedBox(height: 16.h),
             // CheckboxListTile(
             //   value: hasGST,
@@ -914,7 +1233,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         child: Row(
                           children: [
                             Text(
-                              '${traveler['Firstname']} ${traveler['lastname']}',
+                              '${traveler['gender']} ${traveler['Firstname']} ${traveler['lastname']}',
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.bold,
@@ -938,30 +1257,33 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                 // ✅ Check if we can still add new adults
                                 var result = await Get.to(
                                   () => AddTravelerPage(
-                                    flight: flight,
-                                    city: widget.city,
-                                    destination: widget.destination,
-                                    airlineName: widget.airlineName,
-                                    airlineCode: widget.airlineCode,
-                                    flightNumber: widget.flightNumber,
-                                    cityName: widget.cityName,
-                                    cityCode: widget.cityCode,
-                                    descityName: widget.descityName,
-                                    descityCode: widget.descityCode,
-                                    depDate: widget.depDate,
-                                    depTime: widget.depTime,
-                                    arrDate: widget.arrDate,
-                                    arrTime: widget.arrTime,
-                                    duration: widget.duration,
-                                    refundable: widget.refundable,
-                                    stop: widget.stop,
-                                    airportName: widget.airportName,
-                                    desairportName: widget.desairportName,
-                                    basefare: widget.basefare,
-                                    segments: widget.segments,
-                                    initialData: traveler,
-                                    travelerType: 'child',
-                                  ),
+                                      flight: flight,
+                                      city: widget.city,
+                                      destination: widget.destination,
+                                      airlineName: widget.airlineName,
+                                      airlineCode: widget.airlineCode,
+                                      flightNumber: widget.flightNumber,
+                                      cityName: widget.cityName,
+                                      cityCode: widget.cityCode,
+                                      descityName: widget.descityName,
+                                      descityCode: widget.descityCode,
+                                      depDate: widget.depDate,
+                                      depTime: widget.depTime,
+                                      arrDate: widget.arrDate,
+                                      arrTime: widget.arrTime,
+                                      duration: widget.duration,
+                                      refundable: widget.refundable,
+                                      stop: widget.stop,
+                                      airportName: widget.airportName,
+                                      desairportName: widget.desairportName,
+                                      basefare: widget.basefare,
+                                      segments: widget.segments,
+                                      initialData: traveler,
+                                      travelerType: 'child',
+                                      isPassportRequiredAtTicket:
+                                          isPassportRequiredAtTicket,
+                                      isPassportFullDetailRequiredAtBook:
+                                          isPassportFullDetailRequiredAtBook),
                                 );
                                 if (result != null) {
                                   setState(() {
@@ -979,82 +1301,88 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   ],
                 );
               }),
-              GestureDetector(
-                onTap: () async {
-                  final maxChild = widget.childCount?.toInt() ?? 0;
-                  print("Max Adults: $maxChild");
+              if (childTravelers.length < (widget.childCount?.toInt() ?? 0))
+                GestureDetector(
+                  onTap: () async {
+                    final maxChild = widget.childCount?.toInt() ?? 0;
+                    print("Max Adults: $maxChild");
 
-                  // ✅ Check if we can still add new adults
-                  if (childTravelers.length < maxChild) {
-                    var result = await Get.to(
-                      () => AddTravelerPage(
-                        flight: flight,
-                        city: widget.city,
-                        destination: widget.destination,
-                        airlineName: widget.airlineName,
-                        airlineCode: widget.airlineCode,
-                        flightNumber: widget.flightNumber,
-                        cityName: widget.cityName,
-                        cityCode: widget.cityCode,
-                        descityName: widget.descityName,
-                        descityCode: widget.descityCode,
-                        depDate: widget.depDate,
-                        depTime: widget.depTime,
-                        arrDate: widget.arrDate,
-                        arrTime: widget.arrTime,
-                        duration: widget.duration,
-                        refundable: widget.refundable,
-                        stop: widget.stop,
-                        airportName: widget.airportName,
-                        desairportName: widget.desairportName,
-                        basefare: widget.basefare,
-                        segments: widget.segments,
-                        travelerType: 'child',
-                      ),
-                    );
-                    if (result != null) {
-                      setState(() {
-                        childTravelers.add(result);
-                      });
-                    }
-                  } else {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text(
-                          'Limit Exceeded',
-                          style: TextStyle(color: Colors.deepOrange),
+                    // ✅ Check if we can still add new adults
+                    if (childTravelers.length < maxChild) {
+                      var result = await Get.to(
+                        () => AddTravelerPage(
+                          flight: flight,
+                          city: widget.city,
+                          destination: widget.destination,
+                          airlineName: widget.airlineName,
+                          airlineCode: widget.airlineCode,
+                          flightNumber: widget.flightNumber,
+                          cityName: widget.cityName,
+                          cityCode: widget.cityCode,
+                          descityName: widget.descityName,
+                          descityCode: widget.descityCode,
+                          depDate: widget.depDate,
+                          depTime: widget.depTime,
+                          arrDate: widget.arrDate,
+                          arrTime: widget.arrTime,
+                          duration: widget.duration,
+                          refundable: widget.refundable,
+                          stop: widget.stop,
+                          airportName: widget.airportName,
+                          desairportName: widget.desairportName,
+                          basefare: widget.basefare,
+                          segments: widget.segments,
+                          travelerType: 'child',
+                          isPassportRequiredAtTicket:
+                              isPassportRequiredAtTicket,
+                          isPassportFullDetailRequiredAtBook:
+                              isPassportFullDetailRequiredAtBook,
                         ),
-                        content: Text(
-                          'You can add only $maxChild child passenger(s).',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('OK'),
+                      );
+                      if (result != null) {
+                        setState(() {
+                          childTravelers.add(result);
+                        });
+                      }
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text(
+                            'Limit Exceeded',
+                            style: TextStyle(color: Colors.deepOrange),
                           ),
-                        ],
+                          content: Text(
+                            'You can add only $maxChild child passenger(s).',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                    width: MediaQuery.sizeOf(context).width,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Color(0xFFF37023))),
+                    child: Text(
+                      '+ ADD NEW CHILD',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFF37023),
                       ),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 100, vertical: 10),
-                  width: MediaQuery.sizeOf(context).width,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Color(0xFFF37023))),
-                  child: Text(
-                    '+ ADD NEW CHILD',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFF37023),
                     ),
                   ),
                 ),
-              ),
             ],
             SizedBox(height: 16.h),
 
@@ -1098,7 +1426,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         child: Row(
                           children: [
                             Text(
-                              '${traveler['Firstname']} ${traveler['lastname']}',
+                              '${traveler['gender']} ${traveler['Firstname']} ${traveler['lastname']}',
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.bold,
@@ -1118,61 +1446,41 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                 final maxInfant =
                                     widget.infantCount?.toInt() ?? 0;
                                 print("Max Adults: $maxInfant");
-                                if (infantTravelers.length < maxInfant) {
-                                  var result = await Get.to(
-                                    () => AddTravelerPage(
-                                      flight: flight,
-                                      city: widget.city,
-                                      destination: widget.destination,
-                                      airlineName: widget.airlineName,
-                                      airlineCode: widget.airlineCode,
-                                      flightNumber: widget.flightNumber,
-                                      cityName: widget.cityName,
-                                      cityCode: widget.cityCode,
-                                      descityName: widget.descityName,
-                                      descityCode: widget.descityCode,
-                                      depDate: widget.depDate,
-                                      depTime: widget.depTime,
-                                      arrDate: widget.arrDate,
-                                      arrTime: widget.arrTime,
-                                      duration: widget.duration,
-                                      refundable: widget.refundable,
-                                      stop: widget.stop,
-                                      airportName: widget.airportName,
-                                      desairportName: widget.desairportName,
-                                      basefare: widget.basefare,
-                                      segments: widget.segments,
-                                      initialData: traveler,
-                                      travelerType: 'infant',
-                                    ),
-                                  );
-                                  if (result != null) {
-                                    setState(() {
-                                      infantTravelers[index] = result;
-                                    });
-                                  }
-                                } else {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text(
-                                        'Limit Exceeded',
-                                        style:
-                                            TextStyle(color: Colors.deepOrange),
-                                      ),
-                                      content: Text(
-                                        'You can add only $maxInfant child passenger(s).',
-                                        style: TextStyle(color: Colors.black),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text('OK'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
+                                var result = await Get.to(
+                                  () => AddTravelerPage(
+                                    flight: flight,
+                                    city: widget.city,
+                                    destination: widget.destination,
+                                    airlineName: widget.airlineName,
+                                    airlineCode: widget.airlineCode,
+                                    flightNumber: widget.flightNumber,
+                                    cityName: widget.cityName,
+                                    cityCode: widget.cityCode,
+                                    descityName: widget.descityName,
+                                    descityCode: widget.descityCode,
+                                    depDate: widget.depDate,
+                                    depTime: widget.depTime,
+                                    arrDate: widget.arrDate,
+                                    arrTime: widget.arrTime,
+                                    duration: widget.duration,
+                                    refundable: widget.refundable,
+                                    stop: widget.stop,
+                                    airportName: widget.airportName,
+                                    desairportName: widget.desairportName,
+                                    basefare: widget.basefare,
+                                    segments: widget.segments,
+                                    initialData: traveler,
+                                    travelerType: 'infant',
+                                    isPassportRequiredAtTicket:
+                                        isPassportRequiredAtTicket,
+                                    isPassportFullDetailRequiredAtBook:
+                                        isPassportFullDetailRequiredAtBook,
+                                  ),
+                                );
+                                if (result != null) {
+                                  setState(() {
+                                    infantTravelers[index] = result;
+                                  });
                                 }
                               },
                               child: Icon(Icons.edit, color: Color(0xFFF37023)),
@@ -1185,58 +1493,84 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                   ],
                 );
               }),
-              GestureDetector(
-                onTap: () async {
-                  var result = await Get.to(
-                    () => AddTravelerPage(
-                      flight: flight,
-                      city: widget.city,
-                      destination: widget.destination,
-                      airlineName: widget.airlineName,
-                      airlineCode: widget.airlineCode,
-                      flightNumber: widget.flightNumber,
-                      cityName: widget.cityName,
-                      cityCode: widget.cityCode,
-                      descityName: widget.descityName,
-                      descityCode: widget.descityCode,
-                      depDate: widget.depDate,
-                      depTime: widget.depTime,
-                      arrDate: widget.arrDate,
-                      arrTime: widget.arrTime,
-                      duration: widget.duration,
-                      refundable: widget.refundable,
-                      stop: widget.stop,
-                      airportName: widget.airportName,
-                      desairportName: widget.desairportName,
-                      basefare: widget.basefare,
-                      segments: widget.segments,
-                      travelerType: 'infant',
+              if (infantTravelers.length < (widget.infantCount?.toInt() ?? 0))
+                GestureDetector(
+                  onTap: () async {
+                    final maxInfant = widget.infantCount?.toInt() ?? 0;
+                    print("Max Adults: $maxInfant");
+                    var result = await Get.to(
+                      () => AddTravelerPage(
+                        flight: flight,
+                        city: widget.city,
+                        destination: widget.destination,
+                        airlineName: widget.airlineName,
+                        airlineCode: widget.airlineCode,
+                        flightNumber: widget.flightNumber,
+                        cityName: widget.cityName,
+                        cityCode: widget.cityCode,
+                        descityName: widget.descityName,
+                        descityCode: widget.descityCode,
+                        depDate: widget.depDate,
+                        depTime: widget.depTime,
+                        arrDate: widget.arrDate,
+                        arrTime: widget.arrTime,
+                        duration: widget.duration,
+                        refundable: widget.refundable,
+                        stop: widget.stop,
+                        airportName: widget.airportName,
+                        desairportName: widget.desairportName,
+                        basefare: widget.basefare,
+                        segments: widget.segments,
+                        travelerType: 'infant',
+                        isPassportRequiredAtTicket: isPassportRequiredAtTicket,
+                        isPassportFullDetailRequiredAtBook:
+                            isPassportFullDetailRequiredAtBook,
+                      ),
+                    );
+                    if (result != null) {
+                      setState(() {
+                        infantTravelers.add(result);
+                      });
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text(
+                            'Limit Exceeded',
+                            style: TextStyle(color: Colors.deepOrange),
+                          ),
+                          content: Text(
+                            'You can add only $maxInfant infant passenger(s).',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                    width: MediaQuery.sizeOf(context).width,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Color(0xFFF37023)),
                     ),
-                  );
-                  if (result != null) {
-                    setState(() {
-                      infantTravelers.add(result);
-                    });
-                  }
-                },
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10),
-                  width: MediaQuery.sizeOf(context).width,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Color(0xFFF37023)),
-                  ),
-                  child: Text(
-                    '+ ADD NEW INFANT',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFF37023),
+                    child: Text(
+                      '+ ADD NEW INFANT',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFF37023),
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ],
         ),
@@ -1295,7 +1629,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹${widget.basefare ?? widget.total}",
+                          "₹$overallFare",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -1368,6 +1702,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                         inBoundData: widget.inBoundData,
                         outresultindex: widget.outresultindex,
                         inresultindex: widget.inresultindex,
+                        segmentsJson: widget.segmentsJson,
                       ),
                     );
                   },
@@ -1426,11 +1761,18 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       ),
       builder: (context) {
         return FareBreakupSheet(
-          basefare: widget.basefare,
-          tax: widget.tax,
-          adultCount: widget.adultCount,
-          childCount: widget.childCount,
-          infantCount: widget.infantCount,
+          basefare: totalBaseFare,
+          tax: totalTax,
+          adultCount: totaladultCount,
+          childCount: totalchildCount,
+          infantCount: totalinfantCount,
+          adultfare: adultFare,
+          childfare: childFare,
+          infantfare: infantFare,
+          total: overallFare,
+          adultTax: 0,
+          childTax: 0,
+          infantTax: 0,
         );
       },
     );
@@ -1589,6 +1931,8 @@ class AddTravelerPage extends StatefulWidget {
   final List<List<Segment>>? segments;
   final Map<String, dynamic>? initialData;
   final String? travelerType;
+  final bool isPassportRequiredAtTicket;
+  final bool isPassportFullDetailRequiredAtBook;
 
   AddTravelerPage({
     required this.flight,
@@ -1614,6 +1958,8 @@ class AddTravelerPage extends StatefulWidget {
     this.segments,
     this.initialData,
     this.travelerType,
+    required this.isPassportRequiredAtTicket,
+    required this.isPassportFullDetailRequiredAtBook,
   });
 
   @override
@@ -1683,32 +2029,28 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     DateTime lastDate;
     DateTime initialDate;
 
-    if (widget.travelerType == "adult") {
-      print("ADULTSSSSS");
-      // Adult: 12+ years
-      lastDate = DateTime(now.year - 12, now.month, now.day);
+    if (travelerType == "adult") {
+      print("ADULT");
       firstDate = DateTime(1900);
+      lastDate = DateTime(now.year - 12, 12, 31);
       initialDate = lastDate;
-    } else if (widget.travelerType == "child") {
-      print("CHILDSSSS");
-      // Child: between 2 and 12 years
-      lastDate = DateTime(now.year - 2, now.month, now.day);
-      firstDate = DateTime(now.year - 12, now.month, now.day);
+    } else if (travelerType == "child") {
+      print("CHILD");
+      firstDate = DateTime(now.year - 12, 1, 1);
+      lastDate = DateTime(now.year - 2, 12, 31);
       initialDate = DateTime(now.year - 6, now.month, now.day);
-    } else if (widget.travelerType == "infant") {
-      print("INFANTSSS");
-      // Infant: below 2 years
-      lastDate = now;
-      firstDate = DateTime(now.year - 2, now.month, now.day);
+    } else if (travelerType == "infant") {
+      print("INFANT");
+      firstDate = DateTime(now.year - 2, 1, 1);
+      lastDate = DateTime(now.year, 12, 31);
       initialDate = DateTime(now.year - 1, now.month, now.day);
     } else {
-      // Default (if not specified)
       firstDate = DateTime(1900);
       lastDate = now;
-      initialDate = lastDate;
+      initialDate = now;
     }
 
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: firstDate,
@@ -1717,8 +2059,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
 
     if (picked != null) {
       setState(() {
-        selectedDate = picked;
-        dateController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
+        dateController.text = DateFormat("dd-MM-yyyy").format(picked);
       });
     }
   }
@@ -1728,7 +2069,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      lastDate: DateTime(2225),
     );
     print("psicked date$picked");
     if (picked != null && picked != selectedDate) {
@@ -1798,42 +2139,65 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
               // important for date picker
               onTap: () => _selectDate(context, widget.travelerType ?? ""),
             ),
-            _buildTextField(
-              label: 'Passport No',
-              hintText: '',
-              controller: passportNoController,
-              // prefixText: '',
-              // keyboardType: TextInputType.phone,
-            ),
-            _buildTextField(
-              label: 'Expiry Date*',
-              hintText: 'Text here',
-              controller: expiryController,
-              readOnly: true,
-              onTap: () => _expiryDate(
-                  context), // This was missing! Now it triggers the picker.
-            ),
-            _buildDropdownField(
-              'Nationality *',
-              selectedNationality,
-              nationality, // your list of countries
-              (value) {
-                setState(() {
-                  selectedNationality = value!;
-                  print("selectedNationality$selectedNationality");
-                });
-              },
-            ),
-            _buildDropdownField(
-              'Issusing Country *',
-              selectedCountry,
-              IssusingCountry, // your list of countries
-              (value) {
-                setState(() {
-                  selectedCountry = value!;
-                });
-              },
-            ),
+            if (widget.isPassportRequiredAtTicket == true) ...[
+              // FIRST CONDITION
+              _buildTextField(
+                label: 'Passport No',
+                hintText: '',
+                controller: passportNoController,
+              ),
+              _buildTextField(
+                label: 'Expiry Date*',
+                hintText: 'Text here',
+                controller: expiryController,
+                readOnly: true,
+                onTap: () => _expiryDate(context),
+              ),
+            ] else if (widget.isPassportFullDetailRequiredAtBook == true) ...[
+              // SECOND CONDITION
+              _buildTextField(
+                label: 'Passport No',
+                hintText: '',
+                controller: passportNoController,
+              ),
+              _buildTextField(
+                label: 'Expiry Date*',
+                hintText: '',
+                controller: expiryController,
+                readOnly: true,
+                onTap: () => _expiryDate(context),
+              ),
+              _buildTextField(
+                label: 'Issue Date*',
+                hintText: '',
+                controller: expiryController,
+                readOnly: true,
+                onTap: () => _expiryDate(context),
+              ),
+              _buildDropdownField(
+                'Issusing Country *',
+                selectedCountry,
+                IssusingCountry,
+                (value) {
+                  setState(() {
+                    selectedCountry = value!;
+                  });
+                },
+              ),
+            ] else ...[
+              // ELSE CONDITION (Domestic or Not Required)
+              SizedBox.shrink(),
+            ],
+            // _buildDropdownField(
+            //   'Nationality *',
+            //   selectedNationality,
+            //   nationality,
+            //   (value) {
+            //     setState(() {
+            //       selectedNationality = value!;
+            //     });
+            //   },
+            // ),
             Text(
               "Contact details",
               style: TextStyle(

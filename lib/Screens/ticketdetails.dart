@@ -47,6 +47,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
       isLoading = true;
     });
     bookingdetailsid = await ApiService().getbookingdetailHistory(widget.id);
+    print("bookingdetailsid$bookingdetailsid");
+
     // final adultCount =
     //     int.parse(bookingdetailsid.data.first.totalpassengers.toString());
     final fare = double.parse(bookingdetailsid
@@ -78,7 +80,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
         } else if (passenger.PaxType == 3) {
           infantCount++;
           infantFare += baseFare;
-          print("ADULTCOUNT$infantFare");
+          print("ADULTCOUNT$infantCount");
         }
       }
     }
@@ -201,6 +203,12 @@ class _TicketdetailsState extends State<Ticketdetails> {
     );
   }
 
+  String _formatDuration(int minutes) {
+    int hours = minutes ~/ 60;
+    int mins = minutes % 60;
+    return '${hours}h ${mins}m';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,7 +226,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                   Container(
                     margin: EdgeInsets.all(10),
                     padding: EdgeInsets.all(10),
-                    height: 143,
+                    height: 150,
                     width: MediaQuery.sizeOf(context).width,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
@@ -308,7 +316,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                           ],
                         ),
                         SizedBox(
-                          height: 15,
+                          height: 8,
                         ),
                       ],
                     ),
@@ -318,572 +326,333 @@ class _TicketdetailsState extends State<Ticketdetails> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Card(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r)),
-                          elevation: 2,
-                          child: Padding(
-                            padding: EdgeInsets.all(12.w),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                        'assets/${bookingdetailsid.data.first.journeyList.first.OperatorCode}.gif'),
-                                    SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          bookingdetailsid.data.first
-                                              .journeyList.first.OperatorName,
+                        // Dynamic flight segments with separate layover between cards
+                        ...() {
+                          List<Widget> flightSections = [];
+                          final journeys =
+                              bookingdetailsid.data.first.journeyList;
+                          for (int segmentIndex = 0;
+                              segmentIndex < journeys.length;
+                              segmentIndex++) {
+                            final journey = journeys[segmentIndex];
+                            final isLastSegment =
+                                segmentIndex == journeys.length - 1;
+
+                            // Build the flight card children (your exact existing logic, without internal layover)
+                            List<Widget> segmentChildren = [
+                              Row(
+                                children: [
+                                  Image.asset(
+                                      'assets/${journey.OperatorCode}.gif'),
+                                  SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        width: 100,
+                                        child: Text(
+                                          journey.OperatorName,
                                           style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14.sp,
                                               color: Colors.black),
                                         ),
-                                        RichText(
-                                          text: TextSpan(
-                                            text: bookingdetailsid.data.first
-                                                .journeyList.first.OperatorCode,
-                                            // first text
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
-                                            // base style
-                                            children: [
-                                              TextSpan(text: " "),
-                                              TextSpan(
-                                                text: bookingdetailsid
-                                                    .data
-                                                    .first
-                                                    .journeyList
-                                                    .first
-                                                    .FlightNumber,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.copyWith(
-                                                        color: Colors
-                                                            .grey.shade700),
-                                              ),
-                                              TextSpan(text: " "),
-                                              TextSpan(
-                                                text: " ${""}",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headlineSmall
-                                                    ?.copyWith(
-                                                      fontSize: 12.sp,
-                                                      color: primaryColor,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                    SizedBox(width: 43.w),
-                                    Image.asset(
-                                      "assets/images/Line.png",
-                                    ),
-                                    const Spacer(),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Row(
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
+                                          text: journey.OperatorCode,
+                                          // first text
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                          // base style
                                           children: [
-                                            Text(
-                                              "Economy Class",
-                                              style: TextStyle(
-                                                  fontFamily: 'Inter',
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12.sp,
-                                                  color: Colors.black),
+                                            TextSpan(text: " "),
+                                            TextSpan(
+                                              text: journey.FlightNumber,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                      color:
+                                                          Colors.grey.shade700),
                                             ),
-                                            SizedBox(
-                                              width: 6.w,
+                                            TextSpan(text: " "),
+                                            TextSpan(
+                                              text: " ${""}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headlineSmall
+                                                  ?.copyWith(
+                                                    fontSize: 12.sp,
+                                                    color: primaryColor,
+                                                  ),
                                             ),
-                                            SizedBox(
-                                              height: 4.h,
-                                            ),
-                                            Image.asset(
-                                                "assets/images/star.png")
                                           ],
                                         ),
-                                      ],
-                                    )
-                                  ],
+                                      )
+                                    ],
+                                  ),
+                                  SizedBox(width: 43.w),
+                                  Image.asset(
+                                    "assets/images/Line.png",
+                                  ),
+                                  const Spacer(),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Economy Class",
+                                            style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12.sp,
+                                                color: Colors.black),
+                                          ),
+                                          SizedBox(
+                                            width: 6.w,
+                                          ),
+                                          SizedBox(
+                                            height: 4.h,
+                                          ),
+                                          Image.asset("assets/images/star.png")
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                              SizedBox(height: 8.h),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: DotDivider(
+                                  dotSize: 1.h, // Adjust size
+                                  spacing: 2.r, // Adjust spacing
+                                  dotCount: 97, // Adjust number of dots
+                                  color: Colors.grey, // Adjust color
                                 ),
-                                SizedBox(height: 8.h),
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: DotDivider(
-                                    dotSize: 1.h, // Adjust size
-                                    spacing: 2.r, // Adjust spacing
-                                    dotCount: 97, // Adjust number of dots
-                                    color: Colors.grey, // Adjust color
+                              ),
+                              SizedBox(height: 8.h),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            journey.DepatureTime,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.w),
+                                        ],
+                                      ),
+                                      //SizedBox(height: 4.h),
+                                      Text(
+                                        journey.Depature,
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                          _formatDuration(
+                                              int.parse(journey.duration)),
+                                          style: TextStyle(fontSize: 12.sp)),
+                                      Image.asset(
+                                          'assets/images/flightColor.png'),
+                                      // Text(
+                                      //   "1 hr 14m",
+                                      //   style: TextStyle(
+                                      //       fontFamily: 'Inter', fontSize: 12.sp),
+                                      // ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            journey.ArrivalTime ?? 'N/A',
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.w),
+                                        ],
+                                      ),
+                                      Text(
+                                        journey.Arrival ?? 'N/A',
+                                        style: TextStyle(fontSize: 12.sp),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 5.h),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            journey.FromCityName,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            journey.FromAirportCode,
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      //SizedBox(height: 4.h),
+                                      // Text(
+                                      //   flight["departure"],
+                                      //   style: TextStyle(
+                                      //     fontSize: 12.sp,
+                                      //     color: Colors.grey,
+                                      //   ),
+                                      // ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            journey.ToCityName,
+                                            style: TextStyle(
+                                              fontSize: 14.sp,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4.w),
+                                          Text(
+                                            journey.ToAirportCode,
+                                            style: TextStyle(
+                                              fontSize: 12.sp,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      // Text(
+                                      //   flight["arrival"],
+                                      //   style: TextStyle(fontSize: 12.sp),
+                                      // ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ];
+
+                            // Add the flight card to the list
+                            flightSections.add(
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 10.h),
+                                child: Card(
+                                  color: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r)),
+                                  elevation: 2,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(12.w),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: segmentChildren,
+                                    ),
                                   ),
                                 ),
-                                SizedBox(height: 8.h),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                              ),
+                            );
+
+                            // If not the last segment, add a SEPARATE layover widget after this card
+                            if (!isLastSegment) {
+                              final thisJourney = journeys[segmentIndex];
+                              final nextJourney = journeys[segmentIndex + 1];
+                              flightSections.add(
+                                Container(
+                                  margin: EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 5.h),
+                                  // Slight margin for visual separation
+                                  height: 40.h,
+                                  width: double.infinity,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w, vertical: 8.h),
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFFE7E5),
+                                    border:
+                                        Border.all(color: Color(0xFFFFD7D7)),
+                                    borderRadius: BorderRadius.circular(
+                                        8.r), // Rounded corners
+                                  ),
+                                  child: Center(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              bookingdetailsid
-                                                  .data
-                                                  .first
-                                                  .journeyList
-                                                  .first
-                                                  .DepatureTime,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4.w),
-                                          ],
+                                        Icon(
+                                          Icons.sync_alt,
+                                          color: Color(0xFFFF4D4F),
+                                          size: 16.sp,
                                         ),
-                                        //SizedBox(height: 4.h),
+                                        SizedBox(width: 8.w),
                                         Text(
-                                          bookingdetailsid.data.first
-                                              .journeyList.first.Depature,
+                                          nextJourney.LayOverTime ??
+                                              'Layover at ${thisJourney.ToCityName}',
                                           style: TextStyle(
-                                            fontSize: 12.sp,
-                                            color: Colors.grey,
+                                            color: Color(0xFFFF4D4F),
+                                            fontSize: 14, // Font size
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                            bookingdetailsid.data.first
-                                                .journeyList.first.duration,
-                                            style: TextStyle(fontSize: 12.sp)),
-                                        Image.asset(
-                                            'assets/images/flightColor.png'),
-                                        // Text(
-                                        //   "1 hr 14m",
-                                        //   style: TextStyle(
-                                        //       fontFamily: 'Inter', fontSize: 12.sp),
-                                        // ),
-                                      ],
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              bookingdetailsid
-                                                  .data
-                                                  .first
-                                                  .journeyList
-                                                  .first
-                                                  .ArrivalTime,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4.w),
-                                          ],
-                                        ),
-                                        Text(
-                                          bookingdetailsid.data.first
-                                              .journeyList.first.Arrival,
-                                          style: TextStyle(fontSize: 12.sp),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                                SizedBox(height: 5.h),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              bookingdetailsid
-                                                  .data
-                                                  .first
-                                                  .journeyList
-                                                  .first
-                                                  .FromCityName,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Text(
-                                              bookingdetailsid
-                                                  .data
-                                                  .first
-                                                  .journeyList
-                                                  .first
-                                                  .FromAirportCode,
-                                              style: TextStyle(
-                                                fontSize: 12.sp,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        //SizedBox(height: 4.h),
-                                        // Text(
-                                        //   flight["departure"],
-                                        //   style: TextStyle(
-                                        //     fontSize: 12.sp,
-                                        //     color: Colors.grey,
-                                        //   ),
-                                        // ),
-                                      ],
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              bookingdetailsid.data.first
-                                                  .journeyList.first.ToCityName,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4.w),
-                                            Text(
-                                              bookingdetailsid
-                                                  .data
-                                                  .first
-                                                  .journeyList
-                                                  .first
-                                                  .ToAirportCode,
-                                              style: TextStyle(
-                                                fontSize: 12.sp,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        // Text(
-                                        //   flight["arrival"],
-                                        //   style: TextStyle(fontSize: 12.sp),
-                                        // ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                              );
+                            }
+                          }
+                          return flightSections;
+                        }(),
                         SizedBox(height: 10.h),
-                        // Container(
-                        //   height: 40.h,
-                        //   width: double.infinity,
-                        //   padding: EdgeInsets.symmetric(
-                        //       horizontal: 10.w, vertical: 8.h),
-                        //   decoration: BoxDecoration(
-                        //     color: Color(0xFFFFE7E5),
-                        //     border: Border.all(color: Color(0xFFFFD7D7)),
-                        //     borderRadius:
-                        //         BorderRadius.circular(8.r), // Rounded corners
-                        //   ),
-                        //   child: Center(
-                        //     child: Row(
-                        //       mainAxisSize: MainAxisSize.min,
-                        //       children: [
-                        //         Icon(
-                        //           Icons.sync_alt,
-                        //           color: Color(0xFFFF4D4F),
-                        //           size: 16.sp,
-                        //         ),
-                        //         SizedBox(width: 8.w),
-                        //         Text(
-                        //           // "10H 35m Layover at ${city}",
-                        //           "10H 35m Layover at city",
-                        //           style: TextStyle(
-                        //             color: Color(0xFFFF4D4F),
-                        //             fontSize: 14, // Font size
-                        //             fontWeight: FontWeight.w500,
-                        //           ),
-                        //         ),
-                        //       ],
-                        //     ),
-                        //   ),
-                        // ),
-                        // SizedBox(height: 10.h),
-                        // Card(
-                        //   color: Colors.white,
-                        //   shape: RoundedRectangleBorder(
-                        //       borderRadius: BorderRadius.circular(8.r)),
-                        //   elevation: 2,
-                        //   child: Padding(
-                        //     padding: EdgeInsets.all(12.w),
-                        //     child: Column(
-                        //       crossAxisAlignment: CrossAxisAlignment.start,
-                        //       children: [
-                        //         Row(
-                        //           children: [
-                        //             // Image.asset(flight['logo'], height: 40, width: 40),
-                        //             SizedBox(width: 12),
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.start,
-                        //               children: [
-                        //                 // Text(
-                        //                 //   flight['airline'],
-                        //                 //   style: TextStyle(
-                        //                 //       fontFamily: 'Inter',
-                        //                 //       fontWeight: FontWeight.bold,
-                        //                 //       fontSize: 14.sp,
-                        //                 //       color: Colors.black),
-                        //                 // ),
-                        //                 RichText(
-                        //                     text: TextSpan(
-                        //                         text: 'XL2724',
-                        //                         style: Theme.of(context)
-                        //                             .textTheme
-                        //                             .bodySmall
-                        //                             ?.copyWith(
-                        //                                 color: Colors
-                        //                                     .grey.shade700),
-                        //                         children: [
-                        //                       TextSpan(
-                        //                           text: " NR",
-                        //                           style: Theme.of(context)
-                        //                               .textTheme
-                        //                               .headlineSmall
-                        //                               ?.copyWith(
-                        //                                   fontSize: 12.sp,
-                        //                                   color: primaryColor))
-                        //                     ]))
-                        //               ],
-                        //             ),
-                        //             SizedBox(width: 43.w),
-                        //             Image.asset(
-                        //               "assets/images/Line.png",
-                        //             ),
-                        //             const Spacer(),
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.end,
-                        //               children: [
-                        //                 Row(
-                        //                   children: [
-                        //                     Text(
-                        //                       "Economy Class",
-                        //                       style: TextStyle(
-                        //                           fontFamily: 'Inter',
-                        //                           fontWeight: FontWeight.bold,
-                        //                           fontSize: 12.sp,
-                        //                           color: Colors.black),
-                        //                     ),
-                        //                     SizedBox(
-                        //                       width: 6.w,
-                        //                     ),
-                        //                     SizedBox(
-                        //                       height: 4.h,
-                        //                     ),
-                        //                     Image.asset(
-                        //                         "assets/images/star.png")
-                        //                   ],
-                        //                 ),
-                        //               ],
-                        //             )
-                        //           ],
-                        //         ),
-                        //         SizedBox(height: 8.h),
-                        //         SingleChildScrollView(
-                        //           scrollDirection: Axis.horizontal,
-                        //           child: DotDivider(
-                        //             dotSize: 1.h, // Adjust size
-                        //             spacing: 2.r, // Adjust spacing
-                        //             dotCount: 97, // Adjust number of dots
-                        //             color: Colors.grey, // Adjust color
-                        //           ),
-                        //         ),
-                        //         SizedBox(height: 8.h),
-                        //         Row(
-                        //           mainAxisAlignment:
-                        //               MainAxisAlignment.spaceBetween,
-                        //           children: [
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.start,
-                        //               children: [
-                        //                 Row(
-                        //                   children: [
-                        //                     Text(
-                        //                       "05:30",
-                        //                       style: TextStyle(
-                        //                         fontSize: 14.sp,
-                        //                         fontWeight: FontWeight.bold,
-                        //                         color: Colors.black,
-                        //                       ),
-                        //                     ),
-                        //                     SizedBox(width: 4.w),
-                        //                   ],
-                        //                 ),
-                        //                 //SizedBox(height: 4.h),
-                        //                 Text(
-                        //                   "Sat,30 Nov 24",
-                        //                   style: TextStyle(
-                        //                     fontSize: 12.sp,
-                        //                     color: Colors.grey,
-                        //                   ),
-                        //                 ),
-                        //               ],
-                        //             ),
-                        //             Column(
-                        //               children: [
-                        //                 Text("1 hr 14m",
-                        //                     style: TextStyle(fontSize: 12.sp)),
-                        //                 Image.asset(
-                        //                     'assets/images/flightColor.png'),
-                        //                 // Text(
-                        //                 //   "1 hr 14m",
-                        //                 //   style: TextStyle(
-                        //                 //       fontFamily: 'Inter', fontSize: 12.sp),
-                        //                 // ),
-                        //               ],
-                        //             ),
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.end,
-                        //               children: [
-                        //                 Row(
-                        //                   mainAxisAlignment:
-                        //                       MainAxisAlignment.end,
-                        //                   children: [
-                        //                     Text(
-                        //                       "05:30",
-                        //                       style: TextStyle(
-                        //                         fontSize: 14.sp,
-                        //                         fontWeight: FontWeight.bold,
-                        //                         color: Colors.black,
-                        //                       ),
-                        //                     ),
-                        //                     SizedBox(width: 4.w),
-                        //                   ],
-                        //                 ),
-                        //                 Text(
-                        //                   "Sat,30 Nov 24",
-                        //                   style: TextStyle(fontSize: 12.sp),
-                        //                 ),
-                        //               ],
-                        //             ),
-                        //           ],
-                        //         ),
-                        //         SizedBox(height: 5.h),
-                        //         Row(
-                        //           mainAxisAlignment:
-                        //               MainAxisAlignment.spaceBetween,
-                        //           children: [
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.start,
-                        //               children: [
-                        //                 Row(
-                        //                   children: [
-                        //                     Text(
-                        //                       "city",
-                        //                       style: TextStyle(
-                        //                         fontSize: 14.sp,
-                        //                         fontWeight: FontWeight.bold,
-                        //                         color: Colors.black,
-                        //                       ),
-                        //                     ),
-                        //                     SizedBox(width: 4.w),
-                        //                     Text(
-                        //                       "DEL",
-                        //                       style: TextStyle(
-                        //                         fontSize: 12.sp,
-                        //                         color: Colors.grey,
-                        //                       ),
-                        //                     ),
-                        //                   ],
-                        //                 ),
-                        //                 //SizedBox(height: 4.h),
-                        //                 // Text(
-                        //                 //   flight["departure"],
-                        //                 //   style: TextStyle(
-                        //                 //     fontSize: 12.sp,
-                        //                 //     color: Colors.grey,
-                        //                 //   ),
-                        //                 // ),
-                        //               ],
-                        //             ),
-                        //             Column(
-                        //               crossAxisAlignment:
-                        //                   CrossAxisAlignment.end,
-                        //               children: [
-                        //                 Row(
-                        //                   mainAxisAlignment:
-                        //                       MainAxisAlignment.end,
-                        //                   children: [
-                        //                     Text(
-                        //                       "destination",
-                        //                       style: TextStyle(
-                        //                         fontSize: 14.sp,
-                        //                         fontWeight: FontWeight.bold,
-                        //                         color: Colors.black,
-                        //                       ),
-                        //                     ),
-                        //                     SizedBox(width: 4.w),
-                        //                     Text(
-                        //                       "BLR",
-                        //                       style: TextStyle(
-                        //                         fontSize: 12.sp,
-                        //                         color: Colors.grey,
-                        //                       ),
-                        //                     ),
-                        //                   ],
-                        //                 ),
-                        //                 // Text(
-                        //                 //   flight["arrival"],
-                        //                 //   style: TextStyle(fontSize: 12.sp),
-                        //                 // ),
-                        //               ],
-                        //             ),
-                        //           ],
-                        //         ),
-                        //       ],
-                        //     ),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
@@ -970,14 +739,17 @@ class _TicketdetailsState extends State<Ticketdetails> {
                             ),
                             SizedBox(height: 8.h),
 
-                            // Baggage List
+                            // Baggage List - Dynamic for segments
                             ListView.separated(
                               shrinkWrap: true,
                               physics: NeverScrollableScrollPhysics(),
-                              itemCount: 2,
+                              itemCount: bookingdetailsid
+                                  .data.first.journeyList.length,
                               // Adjust based on your data
                               separatorBuilder: (context, index) => Divider(),
                               itemBuilder: (context, index) {
+                                final journey = bookingdetailsid
+                                    .data.first.journeyList[index];
                                 return Row(
                                   //mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
@@ -988,8 +760,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                         //mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            bookingdetailsid.data.first
-                                                .journeyList.first.CabinBaggage,
+                                            journey.CabinBaggage ?? 'N/A',
                                             style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 12.sp,
@@ -1000,8 +771,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                           //Spacer(),
                                           SizedBox(width: 50.w),
                                           Text(
-                                            bookingdetailsid.data.first
-                                                .journeyList.first.Baggage,
+                                            journey.Baggage ?? 'N/A',
                                             style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 12.sp,
@@ -1011,7 +781,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                           ),
                                           SizedBox(width: 60.h),
                                           Text(
-                                            '${bookingdetailsid.data.first.journeyList.first.FromAirportCode} - ${bookingdetailsid.data.first.journeyList.first.ToAirportCode}',
+                                            '${journey.FromAirportCode} - ${journey.ToAirportCode}',
                                             style: TextStyle(
                                                 fontSize: 12.sp,
                                                 fontFamily: 'Inter',

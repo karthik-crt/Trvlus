@@ -7,12 +7,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:trvlus/Screens/Home_Page.dart';
 
+import '../models/commissionpercentage.dart';
 import '../models/search_data.dart';
 import '../utils/api_service.dart';
 import '../utils/constant.dart';
 import 'DotDivider.dart';
 import 'FlightDetailsPage.dart';
-import 'Search_Result_Page.dart';
 
 // Global variables (consider moving to state management if the app grows)
 String departureTime = "";
@@ -25,6 +25,7 @@ String infare = "";
 double total = 0.0;
 String finalrounddepDateformat = "";
 String finalroundarrDateformat = "";
+late ComissionPercentage commission;
 
 class Localroundtrip extends StatefulWidget {
   String airportCode;
@@ -71,6 +72,16 @@ class _LocalroundtripState extends State<Localroundtrip> {
   int childCount = children;
 
   int infantCount = infants; // Track selected inbound flight
+  getCommissionData() async {
+    setState(() {
+      isLoading = true;
+    });
+    commission = await ApiService().commissionPercentage();
+    print("COMMISION$commission");
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   getSearchData(String airportCode,
       String fromAirport,
@@ -153,6 +164,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
         });
       }
     });
+    getCommissionData();
     getSearchData(
         widget.airportCode,
         widget.fromAirport,
@@ -567,9 +579,10 @@ class _LocalroundtripState extends State<Localroundtrip> {
                         ),
                         SizedBox(width: 10),
                         Text(
-                          "${finalrounddepDateformat
-                              .toString()} - ${finalroundarrDateformat
-                              .toString()}",
+                          // "${finalrounddepDateformat
+                          //     .toString()} - ${finalroundarrDateformat
+                          //     .toString()}",
+                          "",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -801,50 +814,51 @@ class _LocalroundtripState extends State<Localroundtrip> {
                     ),
                   ),
                 ),
-                Container(
-                  height: 25.h,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16)),
-                        ),
-                        builder: (context) {
-                          return Container(
-                            height: 620.h,
-                            child: FilterBottomSheet(),
-                          );
-                        },
-                      );
-                    },
-                    icon: Image.asset(
-                      'assets/images/Filter.png',
-                      alignment: Alignment.center,
-                      height: 12.h,
-                      width: 12.w,
-                    ),
-                    label: Text(
-                      "Filter",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 10.sp,
-                        color: Color(0xFF606060),
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100,
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                          vertical: 3.h, horizontal: 20.w),
-                    ),
-                  ),
-                ),
+                // FILTER
+                // Container(
+                //   height: 25.h,
+                //   child: ElevatedButton.icon(
+                //     onPressed: () {
+                //       showModalBottomSheet(
+                //         context: context,
+                //         isScrollControlled: true,
+                //         shape: RoundedRectangleBorder(
+                //           borderRadius: BorderRadius.vertical(
+                //               top: Radius.circular(16)),
+                //         ),
+                //         builder: (context) {
+                //           return Container(
+                //             height: 620.h,
+                //             child: FilterBottomSheet(),
+                //           );
+                //         },
+                //       );
+                //     },
+                //     icon: Image.asset(
+                //       'assets/images/Filter.png',
+                //       alignment: Alignment.center,
+                //       height: 12.h,
+                //       width: 12.w,
+                //     ),
+                //     label: Text(
+                //       "Filter",
+                //       style: TextStyle(
+                //         fontFamily: 'Inter',
+                //         fontSize: 10.sp,
+                //         color: Color(0xFF606060),
+                //       ),
+                //     ),
+                //     style: ElevatedButton.styleFrom(
+                //       backgroundColor: Colors.grey.shade100,
+                //       elevation: 3,
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(30.r),
+                //       ),
+                //       padding: EdgeInsets.symmetric(
+                //           vertical: 3.h, horizontal: 20.w),
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -981,6 +995,95 @@ class _FlightCardState extends State<FlightCard> {
 
   @override
   Widget build(BuildContext context) {
+    // LAYOVER CALCULATION
+    int totalFlightMinutes = 0;
+    for (var segmentGroup in widget.flight.segments.first) {
+      totalFlightMinutes +=
+          segmentGroup.duration; // Assuming 'duration' is flight time only
+    }
+    int totalHours = totalFlightMinutes ~/ 60;
+    int totalMinutesRem = totalFlightMinutes % 60;
+    String formattedTotalDuration = "${totalHours}h ${totalMinutesRem}m";
+
+    String layoverText = "";
+    int numStops = widget.flight.segments.first.length - 1;
+    if (numStops > 0) {
+      int layoverMinutes = widget.flight.segments.first[1].groundTime;
+      int layoverHours = layoverMinutes ~/ 60;
+      int layoverMins = layoverMinutes % 60;
+
+      String layoverCity =
+          widget.flight.segments.first[1].origin.airport.cityName;
+
+      layoverText = "${layoverHours}h ${layoverMins}m layover at $layoverCity";
+      print("layoverText$layoverText");
+    } else {
+      layoverText = "";
+    }
+
+    // TOTAL DURATION CALCULATION
+    var segments = widget.flight.segments.first;
+    String displayTotalDuration =
+        formattedTotalDuration; // Default to flight-only
+
+    if (numStops > 0) {
+      DateTime firstDepTime = segments.first.origin.depTime;
+      DateTime lastArrTime = segments.last.destination.arrTime;
+      int totalTripMinutes = lastArrTime
+          .difference(firstDepTime)
+          .inMinutes;
+      int totalTripHours = totalTripMinutes ~/ 60;
+      int totalTripMins = totalTripMinutes % 60;
+      displayTotalDuration =
+      "${totalTripHours}h ${totalTripMins}m"; // e.g., "9h 0m"
+      print("displayTotalDuration$displayTotalDuration");
+      print("displayTotalDuration (Total Trip)$displayTotalDuration");
+    } else {
+      print("displayTotalDuration (Non-Stop)$displayTotalDuration");
+    }
+
+    // FARE CALCULATION
+    String publishFare = widget.flight.fare.publishedFare.toString();
+    print("publishFare$publishFare");
+    String offeredFare = widget.flight.fare.offeredFare.toString();
+    print("offeredFare$offeredFare");
+    final commissionEarned = widget.flight.fare.commissionEarned.toDouble();
+    print("TBOcommision$commissionEarned");
+    double tboTDS = widget.flight.fare.tdsOnCommission.toDouble();
+    print("tboTDS$tboTDS");
+    double publishFareVal = double.tryParse(publishFare) ?? 0;
+    double offeredFareVal = double.tryParse(offeredFare) ?? 0;
+    // COMMISIONPERCENTAGE
+
+    double commissionpercentage =
+    commission.data.first.commissionforgds.toDouble();
+    print("commissionpercentage$commissionpercentage");
+    // COMMISSION
+    double commissionraw = publishFareVal - offeredFareVal;
+    double owncommision =
+    double.parse((commissionEarned * 0.02).toStringAsFixed(2));
+    // print("owncommision$owncommision");
+
+    // calculation
+    double tbooverallCommision = commissionEarned - tboTDS;
+    print("tbooverallCommision$tbooverallCommision");
+    double toubikcommisionearned = tbooverallCommision - commissionpercentage;
+    print("toubikcommisionearned$toubikcommisionearned");
+    double toubiktdsoncommision =
+    double.parse((toubikcommisionearned * 0.02).toStringAsFixed(2));
+    print("toubiktdsoncommision$toubiktdsoncommision");
+    double tdsplb = widget.flight.fare.tdsOnPlb.toDouble();
+    print("tdsplb$tdsplb");
+
+    // NETFARE
+    int offFare = (double.parse(offeredFare.toString()) +
+        double.parse(tboTDS.toString()) +
+        double.parse(toubiktdsoncommision.toString()) +
+        double.parse(tdsplb.toString()) +
+        double.parse(commissionpercentage.toString()))
+        .round();
+    print("offFare$offFare");
+
     return Padding(
       padding: EdgeInsets.only(
         left: 16.w,
@@ -1123,7 +1226,7 @@ class _FlightCardState extends State<FlightCard> {
                                 fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            "${widget.flight.fare.baseFare}",
+                            "$offFare",
                             style: TextStyle(
                                 fontFamily: 'Inter',
                                 color: primaryColor,
@@ -1131,7 +1234,7 @@ class _FlightCardState extends State<FlightCard> {
                                 fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            "11hrs 15m layover at Mumbai",
+                            layoverText,
                             textAlign: TextAlign.end,
                             style: TextStyle(
                               fontSize: 10.sp,
@@ -1201,7 +1304,7 @@ class _FlightCardState extends State<FlightCard> {
                         ),
                         Image.asset('assets/images/flightStop.png'),
                         Text(
-                          "${widget.hours}h ${widget.minutes}m",
+                          displayTotalDuration,
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: Colors.grey,
@@ -1279,7 +1382,7 @@ class _FlightCardState extends State<FlightCard> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
-                              widget.flight.segments.first.first.destination
+                              widget.flight.segments.last.last.destination
                                   .airport.cityName,
                               style: TextStyle(
                                 fontSize: 16.sp,
@@ -1289,7 +1392,7 @@ class _FlightCardState extends State<FlightCard> {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              widget.flight.segments.first.first.destination
+                              widget.flight.segments.last.last.destination
                                   .airport.cityCode,
                               style: TextStyle(
                                 fontSize: 12.sp,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
+import '../utils/api_service.dart';
 import 'Home_Page.dart';
 
 class FrontScreen extends StatelessWidget {
@@ -54,7 +55,7 @@ class FrontScreen extends StatelessWidget {
                     width: 650.w,
                     fit: BoxFit.cover,
                   ),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: 20.h),
                   // Main Text
                   Text(
                     'Travel Your Way!',
@@ -65,7 +66,7 @@ class FrontScreen extends StatelessWidget {
                       color: Color(0xFFF37023),
                     ),
                   ),
-                  SizedBox(height: 10.h),
+                  // SizedBox(height: 10.h),
                   // Subtext
                   Text(
                     '',
@@ -76,12 +77,13 @@ class FrontScreen extends StatelessWidget {
                       color: Color(0xFF031A40),
                     ),
                   ),
-                  SizedBox(height: 65.h),
+                  // SizedBox(height: 65.h),
                   // "Get Started" Button
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40.w),
                     child: ElevatedButton(
                       onPressed: () async {
+                        await ApiService().flightAuthenticate();
                         Get.to(SearchFlightPage());
                         // await ApiService().userAuthenticate();
                         // await ApiService().flightAuthenticate();

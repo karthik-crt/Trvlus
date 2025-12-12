@@ -9,7 +9,7 @@ class FareRuleData {
   late final ResponseData responseData;
 
   FareRuleData.fromJson(Map<String, dynamic> json) {
-    responseData = ResponseData.fromJson(json['Response']);
+    responseData = ResponseData.fromJson(json['Response'] ?? "");
   }
 
   Map<String, dynamic> toJson() {

@@ -3,13 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trvlus/utils/api_service.dart';
 import 'package:trvlus/utils/app_theme.dart';
 
 import 'Screens/FrontScreen.dart';
 import 'Screens/SplashScreen.dart';
+import 'Screens/price_alert_controller.dart';
+import 'Screens/price_alert_wrapper.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -54,7 +56,7 @@ void main() async {
       await OpenFilex.open(filePath);
     }
   }
-
+  Get.put(PriceAlertController());
   runApp(MyApp());
 }
 
@@ -87,6 +89,9 @@ class _MyAppState extends State<MyApp> {
           title: 'Trvlus App',
           theme: AppTheme.lightTheme,
           initialRoute: '/',
+          builder: (context, child) {
+            return PriceAlertWrapper(child: child!);
+          },
           routes: {
             '/': (context) => SplashScreen(),
             '/home': (context) => FrontScreen(),

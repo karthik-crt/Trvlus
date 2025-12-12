@@ -9,7 +9,7 @@ class SearchData {
   });
 
   factory SearchData.fromJson(Map<String, dynamic> json) => SearchData(
-        response: Response.fromJson(json["Response"]),
+        response: Response.fromJson(json["Response"] ?? ""),
       );
 
   Map<String, dynamic> toJson() => {
@@ -387,7 +387,7 @@ class FareBreakdown {
   int baseFare;
   int tax;
   List<ChargeBu> taxBreakUp;
-  int yqTax;
+  double yqTax;
   int additionalTxnFeeOfrd;
   double additionalTxnFeePub;
   int pgCharge;
@@ -411,13 +411,13 @@ class FareBreakdown {
         currency: json["Currency"],
         passengerType: json["PassengerType"],
         passengerCount: json["PassengerCount"],
-        baseFare: json["BaseFare"],
+        baseFare: (json["BaseFare"] as num).toInt(),
         tax: (json["Tax"] as num).toInt(),
         taxBreakUp: json["TaxBreakUp"] != null && json["TaxBreakUp"] is List
             ? List<ChargeBu>.from(
                 json["TaxBreakUp"].map((x) => ChargeBu.fromJson(x)))
             : [],
-        yqTax: json["YQTax"],
+        yqTax: (json["YQTax"] ?? 0).toDouble(),
         additionalTxnFeeOfrd: json["AdditionalTxnFeeOfrd"],
         additionalTxnFeePub: json["AdditionalTxnFeePub"].toDouble(),
         pgCharge: json["PGCharge"],
