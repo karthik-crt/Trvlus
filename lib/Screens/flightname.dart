@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Flightname extends StatefulWidget {
-  String from;
+  String from; // "From" or "To"
 
   Flightname({super.key, required this.from});
 
@@ -13,9 +14,9 @@ class Flightname extends StatefulWidget {
 
 class _FlightnameState extends State<Flightname> {
   final TextEditingController _controller = TextEditingController();
-  final FocusNode _focusNode = FocusNode(); // 👈 create focus node
+  final FocusNode _focusNode = FocusNode();
 
-  // Sample airport data (replace with full list later)
+  // Sample airport data
   final List<Map<String, String>> airports = [
     {
       "airport_code": "AAA",
@@ -45176,13 +45177,35 @@ class _FlightnameState extends State<Flightname> {
       "airport_city": "Deoghar Airport"
     }
   ];
+
   late List<Map<String, String>> filteredAirports;
+
+  // RECENT SEARCHES
+  List<Map<String, String>> recentSearches = [];
+  bool showRecent = false;
+
+  // 🔹 DYNAMIC KEY FOR FROM / TO
+  String get recentKey {
+    if (widget.from.toLowerCase() == "from") {
+      return "recent_airports_from";
+    } else {
+      return "recent_airports_to";
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    // Initially show first 3 suggestions
+
     filteredAirports = airports.take(3).toList();
+
+    loadRecentSearches();
+
+    _focusNode.addListener(() {
+      setState(() {
+        showRecent = _focusNode.hasFocus && _controller.text.isEmpty;
+      });
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_focusNode);
@@ -45195,16 +45218,13 @@ class _FlightnameState extends State<Flightname> {
     } else {
       final q = query.toLowerCase();
 
-      // Collect all possible matches
       final matches = airports.where((airport) {
         final code = airport["airport_code"]!.toLowerCase();
         final city = airport["airport_city"]!.toLowerCase();
         final name = airport["airport_name"]!.toLowerCase();
-
         return code.startsWith(q) || city.startsWith(q) || name.startsWith(q);
       }).toList();
 
-      // ✅ If query is an exact code (like maa/che/mst), then keep only that exact match
       final exactCodeMatch = matches.where((airport) {
         final code = airport["airport_code"]!.toLowerCase();
         return code == q;
@@ -45216,72 +45236,125 @@ class _FlightnameState extends State<Flightname> {
         filteredAirports = matches;
       }
     }
-    setState(() {});
+
+    setState(() {
+      showRecent = false;
+    });
+  }
+
+  // 🔹 LOAD RECENT SEARCHES
+  Future<void> loadRecentSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getStringList(recentKey) ?? [];
+
+    setState(() {
+      recentSearches =
+          data.map((e) => Map<String, String>.from(jsonDecode(e))).toList();
+    });
+  }
+
+  // 🔹 SAVE RECENT SEARCHES
+  Future<void> saveRecentSearch(Map<String, String> airport) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> data = prefs.getStringList(recentKey) ?? [];
+
+    final value = jsonEncode(airport);
+
+    data.remove(value); // remove duplicate
+    data.insert(0, value); // insert at top
+
+    if (data.length > 5) data = data.sublist(0, 5);
+
+    await prefs.setStringList(recentKey, data);
+    loadRecentSearches();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE8E8E8),
+      backgroundColor: const Color(0xFFE8E8E8),
       appBar: AppBar(
-          backgroundColor: Color(0xFFE8E8E8),
-          title: Text(
-            widget.from,
-            style: TextStyle(color: Color(0xFF000000)),
-          )),
+        backgroundColor: const Color(0xFFE8E8E8),
+        title: Text(
+          widget.from,
+          style: const TextStyle(color: Color(0xFF000000)),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextFormField(
-              style: TextStyle(color: Colors.black),
+              style: const TextStyle(color: Colors.black),
               controller: _controller,
               focusNode: _focusNode,
-              // 👈 attach focus node
               onChanged: _searchAirports,
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.grey),
+                  borderSide: const BorderSide(color: Colors.grey),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Color(0xFFF37023), width: 1.5),
+                  borderSide:
+                      const BorderSide(color: Color(0xFFF37023), width: 1.5),
                 ),
-                suffixIcon: Icon(Icons.search),
+                suffixIcon: const Icon(Icons.search),
                 hintText: 'Search airport',
               ),
             ),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredAirports.length,
-                itemBuilder: (context, index) {
-                  final airport = filteredAirports[index];
-                  return ListTile(
-                    leading: Icon(Icons.flight_takeoff),
-                    title: Text(airport["airport_name"]!),
-                    subtitle: Text(
-                        "${airport["airport_city"]} • ${airport["airport_code"]}"),
-                    onTap: () {
-                      // Set selected airport in the search bar
-                      _controller.text =
-                          "${airport["airport_city"]} (${airport["airport_code"]})";
-                      Map twoValue = {
-                        "airport_city": airport["airport_city"],
-                        "airport_code": airport["airport_code"]
-                      };
-                      var jsonValue = jsonEncode(twoValue);
-                      // Optionally: collapse suggestion list to just this airport
-                      setState(() {
-                        filteredAirports = [airport];
-                      });
-                      Navigator.of(context).pop(jsonValue);
-                    },
-                  );
-                },
+            const SizedBox(height: 10),
+
+            // 🔹 RECENT SEARCHES
+            if (showRecent && recentSearches.isNotEmpty)
+              Expanded(
+                child: ListView.builder(
+                  itemCount: recentSearches.length,
+                  itemBuilder: (context, index) {
+                    final airport = recentSearches[index];
+                    return ListTile(
+                      leading: const Icon(Icons.history),
+                      title: Text(airport["airport_city"]!),
+                      subtitle: Text(airport["airport_code"]!),
+                      onTap: () {
+                        _controller.text =
+                            "${airport["airport_city"]} (${airport["airport_code"]})";
+                        Navigator.of(context).pop(jsonEncode(airport));
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
+
+            // 🔹 ORIGINAL AIRPORT LIST
+            if (!showRecent)
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredAirports.length,
+                  itemBuilder: (context, index) {
+                    final airport = filteredAirports[index];
+                    return ListTile(
+                      leading: const Icon(Icons.flight_takeoff),
+                      title: Text(airport["airport_name"]!),
+                      subtitle: Text(
+                          "${airport["airport_city"]} • ${airport["airport_code"]}"),
+                      onTap: () async {
+                        _controller.text =
+                            "${airport["airport_city"]} (${airport["airport_code"]})";
+
+                        Map<String, String> twoValue = {
+                          "airport_city": airport["airport_city"]!,
+                          "airport_code": airport["airport_code"]!
+                        };
+
+                        await saveRecentSearch(twoValue);
+
+                        Navigator.of(context).pop(jsonEncode(twoValue));
+                      },
+                    );
+                  },
+                ),
+              ),
           ],
         ),
       ),

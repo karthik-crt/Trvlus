@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/ProfilePage.dart';
 import 'package:trvlus/Screens/roundtrip.dart';
@@ -23,6 +24,7 @@ String selectedRetDate = "";
 DateTime? departureDate;
 DateTime? returnDate;
 DateTime? _selectedDates;
+DateTime? formattedDate;
 int adults = 1;
 int children = 0;
 int infants = 0;
@@ -129,10 +131,13 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   Future<void> date() async {
     final api = ApiService();
     print("Authenticateapicalling");
+    print(selectedDepDate);
+    print("getCalendarFare$selectedDepatureDate");
 
     final response = await api.getCalendarFare(
       airportCode,
       toairportCode,
+      selectedDepatureDate.toString(),
     );
 
     print("token$response");
@@ -156,8 +161,8 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   @override
   void initState() {
     super.initState();
+    // _requestNotifi\cationPermission();
     // date();
-
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -172,6 +177,27 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     print('selectedReturnDate$selectedReturnDate');
     setPaxValue();
     // _selectedDepDate = today.toString();
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    PermissionStatus status = await Permission.notification.status;
+    print("Notification permission status: $status");
+    if (!status.isGranted) {
+      status = await Permission.notification.request();
+    }
+
+    if (status.isGranted) {
+      //SharedPreferenceHelper.setString('notification_permission', 'agree');
+      print("Notification permission granted");
+      //await initialDialogLocation();
+    } else {
+      //SharedPreferenceHelper.setString('notification_permission', 'denied');
+      if (status.isPermanentlyDenied) {
+        //_showNotificationPermissionDeniedDialog();
+      } else {
+        // await initialDialogLocation();
+      }
+    }
   }
 
   setPaxValue() async {

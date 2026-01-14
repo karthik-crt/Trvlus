@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/price_alert_controller.dart';
 
+import '../models/countrycode.dart';
 import '../models/farequote.dart' as farequote;
 import '../models/search_data.dart';
 import '../utils/api_service.dart';
@@ -20,6 +21,8 @@ import 'afterPayment.dart';
 String finaldepDateformat = '';
 String finalarrDateformat = '';
 double totalFare = 0;
+double convenienceFee = 0;
+late Countrycode countrycode;
 
 class MakePaymentScreen extends StatefulWidget {
   final Map<String, dynamic> flight;
@@ -56,6 +59,14 @@ class MakePaymentScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final int? coupouncode;
+  final String? commonPublishedFare;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
   final bool? isLLC;
   final List<Map<String, dynamic>>? passenger;
   final List<Map<String, dynamic>>? childpassenger;
@@ -110,6 +121,14 @@ class MakePaymentScreen extends StatefulWidget {
       this.adultCount,
       this.childCount,
       this.infantCount,
+      this.coupouncode,
+      this.commonPublishedFare,
+      this.tboOfferedFare,
+      this.tboCommission,
+      this.tboTds,
+      this.trvlusCommission,
+      this.trvlusTds,
+      this.trvlusNetFare,
       this.passenger,
       this.childpassenger,
       this.infantpassenger,
@@ -141,6 +160,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   int totaladultCount = 0;
   int totalchildCount = 0;
   int totalinfantCount = 0;
+  int coupouncode = 0;
   double adultFare = 0;
   double childFare = 0;
   double infantFare = 0;
@@ -150,6 +170,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     // TODO: implement initState
     super.initState();
     getfarequotedata();
+    getCountryCode();
   }
 
   getfarequotedata() async {
@@ -236,11 +257,12 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     }
     setState(() {
       isLoading = false;
+      coupouncode = widget.coupouncode!;
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
       totalTax = tax + intax;
       print("totalTax$totalTax");
-      overallFare = totalBaseFare + totalTax;
+      overallFare = totalBaseFare + totalTax - coupouncode.round();
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
@@ -248,6 +270,19 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
+    });
+  }
+
+  getCountryCode() async {
+    setState(() {
+      isLoading = true;
+    });
+    countrycode = await ApiService().countryCode();
+    convenienceFee = countrycode.data.first.convenienceFee;
+    print("countrycode$countrycode");
+    print("convenienceFee$convenienceFee");
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -1347,6 +1382,16 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                   resultindex: widget.resultindex,
                                   traceid: widget.traceid,
                                   segmentsJson: widget.segmentsJson,
+                                  convenienceFee: convenienceFee,
+                                  coupouncode: widget.coupouncode,
+                                  commonPublishedFare:
+                                      widget.commonPublishedFare,
+                                  tboOfferedFare: widget.tboOfferedFare,
+                                  tboCommission: widget.tboCommission,
+                                  tboTds: widget.tboTds,
+                                  trvlusCommission: widget.trvlusCommission,
+                                  trvlusTds: widget.trvlusTds,
+                                  trvlusNetFare: widget.trvlusNetFare,
                                 )));
                     // Get.to(MakePaymentScreen(
                     //   flight: flight,
@@ -1421,6 +1466,9 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           adultTax: 0,
           childTax: 0,
           infantTax: 0,
+          coupouncode: coupouncode,
+          showConvenienceFee: true,
+          convenienceFee: convenienceFee,
         );
       },
     );

@@ -50,7 +50,16 @@ class MobileVerificationScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final int? coupouncode;
+  final String? commonPublishedFare;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
   final bool? isLLC;
+  final bool? islogin;
   final Map<String, dynamic> outBoundData;
   final Map<String, dynamic> inBoundData;
 
@@ -91,6 +100,14 @@ class MobileVerificationScreen extends StatefulWidget {
       this.adultCount,
       this.childCount,
       this.infantCount,
+      this.coupouncode,
+      this.commonPublishedFare,
+      this.tboOfferedFare,
+      this.tboCommission,
+      this.tboTds,
+      this.trvlusCommission,
+      this.trvlusTds,
+      this.trvlusNetFare,
       this.isLLC,
       this.outdepDate,
       this.outdepTime,
@@ -99,7 +116,8 @@ class MobileVerificationScreen extends StatefulWidget {
       this.indepDate,
       this.indepTime,
       this.inarrDate,
-      this.inarrTime});
+      this.inarrTime,
+      this.islogin});
 
   @override
   _MobileVerificationScreenState createState() =>
@@ -262,6 +280,9 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                           authController.setMobileNumber(value.trim());
                           setState(() {
                             enteredMobileNumber = value.trim();
+                            if (value.length == 10) {
+                              _mobileFocus.unfocus(); // removes cursor
+                            }
                           });
                           print("Entered mobile number: $enteredMobileNumber");
                           print(widget.outresultindex);
@@ -357,6 +378,15 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                 outresultindex: widget.outresultindex,
                                 inresultindex: widget.inresultindex,
                                 segmentsJson: widget.segmentsJson,
+                                islogin: widget.islogin,
+                                coupouncode: widget.coupouncode,
+                                commonPublishedFare: widget.commonPublishedFare,
+                                tboOfferedFare: widget.tboOfferedFare,
+                                tboCommission: widget.tboCommission,
+                                tboTds: widget.tboTds,
+                                trvlusCommission: widget.trvlusCommission,
+                                trvlusTds: widget.trvlusTds,
+                                trvlusNetFare: widget.trvlusNetFare,
                               ));
                         }
                       : null,

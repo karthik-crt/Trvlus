@@ -29,9 +29,13 @@ class _TicketdetailsState extends State<Ticketdetails> {
   int childCount = 0;
   int infantCount = 0;
 
+  double totaladultFare = 0;
+  double totalchildFare = 0;
+  double totalinfantFare = 0;
   double adultFare = 0;
   double childFare = 0;
   double infantFare = 0;
+  double total = 0; // declare variable here
 
   @override
   void initState() {
@@ -47,16 +51,30 @@ class _TicketdetailsState extends State<Ticketdetails> {
       isLoading = true;
     });
     bookingdetailsid = await ApiService().getbookingdetailHistory(widget.id);
-    print("bookingdetailsid$bookingdetailsid");
 
     // final adultCount =
     //     int.parse(bookingdetailsid.data.first.totalpassengers.toString());
-    final fare = double.parse(bookingdetailsid
-        .data.first.passengerDetails.first.fare.BaseFare
-        .toString());
-    print('fare$fare');
+    final fare =
+        double.parse(bookingdetailsid.data.first.price.BaseFare.toString());
+    final tax = double.parse(bookingdetailsid.data.first.price.Tax.toString());
+    final conveiencefee = double.tryParse(
+            bookingdetailsid.data.first.convenienceFee.toString()) ??
+        0.0;
+    final coupounCode =
+        double.tryParse(bookingdetailsid.data.first.coupounCode.toString()) ??
+            0.0;
+    print("coupounCode$coupounCode");
+
+    // total = fare + tax + conveiencefee - coupounCode;
+    print("conveiencefee$conveiencefee");
+    print('farefare$fare');
+    print('taxtax$tax');
+    total = fare + tax + conveiencefee - coupounCode;
+    print('total$total');
+
     adultFare = adultCount * fare;
     print("TOTAL COUNT $adultFare");
+
     setState(() {
       isLoading = false;
     });
@@ -70,17 +88,17 @@ class _TicketdetailsState extends State<Ticketdetails> {
 
         if (passenger.PaxType == 1) {
           adultCount++;
-          print("ADULTCOUNT$adultCount");
-          adultFare += baseFare;
-          print("ADULTCOUNT$adultFare");
+          adultFare = baseFare;
+          totaladultFare += baseFare;
         } else if (passenger.PaxType == 2) {
           childCount++;
-          childFare += baseFare;
-          print("ADULTCOUNT$childFare");
+          childFare = baseFare;
+          totalchildFare += baseFare;
         } else if (passenger.PaxType == 3) {
           infantCount++;
-          infantFare += baseFare;
-          print("ADULTCOUNT$infantCount");
+          infantFare = baseFare;
+          totalinfantFare += baseFare;
+          print("infantFare$infantFare");
         }
       }
     }
@@ -983,7 +1001,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                       width: 15,
                                                     ),
                                                     Text(
-                                                      '${passenger.FirstName} ${passenger.LastName}',
+                                                      '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
                                                       style: TextStyle(
                                                           color: Colors.black),
                                                     ),
@@ -998,10 +1016,11 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     SizedBox(
                                       height: 5,
                                     ),
-                                    Text(
-                                      "CHILD",
-                                      style: TextStyle(color: Colors.black),
-                                    ),
+                                    if (childCount > 0)
+                                      Text(
+                                        "CHILD",
+                                        style: TextStyle(color: Colors.black),
+                                      ),
                                     SizedBox(
                                       height: 5,
                                     ),
@@ -1043,7 +1062,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                     width: 15,
                                                   ),
                                                   Text(
-                                                    '${passenger.FirstName} ${passenger.LastName}',
+                                                    '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
                                                     style: TextStyle(
                                                         color: Colors.black),
                                                   ),
@@ -1058,10 +1077,11 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     SizedBox(
                                       height: 10,
                                     ),
-                                    Text(
-                                      "INFANT",
-                                      style: TextStyle(color: Colors.black),
-                                    ),
+                                    if (infantCount > 0)
+                                      Text(
+                                        "INFANT",
+                                        style: TextStyle(color: Colors.black),
+                                      ),
                                     SizedBox(
                                       height: 5,
                                     ),
@@ -1103,7 +1123,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                     width: 15,
                                                   ),
                                                   Text(
-                                                    '${passenger.FirstName} ${passenger.LastName}',
+                                                    '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
                                                     style: TextStyle(
                                                         color: Colors.black),
                                                   ),
@@ -1192,7 +1212,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                     fontWeight:
                                                         FontWeight.bold)),
                                             Text(
-                                                '₹${bookingdetailsid.data.first.passengerDetails.first.fare.BaseFare.toString()}',
+                                                '₹${bookingdetailsid.data.first.price.BaseFare.toInt()}',
                                                 style: TextStyle(
                                                     fontSize: 14.sp,
                                                     fontWeight: FontWeight.bold,
@@ -1204,51 +1224,54 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                                "Adults($adultCount X ₹$adultFare)",
+                                                "Adults($adultCount X ₹${adultFare.toInt()})",
                                                 style: TextStyle(
                                                   fontSize: 12.sp,
                                                   color: Colors.grey,
                                                 )),
-                                            Text("₹$adultFare",
+                                            Text("₹${totaladultFare.toInt()}",
                                                 style: TextStyle(
                                                     fontSize: 12.sp,
                                                     color: Colors.grey)),
                                           ],
                                         ),
                                         SizedBox(height: 3.h),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                                "Child ($childCount X ₹$childFare))",
-                                                style: TextStyle(
-                                                  fontSize: 12.sp,
-                                                  color: Colors.grey,
-                                                )),
-                                            Text("₹$childFare",
-                                                style: TextStyle(
+                                        if (childCount > 0)
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                  "Child ($childCount X ₹${childFare.toInt()}))",
+                                                  style: TextStyle(
                                                     fontSize: 12.sp,
-                                                    color: Colors.grey)),
-                                          ],
-                                        ),
+                                                    color: Colors.grey,
+                                                  )),
+                                              Text("₹${totalchildFare.toInt()}",
+                                                  style: TextStyle(
+                                                      fontSize: 12.sp,
+                                                      color: Colors.grey)),
+                                            ],
+                                          ),
                                         SizedBox(height: 3.h),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                                "Infant ($infantCount X ₹$infantFare))",
-                                                style: TextStyle(
-                                                  fontSize: 12.sp,
-                                                  color: Colors.grey,
-                                                )),
-                                            Text("₹$infantFare",
-                                                style: TextStyle(
+                                        if (infantCount > 0)
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                  "Infant ($infantCount X ₹${infantFare.toInt()}))",
+                                                  style: TextStyle(
                                                     fontSize: 12.sp,
-                                                    color: Colors.grey)),
-                                          ],
-                                        ),
+                                                    color: Colors.grey,
+                                                  )),
+                                              Text(
+                                                  "₹${totalinfantFare.toInt()}",
+                                                  style: TextStyle(
+                                                      fontSize: 12.sp,
+                                                      color: Colors.grey)),
+                                            ],
+                                          ),
                                         SizedBox(height: 5.h),
                                       ],
                                     ),
@@ -1279,7 +1302,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                         fontWeight:
                                                             FontWeight.bold)),
                                                 Text(
-                                                    '₹${bookingdetailsid.data.first.passengerDetails.first.fare.Tax.toString()}',
+                                                    '₹${bookingdetailsid.data.first.price.Tax}',
                                                     style: TextStyle(
                                                         fontSize: 14.sp,
                                                         fontWeight:
@@ -1301,7 +1324,63 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                             Color(0xFF909090),
                                                         fontWeight:
                                                             FontWeight.bold)),
-                                                Text("",
+                                                Text(
+                                                    "₹${bookingdetailsid.data.first.price.Tax}",
+                                                    style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color: Colors.grey)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 7,
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.all(5),
+                                        padding: EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Color(0xFFF5F5F5)),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text("Convenience Fee",
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text(
+                                                    '₹${bookingdetailsid.data.first.convenienceFee}',
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFFF37023))),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text("COUPOUN DISCOUNT",
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      color: Colors.black,
+                                                      // fontWeight:
+                                                      //     FontWeight.bold
+                                                    )),
+                                                Text(
+                                                    '₹${bookingdetailsid.data.first.coupounCode}',
                                                     style: TextStyle(
                                                         fontSize: 14.sp,
                                                         fontWeight:
@@ -1313,6 +1392,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                           ],
                                         ),
                                       ),
+
                                       Container(
                                         margin: EdgeInsets.all(5),
                                         padding: EdgeInsets.all(10),
@@ -1323,17 +1403,16 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Text("Total",
+                                                Text("TOTAL",
                                                     style: TextStyle(
                                                         fontSize: 13.sp,
                                                         color:
                                                             Color(0xFF606060),
                                                         fontWeight:
                                                             FontWeight.bold)),
-                                                Text(
-                                                    "₹${bookingdetailsid.data.first.totalFare}",
+                                                Text("₹${total.toInt()}",
                                                     style: TextStyle(
-                                                        fontSize: 13.sp,
+                                                        fontSize: 17.sp,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         color:
@@ -1345,7 +1424,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Text("Amount",
+                                                Text("AMOUNT",
                                                     style: TextStyle(
                                                         fontSize: 13.sp,
                                                         color:
@@ -1355,8 +1434,6 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                 Text("Including GST+ taxes",
                                                     style: TextStyle(
                                                         fontSize: 13.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
                                                         color:
                                                             Color(0xFF909090))),
                                               ],

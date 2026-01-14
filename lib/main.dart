@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:trvlus/utils/api_service.dart';
 import 'package:trvlus/utils/app_theme.dart';
 
@@ -25,6 +27,27 @@ class MyHttpOverrides extends HttpOverrides {
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+Future<void> _requestNotificationPermission() async {
+  PermissionStatus status = await Permission.notification.status;
+  print("Notification permission status: $status");
+  if (!status.isGranted) {
+    status = await Permission.notification.request();
+  }
+
+  if (status.isGranted) {
+    //SharedPreferenceHelper.setString('notification_permission', 'agree');
+    print("Notification permission granted");
+    //await initialDialogLocation();
+  } else {
+    //SharedPreferenceHelper.setString('notification_permission', 'denied');
+    if (status.isPermanentlyDenied) {
+      //_showNotificationPermissionDeniedDialog();
+    } else {
+      // await initialDialogLocation();
+    }
+  }
+}
+
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +57,9 @@ void main() async {
 
   const InitializationSettings initSettings =
       InitializationSettings(android: androidSettings);
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Colors.white,
+  ));
 
   await flutterLocalNotificationsPlugin.initialize(
     initSettings,
@@ -45,6 +71,7 @@ void main() async {
       }
     },
   );
+  await _requestNotificationPermission();
 
   // ✅ Handle case when app is launched from notification
   final NotificationAppLaunchDetails? details =

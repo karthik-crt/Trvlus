@@ -19,7 +19,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/app_logo"
         android:label="Trvlus"
-        android:requestLegacyExternalStorage="true">
+        android:requestLegacyExternalStorage="true"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"

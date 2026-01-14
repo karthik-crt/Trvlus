@@ -3,19 +3,22 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
-class Tearmsandcondition extends StatefulWidget {
+class Legal extends StatefulWidget {
+  const Legal({super.key});
+
   @override
-  _TearmsandconditionState createState() => _TearmsandconditionState();
+  State<Legal> createState() => _LegalState();
 }
 
-class _TearmsandconditionState extends State<Tearmsandcondition> {
+class _LegalState extends State<Legal> {
   late final WebViewController _controller;
-  double progress = 0;
+  double progress = 0; // Track loading progress
 
   @override
   void initState() {
     super.initState();
 
+    // Platform-specific params
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
@@ -26,22 +29,36 @@ class _TearmsandconditionState extends State<Tearmsandcondition> {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    final controller = WebViewController.fromPlatformCreationParams(params);
+    final WebViewController controller =
+        WebViewController.fromPlatformCreationParams(params);
 
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onProgress: (p) => setState(() => progress = p / 100.0),
-          onPageStarted: (_) => setState(() => progress = 0),
-          onPageFinished: (_) => setState(() => progress = 1),
-          onWebResourceError: (error) {
+          onProgress: (int p) {
+            setState(() {
+              progress = p / 100.0; // convert to 0.0 - 1.0
+            });
+          },
+          onPageStarted: (String url) {
+            setState(() {
+              progress = 0;
+            });
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              progress = 1;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {
             debugPrint('WebView Error: ${error.description}');
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://www.trvlus.com/terms-conditions.html'));
+      ..loadRequest(Uri.parse('https://www.trvlus.com/legal.html'));
 
+    // Android-specific
     if (controller.platform is AndroidWebViewController) {
       AndroidWebViewController.enableDebugging(true);
       (controller.platform as AndroidWebViewController)
@@ -54,29 +71,26 @@ class _TearmsandconditionState extends State<Tearmsandcondition> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // Set white background
       appBar: AppBar(
-        title: const Text("T&C"),
+        title: const Text("Legal Policy"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
       ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                child: WebViewWidget(controller: _controller)),
-            if (progress < 1.0)
-              LinearProgressIndicator(
-                value: progress,
-                backgroundColor: Colors.white,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                minHeight: 3,
-              ),
-          ],
-        ),
+      body: Stack(
+        children: [
+          Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: WebViewWidget(controller: _controller)),
+          if (progress < 1.0)
+            LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.white,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+              minHeight: 3,
+            ),
+        ],
       ),
     );
   }

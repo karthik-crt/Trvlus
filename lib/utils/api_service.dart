@@ -18,11 +18,13 @@ import '../models/addstatus.dart' as addstatus;
 import '../models/bookinghistory.dart' as booking_history;
 import '../models/commissionpercentage.dart' as commissionpercentage;
 import '../models/countrycode.dart' as country_code;
+import '../models/customercommision.dart';
 import '../models/farequote.dart' as fareQuote;
 import '../models/farerule.dart' as fare;
 import '../models/getbookingdetailsid.dart' as bookinghistoryID;
 import '../models/getprofile.dart' as profileupdatation;
 import '../models/search_data.dart' as search;
+import '../models/selecttraveler.dart' as traveller;
 import '../models/ssr.dart' as ssrdata;
 
 late GlobalKey<NavigatorState> _navigatorKey;
@@ -37,10 +39,13 @@ class ApiBaseHelper {
   List<Map<String, dynamic>> passengersList = [];
 
   // LOCAL IP
-  static const _baseUrl = 'http://192.168.0.11:8000/api/';
+  static const _baseUrl = 'http://192.168.0.18:8000/api/';
 
   // LIVE
   // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
+
+  //
+  // (NEEED TO HIDE ENDUSERIP FOR DATESCROLLER) [NEED TO CHANGE TICKET AND INVOICE URL]
 
   // TBO TEST
   final Dio dio = Dio(
@@ -478,6 +483,19 @@ class ApiService {
     return fare.fareRuleDataFromJson(decode);
   }
 
+  // PRINTING THE LARGE OUTPUT
+  // void printLargeJson(dynamic data) {
+  //   final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+  //   const int chunkSize = 800;
+  //
+  //   for (int i = 0; i < jsonString.length; i += chunkSize) {
+  //     print(jsonString.substring(
+  //       i,
+  //       i + chunkSize > jsonString.length ? jsonString.length : i + chunkSize,
+  //     ));
+  //   }
+  // }
+
   // FAREQUOTE
   Future<fareQuote.FareQuotesData> farequote(
     String resultIndex,
@@ -503,6 +521,7 @@ class ApiService {
     final decode = response;
 
     print("FareQuote response${jsonEncode(decode)}");
+    // printLargeJson(decode);
     return fareQuote.fareQuotesDataFromJson(decode);
   }
 
@@ -534,17 +553,21 @@ class ApiService {
   Future<Map<String, dynamic>> getCalendarFare(
     String origin,
     String destination,
+    selectedDepatureDate,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("tokenId");
+    final tokenId = prefs.getString("tokenId");
+    String formattedDate =
+        DateFormat('yyyy-MM-dd').format(selectedDepatureDate);
+    print("formattedDateformattedDate$formattedDate");
 
-    if (token == null) {
+    if (tokenId == null) {
       throw Exception("TokenId not found in SharedPreferences");
     }
 
     final body = {
       "EndUserIp": "192.168.1.10",
-      "TokenId": token,
+      "TokenId": tokenId,
       "JourneyType": "1",
       "PreferredAirlines": null,
       "Segments": [
@@ -552,7 +575,7 @@ class ApiService {
           "Origin": origin,
           "Destination": destination,
           "FlightCabinClass": "2",
-          "PreferredDepartureTime": "2025-12-12T00:00:00",
+          "PreferredDepartureTime": formattedDate,
         },
       ],
       "Sources": null,
@@ -561,11 +584,14 @@ class ApiService {
     print("body$body");
 
     try {
-      final response = await _helper.postCalender("GetCalendarFare", body);
+      // LIVE
+      final response = await _helper.post("mobile/calendar-fare/", body);
+      // LOCAL
+      // final response = await _helper.postCalender("GetCalendarFare", body);
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       print("FULL CALENDAR API RESPONSE:");
       print(encoder.convert(response));
-      return response; // assuming Dio already decodes JSON
+      return response;
     } catch (e) {
       print("Error fetching calendar fare: $e");
       throw Exception("Failed to fetch calendar fare");
@@ -575,31 +601,39 @@ class ApiService {
   // HOLD TICKET BOOKING
 
   Future<Map<String, dynamic>> holdTicket(
-    String resultIndex,
-    String traceid,
-    flightNumber,
-    airlineName,
-    depTime,
-    depDate,
-    airportName,
-    arrTime,
-    arrDate,
-    desairportName,
-    duration,
-    airlineCode,
-    cityCode,
-    descityCode,
-    cityName,
-    descityName,
-    baseFare,
-    tax,
-    List<Map<String, dynamic>> passenger,
-    List<Map<String, dynamic>> childpassenger,
-    List<Map<String, dynamic>> infantpassenger,
-    Map<String, dynamic> meal,
-    stop,
-    journeyList,
-  ) async {
+      String resultIndex,
+      String traceid,
+      flightNumber,
+      airlineName,
+      depTime,
+      depDate,
+      airportName,
+      arrTime,
+      arrDate,
+      desairportName,
+      duration,
+      airlineCode,
+      cityCode,
+      descityCode,
+      cityName,
+      descityName,
+      baseFare,
+      tax,
+      List<Map<String, dynamic>> passenger,
+      List<Map<String, dynamic>> childpassenger,
+      List<Map<String, dynamic>> infantpassenger,
+      Map<String, dynamic> meal,
+      stop,
+      journeyList,
+      conveniencefee,
+      coupouncode,
+      commonPublishedFare,
+      tboOfferedFare,
+      tboCommission,
+      tboTds,
+      trvlusCommission,
+      trvlusTds,
+      trvlusNetFare) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     print("APICALLING$passenger");
@@ -831,7 +865,7 @@ class ApiService {
         "OperatorCode": item['airlineCode'],
         "OperatorName": item['airlineName'],
         "noofstop": item['noofstop'],
-        "durationTime": "0 Mins",
+        "durationTime": item['durationTime'],
         "ToAirportCode": item['toAirportCode'],
         "ToAirportName": item['toAirport'],
         "FromAirportCode": item['fromAirportCode'],
@@ -1148,10 +1182,14 @@ class ApiService {
 
     String appReferenceNumber = generateReferenceNumber();
     print("appReferenceNumber$appReferenceNumber");
+
+    final commision = tboCommission;
+    final commisionPercentage = passengersDetailData.length * commision;
+    print("commisionPercentage$commisionPercentage");
     final holdparams = {
       "PreferredCurrency": null,
       "ResultIndex": resultIndex,
-      "AgentReferenceNo": "CR9-985839-706449",
+      "AgentReferenceNo": "",
       "Passengers": passengersDetailData,
       "TokenId": tokenId,
       "TraceId": traceid,
@@ -1168,7 +1206,7 @@ class ApiService {
       "user": userID,
       "role": "3",
       "document_type": "Passport",
-      "commission_amt": 20,
+      "commission_amt": commision,
       "service_tax": 0,
       "document_number": "",
       "journey_list": journeyListarray,
@@ -1186,7 +1224,18 @@ class ApiService {
       "destination": descityName,
       "travel_date": depDate,
       "return_date": "",
-      "commision_percentage_amount": 0.0,
+      "commision_percentage_amount": commisionPercentage,
+      "convenience_fee": conveniencefee,
+      "coupoun_code": coupouncode,
+      "commonPublishedFare": commonPublishedFare,
+      "tboOfferedFare": tboOfferedFare,
+      "tboCommission": tboCommission,
+      "tboTds": tboTds,
+      "tboNetFare": 0.0,
+      "trvlusOfferedFare": 0.0,
+      "trvlusCommission": trvlusCommission,
+      "trvlusTds": trvlusTds,
+      "trvlusNetFare": trvlusNetFare,
       "excessAmount": 0,
     };
 
@@ -1205,31 +1254,39 @@ class ApiService {
 
   // DIRECTTICKET
   Future<Map<String, dynamic>> ticket(
-    String resultIndex,
-    String traceid,
-    flightNumber,
-    airlineName,
-    depTime,
-    depDate,
-    airportName,
-    arrTime,
-    arrDate,
-    desairportName,
-    duration,
-    airlineCode,
-    cityCode,
-    descityCode,
-    cityName,
-    descityName,
-    baseFare,
-    tax,
-    List<Map<String, dynamic>> passenger,
-    List<Map<String, dynamic>> childpassenger,
-    List<Map<String, dynamic>> infantpassenger,
-    Map<String, dynamic> meal,
-    stop,
-    journeyList,
-  ) async {
+      String resultIndex,
+      String traceid,
+      flightNumber,
+      airlineName,
+      depTime,
+      depDate,
+      airportName,
+      arrTime,
+      arrDate,
+      desairportName,
+      duration,
+      airlineCode,
+      cityCode,
+      descityCode,
+      cityName,
+      descityName,
+      baseFare,
+      tax,
+      List<Map<String, dynamic>> passenger,
+      List<Map<String, dynamic>> childpassenger,
+      List<Map<String, dynamic>> infantpassenger,
+      Map<String, dynamic> meal,
+      stop,
+      journeyList,
+      conveniencefee,
+      coupouncode,
+      commonPublishedFare,
+      tboOfferedFare,
+      tboCommission,
+      tboTds,
+      trvlusCommission,
+      trvlusTds,
+      trvlusNetFare) async {
     print("APISERVICEEEEE$meal");
 
     final prefs = await SharedPreferences.getInstance();
@@ -1492,7 +1549,7 @@ class ApiService {
         "OperatorCode": item['airlineCode'],
         "OperatorName": item['airlineName'],
         "noofstop": item['noofstop'],
-        "durationTime": "0 Mins",
+        "durationTime": item['durationTime'],
         "ToAirportCode": item['toAirportCode'],
         "ToAirportName": item['toAirport'],
         "FromAirportCode": item['fromAirportCode'],
@@ -1505,8 +1562,11 @@ class ApiService {
       final p = passenger[i];
       final gender = p['gender'] == 'Mr' ? 1 : 2;
 
+      print(p['Date of Birth']);
       final dob = DateFormat('dd-MM-yyyy').parse(p['Date of Birth']);
+      print("dsgdhgd$dob");
       final formattedDOB = DateFormat('yyyy-MM-dd').format(dob);
+      print("sgregr$formattedDOB");
       // final expiry = DateFormat('dd-MM-yyyy').parse(p['Expiry']);
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(expiry);
 
@@ -1754,7 +1814,7 @@ class ApiService {
         "PassportIssueCountryCode": "",
         "AddressLine1": "NA",
         "AddressLine2": "",
-        "City": "Gurgaon",
+        "City": "",
         "CountryCode": "IN",
         "CountryName": "India",
         "ContactNo": ip['mobile'],
@@ -1796,12 +1856,15 @@ class ApiService {
 
     String appReferenceNumber = generateReferenceNumber();
     print("appReferenceNumber$appReferenceNumber");
+    final commision = tboCommission;
+    final commisionPercentage = passengersDetailData.length * commision;
+    print("commisionPercentage$commisionPercentage");
 
-    /// 3️⃣ Confirm Booking Params (converted from Angular version)
+    /// 3️⃣ Confirm Booking Params
     final confirmBookingParams = {
       "PreferredCurrency": null,
       "ResultIndex": resultIndex,
-      "AgentReferenceNo": "sonam1234567890",
+      "AgentReferenceNo": "",
       "Passengers": passengersDetailData,
       "TokenId": tokenId,
       "TraceId": traceid,
@@ -1814,7 +1877,7 @@ class ApiService {
       "user": userID, // replace with actual value
       "role": 3, // replace with actual value
       "document_type": "Passport",
-      "commission_amt": 100, // double.parse if numeric
+      "commission_amt": commisionPercentage, // double.parse if numeric
       "service_tax": 50,
       "document_number": "A1234567",
       "journey_list": journeyListarray,
@@ -1832,10 +1895,20 @@ class ApiService {
       "destination": descityName,
       "travel_date": depDate,
       "return_date": "",
-      "commision_percentage_amount": 10.0,
+      "commision_percentage_amount": commision,
+      "convenience_fee": conveniencefee,
+      "coupoun_code": coupouncode,
+      "commonPublishedFare": commonPublishedFare,
+      "tboOfferedFare": tboOfferedFare,
+      "tboCommission": tboCommission,
+      "tboTds": tboTds,
+      "tboNetFare": 0.0,
+      "trvlusOfferedFare": 0.0,
+      "trvlusCommission": trvlusCommission,
+      "trvlusTds": trvlusTds,
+      "trvlusNetFare": trvlusNetFare,
       "excessAmount": 0.0,
     };
-
     // debugPrint("ticketBody: $ticketBody");
     debugPrint(
       "confirmBookingParams: ${jsonEncode(confirmBookingParams)}",
@@ -2091,6 +2164,15 @@ class ApiService {
     return bookinghistoryID.getbookingdetailsidFromJson(decode);
   }
 
+  // CUSTOMER COMMISION
+  Future<Customercommission> getcustomercommission() async {
+    final response = await _helper.get("customercomission?country=1");
+    print("Customercommission");
+    print("Customercommission$response");
+    // Pass the full Map to your model
+    return customerCommissionFromJson(response);
+  }
+
   // PROFILEUPDATE
   Future<profileupdatation.Getprofile> getprofileupdate(id) async {
     final response = await _helper.dio.get("updatemobileUser?id=$id");
@@ -2109,21 +2191,30 @@ class ApiService {
     date,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id');
+    print("API CALLING");
+    print("firstname$firstname");
+    print("firstname$lastname");
+    print("firstname$email");
+    print("firstname$mobile");
+    print("firstname$date");
     final body = {
       "first_name": firstname,
       "last_name": lastname,
       "email": email,
       "gst_number": "",
       "mobile": mobile,
-      "user_image": "",
+      "user_images": "",
       "dateofbirth": date,
       "wallet": 0.0,
       "wallet_ticket_booking": 0.0,
       "balance_verified": "1",
       "server_wallet": 0.0,
     };
+    final userId = prefs.getString('user_id');
+    print("userId$userId");
+    print("bodybodybody$body");
 
+    await ApiService().getprofileupdate(userId);
     final response = await _helper.dio.patch(
       "updatemobileUser?id=$userId",
       data: body,
@@ -2144,7 +2235,7 @@ class ApiService {
     final fileName = imagePath.split('/').last;
 
     final formData = FormData.fromMap({
-      "user_image": await MultipartFile.fromFile(
+      "user_images": await MultipartFile.fromFile(
         imagePath,
         filename: fileName,
         contentType: MediaType("image", "jpeg"), // important
@@ -2167,8 +2258,8 @@ class ApiService {
   //  ADDSTATUS
   Future<addstatus.CancelReasonData> addStatus() async {
     final response = await _helper.get("addstatus");
-    final decode = _helper.decodeBase64Response(response);
-    // final decode = response;
+    // final decode = _helper.decodeBase64Response(response);
+    final decode = response;
 
     print("addstatus response${jsonEncode(decode)}");
     return addstatus.addstatusFromJson(decode);
@@ -2198,14 +2289,129 @@ class ApiService {
     return (response);
   }
 
+  // SELECT TRAVELER
+  Future<void> selectTraveler(
+    List passenger,
+    List childpassenger,
+    List infantpassenger,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('user_id');
+
+    if (userID == null) {
+      throw Exception("User ID not found");
+    }
+
+    List<Map<String, dynamic>> passengersArrayData = [];
+
+    // Helper to add passenger to list
+    void addPassenger(Map p, String gender, String typeLabel) {
+      final dob = DateFormat('dd-MM-yyyy').parse(p['Date of Birth']);
+      final formattedDOB = DateFormat('yyyy-MM-dd').format(dob);
+
+      String? formattedExpiry;
+      if (p['Expiry'] != null && p['Expiry'].toString().trim().isNotEmpty) {
+        formattedExpiry = DateFormat('yyyy-MM-dd').format(
+          DateFormat('dd-MM-yyyy').parse(p['Expiry']),
+        );
+      } else {
+        formattedExpiry = ""; // keep null if not provided
+      }
+
+      passengersArrayData.add({
+        "user": userID,
+        "first_name": p['Firstname'],
+        "last_name": p['lastname'],
+        "passport_no": p['Passport No'] ?? "",
+        "passport_expiry":
+            formattedExpiry.trim().isNotEmpty ? formattedExpiry : null,
+        "dob": formattedDOB,
+        "gender": gender,
+        "mobile": p['mobile'],
+        "email": p['email'],
+        "pax_type": typeLabel,
+        'nationality': p['Nationality'],
+        'issusing_country': p['IssusingCountry'],
+        'title': p['title']
+      });
+    }
+
+    // Add adults
+    for (var p in passenger) {
+      print("ENTERED INTO API - Adult");
+      addPassenger(p, p['gender'], p['typeLable']);
+    }
+
+    // Add children
+    for (var c in childpassenger) {
+      print("ENTERED INTO API - Child");
+      addPassenger(c, c['gender'], c['typeLable']);
+    }
+
+    // Add infants
+    for (var i in infantpassenger) {
+      print("ENTERED INTO API - Infant");
+      addPassenger(i, i['gender'], i['typeLable']);
+    }
+
+    // ================= API CALLS - one by one =================
+    for (var passengerData in passengersArrayData) {
+      print("Sending Passenger: $passengerData");
+
+      try {
+        final response = await _helper.post(
+          "passengers/create/",
+          passengerData, // send single passenger at a time
+        );
+        print("Passenger Added: ${jsonEncode(response)}");
+      } catch (e) {
+        print("Error adding passenger: $e");
+      }
+    }
+  }
+
+  // GET METHOD
+  Future<traveller.Selecttraveler> gettraveler() async {
+    final response = await _helper.get("passengers/create/");
+    print("SelecttravelerSelecttraveler$response");
+    // final decode = _helper.decodeBase64Response(response);
+    final decode = response;
+
+    print("addstatus response${jsonEncode(decode)}");
+    return traveller.selecttravelerdetailFromJson(decode);
+  }
+
+  // PATCH METHOD
+  Future<void> updatePassenger(
+      int passengerId, Map<String, dynamic> payload) async {
+    final response = await _helper.dio.patch(
+      "passengers/create/?id=$passengerId",
+      data: payload,
+    );
+    print("updatePassengerupdatePassenger$response");
+    // return response.statusCode == 200;
+  }
+
+  // ADDING PASSENGER ON THE SAME PAGE
+  Future<void> addSinglePassenger(Map<String, dynamic> payload) async {
+    final response = await _helper.post(
+      "passengers/create/",
+      payload,
+    );
+
+    debugPrint("Add Passenger Response: ${jsonEncode(response)}");
+  }
+
   //   DOWNLOAD TICKET
 
   Future<void> downloadTicket(String bookingId, String pnr) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     try {
+      // final url =
+      //     "http://192.168.0.7:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
       final url =
-          "http://192.168.0.6:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
+          "https://dev-api.trvlus.com/api/ticket-download/$bookingId/$pnr/$tokenId";
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -2243,8 +2449,10 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     try {
+      // final url =
+      //     "http://192.168.0.7:8000/api/invoice-download/$bookingId/$pnr/$tokenId";
       final url =
-          "http://192.168.0.9:8000/api/invoice-download/$bookingId/$pnr/$tokenId";
+          "https://dev-api.trvlus.com/api/invoice-download/$bookingId/$pnr/$tokenId";
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {

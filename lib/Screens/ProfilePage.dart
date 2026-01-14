@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,15 +10,22 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/Home_Page.dart';
 import 'package:trvlus/Screens/customer_support.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/countrycode.dart';
 import '../models/getprofile.dart';
 import '../utils/api_service.dart';
 import 'BookingHistory.dart';
+import 'EditProfile.dart';
+import 'Mobile_Verification.dart';
 import 'NotificationScreen.dart';
+import 'countryCode.dart';
+import 'legal.dart';
 
 class ProfilePage extends StatefulWidget {
+  final bool? islogin;
+
+  ProfilePage({super.key, this.islogin});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -28,92 +36,101 @@ class _ProfilePageState extends State<ProfilePage> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
+  bool isImageLoading = false;
+
   late Countrycode countrycode;
   late Getprofile profile;
-  String? uploadResult;
+
+  bool _hasUserId = false;
+  bool isNotificationsEnabled = true;
+
+  String _selectedCountry = "India";
+  String _selectedFlag = "🇮🇳";
+  String _selectedcurrency = "INR ₹";
 
   @override
   void initState() {
-    print("Profile PAge");
     super.initState();
     _checkUserId();
-    // getcountryCodeData();
-    // userprofileupdation();
+    getcountryCodeData();
+    userprofileupdation(true);
   }
-
-  // userprofileupdation() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final userId = prefs.getString('user_id');
-  //   setState(() {
-  //     isLoading = true;
-  //   });
-  //   profile = await ApiService().getprofileupdate(userId);
-  //   print("ffffffffff");
-  //   print(profile.data.userImage);
-  //   setState(() {
-  //     isLoading = false;
-  //   });
-  // }
-
-  // getcountryCodeData() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   setState(() {
-  //     isLoading = true;
-  //   });
-  //   countrycode = (await ApiService().countryCode())!;
-  //   _selectedCountry = prefs.getString('selected_country') ?? "India";
-  //   _selectedcurrency = prefs.getString('selected_currency') ?? "INR";
-  //   print("countrycodecountrycodecountrycode$countrycode");
-  // }
 
   Future<void> _checkUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id'); // use same key you stored
-    print("User ID: $userId"); // ✅ Will print correctly
+    final userId = prefs.getString('user_id');
+    print("userId$userId");
+
     setState(() {
       _hasUserId = userId != null && userId.isNotEmpty;
     });
   }
 
-  // Future<void> _pickImage(ImageSource source) async {
-  //   final pickedFile = await _picker.pickImage(source: source);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _image = File(pickedFile.path);
-  //       print("IMAGEIMAGEIMAGE$_image");
-  //       print(
-  //           "Selected photo for upload: ${pickedFile.name} (path: ${pickedFile.path})");
-  //     });
-  //     try {
-  //       final prefs = await SharedPreferences.getInstance();
-  //       final userId = prefs.getString('user_id');
-  //       final uploadResult =
-  //           await ApiService().userprofileupdate(userId!, _image!.path);
+  userprofileupdation(load) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    if (userId == null || userId.isEmpty) return;
+
+    setState(() => isLoading = load);
+    try {
+      profile = await ApiService().getprofileupdate(userId);
+      print("profileget${jsonEncode(profile)}");
+    } catch (e) {
+      print("Profile API error: $e");
+    }
+    setState(() => isLoading = false);
+  }
+
+  // String getProfileImageUrl(String? url) {
+  //   if (url == null || url.isEmpty) return "";
   //
-  //       final serverImageUrl = uploadResult.data?.userImage;
+  //   // If the URL already starts with http, return as is
+  //   if (url.startsWith("http")) return url;
   //
-  //       if (serverImageUrl != null) {
-  //         setState(() {
-  //           profile.data.userImage = serverImageUrl; // update UI immediately
-  //         });
-  //       }
-  //
-  //       ScaffoldMessenger.of(context)
-  //           .showSnackBar(SnackBar(content: Text('Profile photo updated!')));
-  //     } catch (e) {
-  //       print("Upload error: $e");
-  //       ScaffoldMessenger.of(context)
-  //           .showSnackBar(SnackBar(content: Text('Upload failed: $e')));
-  //     }
-  //   }
+  //   // Otherwise, add your backend base URL
+  //   return "http://192.168.0.4:8000/api/$url";
   // }
 
-  bool isNotificationsEnabled = true;
-  bool _hasUserId = false;
+  Future<void> _pickImage(ImageSource source) async {
+    if (!_hasUserId) return;
 
-  String _selectedCountry = "India"; // default
-  String _selectedFlag = "🇮🇳";
-  String _selectedcurrency = "INR ₹";
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile == null) return;
+
+    setState(() {
+      _image = File(pickedFile.path);
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      final uploadResult =
+          await ApiService().userprofileupdate(userId!, _image!.path);
+      userprofileupdation(false);
+
+      final serverImageUrl = uploadResult.data?.userImages;
+
+      // if (serverImageUrl != null) {
+      //   setState(() {
+      //     profile.data.userImage = serverImageUrl;
+      //   });
+      // }
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Profile photo updated')));
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    }
+  }
+
+  getcountryCodeData() async {
+    final prefs = await SharedPreferences.getInstance();
+    countrycode = (await ApiService().countryCode())!;
+    _selectedCountry = prefs.getString('selected_country') ?? "India";
+    _selectedcurrency = prefs.getString('selected_currency') ?? "INR";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,15 +143,17 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Scaffold(
         body: isLoading
             ? Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: Colors.deepOrange,
+                ),
               )
             : CustomScrollView(
                 slivers: [
                   SliverAppBar(
                     backgroundColor: Colors.white,
                     centerTitle: true,
-                    // toolbarHeight: 280.h,
-                    toolbarHeight: 60.h,
+                    toolbarHeight: _hasUserId ? 280.h : 220.h,
+                    // toolbarHeight: 60.h,
                     automaticallyImplyLeading: false,
                     flexibleSpace: FlexibleSpaceBar(
                       centerTitle: true,
@@ -182,259 +201,321 @@ class _ProfilePageState extends State<ProfilePage> {
                             SizedBox(
                               height: 5.h,
                             ),
-                            // Container(
-                            //   width: double.infinity,
-                            //   padding: EdgeInsets.symmetric(vertical: 0),
-                            //   decoration: BoxDecoration(
-                            //       /* gradient: LinearGradient(
-                            //   colors: [Colors.orange.shade200, Colors.orange.shade100],
-                            //   begin: Alignment.topCenter,
-                            //   end: Alignment.bottomCenter,
-                            // ),*/
-                            //       ),
-                            //   child: Column(
-                            //     crossAxisAlignment: CrossAxisAlignment.center,
-                            //     children: [
-                            //       Stack(
-                            //         clipBehavior: Clip.none,
-                            //         children: [
-                            //           GestureDetector(
-                            //             onTap: () {
-                            //               // Open a bottom sheet for camera/gallery choice
-                            //               showModalBottomSheet(
-                            //                 context: context,
-                            //                 builder: (context) {
-                            //                   return Wrap(
-                            //                     children: [
-                            //                       ListTile(
-                            //                         leading: Icon(
-                            //                             Icons.photo_library),
-                            //                         title: Text(
-                            //                             'Pick from Gallery'),
-                            //                         onTap: () {
-                            //                           Navigator.pop(context);
-                            //                           _pickImage(
-                            //                               ImageSource.gallery);
-                            //                         },
-                            //                       ),
-                            //                       ListTile(
-                            //                         leading:
-                            //                             Icon(Icons.camera_alt),
-                            //                         title: Text('Take a Photo'),
-                            //                         onTap: () {
-                            //                           Navigator.pop(context);
-                            //                           _pickImage(
-                            //                               ImageSource.camera);
-                            //                         },
-                            //                       ),
-                            //                     ],
-                            //                   );
-                            //                 },
-                            //               );
-                            //             },
-                            //             child: Container(
-                            //               height: 65.h,
-                            //               width: 58.w,
-                            //               child: CircleAvatar(
-                            //                 radius: 25.r,
-                            //                 backgroundImage: _image != null
-                            //                     ? FileImage(_image!)
-                            //                         as ImageProvider
-                            //                     : NetworkImage(
-                            //                         profile.data.userImage),
-                            //                 child: _image == null &&
-                            //                         (profile
-                            //                             .data.userImage.isEmpty)
-                            //                     ? Icon(Icons.person,
-                            //                         size: 40,
-                            //                         color: Colors.grey)
-                            //                     : null,
-                            //                 backgroundColor: Colors.white,
-                            //               ),
-                            //             ),
-                            //           ),
-                            //           Positioned(
-                            //             left: 40.w,
-                            //             top: 30.h,
-                            //             child: Image.asset(
-                            //                 "assets/images/EditProfile.png"),
-                            //           ),
-                            //         ],
-                            //       ),
-                            //       SizedBox(height: 10.h),
-                            //       GestureDetector(
-                            //         onTap: () {
-                            //           Navigator.push(
-                            //               context,
-                            //               MaterialPageRoute(
-                            //                   builder: (context) =>
-                            //                       const countryCode()));
-                            //         },
-                            //         child: Text(
-                            //           "${profile.data.firstName} ${profile.data.lastName}",
-                            //           style: TextStyle(
-                            //               fontFamily: 'Inter',
-                            //               fontSize: 18.sp,
-                            //               fontWeight: FontWeight.bold,
-                            //               color: Colors.black),
-                            //         ),
-                            //       ),
-                            //       SizedBox(height: 10.h),
-                            //       Text(
-                            //         profile.data.mobile,
-                            //         style: TextStyle(
-                            //             fontSize: 12.sp, color: Colors.grey),
-                            //       ),
-                            //       SizedBox(height: 10.h),
-                            //       Row(
-                            //         mainAxisAlignment: MainAxisAlignment.center,
-                            //         children: [
-                            //           SizedBox(width: 7.w),
-                            //           GestureDetector(
-                            //             onTap: () async {
-                            //               final selected =
-                            //                   await showModalBottomSheet<
-                            //                       Map<String, String>>(
-                            //                 context: context,
-                            //                 shape: const RoundedRectangleBorder(
-                            //                   borderRadius: BorderRadius.only(
-                            //                     topLeft: Radius.circular(5),
-                            //                     topRight: Radius.circular(5),
-                            //                   ),
-                            //                 ),
-                            //                 builder: (BuildContext context) {
-                            //                   return const countryCode(
-                            //                       type: "country");
-                            //                 },
-                            //               );
-                            //
-                            //               if (selected != null) {
-                            //                 print(
-                            //                     "Selected Country Map: $selected");
-                            //
-                            //                 setState(() {
-                            //                   _selectedCountry =
-                            //                       selected["name"]!;
-                            //                   _selectedFlag = selected["flag"]!;
-                            //                   _selectedcurrency = selected[
-                            //                       "currency"]!; // ✅ updates currency too
-                            //                 });
-                            //
-                            //                 final prefs =
-                            //                     await SharedPreferences
-                            //                         .getInstance();
-                            //                 await prefs.setString(
-                            //                     'selected_country',
-                            //                     _selectedCountry);
-                            //                 await prefs.setString(
-                            //                     'selected_flag', _selectedFlag);
-                            //                 await prefs.setString(
-                            //                     'selected_currency',
-                            //                     _selectedcurrency);
-                            //               }
-                            //             },
-                            //             child: Row(
-                            //               children: [
-                            //                 Image.asset(
-                            //                   'assets/flag/$_selectedCountry.png',
-                            //                   width: 20,
-                            //                   height: 20,
-                            //                 ),
-                            //                 SizedBox(width: 5),
-                            //                 Text(
-                            //                   _selectedCountry,
-                            //                   style: TextStyle(
-                            //                       color: Colors.black,
-                            //                       fontSize: 14.sp),
-                            //                 ),
-                            //               ],
-                            //             ),
-                            //           ),
-                            //           SizedBox(width: 7.w),
-                            //           const Text("|"),
-                            //           SizedBox(width: 8.w),
-                            //           GestureDetector(
-                            //             onTap: () async {
-                            //               final selectedCurrency =
-                            //                   await showModalBottomSheet<
-                            //                       Map<String, String>>(
-                            //                 context: context,
-                            //                 shape: const RoundedRectangleBorder(
-                            //                   borderRadius: BorderRadius.only(
-                            //                     topLeft: Radius.circular(5),
-                            //                     topRight: Radius.circular(5),
-                            //                   ),
-                            //                 ),
-                            //                 builder: (BuildContext context) {
-                            //                   return const countryCode(); // type defaults to currency
-                            //                 },
-                            //               );
-                            //
-                            //               if (selectedCurrency != null) {
-                            //                 setState(() {
-                            //                   _selectedCountry = selectedCurrency[
-                            //                       "name"]!; // optional: if you want country update too
-                            //                   _selectedFlag =
-                            //                       selectedCurrency["flag"]!;
-                            //                   _selectedcurrency = selectedCurrency[
-                            //                       "currency"]!; // ✅ extract string
-                            //                 });
-                            //
-                            //                 final prefs =
-                            //                     await SharedPreferences
-                            //                         .getInstance();
-                            //                 await prefs.setString(
-                            //                     'selected_country',
-                            //                     _selectedCountry);
-                            //                 await prefs.setString(
-                            //                     'selected_flag', _selectedFlag);
-                            //                 await prefs.setString(
-                            //                     'selected_currency',
-                            //                     _selectedcurrency);
-                            //                 print(
-                            //                     "Saved selected currency: $_selectedcurrency");
-                            //               }
-                            //             },
-                            //             child: Text(
-                            //               _selectedcurrency ??
-                            //                   "Select Currency",
-                            //               style: TextStyle(
-                            //                   fontSize: 14.sp,
-                            //                   color: Colors.black),
-                            //             ),
-                            //           ),
-                            //           SizedBox(width: 10.w),
-                            //           Image.asset(
-                            //               "assets/images/TraingleBlack.png"),
-                            //         ],
-                            //       ),
-                            //       SizedBox(height: 15.h),
-                            //       ElevatedButton(
-                            //         onPressed: () async {
-                            //           final prefs =
-                            //               await SharedPreferences.getInstance();
-                            //           final userId = prefs.getString('user_id');
-                            //           await Get.to(EditProfilePage());
-                            //           profile = await ApiService()
-                            //               .getprofileupdate(userId);
-                            //         },
-                            //         style: ElevatedButton.styleFrom(
-                            //           backgroundColor: Color(0xFFF37023),
-                            //           shape: RoundedRectangleBorder(
-                            //             borderRadius: BorderRadius.circular(10),
-                            //           ),
-                            //         ),
-                            //         child: Text(
-                            //           "Edit Profile",
-                            //           style: TextStyle(
-                            //             fontSize: 12.sp,
-                            //             fontFamily: 'Inter',
-                            //           ),
-                            //         ),
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
+                            if (_hasUserId) ...[
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(vertical: 0),
+                                decoration: BoxDecoration(
+                                    /* gradient: LinearGradient(
+                              colors: [Colors.orange.shade200, Colors.orange.shade100],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),*/
+                                    ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              builder: (context) {
+                                                return Wrap(
+                                                  children: [
+                                                    ListTile(
+                                                      leading: Icon(
+                                                          Icons.photo_library),
+                                                      title: Text(
+                                                          'Pick from Gallery'),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        _pickImage(ImageSource
+                                                            .gallery);
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: Icon(
+                                                          Icons.camera_alt),
+                                                      title:
+                                                          Text('Take a Photo'),
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        _pickImage(
+                                                            ImageSource.camera);
+                                                      },
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          child: Container(
+                                            height: 65.h,
+                                            width: 58.w,
+                                            child: profile.data.userImages != ""
+                                                ? CircleAvatar(
+                                                    radius: 25.r,
+                                                    backgroundImage:
+                                                        NetworkImage(profile
+                                                            .data.userImages),
+                                                  )
+                                                : CircleAvatar(
+                                                    radius: 25.r,
+                                                    child: Icon(Icons.person),
+                                                  ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 40.w,
+                                          top: 30.h,
+                                          child: Image.asset(
+                                              "assets/images/EditProfile.png"),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 10.h),
+                                    Text(
+                                      "${profile.data.firstName} ${profile.data.lastName}",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 18.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black),
+                                    ),
+                                    SizedBox(height: 10.h),
+                                    Text(
+                                      profile.data.mobile,
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey),
+                                    ),
+                                    SizedBox(height: 10.h),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(width: 7.w),
+                                        GestureDetector(
+                                          onTap: () async {
+                                            final selected =
+                                                await showModalBottomSheet<
+                                                    Map<String, String>>(
+                                              context: context,
+                                              shape:
+                                                  const RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(5),
+                                                  topRight: Radius.circular(5),
+                                                ),
+                                              ),
+                                              builder: (BuildContext context) {
+                                                return const countryCode(
+                                                    type: "country");
+                                              },
+                                            );
+
+                                            if (selected != null) {
+                                              print(
+                                                  "Selected Country Map: $selected");
+
+                                              setState(() {
+                                                _selectedCountry =
+                                                    selected["name"]!;
+                                                _selectedFlag =
+                                                    selected["flag"]!;
+                                                _selectedcurrency = selected[
+                                                    "currency"]!; // ✅ updates currency too
+                                              });
+
+                                              final prefs =
+                                                  await SharedPreferences
+                                                      .getInstance();
+                                              await prefs.setString(
+                                                  'selected_country',
+                                                  _selectedCountry);
+                                              await prefs.setString(
+                                                  'selected_flag',
+                                                  _selectedFlag);
+                                              await prefs.setString(
+                                                  'selected_currency',
+                                                  _selectedcurrency);
+                                            }
+                                          },
+                                          child: Row(
+                                            children: [
+                                              Image.asset(
+                                                'assets/flag/$_selectedCountry.png',
+                                                width: 20,
+                                                height: 20,
+                                              ),
+                                              SizedBox(width: 5),
+                                              Text(
+                                                _selectedCountry,
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14.sp),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(width: 7.w),
+                                        const Text("|"),
+                                        SizedBox(width: 8.w),
+                                        GestureDetector(
+                                          onTap: () async {
+                                            final selectedCurrency =
+                                                await showModalBottomSheet<
+                                                    Map<String, String>>(
+                                              context: context,
+                                              shape:
+                                                  const RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(5),
+                                                  topRight: Radius.circular(5),
+                                                ),
+                                              ),
+                                              builder: (BuildContext context) {
+                                                return const countryCode(); // type defaults to currency
+                                              },
+                                            );
+
+                                            if (selectedCurrency != null) {
+                                              setState(() {
+                                                _selectedCountry = selectedCurrency[
+                                                    "name"]!; // optional: if you want country update too
+                                                _selectedFlag =
+                                                    selectedCurrency["flag"]!;
+                                                _selectedcurrency =
+                                                    selectedCurrency[
+                                                        "currency"]!; // ✅ extract string
+                                              });
+
+                                              final prefs =
+                                                  await SharedPreferences
+                                                      .getInstance();
+                                              await prefs.setString(
+                                                  'selected_country',
+                                                  _selectedCountry);
+                                              await prefs.setString(
+                                                  'selected_flag',
+                                                  _selectedFlag);
+                                              await prefs.setString(
+                                                  'selected_currency',
+                                                  _selectedcurrency);
+                                              print(
+                                                  "Saved selected currency: $_selectedcurrency");
+                                            }
+                                          },
+                                          child: Text(
+                                            _selectedcurrency ??
+                                                "Select Currency",
+                                            style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: Colors.black),
+                                          ),
+                                        ),
+                                        SizedBox(width: 10.w),
+                                        Image.asset(
+                                            "assets/images/TraingleBlack.png"),
+                                      ],
+                                    ),
+                                    SizedBox(height: 15.h),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        final prefs = await SharedPreferences
+                                            .getInstance();
+                                        final userId =
+                                            prefs.getString('user_id');
+                                        await Get.to(EditProfilePage());
+                                        profile = await ApiService()
+                                            .getprofileupdate(userId);
+                                        setState(() {});
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xFFF37023),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "Edit Profile",
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontFamily: 'Inter',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              const CircleAvatar(
+                                radius: 35,
+                                child: Icon(Icons.person, size: 40),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                "Guest User",
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await Get.to(MobileVerificationScreen(
+                                      flight: '',
+                                      city: '',
+                                      destination: '',
+                                      airlineName: '',
+                                      airlineCode: '',
+                                      flightNumber: '',
+                                      cityName: '',
+                                      cityCode: '',
+                                      descityName: '',
+                                      descityCode: '',
+                                      depDate: '',
+                                      depTime: '',
+                                      arrDate: '',
+                                      arrTime: '',
+                                      duration: '',
+                                      refundable: '',
+                                      stop: '',
+                                      airportName: '',
+                                      desairportName: '',
+                                      basefare: 0,
+                                      segments: [],
+                                      resultindex: '',
+                                      traceid: '',
+                                      total: '',
+                                      tax: 0,
+                                      adultCount: 0,
+                                      childCount: 0,
+                                      infantCount: 0,
+                                      // BY GOPAL
+                                      isLLC: false,
+                                      outdepDate: '',
+                                      outdepTime: '',
+                                      outarrDate: '',
+                                      outarrTime: '',
+                                      indepDate: '',
+                                      indepTime: '',
+                                      inarrDate: '',
+                                      inarrTime: '',
+                                      outBoundData: {},
+                                      inBoundData: {},
+                                      outresultindex: '',
+                                      inresultindex: '',
+                                      segmentsJson: [],
+                                      islogin: false));
+                                  _checkUserId();
+                                  userprofileupdation(true);
+                                },
+                                child: const Text("Login Account"),
+                              ),
+                            ],
                           ],
                         ),
                       )),
@@ -493,57 +574,54 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: buildListTile(
                               "assets/icon/contacts.svg", "Help & Support"),
                         ),
+                        // GestureDetector(
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (_) => Tearmsandcondition(),
+                        //       ),
+                        //     );
+                        //   },
+                        //   child: buildListTile("assets/icon/T&C.svg", "T&C"),
+                        // ),
+                        // GestureDetector(
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (_) => PrivacyPolicyScreen(),
+                        //       ),
+                        //     );
+                        //   },
+                        //   child: buildListTile(
+                        //     "assets/icon/privacypolicy.svg",
+                        //     "Privacy Policy",
+                        //   ),
+                        // ),
+                        // GestureDetector(
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (_) => Refundpolicy(),
+                        //       ),
+                        //     );
+                        //   },
+                        //   child: buildListTile(
+                        //       "assets/icon/refundpolicy.svg", "Refund Policy"),
+                        // ),
                         GestureDetector(
-                          onTap: () async {
-                            print("tapping here now browser");
-                            final url = Uri.parse(
-                                "https://dev.trvlus.com/terms-conditions");
-                            try {
-                              await launchUrl(url,
-                                  mode: LaunchMode
-                                      .externalNonBrowserApplication // Opens in default browser (e.g., Chrome)
-                                  );
-                            } catch (e) {
-                              print("Could not launch $url: $e");
-                            }
-                          },
-                          child: buildListTile("assets/icon/T&C.svg", "T&C"),
-                        ),
-                        GestureDetector(
-                          onTap: () async {
-                            print("tapping here now browser");
-                            final url = Uri.parse(
-                                "https://dev.trvlus.com/privacy-policy");
-                            try {
-                              await launchUrl(url,
-                                  mode: LaunchMode
-                                      .externalNonBrowserApplication // Opens in default browser (e.g., Chrome)
-                                  );
-                            } catch (e) {
-                              print("Could not launch $url: $e");
-                            }
-                          },
-                          child: buildListTile(
-                            "assets/icon/privacypolicy.svg",
-                            "Privacy Policy",
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () async {
-                            print("tapping here now browser");
-                            final url =
-                                Uri.parse("https://dev.trvlus.com/refund");
-                            try {
-                              await launchUrl(url,
-                                  mode: LaunchMode
-                                      .externalNonBrowserApplication // Opens in default browser (e.g., Chrome)
-                                  );
-                            } catch (e) {
-                              print("Could not launch $url: $e");
-                            }
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const Legal(),
+                              ),
+                            );
                           },
                           child: buildListTile(
-                              "assets/icon/refundpolicy.svg", "Refund Policy"),
+                              "assets/icon/legalpolicy.svg", "Legal Policy"),
                         ),
                         GestureDetector(
                             onTap: () => _onShareXFileFromAssets(context),

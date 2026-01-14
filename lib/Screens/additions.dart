@@ -393,7 +393,7 @@ class _AdditionsState extends State<Additions> {
                 selectedindex == 0
                     ? buildBaggage()
                     : selectedindex == 1
-                        ? buildseat()
+                        ? Expanded(child: buildseat())
                         : (ssrData.response != null &&
                                 ssrData.response!.mealDynamic != null &&
                                 ssrData.response!.mealDynamic.isNotEmpty &&
@@ -427,7 +427,7 @@ class _AdditionsState extends State<Additions> {
                                   ],
                                 ),
                               )
-                            : const SizedBox(),
+                            : const SizedBox.shrink(),
               ],
             ));
   }
@@ -1105,10 +1105,14 @@ class _AdditionsState extends State<Additions> {
   }
 
   buildseat() {
-    return Container(
-        height: MediaQuery.sizeOf(context).height * 0.7,
+    return SizedBox(
+        height: MediaQuery.sizeOf(context).height,
         width: MediaQuery.sizeOf(context).width,
         child: SeatSelectionScreen(
-            traceid: widget.traceid, resultindex: widget.resultindex));
+            traceid: widget.traceid,
+            resultindex: widget.resultindex,
+            adultCount: widget.adultCount,
+            childCount: widget.childCount,
+            infantCount: widget.infantCount));
   }
 }

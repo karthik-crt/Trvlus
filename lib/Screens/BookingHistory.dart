@@ -124,6 +124,12 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                       print("HISTORY BOOKING HISTORY");
                       print(booking.passengerDetails.length);
                       print(booking.journeyList.first.noofstop);
+                      print("BOOKING status");
+                      print(booking.status);
+                      print("customerStatus");
+                      print(booking.customerStatus);
+                      print("BOOKING HISTORY HISTORY");
+                      // print(booking.journeyList[index].duration);
                       // print(booking.passengerDetails.first.baggage.length);
                       // print(booking.passengerDetails.first.baggage);
                       final create = booking.createdAt;
@@ -260,12 +266,17 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             booking
@@ -310,11 +321,12 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                     children: [
                                       Row(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.end,
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            booking
-                                                .journeyList.first.toCityName,
+                                            booking.journeyList.last.toCityName,
                                             style: TextStyle(
                                               fontSize: 14.sp,
                                               fontWeight: FontWeight.bold,
@@ -323,8 +335,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                           ),
                                           SizedBox(width: 4.w),
                                           Text(
-                                            booking.journeyList.first
-                                                .toAirportCode,
+                                            booking
+                                                .journeyList.last.toAirportCode,
                                             style: TextStyle(
                                               fontSize: 12.sp,
                                               color: Colors.grey,
@@ -337,7 +349,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                         child: Text(
                                           textAlign: TextAlign.end,
                                           booking
-                                              .journeyList.first.toAirportName,
+                                              .journeyList.last.toAirportName,
                                           style: TextStyle(fontSize: 12.sp),
                                         ),
                                       ),
@@ -386,7 +398,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                     ),
                                     Column(
                                       children: [
-                                        Text(booking.journeyList.first.duration,
+                                        Text(
+                                            booking
+                                                .journeyList.first.durationTime,
                                             style: TextStyle(fontSize: 12.sp)),
                                         Image.asset(
                                             'assets/images/flightDetails.png'),
@@ -484,10 +498,52 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                 BorderRadius.circular(15.r),
                                           ),
                                           child: Text(
-                                            (booking.status ?? "CONFIRMEDD")
+                                            (booking.status ?? "")
                                                 .toUpperCase(),
                                             style: TextStyle(
-                                              color: const Color(0xFF138808),
+                                              color: [
+                                                "FAILED",
+                                              ].contains((booking.status ?? "")
+                                                      .toUpperCase())
+                                                  ? Colors.red
+                                                  : const Color(0xFF138808),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10.sp,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Customer Status",
+                                            style: TextStyle(fontSize: 12.sp)),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 10.w, vertical: 5.h),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFDEF6DB),
+                                            borderRadius:
+                                                BorderRadius.circular(15.r),
+                                          ),
+                                          child: Text(
+                                            (booking.customerStatus ?? "")
+                                                .toUpperCase(),
+                                            style: TextStyle(
+                                              color: [
+                                                "FAILED",
+                                                "CANCELLED"
+                                              ].contains(
+                                                      (booking.customerStatus ??
+                                                              "")
+                                                          .toUpperCase())
+                                                  ? Colors.red
+                                                  : const Color(0xFF138808),
                                               fontWeight: FontWeight.bold,
                                               fontSize: 10.sp,
                                             ),
@@ -515,6 +571,15 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                       var pnr = booking.pnr.toString();
                                       print("DOWNLOAD API CALLING");
 
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text("Ticket is downloading…"),
+                                          duration: Duration(seconds: 3),
+                                        ),
+                                      );
+
                                       await ApiService()
                                           .downloadTicket(bookingID, pnr);
 
@@ -537,6 +602,15 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                       var bookingID =
                                           booking.bookingId.toString();
                                       var pnr = booking.pnr.toString();
+
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text("Invoice is downloading…"),
+                                          duration: Duration(seconds: 3),
+                                        ),
+                                      );
                                       await ApiService()
                                           .downloadInvoice(bookingID, pnr);
                                       print("Download Invoice tapped");
@@ -556,7 +630,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                     Container(
                                       padding: const EdgeInsets.all(5),
                                       height: 55,
-                                      width: 300,
+                                      width: MediaQuery.sizeOf(context).width,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
                                         color: const Color(0xFFFFE9DD),
@@ -923,9 +997,16 @@ Widget _buildTextField1(
 
 Future<bool> requestStoragePermission() async {
   var status = await Permission.storage.status;
-  if (!status.isGranted) {
-    status = await Permission.storage.request();
+
+  if (status.isGranted) return true;
+
+  if (status.isPermanentlyDenied) {
+    // User denied forever → open app settings
+    await openAppSettings();
+    return false;
   }
+
+  status = await Permission.storage.request();
   return status.isGranted;
 }
 

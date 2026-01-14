@@ -13,6 +13,7 @@ import '../utils/api_service.dart';
 import '../utils/constant.dart';
 import 'DotDivider.dart';
 import 'FlightDetailsPage.dart';
+import 'Search_Result_Page.dart';
 
 // Global variables (consider moving to state management if the app grows)
 String departureTime = "";
@@ -72,6 +73,19 @@ class _LocalroundtripState extends State<Localroundtrip> {
   int childCount = children;
 
   int infantCount = infants; // Track selected inbound flight
+
+  // FILTER
+  late List<Map<String, dynamic>> uniqueAirlines;
+  String? _selectedAirlineCode;
+  int? _selectedStops; // null = no stops filter
+  bool _hideNonRefundable =
+  false; // false = show all (including non-refundable)
+  String?
+  _selectedDepartureTimeRange; // e.g., "Before 6 AM", "6 AM-12 Noon", etc.
+  String? _selectedArrivalTimeRange;
+  String? filterorigin;
+  String? filterdestination;
+
   getCommissionData() async {
     setState(() {
       isLoading = true;
@@ -106,6 +120,27 @@ class _LocalroundtripState extends State<Localroundtrip> {
         infantCount);
     outbound = searchData.response.results.first;
     inbound = searchData.response.results.last;
+
+    // Compute unique airlines(FILTER AIRLINES)
+    Set<String> codes = <String>{};
+    uniqueAirlines = [
+      {"name": "All Airlines", "code": null, "logo": "", "price": ""}
+    ];
+    for (var group in [outbound, inbound]) {
+      for (int j = 0; j < group.length; j++) {
+        String code = group[j].segments.first.first.airline.airlineCode;
+        if (!codes.contains(code)) {
+          codes.add(code);
+          String name = group[j].segments.first.first.airline.airlineName;
+          uniqueAirlines.add({
+            "name": name,
+            "code": code,
+            "logo": "assets/${code}.gif",
+            "price": ""
+          });
+        }
+      }
+    }
 
 // Set default selected flights
     if (outbound.isNotEmpty) {
@@ -146,9 +181,149 @@ class _LocalroundtripState extends State<Localroundtrip> {
     });
   }
 
+  int get currentSelectedIndex {
+    if (_selectedAirlineCode == null) return 0;
+    for (int i = 1; i < uniqueAirlines.length; i++) {
+      if (uniqueAirlines[i]["code"] == _selectedAirlineCode) return i;
+    }
+    return 0;
+  }
+
+  List<Result> getFilteredOutbound() {
+    var filtered = outbound.where((flight) {
+      if (_selectedAirlineCode != null) {
+        if (flight.segments.first.first.airline.airlineCode !=
+            _selectedAirlineCode) return false;
+      }
+      if (_selectedStops != null) {
+        int stops = flight.segments.first.length - 1;
+        if (_selectedStops! >= 2) return stops >= 2;
+        return stops == _selectedStops!;
+      }
+      if (_hideNonRefundable) {
+        return flight.isRefundable == true;
+      }
+      if (_selectedDepartureTimeRange != null &&
+          _selectedDepartureTimeRange!.isNotEmpty) {
+        DateTime depTime = flight.segments.first.first.origin.depTime.toLocal();
+        int hour = depTime.hour;
+        bool matches = false;
+        switch (_selectedDepartureTimeRange) {
+          case "Before 6 AM":
+            matches = hour < 6;
+            break;
+          case "6 AM-12 Noon":
+            matches = hour >= 6 && hour < 12;
+            break;
+          case "12 Noon-6 PM":
+            matches = hour >= 12 && hour < 18;
+            break;
+          case "6 PM-12 Midnight":
+            matches = hour >= 18;
+            break;
+        }
+        if (!matches) return false;
+      }
+      if (_selectedArrivalTimeRange != null &&
+          _selectedArrivalTimeRange!.isNotEmpty) {
+        DateTime arrTime = flight.segments.first.last.destination.arrTime
+            .toLocal();
+        int hour = arrTime.hour;
+        bool matches = false;
+        switch (_selectedArrivalTimeRange) {
+          case "Before 6 AM":
+            matches = hour < 6;
+            break;
+          case "6 AM-12 Noon":
+            matches = hour >= 6 && hour < 12;
+            break;
+          case "12 Noon-6 PM":
+            matches = hour >= 12 && hour < 18;
+            break;
+          case "6 PM-12 Midnight":
+            matches = hour >= 18;
+            break;
+        }
+        if (!matches) return false;
+      }
+      return true;
+    }).toList();
+    if (filtered.isNotEmpty) {
+      filterorigin =
+          filtered.first.segments.first.first.origin.airport.cityName;
+      filterdestination =
+          filtered.last.segments.last.last.destination.airport.cityName;
+    }
+    return filtered;
+  }
+
+  List<Result> getFilteredInbound() {
+    var filtered = inbound.where((flight) {
+      if (_selectedAirlineCode != null) {
+        if (flight.segments.first.first.airline.airlineCode !=
+            _selectedAirlineCode) return false;
+      }
+      if (_selectedStops != null) {
+        int stops = flight.segments.first.length - 1;
+        if (_selectedStops! >= 2) return stops >= 2;
+        return stops == _selectedStops!;
+      }
+      if (_hideNonRefundable) {
+        return flight.isRefundable == true;
+      }
+      if (_selectedDepartureTimeRange != null &&
+          _selectedDepartureTimeRange!.isNotEmpty) {
+        DateTime depTime = flight.segments.first.first.origin.depTime.toLocal();
+        int hour = depTime.hour;
+        bool matches = false;
+        switch (_selectedDepartureTimeRange) {
+          case "Before 6 AM":
+            matches = hour < 6;
+            break;
+          case "6 AM-12 Noon":
+            matches = hour >= 6 && hour < 12;
+            break;
+          case "12 Noon-6 PM":
+            matches = hour >= 12 && hour < 18;
+            break;
+          case "6 PM-12 Midnight":
+            matches = hour >= 18;
+            break;
+        }
+        if (!matches) return false;
+      }
+      if (_selectedArrivalTimeRange != null &&
+          _selectedArrivalTimeRange!.isNotEmpty) {
+        DateTime arrTime = flight.segments.first.last.destination.arrTime
+            .toLocal();
+        int hour = arrTime.hour;
+        bool matches = false;
+        switch (_selectedArrivalTimeRange) {
+          case "Before 6 AM":
+            matches = hour < 6;
+            break;
+          case "6 AM-12 Noon":
+            matches = hour >= 6 && hour < 12;
+            break;
+          case "12 Noon-6 PM":
+            matches = hour >= 12 && hour < 18;
+            break;
+          case "6 PM-12 Midnight":
+            matches = hour >= 18;
+            break;
+        }
+        if (!matches) return false;
+      }
+      return true;
+    }).toList();
+    return filtered;
+  }
+
   @override
   void initState() {
     super.initState();
+    filterorigin = widget.fromAirport;
+    filterdestination = widget.toAirport;
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
           ScrollDirection.forward &&
@@ -177,6 +352,11 @@ class _LocalroundtripState extends State<Localroundtrip> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredOutbound = getFilteredOutbound();
+    final filteredInbound = getFilteredInbound();
+    final currentFiltered = selectedBaggage == 0
+        ? filteredOutbound
+        : filteredInbound;
     return isLoading
         ? Scaffold(
       body: Center(
@@ -772,6 +952,30 @@ class _LocalroundtripState extends State<Localroundtrip> {
           child: CircularProgressIndicator(
             color: Color(0xFFF37023),
           ))
+          : currentFiltered.isEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              "assets/icon/noFlight.png",
+              height: 70,
+            ),
+            SizedBox(height: 10),
+            SizedBox(
+              width: 150,
+              child: Text(
+                "No flights are available for the selected date",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12),
+              ),
+            )
+          ],
+        ),
+      )
           : ListView(
         controller: _scrollController,
         children: [
@@ -789,10 +993,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: (selectedBaggage == 0
-                              ? outbound.length
-                              : inbound.length)
-                              .toString(),
+                          text: currentFiltered.length.toString(),
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14.sp,
@@ -815,63 +1016,88 @@ class _LocalroundtripState extends State<Localroundtrip> {
                   ),
                 ),
                 // FILTER
-                // Container(
-                //   height: 25.h,
-                //   child: ElevatedButton.icon(
-                //     onPressed: () {
-                //       showModalBottomSheet(
-                //         context: context,
-                //         isScrollControlled: true,
-                //         shape: RoundedRectangleBorder(
-                //           borderRadius: BorderRadius.vertical(
-                //               top: Radius.circular(16)),
-                //         ),
-                //         builder: (context) {
-                //           return Container(
-                //             height: 620.h,
-                //             child: FilterBottomSheet(),
-                //           );
-                //         },
-                //       );
-                //     },
-                //     icon: Image.asset(
-                //       'assets/images/Filter.png',
-                //       alignment: Alignment.center,
-                //       height: 12.h,
-                //       width: 12.w,
-                //     ),
-                //     label: Text(
-                //       "Filter",
-                //       style: TextStyle(
-                //         fontFamily: 'Inter',
-                //         fontSize: 10.sp,
-                //         color: Color(0xFF606060),
-                //       ),
-                //     ),
-                //     style: ElevatedButton.styleFrom(
-                //       backgroundColor: Colors.grey.shade100,
-                //       elevation: 3,
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(30.r),
-                //       ),
-                //       padding: EdgeInsets.symmetric(
-                //           vertical: 3.h, horizontal: 20.w),
-                //     ),
-                //   ),
-                // ),
+                Container(
+                  height: 25.h,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      var filterData = await showModalBottomSheet<
+                          Map<String, dynamic>>(
+                        context: context,
+                        isScrollControlled: true,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                        ),
+                        builder: (context) {
+                          return Container(
+                            height: 620.h,
+                            child: FilterBottomSheet(
+                                airlines: uniqueAirlines,
+                                currentSelectedIndex:
+                                currentSelectedIndex,
+                                filterorigin: filterorigin,
+                                filterdestination:
+                                filterdestination),
+                          );
+                        },
+                      );
+                      if (filterData != null) {
+                        setState(() {
+                          int airlineIndex =
+                              filterData['airlineIndex'] ?? 0;
+                          if (airlineIndex == 0) {
+                            _selectedAirlineCode = null;
+                          } else {
+                            _selectedAirlineCode =
+                            uniqueAirlines[airlineIndex]
+                            ['code'];
+                          }
+                          _selectedStops =
+                          filterData['stops']; // <-- ADD THIS
+                          _hideNonRefundable =
+                              filterData['hideNonRefundable'] ??
+                                  false;
+                          _selectedDepartureTimeRange =
+                          filterData['departureTime'];
+                          _selectedArrivalTimeRange =
+                          filterData['arrivalTime'];
+                        });
+                      }
+                    },
+                    icon: Image.asset(
+                      'assets/images/Filter.png',
+                      alignment: Alignment.center,
+                      height: 12.h,
+                      width: 12.w,
+                    ),
+                    label: Text(
+                      "Filter",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 10.sp,
+                        color: Color(0xFF606060),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade100,
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                          vertical: 3.h, horizontal: 20.w),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
           ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: selectedBaggage == 0
-                ? outbound.length
-                : inbound.length,
+            itemCount: currentFiltered.length,
             itemBuilder: (context, index) {
-              final flight = selectedBaggage == 0
-                  ? outbound[index]
-                  : inbound[index];
+              final flight = currentFiltered[index];
               int outBoundDuration =
                   flight.segments.first.first.duration;
               int hours = outBoundDuration ~/ 60;
@@ -1924,6 +2150,454 @@ class _FlightCardState extends State<FlightCard> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FilterBottomSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> airlines;
+  final int? currentSelectedIndex;
+  final bool initialHideNonRefundable; // <-- ADD
+  final String? filterorigin;
+  final String? filterdestination;
+
+  const FilterBottomSheet({
+    Key? key,
+    required this.airlines,
+    this.currentSelectedIndex,
+    this.initialHideNonRefundable = false, // <-- ADD
+    this.filterorigin,
+    this.filterdestination,
+  }) : super(key: key);
+
+  @override
+  _FilterBottomSheetState createState() => _FilterBottomSheetState();
+}
+
+class _FilterBottomSheetState extends State<FilterBottomSheet> {
+  bool hideNonRefundable = false;
+  int? selectedStops;
+  String departureTime = "";
+  String arrivalTime = "";
+
+  // final List<Map<String, String>> airlines = List.generate(
+  //   10,
+  //   (index) => {
+  //     "name": "Emirates",
+  //     "price": "₹500",
+  //     "logo": "assets/images/Emirates.png",
+  //   },
+  // );
+  int? selectedAirlineIndex;
+
+  int? get selectedStopsValue => selectedStops; // Expose for return
+  bool get hideNonRefundableValue => hideNonRefundable; // Expose for return
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    selectedAirlineIndex = widget.currentSelectedIndex;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        color: Colors.white,
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 16.h),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 10.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Filters",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20.sp,
+                            color: const Color(0xFF0A0A0A),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.black),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    //SizedBox(height: 8.h),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DotDivider(
+                        dotSize: 1.h, // Adjust size
+                        spacing: 2.r, // Adjust spacing
+                        dotCount: 103, // Adjust number of dots
+                        color: Colors.grey, // Adjust color
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+
+                    // "Hide non-refundable flights" switch
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Hide non-refundable flights",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.normal,
+                            fontSize: 16.sp,
+                            color: const Color(0xFF606060),
+                          ),
+                        ),
+                        Switch(
+                          value: hideNonRefundable,
+                          onChanged: (value) {
+                            setState(() {
+                              hideNonRefundable = value;
+                            });
+                          },
+                          activeColor: const Color(0xFFF37023),
+                        ),
+                      ],
+                    ),
+                    // SizedBox(height: 8.h),
+                    SizedBox(height: 8.h),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DotDivider(
+                        dotSize: 1.h, // Adjust size
+                        spacing: 2.r, // Adjust spacing
+                        dotCount: 103, // Adjust number of dots
+                        color: Colors.grey, // Adjust color
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+
+                    Text(
+                      "Stops",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                        color: const Color(0xFF909090),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        _buildChip("Non Stop", 0),
+                        _buildChip("1 Stop", 1),
+                        _buildChip("2+ Stops", 2),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 15.h,
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DotDivider(
+                        dotSize: 1.h,
+                        spacing: 2.r,
+                        dotCount: 103,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    Text(
+                      "DEPARTURE FROM ${widget.filterorigin}",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                        color: const Color(0xFF909090),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        _timeButton("Before 6 AM", "Before 6 AM"),
+                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
+                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+                    Text(
+                      "ARRIVAL AT ${widget.filterdestination}",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                        color: const Color(0xFF909090),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        _timeButton("Before 6 AM", "Before 6 AM",
+                            isArrival: true),
+                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon",
+                            isArrival: true),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM",
+                            isArrival: true),
+                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight",
+                            isArrival: true),
+                      ],
+                    ),
+                    SizedBox(height: 15.h),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DotDivider(
+                        dotSize: 1.h, // Adjust size
+                        spacing: 2.r, // Adjust spacing
+                        dotCount: 103, // Adjust number of dots
+                        color: Colors.grey, // Adjust color
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    Text(
+                      "AIRLINES",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF909090),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: widget.airlines.length,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          // All Airlines row
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.w),
+                            child: Row(
+                              children: [
+                                Transform.scale(
+                                  scale: 1.3,
+                                  child: Radio<int>(
+                                    value: 0,
+                                    groupValue: selectedAirlineIndex,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedAirlineIndex = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    widget.airlines[0]["name"]!,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                                // No price for "All"
+                              ],
+                            ),
+                          );
+                        } else {
+                          // Regular airline row
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.w),
+                            child: Row(
+                              children: [
+                                Transform.scale(
+                                  scale: 1.3,
+                                  child: Radio<int>(
+                                    value: index,
+                                    groupValue: selectedAirlineIndex,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedAirlineIndex = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      if (widget.airlines[index]["logo"] !=
+                                          null &&
+                                          widget.airlines[index]["logo"]!
+                                              .isNotEmpty)
+                                        Image.asset(
+                                          widget.airlines[index]["logo"]!,
+                                          height: 24.h,
+                                          width: 24.w,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        widget.airlines[index]["name"]!,
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  widget.airlines[index]["price"] ?? "",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 65.h,
+        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context, {
+              'airlineIndex': selectedAirlineIndex ?? 0,
+              'stops': selectedStops,
+              'hideNonRefundable': hideNonRefundable, // <-- ADD THIS
+              'departureTime': departureTime, // ADD
+              'arrivalTime': arrivalTime,
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF37023),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.r),
+            ),
+          ),
+          child: Text(
+            "Apply Filter",
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChip(String label, int value) {
+    bool isSelected = selectedStops == value;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedStops = value;
+        });
+      },
+      child: Padding(
+        padding: EdgeInsets.only(left: 10.w),
+        child: Container(
+          decoration: BoxDecoration(
+            color:
+            isSelected ? const Color(0xFFFFE7DA) : const Color(0xFFFFFFFF),
+            border: Border.all(
+                color: isSelected
+                    ? const Color(0xFFF37023)
+                    : const Color(0xFFE6E6E6)),
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontFamily: 'Inter',
+              color: isSelected ? const Color(0xFFF37023) : Colors.black,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _timeButton(String label, String value, {bool isArrival = false}) {
+    bool isSelected = isArrival ? arrivalTime == value : departureTime == value;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isArrival) {
+            arrivalTime = value;
+          } else {
+            departureTime = value;
+          }
+        });
+      },
+      child: Padding(
+        padding: EdgeInsets.only(left: 10.w),
+        child: Container(
+          width: 140.w,
+          height: 35.h,
+          decoration: BoxDecoration(
+            color:
+            isSelected ? const Color(0xFFFFE7DA) : const Color(0xFFFFFFFF),
+            border: Border.all(
+                color: isSelected
+                    ? const Color(0xFFF37023)
+                    : const Color(0xFFE6E6E6)),
+            borderRadius: BorderRadius.circular(3.r),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontFamily: 'Inter',
+              color: isSelected ? const Color(0xFFF37023) : Colors.black,
+              fontWeight: FontWeight.normal,
             ),
           ),
         ),

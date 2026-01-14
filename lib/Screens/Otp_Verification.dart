@@ -42,8 +42,17 @@ class OtpVerificationScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final int? coupouncode;
+  final String? commonPublishedFare;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
   final String? mobileNumber;
   final bool? isLLC;
+  final bool? islogin;
   final String? outdepDate;
   final String? outdepTime;
   final String? outarrDate;
@@ -71,6 +80,7 @@ class OtpVerificationScreen extends StatefulWidget {
       this.flightNumber,
       this.depDate,
       this.depTime,
+      this.islogin,
       this.refundable,
       this.arrDate,
       this.arrTime,
@@ -92,6 +102,14 @@ class OtpVerificationScreen extends StatefulWidget {
       this.adultCount,
       this.childCount,
       this.infantCount,
+      this.coupouncode,
+      this.commonPublishedFare,
+      this.tboOfferedFare,
+      this.tboCommission,
+      this.tboTds,
+      this.trvlusCommission,
+      this.trvlusTds,
+      this.trvlusNetFare,
       this.mobileNumber,
       this.isLLC,
       this.outdepDate,
@@ -127,6 +145,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
       String otp = _otpControllers.map((c) => c.text).join();
       print("segmentsJsonsegmentsJson${widget.segmentsJson}");
+      print("OTPPPPP$otp");
       // Calling VerifyOTP API
       final verifyOTP =
           await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
@@ -136,52 +155,112 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       await prefs.setBool('isLoggedIn', true);
       print(widget.outresultindex);
       print(widget.inresultindex);
-      Get.to(() => TravelerDetailsPage(
-            flight: {},
-            city: widget.city,
-            destination: widget.destination,
-            airlineName: widget.airlineName,
-            airlineCode: widget.airlineCode,
-            flightNumber: widget.flightNumber,
-            cityName: widget.cityName,
-            cityCode: widget.cityCode,
-            descityName: widget.descityName,
-            descityCode: widget.descityCode,
-            depDate: widget.depDate,
-            depTime: widget.depTime,
-            arrDate: widget.arrDate,
-            arrTime: widget.arrTime,
-            duration: widget.duration,
-            refundable: widget.refundable,
-            stop: widget.stop,
-            airportName: widget.airportName,
-            desairportName: widget.desairportName,
-            basefare: widget.basefare,
-            segments: widget.segments,
-            resultindex: widget.resultindex,
-            traceid: widget.traceid,
-            outboundFlight: widget.outboundFlight,
-            inboundFlight: widget.inboundFlight,
-            total: widget.total,
-            tax: widget.tax,
-            adultCount: widget.adultCount,
-            childCount: widget.childCount,
-            infantCount: widget.infantCount,
-            isLLC: widget.isLLC,
-            outdepDate: widget.outdepDate,
-            outdepTime: widget.outdepTime,
-            outarrDate: widget.outarrDate,
-            outarrTime: widget.outarrTime,
-            indepDate: widget.indepDate,
-            indepTime: widget.indepTime,
-            inarrDate: widget.inarrDate,
-            inarrTime: widget.inarrTime,
-            outBoundData: widget.outBoundData,
-            inBoundData: widget.inBoundData,
-            outresultindex: widget.outresultindex,
-            inresultindex: widget.inresultindex,
-            segmentsJson: widget.segmentsJson,
-          ));
+      print("hellloo${widget.islogin}");
+      if (widget.islogin != false) {
+        // Get.to(() => SelectTraveller(
+        //       flight: {},
+        //       city: widget.city,
+        //       destination: widget.destination,
+        //       airlineName: widget.airlineName,
+        //       airlineCode: widget.airlineCode,
+        //       flightNumber: widget.flightNumber,
+        //       cityName: widget.cityName,
+        //       cityCode: widget.cityCode,
+        //       descityName: widget.descityName,
+        //       descityCode: widget.descityCode,
+        //       depDate: widget.depDate,
+        //       depTime: widget.depTime,
+        //       arrDate: widget.arrDate,
+        //       arrTime: widget.arrTime,
+        //       duration: widget.duration,
+        //       refundable: widget.refundable,
+        //       stop: widget.stop,
+        //       airportName: widget.airportName,
+        //       desairportName: widget.desairportName,
+        //       basefare: widget.basefare,
+        //       segments: widget.segments,
+        //       resultindex: widget.resultindex,
+        //       traceid: widget.traceid,
+        //       outboundFlight: widget.outboundFlight,
+        //       inboundFlight: widget.inboundFlight,
+        //       total: widget.total,
+        //       tax: widget.tax,
+        //       adultCount: widget.adultCount,
+        //       childCount: widget.childCount,
+        //       infantCount: widget.infantCount,
+        //       isLLC: widget.isLLC,
+        //       outdepDate: widget.outdepDate,
+        //       outdepTime: widget.outdepTime,
+        //       outarrDate: widget.outarrDate,
+        //       outarrTime: widget.outarrTime,
+        //       indepDate: widget.indepDate,
+        //       indepTime: widget.indepTime,
+        //       inarrDate: widget.inarrDate,
+        //       inarrTime: widget.inarrTime,
+        //       outBoundData: widget.outBoundData,
+        //       inBoundData: widget.inBoundData,
+        //       outresultindex: widget.outresultindex,
+        //       inresultindex: widget.inresultindex,
+        //       segmentsJson: widget.segmentsJson,
+        //       coupouncode: widget.coupouncode,
+        //     ));
+        Get.to(() => TravelerDetailsPage(
+              flight: {},
+              city: widget.city,
+              destination: widget.destination,
+              airlineName: widget.airlineName,
+              airlineCode: widget.airlineCode,
+              flightNumber: widget.flightNumber,
+              cityName: widget.cityName,
+              cityCode: widget.cityCode,
+              descityName: widget.descityName,
+              descityCode: widget.descityCode,
+              depDate: widget.depDate,
+              depTime: widget.depTime,
+              arrDate: widget.arrDate,
+              arrTime: widget.arrTime,
+              duration: widget.duration,
+              refundable: widget.refundable,
+              stop: widget.stop,
+              airportName: widget.airportName,
+              desairportName: widget.desairportName,
+              basefare: widget.basefare,
+              segments: widget.segments,
+              resultindex: widget.resultindex,
+              traceid: widget.traceid,
+              outboundFlight: widget.outboundFlight,
+              inboundFlight: widget.inboundFlight,
+              total: widget.total,
+              tax: widget.tax,
+              adultCount: widget.adultCount,
+              childCount: widget.childCount,
+              infantCount: widget.infantCount,
+              isLLC: widget.isLLC,
+              outdepDate: widget.outdepDate,
+              outdepTime: widget.outdepTime,
+              outarrDate: widget.outarrDate,
+              outarrTime: widget.outarrTime,
+              indepDate: widget.indepDate,
+              indepTime: widget.indepTime,
+              inarrDate: widget.inarrDate,
+              inarrTime: widget.inarrTime,
+              outBoundData: widget.outBoundData,
+              inBoundData: widget.inBoundData,
+              outresultindex: widget.outresultindex,
+              inresultindex: widget.inresultindex,
+              segmentsJson: widget.segmentsJson,
+              coupouncode: widget.coupouncode,
+              commonPublishedFare: widget.commonPublishedFare,
+              tboOfferedFare: widget.tboOfferedFare,
+              tboCommission: widget.tboCommission,
+              tboTds: widget.tboTds,
+              trvlusCommission: widget.trvlusCommission,
+              trvlusTds: widget.trvlusTds,
+              trvlusNetFare: widget.trvlusNetFare,
+            ));
+      } else {
+        Get.until((route) => route.settings.name == '/ProfilePage');
+      }
     } else {
       print("Enter complete OTP");
     }
@@ -267,27 +346,34 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       ),
                       decoration: InputDecoration(
                         counterText: "",
-                        border: OutlineInputBorder(
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                          borderSide: BorderSide(
+                            color: Colors.orange, // ✅ ACTIVE BOX COLOR
+                            width: 2,
+                          ),
                         ),
                       ),
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
-                        // Move to next field
-                        if (value.isNotEmpty &&
-                            index < _otpControllers.length - 1) {
-                          FocusScope.of(context)
-                              .requestFocus(_focusNodes[index + 1]);
+                        if (value.isNotEmpty) {
+                          if (index < _otpControllers.length - 1) {
+                            // Move to next box
+                            FocusScope.of(context)
+                                .requestFocus(_focusNodes[index + 1]);
+                          } else {
+                            // ✅ Last OTP digit → hide cursor
+                            _focusNodes[index].unfocus();
+                          }
                         }
-
-                        // ✅ Print current field value
-                        print("Digit ${index + 1}: $value");
-
-                        // ✅ Print full OTP (joined from all 4 fields)
-                        String currentOtp =
-                            _otpControllers.map((c) => c.text).join();
-                        print("Current OTP: $currentOtp");
                       },
                     ),
                   ),

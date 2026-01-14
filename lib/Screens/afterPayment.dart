@@ -27,7 +27,16 @@ class Afterpayment extends StatefulWidget {
   final String? inresultindex;
   final String? stop;
   final double? tax;
+  final double? convenienceFee;
   final bool? isLLC;
+  final int? coupouncode;
+  final String? commonPublishedFare;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
 
   final List<Map<String, dynamic>>? passenger;
   final List<Map<String, dynamic>>? childpassenger;
@@ -49,48 +58,57 @@ class Afterpayment extends StatefulWidget {
 
   final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
 
-  const Afterpayment({
-    Key? key,
-    this.flightNumber,
-    required this.airlineName,
-    required this.outBoundData,
-    required this.inBoundData,
-    required this.meal,
-    this.depDate,
-    this.depTime,
-    this.arrDate,
-    this.arrTime,
-    this.duration,
-    this.airportName,
-    this.desairportName,
-    this.airlineCode,
-    required this.cityCode,
-    this.descityCode,
-    required this.cityName,
-    this.descityName,
-    this.stop,
-    this.outboundFlight,
-    this.inboundFlight,
-    this.outresultindex,
-    this.inresultindex,
-    this.basefare,
-    this.tax,
-    this.passenger,
-    this.childpassenger,
-    this.infantpassenger,
-    this.isLLC,
-    this.segmentsJson,
-    this.outdepDate,
-    this.outdepTime,
-    this.outarrDate,
-    this.outarrTime,
-    this.indepDate,
-    this.indepTime,
-    this.inarrDate,
-    this.inarrTime,
-    this.resultindex,
-    this.traceid,
-  }) : super(key: key);
+  const Afterpayment(
+      {Key? key,
+      this.flightNumber,
+      required this.airlineName,
+      required this.outBoundData,
+      required this.inBoundData,
+      required this.meal,
+      this.depDate,
+      this.depTime,
+      this.arrDate,
+      this.arrTime,
+      this.duration,
+      this.airportName,
+      this.desairportName,
+      this.airlineCode,
+      required this.cityCode,
+      this.descityCode,
+      required this.cityName,
+      this.descityName,
+      this.stop,
+      this.outboundFlight,
+      this.inboundFlight,
+      this.outresultindex,
+      this.inresultindex,
+      this.basefare,
+      this.tax,
+      this.passenger,
+      this.childpassenger,
+      this.infantpassenger,
+      this.isLLC,
+      this.segmentsJson,
+      this.outdepDate,
+      this.outdepTime,
+      this.outarrDate,
+      this.outarrTime,
+      this.indepDate,
+      this.indepTime,
+      this.inarrDate,
+      this.inarrTime,
+      this.resultindex,
+      this.traceid,
+      this.convenienceFee,
+      this.commonPublishedFare,
+      this.tboOfferedFare,
+      this.tboCommission,
+      this.tboTds,
+      this.trvlusCommission,
+      this.trvlusTds,
+      this.trvlusNetFare,
+      this.coupouncode})
+      : super(key: key);
 
   @override
   State<Afterpayment> createState() => _AfterpaymentState();
@@ -137,6 +155,15 @@ class _AfterpaymentState extends State<Afterpayment> {
     final infantpassenger = widget.infantpassenger ?? [];
     final Map<String, dynamic> meal = widget.meal ?? {};
     final journeyList = widget.segmentsJson ?? "";
+    final conveniencefee = widget.convenienceFee;
+    final coupouncode = widget.coupouncode;
+    final commonPublishedFare = widget.commonPublishedFare;
+    final tboOfferedFare = widget.tboOfferedFare;
+    final tboCommission = widget.tboCommission;
+    final tboTds = widget.tboTds;
+    final trvlusCommission = widget.trvlusCommission;
+    final trvlusTds = widget.trvlusTds;
+    final trvlusNetFare = widget.trvlusNetFare;
 
     setState(() {
       isLoading = true;
@@ -157,58 +184,74 @@ class _AfterpaymentState extends State<Afterpayment> {
       print("ROUNDTRIP");
       if (widget.outBoundData['IsLCC'] == true) {
         searchData = await ApiService().ticket(
-          widget.outBoundData['outresultindex'],
-          widget.outBoundData['traceid'],
-          widget.outBoundData['flightNumber'],
-          widget.outBoundData['airlineName'],
-          widget.outBoundData['outdepTime'],
-          widget.outBoundData['outdepDate'],
-          widget.outBoundData['airportName'],
-          widget.outBoundData['outarrTime'],
-          widget.outBoundData['outarrDate'],
-          widget.outBoundData['desairportName'],
-          widget.outBoundData['duration'],
-          widget.outBoundData['airlineCode'],
-          widget.outBoundData['cityCode'],
-          widget.outBoundData['descityCode'],
-          widget.outBoundData['cityName'],
-          widget.outBoundData['descityName'],
-          widget.outBoundData['basefare'],
-          widget.outBoundData['tax'],
-          passenger,
-          childpassenger,
-          infantpassenger,
-          meal,
-          "",
-          "",
-        );
+            widget.outBoundData['outresultindex'],
+            widget.outBoundData['traceid'],
+            widget.outBoundData['flightNumber'],
+            widget.outBoundData['airlineName'],
+            widget.outBoundData['outdepTime'],
+            widget.outBoundData['outdepDate'],
+            widget.outBoundData['airportName'],
+            widget.outBoundData['outarrTime'],
+            widget.outBoundData['outarrDate'],
+            widget.outBoundData['desairportName'],
+            widget.outBoundData['duration'],
+            widget.outBoundData['airlineCode'],
+            widget.outBoundData['cityCode'],
+            widget.outBoundData['descityCode'],
+            widget.outBoundData['cityName'],
+            widget.outBoundData['descityName'],
+            widget.outBoundData['basefare'],
+            widget.outBoundData['tax'],
+            passenger,
+            childpassenger,
+            infantpassenger,
+            meal,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "");
       } else {
         searchData = await ApiService().holdTicket(
-          widget.outBoundData['outresultindex'],
-          widget.outBoundData['traceid'],
-          widget.outBoundData['flightNumber'],
-          widget.outBoundData['airlineName'],
-          widget.outBoundData['outdepTime'],
-          widget.outBoundData['outdepDate'],
-          widget.outBoundData['airportName'],
-          widget.outBoundData['outarrTime'],
-          widget.outBoundData['outarrDate'],
-          widget.outBoundData['desairportName'],
-          widget.outBoundData['duration'],
-          widget.outBoundData['airlineCode'],
-          widget.outBoundData['cityCode'],
-          widget.outBoundData['descityCode'],
-          widget.outBoundData['cityName'],
-          widget.outBoundData['descityName'],
-          widget.outBoundData['basefare'],
-          widget.outBoundData['tax'],
-          passenger,
-          childpassenger,
-          infantpassenger,
-          meal,
-          "",
-          "",
-        );
+            widget.outBoundData['outresultindex'],
+            widget.outBoundData['traceid'],
+            widget.outBoundData['flightNumber'],
+            widget.outBoundData['airlineName'],
+            widget.outBoundData['outdepTime'],
+            widget.outBoundData['outdepDate'],
+            widget.outBoundData['airportName'],
+            widget.outBoundData['outarrTime'],
+            widget.outBoundData['outarrDate'],
+            widget.outBoundData['desairportName'],
+            widget.outBoundData['duration'],
+            widget.outBoundData['airlineCode'],
+            widget.outBoundData['cityCode'],
+            widget.outBoundData['descityCode'],
+            widget.outBoundData['cityName'],
+            widget.outBoundData['descityName'],
+            widget.outBoundData['basefare'],
+            widget.outBoundData['tax'],
+            passenger,
+            childpassenger,
+            infantpassenger,
+            meal,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "");
 
         final pnr =
             (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
@@ -230,63 +273,79 @@ class _AfterpaymentState extends State<Afterpayment> {
       print("searchDataROUNDTRIP$searchData");
       if (widget.inBoundData['IsLCC'] == true) {
         searchData = await ApiService().ticket(
-          widget.inBoundData['inresultindex'],
-          widget.inBoundData['traceid'],
-          widget.inBoundData['flightNumber'],
-          widget.inBoundData['airlineName'],
-          widget.inBoundData['indepTime'],
-          widget.inBoundData['indepDate'],
-          widget.inBoundData['airportName'],
-          widget.inBoundData['inarrTime'],
-          widget.inBoundData['inarrDate'],
-          widget.inBoundData['desairportName'],
-          widget.inBoundData['duration'],
-          widget.inBoundData['airlineCode'],
-          widget.inBoundData['cityCode'],
-          widget.inBoundData['descityCode'],
-          widget.inBoundData['cityName'],
-          widget.inBoundData['descityName'],
-          widget.inBoundData['basefare'],
-          widget.inBoundData['tax'],
-          passenger,
-          childpassenger,
-          infantpassenger,
-          meal,
-          "",
-          "",
-        );
+            widget.inBoundData['inresultindex'],
+            widget.inBoundData['traceid'],
+            widget.inBoundData['flightNumber'],
+            widget.inBoundData['airlineName'],
+            widget.inBoundData['indepTime'],
+            widget.inBoundData['indepDate'],
+            widget.inBoundData['airportName'],
+            widget.inBoundData['inarrTime'],
+            widget.inBoundData['inarrDate'],
+            widget.inBoundData['desairportName'],
+            widget.inBoundData['duration'],
+            widget.inBoundData['airlineCode'],
+            widget.inBoundData['cityCode'],
+            widget.inBoundData['descityCode'],
+            widget.inBoundData['cityName'],
+            widget.inBoundData['descityName'],
+            widget.inBoundData['basefare'],
+            widget.inBoundData['tax'],
+            passenger,
+            childpassenger,
+            infantpassenger,
+            meal,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "");
         print("searchDataINBOUNDROUNDTRIP$searchData");
       } else {
         searchData = await ApiService().holdTicket(
-          widget.inBoundData['inresultindex'],
-          widget.inBoundData['traceid'],
-          widget.inBoundData['flightNumber'],
-          widget.inBoundData['airlineName'],
-          widget.inBoundData['indepTime'],
-          widget.inBoundData['indepDate'],
-          widget.inBoundData['airportName'],
-          widget.inBoundData['inarrTime'],
-          widget.inBoundData['inarrDate'],
-          widget.inBoundData['desairportName'],
-          widget.inBoundData['duration'],
-          widget.inBoundData['airlineCode'],
-          widget.inBoundData['cityCode'],
-          widget.inBoundData['descityCode'],
-          widget.inBoundData['cityName'],
-          widget.inBoundData['descityName'],
-          widget.inBoundData['basefare'],
-          widget.inBoundData['tax'],
-          passenger,
-          childpassenger,
-          infantpassenger,
-          meal,
-          "",
-          "",
-        );
+            widget.inBoundData['inresultindex'],
+            widget.inBoundData['traceid'],
+            widget.inBoundData['flightNumber'],
+            widget.inBoundData['airlineName'],
+            widget.inBoundData['indepTime'],
+            widget.inBoundData['indepDate'],
+            widget.inBoundData['airportName'],
+            widget.inBoundData['inarrTime'],
+            widget.inBoundData['inarrDate'],
+            widget.inBoundData['desairportName'],
+            widget.inBoundData['duration'],
+            widget.inBoundData['airlineCode'],
+            widget.inBoundData['cityCode'],
+            widget.inBoundData['descityCode'],
+            widget.inBoundData['cityName'],
+            widget.inBoundData['descityName'],
+            widget.inBoundData['basefare'],
+            widget.inBoundData['tax'],
+            passenger,
+            childpassenger,
+            infantpassenger,
+            meal,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "");
 
         pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        bookingId =
-            (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
+        bookingId = (searchData?["data"]?["Response"]?["Response"]
+                    ?["BookingId"])
                 ?.toString() ??
             "0";
         final api = searchData;
@@ -314,35 +373,43 @@ class _AfterpaymentState extends State<Afterpayment> {
           "dd MMM yy",
         ).format(DateTime.parse(widget.arrDate.toString()));
         searchData = await ApiService().ticket(
-          resultIndex!,
-          traceid!,
-          flightNumber,
-          airlineName,
-          depTime,
-          depDate,
-          airportName,
-          arrTime,
-          arrDate,
-          desairportName,
-          duration,
-          airlineCode,
-          cityCode,
-          descityCode,
-          cityName,
-          descityName,
-          baseFare,
-          tax,
-          passenger,
-          childpassenger,
-          infantpassenger,
-          meal,
-          stop,
-          journeyList,
-        );
+            resultIndex!,
+            traceid!,
+            flightNumber,
+            airlineName,
+            depTime,
+            depDate,
+            airportName,
+            arrTime,
+            arrDate,
+            desairportName,
+            duration,
+            airlineCode,
+            cityCode,
+            descityCode,
+            cityName,
+            descityName,
+            baseFare,
+            tax,
+            passenger,
+            childpassenger,
+            infantpassenger,
+            meal,
+            stop,
+            journeyList,
+            conveniencefee,
+            coupouncode,
+            commonPublishedFare,
+            tboOfferedFare,
+            tboCommission,
+            tboTds,
+            trvlusCommission,
+            trvlusTds,
+            trvlusNetFare);
         setState(() {
           pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-          bookingId =
-              (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
+          bookingId = (searchData?["data"]?["Response"]?["Response"]
+                      ?["BookingId"])
                   ?.toString() ??
               "0";
           statusMessage = (searchData?["statusMessage"]);
@@ -360,36 +427,44 @@ class _AfterpaymentState extends State<Afterpayment> {
         ).format(DateTime.parse(widget.arrDate.toString()));
         print("HOLD TICKET BOOKING");
         searchData = await ApiService().holdTicket(
-          resultIndex!,
-          traceid!,
-          flightNumber,
-          airlineName,
-          depTime,
-          depDate,
-          airportName,
-          arrTime,
-          arrDate,
-          desairportName,
-          duration,
-          airlineCode,
-          cityCode,
-          descityCode,
-          cityName,
-          descityName,
-          baseFare,
-          tax,
-          passenger,
-          childpassenger,
-          infantpassenger,
-          meal,
-          stop,
-          journeyList,
-        );
+            resultIndex!,
+            traceid!,
+            flightNumber,
+            airlineName,
+            depTime,
+            depDate,
+            airportName,
+            arrTime,
+            arrDate,
+            desairportName,
+            duration,
+            airlineCode,
+            cityCode,
+            descityCode,
+            cityName,
+            descityName,
+            baseFare,
+            tax,
+            passenger,
+            childpassenger,
+            infantpassenger,
+            meal,
+            stop,
+            journeyList,
+            conveniencefee,
+            coupouncode,
+            commonPublishedFare,
+            tboOfferedFare,
+            tboCommission,
+            tboTds,
+            trvlusCommission,
+            trvlusTds,
+            trvlusNetFare);
 
         setState(() {
           pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-          bookingId =
-              (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
+          bookingId = (searchData?["data"]?["Response"]?["Response"]
+                      ?["BookingId"])
                   ?.toString() ??
               "0";
 
@@ -415,11 +490,32 @@ class _AfterpaymentState extends State<Afterpayment> {
     });
   }
 
+  // SELECT TRAVELER
+  selecttravelerData() async {
+    print("TICKET API CALLING");
+    final passenger = widget.passenger ?? [];
+    final childpassenger = widget.childpassenger ?? [];
+    final infantpassenger = widget.infantpassenger ?? [];
+
+    setState(() {
+      isLoading = true;
+      print("selectTravelerbeforeOutput");
+    });
+    var traveler = await ApiService()
+        .selectTraveler(passenger, childpassenger, infantpassenger);
+    // print("travelertravelertraveler${jsonEncode(traveler)}");
+    print("traveler");
+    setState(() {
+      isLoading = false;
+      print("selectTravelerAfterOutput");
+    });
+  }
+
   @override
   void initState() {
     getSearchData();
+    // selecttravelerData();
     print('passengerdetailsall${widget.passenger}');
-
     super.initState();
   }
 

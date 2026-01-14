@@ -58,6 +58,14 @@ class ConfirmTravelerDetails extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final int? coupouncode;
+  final String? commonPublishedFare;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
   final bool? isLLC;
   final String? outdepDate;
   final String? outdepTime;
@@ -98,6 +106,14 @@ class ConfirmTravelerDetails extends StatefulWidget {
       this.initialData,
       this.childData,
       this.infantData,
+      this.coupouncode,
+      this.commonPublishedFare,
+      this.tboOfferedFare,
+      this.tboCommission,
+      this.tboTds,
+      this.trvlusCommission,
+      this.trvlusTds,
+      this.trvlusNetFare,
       this.resultindex,
       this.traceid,
       this.outboundFlight,
@@ -146,6 +162,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
   double adultFare = 0;
   double childFare = 0;
   double infantFare = 0;
+  int coupouncode = 0;
 
   @override
   void initState() {
@@ -160,6 +177,10 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       print("beforeOutput");
     });
     print("CONFIRMTRAVELERRR");
+    print("islcc${widget.isLLC}");
+    print("coupoun code${widget.coupouncode}");
+    print("islcc${widget.basefare}");
+    print("islcc${widget.tax}");
     print("segmentsJson${widget.segmentsJson}");
     if (widget.outBoundData['outresultindex'] != null &&
         widget.inBoundData['inresultindex'] != null) {
@@ -252,11 +273,12 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     }
     setState(() {
       isLoading = false;
+      coupouncode = widget.coupouncode!;
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
       totalTax = tax + intax;
       print("totalTax$totalTax");
-      overallFare = totalBaseFare + totalTax;
+      overallFare = totalBaseFare + totalTax - coupouncode.round();
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
@@ -265,6 +287,16 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
       print("AferOutput");
+    });
+  }
+
+  getCountryCode() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -1620,6 +1652,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               GestureDetector(
                                 onTap: () {
                                   // Action for "View full details"
+                                  showFareBreakupSheet(context);
                                 },
                                 child: Row(
                                   children: [
@@ -1644,7 +1677,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "₹$overallFare",
+                                "₹${overallFare.toStringAsFixed(0)}",
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
@@ -1726,6 +1759,14 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               inBoundData: widget.inBoundData,
                               meal: meal,
                               segmentsJson: widget.segmentsJson,
+                              coupouncode: widget.coupouncode,
+                              commonPublishedFare: widget.commonPublishedFare,
+                              tboOfferedFare: widget.tboOfferedFare,
+                              tboCommission: widget.tboCommission,
+                              tboTds: widget.tboTds,
+                              trvlusCommission: widget.trvlusCommission,
+                              trvlusTds: widget.trvlusTds,
+                              trvlusNetFare: widget.trvlusNetFare,
                             ),
                           );
                         },
@@ -1796,6 +1837,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           adultTax: 0,
           childTax: 0,
           infantTax: 0,
+          convenienceFee: 0,
+          coupouncode: coupouncode,
         );
       },
     );

@@ -30,8 +30,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      firstDate: DateTime(1925),
+      lastDate: DateTime(2040),
     );
     print("psicked date$picked");
     if (picked != null && picked != selectedDate) {
@@ -266,6 +266,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
             print("date$date");
 
             print("dob$dob");
+            print("firstname$firstname");
+            print("lastname$lastname");
+            print("email$email");
+            print("mobile$mobile");
+            print("date$date");
             await ApiService()
                 .profileupdate(firstname, lastname, email, mobile, date);
             Navigator.pop(context);

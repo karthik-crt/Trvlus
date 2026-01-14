@@ -7,12 +7,15 @@ class FareBreakupSheet extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final int? coupouncode;
   final double? adultfare;
   final double? childfare;
   final double? infantfare;
-  final double? adultTax;
+  double? adultTax;
   final double? childTax;
   final double? infantTax;
+  final bool showConvenienceFee;
+  double convenienceFee = 0;
   final double? total;
 
   FareBreakupSheet(
@@ -21,12 +24,15 @@ class FareBreakupSheet extends StatefulWidget {
       this.adultCount,
       this.childCount,
       this.infantCount,
+      this.coupouncode,
       this.adultfare,
       this.childfare,
       this.infantfare,
       this.adultTax,
       this.childTax,
       this.infantTax,
+      this.showConvenienceFee = false, // ✅ DEFAULT FALSE
+      required this.convenienceFee,
       this.total});
 
   @override
@@ -40,22 +46,53 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     // final adultFare = (widget.adultCount ?? 0) * (widget.basefare ?? 0);
     // final childFare = (widget.childCount ?? 0) * (widget.basefare ?? 0);
     // final infantFare = (widget.infantCount ?? 0) * (widget.basefare ?? 0);
-    final tax = widget.tax ?? 0;
-    // print("totaltotal$total");
+    final tax = widget.tax?.round();
+    print("totaltotal$tax");
+    print("coupoun${widget.coupouncode}");
 
-    final adultFare = widget.adultfare;
-    final childFare = widget.childfare;
-    final infantFare = widget.infantfare;
+    final adultFare = widget.adultfare?.round();
+    final childFare = widget.childfare?.round();
+    final infantFare = widget.infantfare?.round();
+    final conveniencefee = widget.convenienceFee.toInt();
     final adulttax = widget.adultTax;
     final childtax = widget.childTax;
     final infanttax = widget.infantTax;
     final taxtotal = tax;
     final overalltotal = widget.total;
     print("overalltotal$overalltotal");
-    final total =
-        adultFare! + childFare! + infantFare! + taxtotal; // ✅ now this works
-    print("totall$total");
     print("taxtotal$taxtotal");
+    final coupoun = widget.coupouncode;
+    final adultCount = widget.adultCount;
+    final childCount = widget.childCount;
+    final infantCount = widget.infantCount;
+
+    final totalAdultFare = adultFare! / adultCount!;
+    final totalChildFare = childFare! / childCount!;
+    final totalInfantFare = infantFare! / infantCount!;
+    print("totalAdultFare$totalAdultFare");
+    print("grgrg${widget.convenienceFee}");
+
+    print("taxtotal$taxtotal");
+    final totalDiscount = conveniencefee! + coupoun!;
+    print("totalDiscount$totalDiscount");
+
+    final basefare = widget.basefare?.round();
+    final totalBaseFare =
+        (double.parse(basefare.toString()) - double.parse(coupoun.toString()))
+            .round();
+
+    final double convenienceFee =
+        widget.showConvenienceFee ? (widget.convenienceFee ?? 0) : 0;
+    print("convenienceFee$convenienceFee");
+
+    final total = adultFare! +
+        childFare! +
+        infantFare! +
+        conveniencefee +
+        taxtotal! -
+        totalDiscount!; // ✅ now this works
+    print("totaltotaltotal$total");
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -100,12 +137,12 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Base fare",
+                        Text("Base Fare",
                             style: TextStyle(
                                 fontSize: 15.sp,
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold)),
-                        Text(widget.basefare.toString(),
+                        Text("₹${widget.basefare!.toStringAsFixed(0)}",
                             style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
@@ -121,7 +158,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                                "Adults (${widget.adultCount} X ₹${widget.adultfare})",
+                                "Adults (${widget.adultCount} X ₹${totalAdultFare.toInt()})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
@@ -132,35 +169,37 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           ],
                         ),
                         SizedBox(height: 3.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                                "Child (${widget.childCount} X ₹${widget.childfare})",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                )),
-                            Text("₹$childFare",
-                                style: TextStyle(
-                                    fontSize: 12.sp, color: Colors.grey)),
-                          ],
-                        ),
+                        if (widget.childCount! > 0)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                  "Child (${widget.childCount} X ₹${totalChildFare.toInt()})",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey,
+                                  )),
+                              Text("₹$childFare",
+                                  style: TextStyle(
+                                      fontSize: 12.sp, color: Colors.grey)),
+                            ],
+                          ),
                         SizedBox(height: 3.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                                "Infant (${widget.infantCount} X ₹${widget.infantfare})",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                )),
-                            Text("₹$infantFare",
-                                style: TextStyle(
-                                    fontSize: 12.sp, color: Colors.grey)),
-                          ],
-                        ),
+                        if (widget.infantCount! > 0)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                  "Infant (${widget.infantCount} X ₹${totalInfantFare.toInt()})",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey,
+                                  )),
+                              Text("₹$infantFare",
+                                  style: TextStyle(
+                                      fontSize: 12.sp, color: Colors.grey)),
+                            ],
+                          ),
                         SizedBox(height: 5.h),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -178,6 +217,75 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           ],
                         ),
                         SizedBox(height: 5.h),
+                        if (widget.showConvenienceFee)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Convenience Fee",
+                                  style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold)),
+                              Text("₹${widget.convenienceFee.toInt()}",
+                                  style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFF37023))),
+                            ],
+                          ),
+                        SizedBox(height: 7.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Total Discount",
+                                style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold)),
+                            Text("-$totalDiscount",
+                                style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFF37023))),
+                          ],
+                        ),
+                        SizedBox(height: 3.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Promo Discount",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey,
+                                )),
+                            Text("₹$coupoun",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey,
+                                )),
+                          ],
+                        ),
+                        if (widget.showConvenienceFee)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Convenience Fee",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                "₹${convenienceFee.toStringAsFixed(0)}",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        SizedBox(height: 7.h),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -186,7 +294,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                     fontSize: 18.sp,
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold)),
-                            Text("₹$overalltotal",
+                            Text("₹${total.toInt()}",
                                 style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.bold,

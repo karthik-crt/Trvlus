@@ -70,12 +70,21 @@ class FlightDetailsPage extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final int? coupouncode;
   final double? adultBaseFare;
   final double? adultTax;
   final double? childBaseFare;
   final double? childTax;
   final double? infantBaseFare;
   final double? infantTax;
+  final String? commonPublishedFare;
+  final int? coupon;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
 
   FlightDetailsPage(
       {required this.flight,
@@ -127,9 +136,18 @@ class FlightDetailsPage extends StatefulWidget {
       this.adultCount,
       this.childCount,
       this.infantCount,
+      this.coupouncode,
       this.adultBaseFare,
       this.childBaseFare,
       this.infantBaseFare,
+      this.commonPublishedFare,
+      this.coupon,
+      this.tboOfferedFare,
+      this.tboCommission,
+      this.tboTds,
+      this.trvlusCommission,
+      this.trvlusTds,
+      this.trvlusNetFare,
       this.adultTax,
       this.childTax,
       this.infantTax});
@@ -154,6 +172,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   int totaladultCount = 0;
   int totalchildCount = 0;
   int totalinfantCount = 0;
+  int coupouncode = 0;
   double adultFare = 0;
   double childFare = 0;
   double infantFare = 0;
@@ -164,6 +183,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     });
     final vale = 0;
     print("FLIGHTDETAILPAGE");
+    print(widget.commonPublishedFare);
+    print(widget.tboCommission);
+    print(widget.tboOfferedFare);
+    print(widget.tboTds);
+    print(widget.trvlusCommission);
+    print(widget.trvlusTds);
+    print(widget.trvlusNetFare);
 
     // ROUNDTRIP
     if (widget.outresultindex != null && widget.inresultindex != null) {
@@ -205,8 +231,11 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     // FARE CALCULATION
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
     print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
-    final baseFare = fareQuote.response.results.fare.baseFare;
-    final tax = fareQuote.response.results.fare.tax.toDouble();
+    final baseFare = fareQuote.response.results.fare.baseFare.round();
+    print("baseFaretax$baseFare");
+    final tax = fareQuote.response.results.fare.tax.round();
+    print("taxtax$tax");
+
     final commision =
         fareQuote.response.results.fare.commissionEarned.toDouble();
 
@@ -262,11 +291,12 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
 
     setState(() {
       isLoading = false;
+      coupouncode = widget.coupouncode!;
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
       totalTax = tax + intax;
       print("totalTax$totalTax");
-      overallFare = totalBaseFare + totalTax;
+      overallFare = totalBaseFare + totalTax - coupouncode.round();
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
@@ -329,6 +359,14 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   outBoundData: widget.outBoundData,
                   inBoundData: widget.inBoundData,
                   segmentsJson: widget.segmentsJson,
+                  coupouncode: widget.coupouncode,
+                  commonPublishedFare: widget.commonPublishedFare,
+                  tboOfferedFare: widget.tboOfferedFare,
+                  tboCommission: widget.tboCommission,
+                  tboTds: widget.tboTds,
+                  trvlusCommission: widget.trvlusCommission,
+                  trvlusTds: widget.trvlusTds,
+                  trvlusNetFare: widget.trvlusNetFare,
                 )),
       );
     } else {
@@ -350,6 +388,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   Widget build(BuildContext context) {
     print("FLIGHTDETAILPAGE");
     print("segmentsJson${widget.segmentsJson}");
+    print("hello${widget.tboCommission}");
     final total = widget.total;
     final llc = widget.isLLC;
     print("LLLLLLCCCCC$llc");
@@ -1580,8 +1619,61 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   SizedBox(height: 10.h),
                   _buildDateChange(),
                   //_buildPromoCodeSection(),
-                  //_buildRefundableBooking(),
-
+                  // _buildRefundableBooking(),
+                  GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MobileVerificationScreen(
+                                      flight: flight,
+                                      city: widget.city,
+                                      destination: widget.destination,
+                                      airlineName: widget.airlineName,
+                                      airlineCode: widget.airlineCode,
+                                      flightNumber: widget.flightNumber,
+                                      cityName: widget.cityName,
+                                      cityCode: widget.cityCode,
+                                      descityName: widget.descityName,
+                                      descityCode: widget.descityCode,
+                                      depDate: widget.depDate,
+                                      depTime: widget.depTime,
+                                      arrDate: widget.arrDate,
+                                      arrTime: widget.arrTime,
+                                      duration: widget.duration,
+                                      refundable: widget.refundable,
+                                      stop: widget.stop,
+                                      airportName: widget.airportName,
+                                      desairportName: widget.desairportName,
+                                      basefare: widget.basefare,
+                                      segments: widget.segments,
+                                      resultindex: widget.resultindex,
+                                      traceid: widget.traceid,
+                                      outboundFlight: widget.outboundFlight,
+                                      inboundFlight: widget.inboundFlight,
+                                      total: widget.total,
+                                      tax: widget.tax,
+                                      adultCount: widget.adultCount,
+                                      childCount: widget.infantCount,
+                                      infantCount: widget.infantCount,
+                                      isLLC: widget.isLLC,
+                                      outdepDate: widget.outdepDate,
+                                      outdepTime: widget.outdepTime,
+                                      outarrDate: widget.outarrDate,
+                                      outarrTime: widget.outarrTime,
+                                      indepDate: widget.indepDate,
+                                      indepTime: widget.indepTime,
+                                      inarrDate: widget.inarrDate,
+                                      inarrTime: widget.inarrTime,
+                                      outBoundData: widget.outBoundData,
+                                      inBoundData: widget.inBoundData,
+                                      outresultindex: widget.outresultindex,
+                                      inresultindex: widget.inresultindex,
+                                      segmentsJson: widget.segmentsJson,
+                                      coupouncode: widget.coupouncode,
+                                    )));
+                      },
+                      child: Text("")),
                   SizedBox(height: 16),
                 ],
               ),
@@ -1641,7 +1733,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "₹$overallFare",
+                                "₹${overallFare.toStringAsFixed(0)}",
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
@@ -1662,9 +1754,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () {
-                          print("RESULTINDEX");
-                          print(widget.outresultindex);
-                          print(widget.inresultindex);
+                          print("RESULTINDEXRESULTINDEX");
+                          print(widget.traceid);
+                          print(widget.resultindex);
                           checkLoginStatus();
                           Get.to(MobileVerificationScreen(
                             flight: flight,
@@ -1711,6 +1803,14 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             outresultindex: widget.outresultindex,
                             inresultindex: widget.inresultindex,
                             segmentsJson: widget.segmentsJson,
+                            coupouncode: widget.coupouncode,
+                            commonPublishedFare: widget.commonPublishedFare,
+                            tboOfferedFare: widget.tboOfferedFare,
+                            tboCommission: widget.tboCommission,
+                            tboTds: widget.tboTds,
+                            trvlusCommission: widget.trvlusCommission,
+                            trvlusTds: widget.trvlusTds,
+                            trvlusNetFare: widget.trvlusNetFare,
                           ));
                         },
                         style: ElevatedButton.styleFrom(
@@ -2292,6 +2392,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         return FareBreakupSheet(
           basefare: totalBaseFare,
           tax: totalTax,
+          convenienceFee: 0,
           adultCount: totaladultCount,
           childCount: totalchildCount,
           infantCount: totalinfantCount,
@@ -2302,6 +2403,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           adultTax: widget.adultTax,
           childTax: widget.childTax,
           infantTax: widget.infantTax,
+          coupouncode: widget.coupouncode,
         );
       },
     );

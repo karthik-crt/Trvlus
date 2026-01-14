@@ -12,16 +12,18 @@ import 'package:trvlus/utils/api_service.dart';
 import 'package:trvlus/utils/constant.dart';
 
 import '../models/commissionpercentage.dart';
+import '../models/customercommision.dart';
 import '../models/farequote.dart' as farequote;
 import '../models/farerule.dart';
 import '../models/ssr.dart';
 import 'DotDivider.dart';
 import 'FlightDetailsPage.dart';
+import 'Home_Page.dart';
 
 class FlightResultsPage extends StatefulWidget {
   String airportCode;
   String fromAirport;
-  SearchData searchData;
+  SearchData? searchData;
 
   String toairportCode;
   String toAirport;
@@ -44,12 +46,12 @@ class FlightResultsPage extends StatefulWidget {
       required this.adultCount,
       this.childCount,
       this.infantCount,
-      required this.searchData})
+      this.searchData})
       : super(key: key);
 
-  get resultindex => null;
+  // get resultindex => null;
 
-  get traceid => null;
+  // get traceid => null;
   List<Map<String, dynamic>> dates =
       []; // This will be shared with DateScroller
 
@@ -62,10 +64,12 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   bool _isButtonVisible = false;
   double _previousScrollPosition = 0.0;
   late SearchData searchData;
+  String currentDepDate =
+      ''; // NEW: Track current departure date for display and fetching
 
   // FILTER
   late List<Map<String, dynamic>> uniqueAirlines;
-  String? _selectedAirlineCode;
+  Set<String> _selectedAirlineCodes = <String>{};
   int? _selectedStops; // null = no stops filter
   bool _hideNonRefundable =
       false; // false = show all (including non-refundable)
@@ -77,7 +81,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   String? filterdestination;
 
   late ComissionPercentage commission;
-  bool isLoading = false;
+  late Customercommission customer;
+  bool isLoading = true;
   List inbound = [];
   List outbound = [];
 
@@ -105,7 +110,63 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
       isLoading = true;
     });
     commission = await ApiService().commissionPercentage();
-    print("COMMISION$commission");
+    print("getCommissionData${jsonEncode(commission)}");
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  getCustomerCommission() async {
+    setState(() {
+      isLoading = true;
+    });
+    customer = await ApiService().getcustomercommission();
+    print("COMMISIONcustomer${jsonEncode(customer)}");
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> _fetchFlightsForDate(String depDate) async {
+    setState(() {
+      isLoading = true;
+    });
+    searchData = await ApiService().getSearchResult(
+        widget.airportCode,
+        widget.fromAirport,
+        widget.toairportCode,
+        widget.toAirport,
+        depDate,
+        widget.selectedReturnDate,
+        widget.selectedTripType,
+        widget.adultCount,
+        widget.childCount,
+        widget.infantCount);
+    print("searchDatasearchData$depDate");
+
+    // Recompute unique airlines after fetching new data
+    Set<String> codes = <String>{};
+    uniqueAirlines = [
+      {"name": "All Airlines", "code": null, "logo": "", "price": ""}
+    ];
+    for (int i = 0; i < searchData.response.results.length; i++) {
+      for (int j = 0; j < searchData.response.results[i].length; j++) {
+        String code = searchData
+            .response.results[i][j].segments.first.first.airline.airlineCode;
+        if (!codes.contains(code)) {
+          codes.add(code);
+          String name = searchData
+              .response.results[i][j].segments.first.first.airline.airlineName;
+          uniqueAirlines.add({
+            "name": name,
+            "code": code,
+            "logo": "assets/${code}.gif",
+            "price": ""
+          });
+        }
+      }
+    }
+
     setState(() {
       isLoading = false;
     });
@@ -123,42 +184,39 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     int? childCount,
     int? infantCount,
   ) async {
-    setState(() {
-      isLoading = true;
-    });
-    final prefs = await SharedPreferences.getInstance();
-    // currencycode = await prefs.getString('selected_currency') ?? '';
-    print("hellohellohellohello${widget.selectedTripType}");
-    searchData = await ApiService().getSearchResult(
-        airportCode,
-        fromAirport,
-        toairportCode,
-        toAirport,
-        selectedDepDate,
-        selectedReturnDate,
-        selectedTripType,
-        adultCount,
-        childCount,
-        infantCount);
-    print("searchDatasearchData${widget.selectedDepDate}");
+    await _fetchFlightsForDate(selectedDepDate); // Reuse the new method
+  }
 
-    searchData.response.results.length > 2 ? "inbound" : "outbound";
-
+  void _onDateSelected(String newDate) {
+    // Update currentDepDate for display
     setState(() {
-      isLoading = false;
+      currentDepDate = newDate;
     });
+
+    // Update selection in dates list
+    for (var d in dates) {
+      d['isSelected'] = d['date'] == newDate;
+    }
+
+    // Fetch new results
+    _fetchFlightsForDate(newDate);
   }
 
   @override
   void initState() {
     getCommissionData();
+    getCustomerCommission();
+    currentDepDate = widget.selectedDepDate; // Initialize current date
     loadCalendarPrices();
     final adult = widget.adultCount;
     final child = widget.childCount;
     final infant = widget.infantCount;
     passengerCount = adult + child! + infant!;
     print("passengerCount$passengerCount");
-    searchData = widget.searchData;
+    if (widget.searchData != null) {
+      searchData = widget.searchData!;
+    }
+
     // Compute unique airlines(FILTER AIRLINES)
     Set<String> codes = <String>{};
     uniqueAirlines = [
@@ -215,9 +273,9 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   }
 
   int get currentSelectedIndex {
-    if (_selectedAirlineCode == null) return 0;
+    if (_selectedAirlineCodes.isEmpty) return 0;
     for (int i = 1; i < uniqueAirlines.length; i++) {
-      if (uniqueAirlines[i]["code"] == _selectedAirlineCode) return i;
+      if (uniqueAirlines[i]["code"] == _selectedAirlineCodes.first) return i;
     }
     return 0;
   }
@@ -273,12 +331,11 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         results.first.first.segments.first.first.origin.airport.cityName;
     filterdestination =
         results.last.last.segments.last.last.destination.airport.cityName;
-    if (_selectedAirlineCode != null) {
+    if (_selectedAirlineCodes.isNotEmpty) {
       results = results
           .map((group) => group
-              .where((flight) =>
-                  flight.segments.first.first.airline.airlineCode ==
-                  _selectedAirlineCode)
+              .where((flight) => _selectedAirlineCodes
+                  .contains(flight.segments.first.first.airline.airlineCode))
               .toList())
           .where((g) => g.isNotEmpty)
           .toList();
@@ -370,9 +427,9 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   Future<void> loadCalendarPrices() async {
     try {
       final response = await ApiService().getCalendarFare(
-        widget.airportCode, // origin  → e.g., "DEL"
-        widget.toairportCode, // destination → e.g., "BOM"
-      );
+          widget.airportCode, // origin  → e.g., "DEL"
+          widget.toairportCode, // destination → e.g., "BOM"
+          selectedDepatureDate);
 
       if (response['Response']['ResponseStatus'] != 1) {
         return; // silent fail
@@ -398,7 +455,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
       final now = DateTime.now();
       final updatedDates = <Map<String, dynamic>>[];
 
-      for (int i = 0; i < 20; i++) {
+      for (int i = 0; i < 16; i++) {
         DateTime date = now.add(Duration(days: i));
         String dateKey = DateFormat('yyyy-MM-dd').format(date);
 
@@ -426,6 +483,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
           "month": "$dayName, ${date.day} $monthName",
           "price": priceText,
           "isSelected": i == 0,
+          "date": dateKey, // NEW: Store the actual date key for callback
         });
       }
 
@@ -503,9 +561,9 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                   width: 10,
                                 ),
                                 Text(
-                                  widget.selectedDepDate.contains("startDate")
-                                      ? widget.selectedDepDate.substring(33, 43)
-                                      : widget.selectedDepDate,
+                                  currentDepDate.contains("startDate")
+                                      ? currentDepDate.substring(33, 43)
+                                      : currentDepDate, // UPDATED: Use currentDepDate
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
@@ -665,7 +723,10 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        DateScroller(dates: dates),
+                        DateScroller(
+                          dates: dates,
+                          onDateSelected: _onDateSelected, // NEW: Pass callback
+                        ),
                         Container(
                           padding: EdgeInsets.symmetric(vertical: 8.h),
                           color: Colors.white,
@@ -706,6 +767,19 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                 height: 25.h,
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
+                                    List<int> currentIndices = [];
+                                    for (String code in _selectedAirlineCodes) {
+                                      for (int i = 1;
+                                          i < uniqueAirlines.length;
+                                          i++) {
+                                        // Skip index 0
+                                        if (uniqueAirlines[i]['code'] == code) {
+                                          currentIndices.add(i);
+                                          break;
+                                        }
+                                      }
+                                    }
+
                                     var filterData = await showModalBottomSheet<
                                         Map<String, dynamic>>(
                                       context: context,
@@ -718,25 +792,33 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                         return Container(
                                           height: 620.h,
                                           child: FilterBottomSheet(
-                                              airlines: uniqueAirlines,
-                                              currentSelectedIndex:
-                                                  currentSelectedIndex,
-                                              filterorigin: filterorigin,
-                                              filterdestination:
-                                                  filterdestination),
+                                            airlines: uniqueAirlines,
+                                            currentSelectedIndices:
+                                                currentIndices,
+                                            filterorigin: filterorigin,
+                                            filterdestination:
+                                                filterdestination,
+                                            initialStops: _selectedStops,
+                                            initialHideNonRefundable:
+                                                _hideNonRefundable,
+                                            initialDepartureTime:
+                                                _selectedDepartureTimeRange ??
+                                                    "",
+                                            initialArrivalTime:
+                                                _selectedArrivalTimeRange ?? "",
+                                          ),
                                         );
                                       },
                                     );
                                     if (filterData != null) {
                                       setState(() {
-                                        int airlineIndex =
-                                            filterData['airlineIndex'] ?? 0;
-                                        if (airlineIndex == 0) {
-                                          _selectedAirlineCode = null;
-                                        } else {
-                                          _selectedAirlineCode =
-                                              uniqueAirlines[airlineIndex]
-                                                  ['code'];
+                                        List<int> indices =
+                                            filterData['airlineIndices'] ?? [];
+                                        _selectedAirlineCodes.clear();
+                                        for (int i in indices) {
+                                          _selectedAirlineCodes.add(
+                                              uniqueAirlines[i]['code']
+                                                  as String);
                                         }
                                         _selectedStops =
                                             filterData['stops']; // <-- ADD THIS
@@ -903,29 +985,95 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                             .offeredFare
                                             .toString();
                                     print("offeredFare$offeredFare");
-                                    final commissionEarned =
-                                        getFilteredResults()[index][innerIndex]
-                                            .fare
-                                            .commissionEarned
-                                            .toDouble();
-                                    print("TBOcommision$commissionEarned");
+                                    // -----------------------CUSTOMER COMMISSION CALCULATION--------------------- //
                                     double tboTDS = getFilteredResults()[index]
                                             [innerIndex]
                                         .fare
                                         .tdsOnCommission
                                         .toDouble();
                                     print("tboTDS$tboTDS");
+                                    final commissionEarned =
+                                        getFilteredResults()[index][innerIndex]
+                                            .fare
+                                            .commissionEarned
+                                            .toDouble();
+                                    print("commissionEarned$commissionEarned");
+
+                                    // final commissionEarned =
+                                    //     getFilteredResults()[index][innerIndex]
+                                    //             .fare
+                                    //             .commissionEarned
+                                    //             .toDouble() -
+                                    //         tboTDS;
+                                    // print("commissionEarned_one$commissionEarned)
+                                    // NEW: Calculate customer commission based on tiers
+                                    double customerComm = 0.0;
+                                    if (customer.data.isNotEmpty) {
+                                      var commData = customer.data[0];
+                                      double earned =
+                                          commissionEarned; // For readability
+                                      if (earned >= 0 && earned <= 50) {
+                                        customerComm = commData.commission_0_50
+                                                ?.toDouble() ??
+                                            0.0;
+                                      } else if (earned <= 100) {
+                                        customerComm = commData
+                                                .commission_50_100
+                                                ?.toDouble() ??
+                                            0.0;
+                                      } else if (earned <= 150) {
+                                        customerComm = commData
+                                                .commission_100_150
+                                                ?.toDouble() ??
+                                            0.0;
+                                      } else if (earned <= 200) {
+                                        customerComm = commData
+                                                .commission_150_200
+                                                ?.toDouble() ??
+                                            0.0;
+                                      } else if (earned <= 250) {
+                                        customerComm = commData
+                                                .commission_200_250
+                                                ?.toDouble() ??
+                                            0.0;
+                                      } else if (earned <= 300) {
+                                        customerComm = commData
+                                                .commission_250_300
+                                                ?.toDouble() ??
+                                            0.0;
+                                      } else {
+                                        customerComm = commData
+                                                .commission_above_300
+                                                ?.toDouble() ??
+                                            0.0;
+                                      }
+                                    }
+                                    print(
+                                        "customerComm: $customerComm"); // Optional: For debugging
+                                    double customercommissiondetection =
+                                        commissionEarned - customerComm;
+                                    double finalcustomercommission =
+                                        customercommissiondetection *
+                                            passengerCount;
+                                    print(
+                                        "customercommissiondetection$customercommissiondetection");
+                                    print(
+                                        "finalcustomercommission$finalcustomercommission");
+                                    // ----------------------------------------------------------------------------//
                                     double publishFareVal =
                                         double.tryParse(publishFare) ?? 0;
                                     double offeredFareVal =
                                         double.tryParse(offeredFare) ?? 0;
                                     // COMMISIONPERCENTAGE
-
                                     double commissionpercentage = commission
-                                        .data.first.commissionforgds
-                                        .toDouble();
+                                            .data.first.commissionforgds
+                                            .toDouble() *
+                                        passengerCount;
                                     print(
                                         "commissionpercentage$commissionpercentage");
+                                    int passengercount = passengerCount;
+                                    print("passengercount$passengercount");
+
                                     // COMMISSION
                                     double commissionraw =
                                         publishFareVal - offeredFareVal;
@@ -939,11 +1087,13 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                         commissionEarned - tboTDS;
                                     print(
                                         "tbooverallCommision$tbooverallCommision");
+                                    //  ---------------------------------------------//
                                     double toubikcommisionearned =
                                         tbooverallCommision -
                                             commissionpercentage;
                                     print(
                                         "toubikcommisionearned$toubikcommisionearned");
+                                    // -------------------------------------------------//
                                     double toubiktdsoncommision = double.parse(
                                         (toubikcommisionearned * 0.02)
                                             .toStringAsFixed(2));
@@ -954,7 +1104,6 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                         .fare
                                         .tdsOnPlb
                                         .toDouble();
-                                    ;
                                     print("tdsplb$tdsplb");
 
                                     // NETFARE
@@ -968,6 +1117,19 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                 .toString()))
                                         .round();
                                     print("offFare$offFare");
+
+                                    // COUPOUN
+                                    int coupon = (double.parse(
+                                                publishFare.toString()) -
+                                            double.parse(offFare.toString()))
+                                        .round();
+                                    print("coupon$coupon");
+
+                                    int baseFare =
+                                        (double.parse(publishFare.toString()) -
+                                                double.parse(coupon.toString()))
+                                            .round();
+                                    print("baseFare$baseFare");
 
                                     return GestureDetector(
                                       onTap: () {
@@ -1719,9 +1881,11 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                 print("fareTax$fareTax");
                                                                                 final tax = await fare.setString('Tax', fareTax!);
 
-                                                                                origin = searchData.response.origin; // Global, fine
+                                                                                origin = searchData.response.results[index][innerIndex].fare.baseFare.toString(); // Global, fine
                                                                                 final fromorigin = await fare.setString('Origin', origin!);
                                                                                 print("origin$origin");
+                                                                                origin = searchData.response.origin; // Global, fine
+
                                                                                 destination = searchData.response.destination; // Global, fine
                                                                                 final todestination = await fare.setString('Destination', destination!);
                                                                                 print("destination$destination");
@@ -1730,8 +1894,16 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
                                                                                 // JOURNEYLIST (segmentListJson loop) - Replace inner accesses too
                                                                                 List<Map<String, dynamic>> segmentListJson = [];
+
                                                                                 for (var segmentGroup in currentFlight.segments) {
-                                                                                  // <-- Changed
+                                                                                  // Calculate total journey duration (first dep → last arrival)
+                                                                                  final firstSegment = segmentGroup.first;
+                                                                                  final lastSegment = segmentGroup.last;
+                                                                                  final totalDurationMinutes = lastSegment.destination.arrTime.difference(firstSegment.origin.depTime).inMinutes;
+                                                                                  final totalHours = totalDurationMinutes ~/ 60;
+                                                                                  final totalMinutes = totalDurationMinutes % 60;
+                                                                                  final totalDurationText = "${totalHours}h ${totalMinutes}m";
+
                                                                                   for (var segment in segmentGroup) {
                                                                                     String layoverText = "";
                                                                                     int currentIndex = segmentGroup.indexOf(segment);
@@ -1748,14 +1920,12 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
                                                                                     final DateTime depTime = segment.origin.depTime;
                                                                                     final String formatteddepDate = DateFormat("dd MMM yy").format(depTime);
-                                                                                    print("formattedDate$formatteddepDate");
                                                                                     final DateTime arrTime = segment.destination.arrTime;
                                                                                     final String formattedarrDate = DateFormat("dd MMM yy").format(arrTime);
-                                                                                    print("formattedDate$formattedarrDate");
-                                                                                    final stop = (currentFlight.segments.first.length - 1) == 0 ? "Non-Stop" : "${currentFlight.segments.first.length - 1} stop"; // <-- Changed
-                                                                                    print("stopstopstop${jsonEncode(stop)}");
+
+                                                                                    final stop = (currentFlight.segments.first.length - 1) == 0 ? "Non-Stop" : "${currentFlight.segments.first.length - 1} stop";
                                                                                     final duration = segment.duration.toString();
-                                                                                    print("durationduration$duration");
+
                                                                                     segmentListJson.add({
                                                                                       "airlineName": segment.airline.airlineName,
                                                                                       "airlineCode": segment.airline.airlineCode,
@@ -1769,6 +1939,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                       "arrival": formattedarrDate,
                                                                                       "arrTime": segment.destination.arrTime.toString().substring(11, 16),
                                                                                       "duration": segment.duration.toString(),
+                                                                                      "durationTime": totalDurationText,
+                                                                                      // <-- Overall journey duration
                                                                                       "fromAirport": segment.origin.airport.airportName,
                                                                                       "fromAirportCode": segment.origin.airport.airportCode,
                                                                                       "toAirport": segment.destination.airport.airportName,
@@ -1778,6 +1950,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                     });
                                                                                   }
                                                                                 }
+
                                                                                 print("segmentListJsonsegmentListJson${jsonEncode(segmentListJson)}");
 
                                                                                 // FARE BREAKDOWN
@@ -1803,9 +1976,13 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                   }
                                                                                 }
 
+                                                                                final fareee = currentFlight.fare.baseFare.toString();
                                                                                 print("adultBase$adultBase");
                                                                                 print("childBase$childBase");
                                                                                 print("infantBase$infantBase");
+                                                                                print("basefareeeee$fareee");
+                                                                                print("efwefwe${searchData.response.traceId}");
+                                                                                print("efwefwe${currentFlight.resultIndex}");
 
                                                                                 Navigator.push(
                                                                                     context,
@@ -1851,6 +2028,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                               segmentsJson: segmentListJson,
                                                                                               resultindex: currentFlight.resultIndex,
                                                                                               traceid: searchData.response.traceId,
+                                                                                              coupouncode: coupon,
                                                                                               // Global, fine
                                                                                               reissue: (() {
                                                                                                 try {
@@ -1890,6 +2068,14 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                                               })(),
                                                                                               outBoundData: {},
                                                                                               inBoundData: {},
+                                                                                              //
+                                                                                              commonPublishedFare: publishFare,
+                                                                                              tboOfferedFare: offeredFare,
+                                                                                              tboCommission: commissionpercentage,
+                                                                                              tboTds: tboTDS,
+                                                                                              trvlusCommission: toubikcommisionearned,
+                                                                                              trvlusTds: toubiktdsoncommision,
+                                                                                              trvlusNetFare: offFare,
                                                                                             )));
                                                                               },
                                                                               child: Container(
@@ -1943,7 +2129,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                           width: 10,
                                                         ),
                                                         Text(
-                                                          "Flat 10% Off upto Rs.with trvlus coupon",
+                                                          // "Flat 10% Off upto Rs.${coupon}with trvlus coupon",
+                                                          "Flat ₹$coupon OFF—only on Trvuls.",
                                                           style: TextStyle(
                                                               fontSize: 10,
                                                               color:
@@ -2051,18 +2238,24 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
 class FilterBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> airlines;
-  final int? currentSelectedIndex;
-  final bool initialHideNonRefundable; // <-- ADD
+  final List<int>? currentSelectedIndices;
+  final int? initialStops;
+  final bool initialHideNonRefundable;
+  final String initialDepartureTime;
+  final String initialArrivalTime;
   final String? filterorigin;
   final String? filterdestination;
 
   const FilterBottomSheet({
     Key? key,
     required this.airlines,
-    this.currentSelectedIndex,
-    this.initialHideNonRefundable = false, // <-- ADD
+    this.currentSelectedIndices,
     this.filterorigin,
     this.filterdestination,
+    this.initialStops, // optional
+    this.initialHideNonRefundable = false,
+    this.initialDepartureTime = "",
+    this.initialArrivalTime = "",
   }) : super(key: key);
 
   @override
@@ -2074,6 +2267,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   int? selectedStops;
   String departureTime = "";
   String arrivalTime = "";
+  Set<int> selectedAirlineIndices = <int>{};
 
   // final List<Map<String, String>> airlines = List.generate(
   //   10,
@@ -2092,7 +2286,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    selectedAirlineIndex = widget.currentSelectedIndex;
+    selectedAirlineIndices =
+        Set<int>.from(widget.currentSelectedIndices ?? <int>[]);
+    selectedStops = widget.initialStops;
+    hideNonRefundable = widget.initialHideNonRefundable;
+    departureTime = widget.initialDepartureTime;
+    arrivalTime = widget.initialArrivalTime;
   }
 
   @override
@@ -2287,93 +2486,116 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       itemCount: widget.airlines.length,
                       itemBuilder: (context, index) {
                         if (index == 0) {
-                          // All Airlines row
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8.w),
-                            child: Row(
-                              children: [
-                                Transform.scale(
-                                  scale: 1.3,
-                                  child: Radio<int>(
-                                    value: 0,
-                                    groupValue: selectedAirlineIndex,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedAirlineIndex = value;
-                                      });
-                                    },
+                          // "All Airlines" - Special tappable row to clear selections
+                          bool isAllSelected = selectedAirlineIndices.isEmpty;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedAirlineIndices.clear();
+                              });
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 8.w, horizontal: 5),
+                              child: Row(
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.3,
+                                    child: Icon(
+                                      isAllSelected
+                                          ? Icons.radio_button_checked
+                                          : Icons.radio_button_unchecked,
+                                      size: 20.r,
+                                      color: isAllSelected
+                                          ? const Color(0xFFF37023)
+                                          : Colors.grey,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: Text(
-                                    widget.airlines[0]["name"]!,
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Text(
+                                      widget.airlines[0]["name"]!,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                  // No price for "All"
+                                ],
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Regular airline row - Now with circular checkbox for multi-select
+                          bool isSelected =
+                              selectedAirlineIndices.contains(index);
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  selectedAirlineIndices.remove(index);
+                                } else {
+                                  selectedAirlineIndices.add(index);
+                                }
+                              });
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 8.w, horizontal: 5),
+                              child: Row(
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.3,
+                                    child: Icon(
+                                      isSelected
+                                          ? Icons.radio_button_checked
+                                          : Icons.radio_button_unchecked,
+                                      size: 20.r,
+                                      color: isSelected
+                                          ? const Color(0xFFF37023)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        if (widget.airlines[index]["logo"] !=
+                                                null &&
+                                            widget.airlines[index]["logo"]!
+                                                .isNotEmpty)
+                                          Image.asset(
+                                            widget.airlines[index]["logo"]!,
+                                            height: 24.h,
+                                            width: 24.w,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          widget.airlines[index]["name"]!,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    widget.airlines[index]["price"] ?? "",
                                     style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14.sp,
+                                      fontSize: 16.sp,
                                       fontWeight: FontWeight.w500,
                                       color: Colors.black,
                                     ),
                                   ),
-                                ),
-                                // No price for "All"
-                              ],
-                            ),
-                          );
-                        } else {
-                          // Regular airline row
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8.w),
-                            child: Row(
-                              children: [
-                                Transform.scale(
-                                  scale: 1.3,
-                                  child: Radio<int>(
-                                    value: index,
-                                    groupValue: selectedAirlineIndex,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedAirlineIndex = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      if (widget.airlines[index]["logo"] !=
-                                              null &&
-                                          widget.airlines[index]["logo"]!
-                                              .isNotEmpty)
-                                        Image.asset(
-                                          widget.airlines[index]["logo"]!,
-                                          height: 24.h,
-                                          width: 24.w,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        widget.airlines[index]["name"]!,
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  widget.airlines[index]["price"] ?? "",
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         }
@@ -2392,10 +2614,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         child: ElevatedButton(
           onPressed: () {
             Navigator.pop(context, {
-              'airlineIndex': selectedAirlineIndex ?? 0,
+              'airlineIndices': selectedAirlineIndices.toList(),
+              // NEW key for multi
               'stops': selectedStops,
-              'hideNonRefundable': hideNonRefundable, // <-- ADD THIS
-              'departureTime': departureTime, // ADD
+              'hideNonRefundable': hideNonRefundable,
+              // <-- ADD THIS
+              'departureTime': departureTime,
+              // ADD
               'arrivalTime': arrivalTime,
             });
           },
@@ -2424,7 +2649,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedStops = value;
+          if (selectedStops == value) {
+            selectedStops = null;
+          } else {
+            selectedStops = value;
+          }
         });
       },
       child: Padding(
@@ -2461,9 +2690,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       onTap: () {
         setState(() {
           if (isArrival) {
-            arrivalTime = value;
+            arrivalTime = (arrivalTime == value) ? "" : value;
           } else {
-            departureTime = value;
+            departureTime = (departureTime == value) ? "" : value;
           }
         });
       },
@@ -2499,14 +2728,21 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
 class DateScroller extends StatefulWidget {
   final List<Map<String, dynamic>> dates;
+  final Function(String)? onDateSelected; // NEW: Callback for date selection
 
-  const DateScroller({Key? key, required this.dates}) : super(key: key);
+  const DateScroller({
+    Key? key,
+    required this.dates,
+    this.onDateSelected, // NEW
+  }) : super(key: key);
 
   @override
   _DateScrollerState createState() => _DateScrollerState();
 }
 
 class _DateScrollerState extends State<DateScroller> {
+  final ScrollController _scrollController = ScrollController();
+
   String _getMonth(DateTime date) {
     const months = [
       "Jan",
@@ -2533,11 +2769,15 @@ class _DateScrollerState extends State<DateScroller> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       scrollDirection: Axis.horizontal,
       child: Container(
         color: Colors.white,
         child: Row(
-          children: widget.dates.map((date) {
+          children: widget.dates.asMap().entries.map((entry) {
+            final int index = entry.key; // ✅ get index here
+            final date = entry.value; // ✅ get the date map
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -2546,7 +2786,18 @@ class _DateScrollerState extends State<DateScroller> {
                   }
                   date['isSelected'] = true;
                 });
-                // You can later trigger search for selected date here if you want
+
+                // ✅ AUTO SCROLL
+                _scrollController.animateTo(
+                  index * 100.w, // item width
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+
+                // Trigger callback to parent
+                if (widget.onDateSelected != null && date['date'] != null) {
+                  widget.onDateSelected!(date['date'] as String);
+                }
               },
               child: Container(
                 height: 40.h,
@@ -2570,15 +2821,14 @@ class _DateScrollerState extends State<DateScroller> {
                               date['isSelected'] ? Colors.black : Colors.black,
                         ),
                       ),
-                      if ((date['price'] as String? ?? '').isNotEmpty)
-                        Text(
-                          date['price'] as String? ?? '',
-                          style: TextStyle(
-                            color: date['isSelected']
-                                ? const Color(0xFFF37023)
-                                : const Color(0xFF909090),
-                          ),
+                      Text(
+                        (date['price'] as String? ?? ''),
+                        style: TextStyle(
+                          color: date['isSelected']
+                              ? const Color(0xFFF37023)
+                              : const Color(0xFF909090),
                         ),
+                      ),
                     ],
                   ),
                 ),

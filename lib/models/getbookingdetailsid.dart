@@ -99,6 +99,8 @@ class Data {
   late final List<PassengerBreakup> passengerBreakup;
   late final String reissueCharge;
   late final String cancellationCharge;
+  late final String convenienceFee;
+  late final String coupounCode;
   late final int invoiceNo;
   late final int markup;
   late final String createdAt;
@@ -144,6 +146,8 @@ class Data {
     //     .toList();
     reissueCharge = json['reissue_charge'];
     cancellationCharge = json['cancellation_charge'];
+    convenienceFee = (json['convenience_fee'] ?? 0).toString();
+    coupounCode = (json['coupoun_code'] ?? 0).toString();
     invoiceNo = json['invoiceNo'];
     markup = (json['markup'] as num).toInt();
     createdAt = json['created_at'];
@@ -186,6 +190,8 @@ class Data {
         passengerBreakup.map((e) => e.toJson()).toList();
     _data['reissue_charge'] = reissueCharge;
     _data['cancellation_charge'] = cancellationCharge;
+    _data['convenience_fee'] = convenienceFee;
+    _data['coupoun_code'] = coupounCode;
     _data['invoiceNo'] = invoiceNo;
     _data['markup'] = markup;
     _data['created_at'] = createdAt;
