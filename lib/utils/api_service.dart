@@ -23,6 +23,7 @@ import '../models/farequote.dart' as fareQuote;
 import '../models/farerule.dart' as fare;
 import '../models/getbookingdetailsid.dart' as bookinghistoryID;
 import '../models/getprofile.dart' as profileupdatation;
+import '../models/payment.dart' as paymentStatus;
 import '../models/search_data.dart' as search;
 import '../models/selecttraveler.dart' as traveller;
 import '../models/ssr.dart' as ssrdata;
@@ -39,10 +40,10 @@ class ApiBaseHelper {
   List<Map<String, dynamic>> passengersList = [];
 
   // LOCAL IP
-  static const _baseUrl = 'http://192.168.0.18:8000/api/';
+  // static const _baseUrl = 'http://192.168.1.12:8000/api/';
 
   // LIVE
-  // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
+  static const _baseUrl = 'https://dev-api.trvlus.com/api/';
 
   //
   // (NEEED TO HIDE ENDUSERIP FOR DATESCROLLER) [NEED TO CHANGE TICKET AND INVOICE URL]
@@ -207,7 +208,8 @@ class ApiBaseHelper {
         data: body,
         options: (url == "ticketInvoice" ||
                 url == "ticketsearch" ||
-                url == "noLccBook")
+                url == "noLccBook" ||
+                url == "cancel-req")
             ? Options(headers: headers)
             : null,
       );
@@ -471,14 +473,6 @@ class ApiService {
     final response = await _helper.post("mobileFareRule", fareruleBody);
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-
-    // final response = await _helper.post(
-    //   "fareRule",
-    //   fareruleBody,
-    //   {
-    //     "Authorization": "Bearer $accessToken",
-    //   },
-    // );
     print("farerule response${jsonEncode(decode)}");
     return fare.fareRuleDataFromJson(decode);
   }
@@ -520,9 +514,21 @@ class ApiService {
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
 
-    print("FareQuote response${jsonEncode(decode)}");
-    // printLargeJson(decode);
+    // print("FareQuote response${jsonEncode(decode)}");
+    printLargeJson(decode);
     return fareQuote.fareQuotesDataFromJson(decode);
+  }
+
+  void printLargeJson(dynamic data) {
+    final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+    const int chunkSize = 800;
+
+    for (int i = 0; i < jsonString.length; i += chunkSize) {
+      print(jsonString.substring(
+        i,
+        i + chunkSize > jsonString.length ? jsonString.length : i + chunkSize,
+      ));
+    }
   }
 
   // SSR
@@ -545,7 +551,6 @@ class ApiService {
     final response = await _helper.post("mobileSSR", ssrBody);
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-    print("SSR response${jsonEncode(decode)}");
     return ssrdata.ssrDataFromJson(decode);
   }
 
@@ -566,7 +571,7 @@ class ApiService {
     }
 
     final body = {
-      "EndUserIp": "192.168.1.10",
+      // "EndUserIp": "192.168.1.10",
       "TokenId": tokenId,
       "JourneyType": "1",
       "PreferredAirlines": null,
@@ -590,7 +595,7 @@ class ApiService {
       // final response = await _helper.postCalender("GetCalendarFare", body);
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       print("FULL CALENDAR API RESPONSE:");
-      print(encoder.convert(response));
+      // print(encoder.convert(response));
       return response;
     } catch (e) {
       print("Error fetching calendar fare: $e");
@@ -633,7 +638,8 @@ class ApiService {
       tboTds,
       trvlusCommission,
       trvlusTds,
-      trvlusNetFare) async {
+      trvlusNetFare,
+      othercharges) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     print("APICALLING$passenger");
@@ -849,7 +855,7 @@ class ApiService {
       print("journeyListarray$journeyListarray");
 
       journeyListarray.add({
-        "Baggage": "15 Kilograms",
+        "Baggage": item['baggage'],
         "duration": item['duration'] != "" && item['duration'] != null
             ? int.parse(item['duration'].toString())
             : 0,
@@ -857,7 +863,7 @@ class ApiService {
         "Arrival": item['arrival'],
         "ArrivalTime": item['arrTime'],
         "LayOverTime": item['layover'],
-        "CabinBaggage": "7 KG",
+        "CabinBaggage": item['cabinBaggage'],
         "Depature": item['departure'],
         "DepatureTime": item['depTime'],
         "FlightNumber": item['flightNumber'],
@@ -924,7 +930,7 @@ class ApiService {
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
-        "PassportIssueCountryCode": "",
+        "PassportIssueCountryCode": "IN",
         "AddressLine1": "NA",
         "AddressLine2": "",
         "City": "Gurgaon",
@@ -1024,7 +1030,7 @@ class ApiService {
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
-        "PassportIssueCountryCode": "",
+        "PassportIssueCountryCode": "IN",
         "AddressLine1": "NA",
         "AddressLine2": "",
         "City": "Gurgaon",
@@ -1124,7 +1130,7 @@ class ApiService {
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
-        "PassportIssueCountryCode": "",
+        "PassportIssueCountryCode": "IN",
         "AddressLine1": "NA",
         "AddressLine2": "",
         "City": "Gurgaon",
@@ -1226,7 +1232,7 @@ class ApiService {
       "return_date": "",
       "commision_percentage_amount": commisionPercentage,
       "convenience_fee": conveniencefee,
-      "coupoun_code": coupouncode,
+      "coupoun_code": coupouncode.toString(),
       "commonPublishedFare": commonPublishedFare,
       "tboOfferedFare": tboOfferedFare,
       "tboCommission": tboCommission,
@@ -1286,7 +1292,8 @@ class ApiService {
       tboTds,
       trvlusCommission,
       trvlusTds,
-      trvlusNetFare) async {
+      trvlusNetFare,
+      othercharges) async {
     print("APISERVICEEEEE$meal");
 
     final prefs = await SharedPreferences.getInstance();
@@ -1303,6 +1310,12 @@ class ApiService {
     var passengersArrayData = [];
     var passengersDetailData = [];
     var journeyListarray = [];
+    final finaltax = tax + othercharges;
+    print("finaltax$finaltax");
+    print("finaltax$tax");
+    print("finaltax$othercharges");
+    final coupounCode = coupouncode;
+    print("coupounCode$coupounCode");
 
     // ADDING ADULTS
     for (var passenger in passenger) {
@@ -1611,7 +1624,7 @@ class ApiService {
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
-        "PassportIssueCountryCode": "",
+        "PassportIssueCountryCode": "IN",
         "AddressLine1": "NA",
         "AddressLine2": "",
         "City": "Gurgaon",
@@ -1711,7 +1724,7 @@ class ApiService {
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
-        "PassportIssueCountryCode": "",
+        "PassportIssueCountryCode": "IN",
         "AddressLine1": "NA",
         "AddressLine2": "",
         "City": "Gurgaon",
@@ -1811,7 +1824,7 @@ class ApiService {
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
-        "PassportIssueCountryCode": "",
+        "PassportIssueCountryCode": "IN",
         "AddressLine1": "NA",
         "AddressLine2": "",
         "City": "",
@@ -1859,6 +1872,9 @@ class ApiService {
     final commision = tboCommission;
     final commisionPercentage = passengersDetailData.length * commision;
     print("commisionPercentage$commisionPercentage");
+    double? paymentAmount = prefs.getDouble("payment");
+
+    print("Stored Amount: $paymentAmount");
 
     /// 3️⃣ Confirm Booking Params
     final confirmBookingParams = {
@@ -1872,8 +1888,16 @@ class ApiService {
       "SequenceNumber": "0",
       "result_token": "resultToken123", // replace with actual value
       "passenger_details": passengersDetailData,
-      "wallet_retake_params": {}, // fill as per your app
-      "wallet_update_params": {}, // fill as per your app
+      "wallet_retake_params": {
+        "from_user_id": userID,
+        "role_id": "5",
+        "wallet": trvlusNetFare,
+        "type": "booking"
+      }, // fill as per your app
+      "wallet_update_params": {
+        "type": "booking",
+        "booking_amount": trvlusNetFare
+      }, // fill as per your app
       "user": userID, // replace with actual value
       "role": 3, // replace with actual value
       "document_type": "Passport",
@@ -1887,8 +1911,8 @@ class ApiService {
       "cancellation_charge": 0,
       "totalpassengers": passengersDetailData.length,
       "base_price": baseFare,
-      "tax": tax,
-      "agentbalance": 0.0,
+      "tax": finaltax,
+      "agentbalance": paymentAmount,
       "agent_commission": 0.0,
       "agent_tdsCommission": 0.0,
       "origin": cityName,
@@ -1897,7 +1921,7 @@ class ApiService {
       "return_date": "",
       "commision_percentage_amount": commision,
       "convenience_fee": conveniencefee,
-      "coupoun_code": coupouncode,
+      "coupoun_code": coupounCode,
       "commonPublishedFare": commonPublishedFare,
       "tboOfferedFare": tboOfferedFare,
       "tboCommission": tboCommission,
@@ -2265,6 +2289,26 @@ class ApiService {
     return addstatus.addstatusFromJson(decode);
   }
 
+  //  PAYMENT FLOW
+  Future<paymentStatus.Payment> payment() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('user_id');
+
+    final response = await _helper.get(
+        "accountStatus?fromdate=2026-01-01&todate=2026-03-10&userid=$userID");
+    // final decode = _helper.decodeBase64Response(response);
+    final decode = response;
+
+    print("payment response${jsonEncode(decode)}");
+    final amount = response["data"][0]["amount"];
+    print("Amount is: $amount");
+    final pref = await SharedPreferences.getInstance();
+
+    await pref.setDouble("payment", amount);
+
+    return paymentStatus.paymentStatusFromJson(decode);
+  }
+
   //   CANCEL REQUEST
   Future<Map<String, dynamic>> cancelRequest({
     required String pnr,
@@ -2409,7 +2453,7 @@ class ApiService {
     final tokenId = prefs.getString("tokenId");
     try {
       // final url =
-      //     "http://192.168.0.7:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
+      //     "http://192.168.1.15:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
       final url =
           "https://dev-api.trvlus.com/api/ticket-download/$bookingId/$pnr/$tokenId";
       final response = await http.get(Uri.parse(url));
@@ -2450,7 +2494,7 @@ class ApiService {
     final tokenId = prefs.getString("tokenId");
     try {
       // final url =
-      //     "http://192.168.0.7:8000/api/invoice-download/$bookingId/$pnr/$tokenId";
+      //     "http://192.168.0.8:8000/api/invoice-download/$bookingId/$pnr/$tokenId";
       final url =
           "https://dev-api.trvlus.com/api/invoice-download/$bookingId/$pnr/$tokenId";
       final response = await http.get(Uri.parse(url));

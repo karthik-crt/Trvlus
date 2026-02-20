@@ -83,7 +83,7 @@ void main() async {
       await OpenFilex.open(filePath);
     }
   }
-  Get.put(PriceAlertController());
+  Get.put(PriceAlertController(), permanent: true);
   runApp(MyApp());
 }
 

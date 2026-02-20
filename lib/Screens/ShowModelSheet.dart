@@ -7,7 +7,8 @@ class FareBreakupSheet extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final int? coupouncode;
+  final num? coupouncode;
+  final double? othercharges;
   final double? adultfare;
   final double? childfare;
   final double? infantfare;
@@ -15,8 +16,12 @@ class FareBreakupSheet extends StatefulWidget {
   final double? childTax;
   final double? infantTax;
   final bool showConvenienceFee;
+  final bool ssrData;
   double convenienceFee = 0;
   final double? total;
+  final Map<String, dynamic> meal;
+  final double baggage;
+  final List<Map<String, dynamic>> seat;
 
   FareBreakupSheet(
       {this.basefare,
@@ -25,14 +30,19 @@ class FareBreakupSheet extends StatefulWidget {
       this.childCount,
       this.infantCount,
       this.coupouncode,
+      this.othercharges,
       this.adultfare,
       this.childfare,
       this.infantfare,
       this.adultTax,
       this.childTax,
       this.infantTax,
-      this.showConvenienceFee = false, // ✅ DEFAULT FALSE
+      this.showConvenienceFee = false,
+      this.ssrData = false,
       required this.convenienceFee,
+      required this.meal,
+      required this.seat,
+      required this.baggage,
       this.total});
 
   @override
@@ -43,12 +53,23 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
   @override
   Widget build(BuildContext context) {
     print("VIEW FARE FULL DETAIL");
-    // final adultFare = (widget.adultCount ?? 0) * (widget.basefare ?? 0);
-    // final childFare = (widget.childCount ?? 0) * (widget.basefare ?? 0);
-    // final infantFare = (widget.infantCount ?? 0) * (widget.basefare ?? 0);
+    double mealTotal = 0.0;
+    double seatTotal = 0.0;
+    double baggageTotal = 0.0;
+    int total = 0;
+
     final tax = widget.tax?.round();
     print("totaltotal$tax");
+    final othertaxcharges =
+        ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
+    print("othertaxcharges$othertaxcharges");
     print("coupoun${widget.coupouncode}");
+    print("meal${widget.meal}");
+    print("meal${widget.meal['Price']}");
+    print("seat${widget.seat}");
+    print("dgtgsgre${widget.adultfare}");
+    print("dgtgsgre${widget.tax}");
+    print("dgtgsgre${widget.othercharges}");
 
     final adultFare = widget.adultfare?.round();
     final childFare = widget.childfare?.round();
@@ -58,6 +79,11 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final childtax = widget.childTax;
     final infanttax = widget.infantTax;
     final taxtotal = tax;
+    print("taxtotal$taxtotal");
+    final othercharges = widget.othercharges?.round();
+    print("othercharges$othercharges");
+    final othertaxtotal = tax! + othercharges!;
+    print("othertaxtotal$othertaxtotal");
     final overalltotal = widget.total;
     print("overalltotal$overalltotal");
     print("taxtotal$taxtotal");
@@ -73,7 +99,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("grgrg${widget.convenienceFee}");
 
     print("taxtotal$taxtotal");
-    final totalDiscount = conveniencefee! + coupoun!;
+    final totalDiscount = coupoun?.toDouble();
     print("totalDiscount$totalDiscount");
 
     final basefare = widget.basefare?.round();
@@ -85,13 +111,72 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
         widget.showConvenienceFee ? (widget.convenienceFee ?? 0) : 0;
     print("convenienceFee$convenienceFee");
 
-    final total = adultFare! +
-        childFare! +
-        infantFare! +
-        conveniencefee +
-        taxtotal! -
-        totalDiscount!; // ✅ now this works
-    print("totaltotaltotal$total");
+    // MEAL SEAT BAGGAGE CALCULATION
+    final mealData = widget.meal;
+    final seatData = widget.seat;
+    final baggageData = widget.baggage;
+
+// Meal
+    if (mealData != null) {
+      mealData.forEach((route, passengers) {
+        passengers.forEach((pax, meals) {
+          for (var meal in meals) {
+            mealTotal += (meal['Price'] ?? 0).toDouble();
+            print("mealTotalmealTotal$mealTotal");
+          }
+        });
+      });
+    }
+
+// Seat
+    if (seatData != null) {
+      for (var seat in seatData) {
+        seatTotal += (seat['Price'] ?? 0).toDouble();
+      }
+    }
+
+    print("Meal: $mealTotal");
+    print("Seat: $seatTotal");
+    print("baggage: $baggageData");
+    print("Grand Total: ${mealTotal + seatTotal + baggageData}");
+
+    final ssrTotal = mealTotal + seatTotal + baggageData;
+    print("ssrTotal$ssrTotal");
+
+    if (widget.coupouncode! > 0) {
+      print("helloooo");
+      print(adultFare);
+      print(conveniencefee);
+      print(taxtotal);
+      print(totalDiscount);
+      total = (adultFare! +
+              childFare! +
+              infantFare! +
+              conveniencefee +
+              taxtotal! -
+              totalDiscount!)
+          .round();
+      print("overallFare1$total");
+    } else {
+      print("helloooohelo");
+      total = adultFare! +
+          childFare! +
+          infantFare! +
+          conveniencefee +
+          othertaxtotal;
+      print("no commission");
+      print("overallFare$total");
+      print("overallFare$adultFare");
+      print("overallFare$othertaxtotal");
+    }
+
+    // final total = adultFare! +
+    //     childFare! +
+    //     infantFare! +
+    //     conveniencefee +
+    //     taxtotal! -
+    //     totalDiscount!;
+    // print("totaltotaltotal$total");
 
     return Stack(
       clipBehavior: Clip.none,
@@ -209,7 +294,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                     fontSize: 14.sp,
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold)),
-                            Text("₹$tax",
+                            Text("₹$othertaxcharges",
                                 style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,
@@ -217,74 +302,113 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           ],
                         ),
                         SizedBox(height: 5.h),
+                        if (ssrTotal > 0)
+                          if (widget.ssrData) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("SSR",
+                                    style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold)),
+                                Text("₹$ssrTotal",
+                                    style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFF37023))),
+                              ],
+                            ),
+                            if (widget.seat.isNotEmpty)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Seat",
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey)),
+                                  Text("₹$seatTotal",
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey)),
+                                ],
+                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Baggage",
+                                    style: TextStyle(
+                                        fontSize: 12.sp, color: Colors.grey)),
+                                Text("${widget.baggage}",
+                                    style: TextStyle(
+                                        fontSize: 12.sp, color: Colors.grey)),
+                              ],
+                            ),
+                            if (widget.meal != {} && mealTotal > 0)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Meals",
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey)),
+                                  Text("₹$mealTotal",
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey)),
+                                ],
+                              ),
+                          ],
                         if (widget.showConvenienceFee)
+                          if (widget.convenienceFee > 0)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Convenience Fee",
+                                    style: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold)),
+                                Text("₹${widget.convenienceFee.toInt()}",
+                                    style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFF37023))),
+                              ],
+                            ),
+                        if (widget.coupouncode != null &&
+                            widget.coupouncode! > 0) ...[
+                          SizedBox(height: 7.h),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text("Convenience Fee",
+                              Text("Total Discount",
                                   style: TextStyle(
                                       fontSize: 14.sp,
                                       color: Colors.black,
                                       fontWeight: FontWeight.bold)),
-                              Text("₹${widget.convenienceFee.toInt()}",
+                              Text("-${totalDiscount?.round()}",
                                   style: TextStyle(
                                       fontSize: 14.sp,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFFF37023))),
                             ],
                           ),
-                        SizedBox(height: 7.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Total Discount",
-                                style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold)),
-                            Text("-$totalDiscount",
-                                style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFF37023))),
-                          ],
-                        ),
-                        SizedBox(height: 3.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Promo Discount",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                )),
-                            Text("₹$coupoun",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                )),
-                          ],
-                        ),
-                        if (widget.showConvenienceFee)
+                          SizedBox(height: 3.h),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                "Convenience Fee",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              Text(
-                                "₹${convenienceFee.toStringAsFixed(0)}",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
+                              Text("Promo Discount",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey,
+                                  )),
+                              Text("₹${coupoun!.toStringAsFixed(2)}",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey,
+                                  )),
                             ],
                           ),
+                        ],
                         SizedBox(height: 7.h),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -264,7 +264,7 @@ class PassengerDetails {
   late final String AddressLine1;
   late final String FFAirlineCode;
   late final bool IsPANRequired;
-  late final BarcodeDetails barcodeDetails;
+  BarcodeDetails? barcodeDetails;
   late final String GSTCompanyName;
   late final String PassportExpiry;
   late final List<DocumentDetails> documentDetails;
@@ -303,7 +303,9 @@ class PassengerDetails {
     AddressLine1 = json['AddressLine1'];
     FFAirlineCode = json['FFAirlineCode'] ?? "";
     IsPANRequired = json['IsPANRequired'];
-    barcodeDetails = BarcodeDetails.fromJson(json['BarcodeDetails']);
+    barcodeDetails = json['BarcodeDetails'] != null
+        ? BarcodeDetails.fromJson(json['BarcodeDetails'])
+        : null;
     GSTCompanyName = json['GSTCompanyName'] ?? "";
     PassportExpiry = json['PassportExpiry'] ?? "";
     documentDetails = List.from(json['DocumentDetails'])
@@ -346,7 +348,7 @@ class PassengerDetails {
     _data['AddressLine1'] = AddressLine1;
     _data['FFAirlineCode'] = FFAirlineCode;
     _data['IsPANRequired'] = IsPANRequired;
-    _data['BarcodeDetails'] = barcodeDetails.toJson();
+    _data['BarcodeDetails'] = barcodeDetails?.toJson();
     _data['GSTCompanyName'] = GSTCompanyName;
     _data['PassportExpiry'] = PassportExpiry;
     _data['DocumentDetails'] = documentDetails.map((e) => e.toJson()).toList();

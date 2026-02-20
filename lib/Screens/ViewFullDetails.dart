@@ -125,6 +125,14 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                       final arrTimeFormatted =
                           DateFormat("HH:mm").format(arrDateTime);
 
+                      final segmentDurationMinutes =
+                          widget.segments![index][innerIndex].duration;
+
+                      final segmentDurationText =
+                          "${segmentDurationMinutes ~/ 60}H ${segmentDurationMinutes % 60}m";
+                      print("segmentDurationMinutes$segmentDurationMinutes");
+                      print("segmentDurationText$segmentDurationText");
+
                       return Column(
                         children: [
                           Card(
@@ -287,7 +295,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                           Image.asset(
                                               'assets/images/flightColor.png'),
                                           Text(
-                                            widget.duration ?? "",
+                                            segmentDurationText,
                                             style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 12.sp,
@@ -480,11 +488,13 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                             nextDep.difference(currentArr);
                                         String layoverTime =
                                             "${layoverDuration.inHours}H ${layoverDuration.inMinutes % 60}m";
+                                        print("layoverTime$layoverTime");
                                         String layoverCity = widget
                                             .segments![index][innerIndex]
                                             .destination
                                             .airport
                                             .cityName;
+                                        print("layoverCity$layoverCity");
                                         return Text(
                                           "$layoverTime Layover at $layoverCity",
                                           style: TextStyle(
@@ -510,7 +520,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                 );
               }),
             ]
-            // RoundTrip
+            //LOCAL RoundTrip
             else ...[
               Container(
                 padding: EdgeInsets.all(5),
@@ -530,7 +540,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                       },
                       child: Container(
                         padding:
-                            EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+                            EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                         margin: EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           color: selectedBaggage == 0
@@ -562,7 +572,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                       },
                       child: Container(
                         padding:
-                            EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+                            EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                         margin: EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           color: selectedBaggage == 1
@@ -602,202 +612,288 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
         return Column(
           children: List.generate(result.segments[index].length, (innerIndex) {
             final segment = result.segments[index][innerIndex];
-            final depTime = DateTime.parse(segment.origin.depTime.toString());
-            print("depTime$depTime");
-            final arrTime =
+
+// ✅ Parse and convert to UTC for duration calculation
+            final depTimeUtc =
+                DateTime.parse(segment.origin.depTime.toString()).toUtc();
+            final arrTimeUtc =
+                DateTime.parse(segment.destination.arrTime.toString()).toUtc();
+
+// ✅ Keep local times for display
+            final depTimeLocal =
+                DateTime.parse(segment.origin.depTime.toString());
+            final arrTimeLocal =
                 DateTime.parse(segment.destination.arrTime.toString());
-            print("arrTime$arrTime");
 
+// -------- DISPLAY (unchanged behavior)
             final depDateFormatted =
-                DateFormat("EEE,dd MMM yy").format(depTime);
+                DateFormat("EEE,dd MMM yy").format(depTimeLocal);
             final arrDateFormatted =
-                DateFormat("EEE,dd MMM yy").format(arrTime);
-            final depTimeFormatted = DateFormat("HH:mm").format(depTime);
-            final arrTimeFormatted = DateFormat("HH:mm").format(arrTime);
+                DateFormat("EEE,dd MMM yy").format(arrTimeLocal);
+            final depTimeFormatted = DateFormat("HH:mm").format(depTimeLocal);
+            final arrTimeFormatted = DateFormat("HH:mm").format(arrTimeLocal);
 
-            return Card(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              elevation: 2,
-              child: Padding(
-                padding: EdgeInsets.all(12.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                            "assets/${segment.airline.airlineCode}.gif"),
-                        SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              segment.airline.airlineName,
-                              style: TextStyle(
-                                color: Color(0xFF1C1E1D),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.sp,
-                              ),
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                    fontSize: 12.sp, color: Color(0xFF909090)),
-                                children: [
-                                  TextSpan(
-                                      text: "${segment.airline.airlineCode} "),
-                                  TextSpan(
-                                      text: "${segment.airline.flightNumber} "),
-                                  TextSpan(
-                                    text: result.isRefundable == true
-                                        ? "R"
-                                        : "NR",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFF37023)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Spacer(),
-                        Text(
-                          "Economy Class",
-                          style: TextStyle(
-                              fontSize: 12.sp,
-                              color: Color(0xFF1C1E1D),
-                              fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(
-                          width: 5,
-                        ),
-                        Icon(
-                          Icons.stars,
-                          color: Color(0xFFF37023),
-                        )
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 97, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+// -------- ✅ CORRECT SEGMENT DURATION (timezone-safe)
+            final segmentDurationMinutes = segment.duration;
+            print("segmentDurationMinutes$segmentDurationMinutes");
+            final segmentDurationText =
+                "${segmentDurationMinutes ~/ 60}H ${segmentDurationMinutes % 60}m";
+            print("segmentDurationText$segmentDurationText");
+
+            String? layover;
+            String? layoverCity;
+
+            if (innerIndex < result.segments[index].length - 1) {
+              final currentArr =
+                  DateTime.parse(segment.destination.arrTime.toString());
+
+              final nextDep = DateTime.parse(result
+                  .segments[index][innerIndex + 1].origin.depTime
+                  .toString());
+
+              final diffMinutes = nextDep.difference(currentArr).inMinutes;
+
+              if (diffMinutes > 0) {
+                layover = "${diffMinutes ~/ 60}H ${diffMinutes % 60}m";
+                layoverCity = segment.destination.airport.cityName;
+              }
+            }
+
+            return Column(
+              children: [
+                Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(12.w),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Text(depTimeFormatted,
-                                style: TextStyle(
-                                    color: Color(0xFF1C1E1D),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14.sp)),
-                            Text(depDateFormatted,
-                                style: TextStyle(color: Colors.grey)),
-                            SizedBox(
-                              height: 8,
+                            Image.asset(
+                              "assets/${segment.airline.airlineCode}.gif",
+                              fit: BoxFit.fill,
+                              height: 35,
+                              width: 35,
                             ),
-                            Row(
+                            SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  segment.origin.airport.cityName,
+                                  segment.airline.airlineName,
                                   style: TextStyle(
-                                    fontSize: 14.sp,
+                                    color: Color(0xFF1C1E1D),
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                                    fontSize: 14.sp,
                                   ),
                                 ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  segment.origin.airport.airportCode,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12.sp,
-                                    color: Color(0xFF909090),
+                                RichText(
+                                  text: TextSpan(
+                                    style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Color(0xFF909090)),
+                                    children: [
+                                      TextSpan(
+                                          text:
+                                              "${segment.airline.airlineCode} "),
+                                      TextSpan(
+                                          text:
+                                              "${segment.airline.flightNumber} "),
+                                      TextSpan(
+                                        text: result.isRefundable == true
+                                            ? "R"
+                                            : "NR",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFFF37023)),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
+                            Spacer(),
+                            Text(
+                              "Economy Class",
+                              style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Color(0xFF1C1E1D),
+                                  fontWeight: FontWeight.bold),
+                            ),
                             SizedBox(
-                              width: 100,
-                              child: Text(segment.origin.airport.airportName,
-                                  style: TextStyle(fontSize: 12.sp)),
+                              width: 5,
+                            ),
+                            Icon(
+                              Icons.stars,
+                              color: Color(0xFFF37023),
                             )
                           ],
                         ),
-                        Column(
-                          children: [
-                            Text(widget.outboundFlight!.segments.first.length -
-                                        1 ==
-                                    0
-                                ? "Non Stop"
-                                : ""),
-                            Image.asset(
-                              'assets/images/flightStop.png',
-                              color: Colors.orange,
-                            ),
-                          ],
+                        SizedBox(height: 10.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DotDivider(
+                            dotSize: 1.h, // Adjust size
+                            spacing: 2.r, // Adjust spacing
+                            dotCount: 97, // Adjust number of dots
+                            color: Colors.grey, // Adjust color
+                          ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        SizedBox(height: 10.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(arrTimeFormatted,
-                                style: TextStyle(
-                                    color: Color(0xFF1C1E1D),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14.sp)),
-                            Text(arrDateFormatted,
-                                style: TextStyle(color: Colors.grey)),
-                            SizedBox(
-                              height: 8,
-                            ),
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  segment.destination.airport.cityName,
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
+                                Text(depTimeFormatted,
+                                    style: TextStyle(
+                                        color: Color(0xFF1C1E1D),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14.sp)),
+                                Text(depDateFormatted,
+                                    style: TextStyle(color: Colors.grey)),
+                                SizedBox(
+                                  height: 8,
                                 ),
-                                SizedBox(width: 4.w),
+                                Row(
+                                  children: [
+                                    Text(
+                                      segment.origin.airport.cityName,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      segment.origin.airport.airportCode,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.sp,
+                                        color: Color(0xFF909090),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                      segment.origin.airport.airportName,
+                                      style: TextStyle(fontSize: 12.sp)),
+                                )
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Text(widget.outboundFlight!.segments.first
+                                                .length -
+                                            1 ==
+                                        0
+                                    ? "Non Stop"
+                                    : ""),
+                                Image.asset(
+                                  'assets/images/flightStop.png',
+                                  color: Colors.orange,
+                                ),
                                 Text(
-                                  segment.destination.airport.airportCode,
+                                  segmentDurationText,
                                   style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Inter',
                                     fontSize: 12.sp,
-                                    color: Color(0xFF909090),
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(
-                              width: 100,
-                              child: Text(
-                                  textAlign: TextAlign.end,
-                                  segment.destination.airport.airportName,
-                                  style: TextStyle(fontSize: 12.sp)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(arrTimeFormatted,
+                                    style: TextStyle(
+                                        color: Color(0xFF1C1E1D),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14.sp)),
+                                Text(arrDateFormatted,
+                                    style: TextStyle(color: Colors.grey)),
+                                SizedBox(
+                                  height: 8,
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      segment.destination.airport.cityName,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    Text(
+                                      segment.destination.airport.airportCode,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.sp,
+                                        color: Color(0xFF909090),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                      textAlign: TextAlign.end,
+                                      segment.destination.airport.airportName,
+                                      style: TextStyle(fontSize: 12.sp)),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                if (innerIndex < result.segments[index].length - 1 &&
+                    layover != null) ...[
+                  SizedBox(height: 10.h),
+                  Container(
+                    height: 40.h,
+                    width: double.infinity,
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFFE7E5),
+                      border: Border.all(color: Color(0xFFFFD7D7)),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.sync_alt,
+                            color: Color(0xFFFF4D4F), size: 16.sp),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "$layover Layover at $layoverCity",
+                          style: TextStyle(
+                            color: Color(0xFFFF4D4F),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                ],
+              ],
             );
           }),
         );

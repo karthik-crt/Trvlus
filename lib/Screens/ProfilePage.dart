@@ -92,36 +92,39 @@ class _ProfilePageState extends State<ProfilePage> {
   // }
 
   Future<void> _pickImage(ImageSource source) async {
-    if (!_hasUserId) return;
+    if (!_hasUserId || isImageLoading) return;
 
     final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile == null) return;
 
+    final tempImage = File(pickedFile.path);
+
     setState(() {
-      _image = File(pickedFile.path);
+      _image = tempImage;
+      isImageLoading = true;
     });
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
-      final uploadResult =
-          await ApiService().userprofileupdate(userId!, _image!.path);
-      userprofileupdation(false);
+      await ApiService().userprofileupdate(userId!, tempImage.path);
 
-      final serverImageUrl = uploadResult.data?.userImages;
-
-      // if (serverImageUrl != null) {
-      //   setState(() {
-      //     profile.data.userImage = serverImageUrl;
-      //   });
-      // }
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Profile photo updated')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile photo updated')),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      setState(() {
+        _image = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload failed')),
+      );
+    } finally {
+      setState(() {
+        isImageLoading = false;
+      });
     }
   }
 
@@ -219,53 +222,131 @@ class _ProfilePageState extends State<ProfilePage> {
                                       clipBehavior: Clip.none,
                                       children: [
                                         GestureDetector(
-                                          onTap: () {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              builder: (context) {
-                                                return Wrap(
-                                                  children: [
-                                                    ListTile(
-                                                      leading: Icon(
-                                                          Icons.photo_library),
-                                                      title: Text(
-                                                          'Pick from Gallery'),
-                                                      onTap: () {
-                                                        Navigator.pop(context);
-                                                        _pickImage(ImageSource
-                                                            .gallery);
-                                                      },
+                                          onTap: isImageLoading
+                                              ? null // 🔒 disable click while uploading
+                                              : () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return Wrap(
+                                                        children: [
+                                                          ListTile(
+                                                            leading: Icon(Icons
+                                                                .photo_library),
+                                                            title: Text(
+                                                                'Pick from Gallery'),
+                                                            onTap: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                              _pickImage(
+                                                                  ImageSource
+                                                                      .gallery);
+                                                            },
+                                                          ),
+                                                          ListTile(
+                                                            leading: Icon(Icons
+                                                                .camera_alt),
+                                                            title: Text(
+                                                                'Take a Photo'),
+                                                            onTap: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                              _pickImage(
+                                                                  ImageSource
+                                                                      .camera);
+                                                            },
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                  height: 65.h,
+                                                  width: 58.w,
+                                                  child: CircleAvatar(
+                                                    radius: 30.r,
+                                                    backgroundColor:
+                                                        Colors.transparent,
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              30.r),
+                                                      // 👈 same as radius
+                                                      child: _image != null
+                                                          ? Image.file(
+                                                              _image!,
+                                                              width: 60.w,
+                                                              height: 60.w,
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : (profile
+                                                                  .data
+                                                                  .userImages
+                                                                  .isNotEmpty
+                                                              ? Image.network(
+                                                                  profile.data
+                                                                      .userImages,
+                                                                  width: 60.w,
+                                                                  height: 60.w,
+                                                                  fit: BoxFit
+                                                                      .cover,
+                                                                  loadingBuilder:
+                                                                      (context,
+                                                                          child,
+                                                                          loadingProgress) {
+                                                                    if (loadingProgress ==
+                                                                        null) {
+                                                                      return child; // ✅ image loaded
+                                                                    }
+                                                                    return Center(
+                                                                      child:
+                                                                          SizedBox(
+                                                                        width:
+                                                                            20,
+                                                                        height:
+                                                                            20,
+                                                                        child:
+                                                                            CircularProgressIndicator(
+                                                                          strokeWidth:
+                                                                              2,
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                )
+                                                              : Icon(
+                                                                  Icons.person,
+                                                                  size: 30)),
                                                     ),
-                                                    ListTile(
-                                                      leading: Icon(
-                                                          Icons.camera_alt),
-                                                      title:
-                                                          Text('Take a Photo'),
-                                                      onTap: () {
-                                                        Navigator.pop(context);
-                                                        _pickImage(
-                                                            ImageSource.camera);
-                                                      },
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          },
-                                          child: Container(
-                                            height: 65.h,
-                                            width: 58.w,
-                                            child: profile.data.userImages != ""
-                                                ? CircleAvatar(
-                                                    radius: 25.r,
-                                                    backgroundImage:
-                                                        NetworkImage(profile
-                                                            .data.userImages),
-                                                  )
-                                                : CircleAvatar(
-                                                    radius: 25.r,
-                                                    child: Icon(Icons.person),
+                                                  )),
+
+                                              // 🔥 LOADER OVER IMAGE
+                                              if (isImageLoading)
+                                                Container(
+                                                  height: 65.h,
+                                                  width: 58.w,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withOpacity(0.4),
+                                                    shape: BoxShape.circle,
                                                   ),
+                                                  child: Center(
+                                                    child: SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         ),
                                         Positioned(

@@ -22,6 +22,7 @@ class Additions extends StatefulWidget {
   final Result? outboundFlight;
   final Result? inboundFlight;
   final String? outresultindex;
+  final List<Map<String, dynamic>> seatPayload;
   final String? inresultindex;
 
   const Additions(
@@ -34,6 +35,7 @@ class Additions extends StatefulWidget {
       required this.outBoundData,
       required this.inBoundData,
       this.outresultindex,
+      required this.seatPayload,
       this.inresultindex,
       this.outboundFlight,
       this.inboundFlight});
@@ -58,7 +60,67 @@ class _AdditionsState extends State<Additions> {
   bool isLoading = true;
   int selectedPassengerType = 0; // 0 - Adult, 1 - Child
   Map<String, Map<String, dynamic>> selectedMealData = {};
+  List<Map<String, dynamic>> selectedSeatPayload = [];
   bool isOutbound = true;
+
+  // Add this at the top of your _AdditionsState class
+  Map<String, Map<int, int>> selectedBaggageCount =
+      {}; // {route: {baggageIndex: count}}
+
+  int getTotalSelectedBaggageForRoute(String route) {
+    if (!selectedBaggageCount.containsKey(route)) return 0;
+    return selectedBaggageCount[route]!
+        .values
+        .fold(0, (sum, count) => sum + count);
+  }
+
+  // Add this method in your _AdditionsState class
+  Map<String, List<Map<String, dynamic>>> getFormattedBaggageData() {
+    Map<String, List<Map<String, dynamic>>> formattedBaggage = {};
+
+    selectedBaggageCount.forEach((route, baggageMap) {
+      formattedBaggage[route] = [];
+
+      baggageMap.forEach((baggageIndex, count) {
+        // Find the correct route index for this baggage
+        int routeIndex = 0;
+        for (int i = 0; i < ssrData.response.baggage.length; i++) {
+          if (ssrData.response.baggage[i].isNotEmpty) {
+            String currentRoute =
+                '${ssrData.response.baggage[i][0].origin}-${ssrData.response.baggage[i][0].destination}';
+            if (currentRoute == route) {
+              routeIndex = i;
+              break;
+            }
+          }
+        }
+
+        if (ssrData.response.baggage.length > routeIndex &&
+            ssrData.response.baggage[routeIndex].length > baggageIndex) {
+          final baggageItem =
+              ssrData.response.baggage[routeIndex][baggageIndex];
+
+          // Add each baggage item 'count' times
+          for (int i = 0; i < count; i++) {
+            formattedBaggage[route]!.add({
+              "AirlineCode": baggageItem.airlineCode ?? "SG",
+              "FlightNumber": baggageItem.flightNumber ?? "",
+              "WayType": baggageItem.wayType ?? 2,
+              "Code": baggageItem.code ?? "Baggage",
+              "Description": baggageItem.weight ?? 0,
+              "Weight": baggageItem.weight ?? 0,
+              "Currency": baggageItem.currency ?? "INR",
+              "Price": baggageItem.price ?? 0,
+              "Origin": baggageItem.origin ?? "",
+              "Destination": baggageItem.destination ?? "",
+            });
+          }
+        }
+      });
+    });
+
+    return formattedBaggage;
+  }
 
   void storeSelectedMeal(
       String route, int paxType, dynamic meal, int passengerIndex) {
@@ -107,6 +169,7 @@ class _AdditionsState extends State<Additions> {
     // TODO: implement initState
     super.initState();
     getssrdata();
+    print("seatdf${widget.seatPayload}");
   }
 
   getssrdata() async {
@@ -185,7 +248,10 @@ class _AdditionsState extends State<Additions> {
                       child: GestureDetector(
                           onTap: () {
                             Map<String, dynamic> threeValue = {
-                              "meal": selectedMealData
+                              "meal": selectedMealData,
+                              "seat": selectedSeatPayload,
+                              "baggage": getFormattedBaggageData()
+                              // Add this line for seats
                             };
                             print("threeValue$threeValue");
                             Navigator.pop(context, threeValue);
@@ -315,81 +381,6 @@ class _AdditionsState extends State<Additions> {
                     ),
                   ),
                 ),
-                // Container(
-                //   padding: EdgeInsets.all(5),
-                //   margin: EdgeInsets.all(12),
-                //   height: 60,
-                //   decoration: BoxDecoration(
-                //       color: Color(0xFFF37023),
-                //       borderRadius: BorderRadius.all(Radius.circular(20))),
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //     children: [
-                //       GestureDetector(
-                //         onTap: () {
-                //           setState(() {
-                //             selectedBaggage = 0;
-                //           });
-                //         },
-                //         child: Container(
-                //           padding: EdgeInsets.symmetric(
-                //               horizontal: 35, vertical: 10),
-                //           margin: EdgeInsets.all(5),
-                //           decoration: BoxDecoration(
-                //               color: selectedBaggage == 0
-                //                   ? Colors.white
-                //                   : Color(0xFFFFF37023),
-                //               borderRadius:
-                //                   BorderRadius.all(Radius.circular(15))),
-                //           child: Text(
-                //             "MAA-BLR",
-                //             style: TextStyle(
-                //                 color: selectedBaggage == 0
-                //                     ? Colors.black
-                //                     : Colors.white,
-                //                 fontWeight: FontWeight.bold,
-                //                 fontSize: 15),
-                //           ),
-                //         ),
-                //       ),
-                //       // Image.asset(
-                //       //   "assets/images/Line.png",
-                //       // ),
-                //       Container(
-                //         height: 50,
-                //         width: 0.5,
-                //         color: Colors.grey.shade200,
-                //       ),
-                //       GestureDetector(
-                //         onTap: () {
-                //           setState(() {
-                //             selectedBaggage = 1;
-                //           });
-                //         },
-                //         child: Container(
-                //           padding: EdgeInsets.symmetric(
-                //               horizontal: 35, vertical: 10),
-                //           margin: EdgeInsets.all(5),
-                //           decoration: BoxDecoration(
-                //               color: selectedBaggage == 1
-                //                   ? Colors.white
-                //                   : Color(0xFFFFF37023),
-                //               borderRadius:
-                //                   BorderRadius.all(Radius.circular(15))),
-                //           child: Text(
-                //             "BLR-MAA",
-                //             style: TextStyle(
-                //                 color: selectedBaggage == 1
-                //                     ? Colors.black
-                //                     : Colors.white,
-                //                 fontWeight: FontWeight.bold,
-                //                 fontSize: 15),
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
                 selectedindex == 0
                     ? buildBaggage()
                     : selectedindex == 1
@@ -433,11 +424,21 @@ class _AdditionsState extends State<Additions> {
   }
 
   buildBaggage() {
-    // if (ssrData.response != null ||
-    //     ssrData.response.baggage != null ||
-    //     ssrData.response.baggage.isEmpty) {
-    //   return const SizedBox(); // 🔹 Don't display meals section
-    // }
+    // Calculate total passenger count
+    final int totalPassengers = (widget.adultCount ?? 0) +
+        (widget.childCount ?? 0) +
+        (widget.infantCount ?? 0);
+
+    // Get current route
+    String currentRoute = '';
+    if (ssrData.response != null &&
+        ssrData.response.baggage != null &&
+        ssrData.response.baggage.isNotEmpty &&
+        ssrData.response.baggage[selectedBaggage].isNotEmpty) {
+      currentRoute =
+          '${ssrData.response.baggage[selectedBaggage][0].origin}-${ssrData.response.baggage[selectedBaggage][0].destination}';
+    }
+
     return Column(
       children: [
         Column(
@@ -445,152 +446,72 @@ class _AdditionsState extends State<Additions> {
             SizedBox(
               height: 15,
             ),
-            // SizedBox(
-            //   height: 50.h,
-            //   child: Container(
-            //     margin: EdgeInsets.all(10),
-            //     child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //       children: [
-            //         Expanded(
-            //             child: GestureDetector(
-            //                 onTap: () {
-            //                   setState(() {
-            //                     selectedindex = 0;
-            //                   });
-            //                 },
-            //                 child: Container(
-            //                   alignment: Alignment.center,
-            //                   height: MediaQuery.sizeOf(context).height,
-            //                   width: MediaQuery.sizeOf(context).width,
-            //                   decoration: BoxDecoration(
-            //                       borderRadius: BorderRadius.circular(5),
-            //                       border: Border.all(color: Colors.grey),
-            //                       color: selectedindex == 0
-            //                           ? Color(0xFFFFE7DA)
-            //                           : Colors.white),
-            //                   child: Text(
-            //                     "Baggage",
-            //                     style: TextStyle(
-            //                         color: selectedindex == 0
-            //                             ? Colors.orange
-            //                             : Colors.black),
-            //                   ),
-            //                 ))),
-            //         Expanded(
-            //             child: GestureDetector(
-            //                 onTap: () {
-            //                   setState(() {
-            //                     selectedindex = 1;
-            //                   });
-            //                 },
-            //                 child: Container(
-            //                   alignment: Alignment.center,
-            //                   height: MediaQuery.sizeOf(context).height,
-            //                   width: MediaQuery.sizeOf(context).width,
-            //                   decoration: BoxDecoration(
-            //                       borderRadius: BorderRadius.circular(5),
-            //                       color: selectedindex == 1
-            //                           ? Color(0xFFFFE7DA)
-            //                           : Colors.white,
-            //                       border: Border.all(color: Colors.grey)),
-            //                   child: Text(
-            //                     "Seat",
-            //                     style: TextStyle(
-            //                         color: selectedindex == 1
-            //                             ? Colors.orange
-            //                             : Colors.black),
-            //                   ),
-            //                 ))),
-            //         Expanded(
-            //             child: GestureDetector(
-            //                 onTap: () {
-            //                   setState(() {
-            //                     selectedindex = 2;
-            //                   });
-            //                 },
-            //                 child: Container(
-            //                   alignment: Alignment.center,
-            //                   height: MediaQuery.sizeOf(context).height,
-            //                   width: MediaQuery.sizeOf(context).width,
-            //                   decoration: BoxDecoration(
-            //                       borderRadius: BorderRadius.circular(5),
-            //                       color: selectedindex == 2
-            //                           ? Color(0xFFFFE7DA)
-            //                           : Colors.white,
-            //                       border: Border.all(color: Colors.grey)),
-            //                   child: Text(
-            //                     "Meals",
-            //                     style: TextStyle(
-            //                         color: selectedindex == 2
-            //                             ? Colors.orange
-            //                             : Colors.black),
-            //                   ),
-            //                 )))
-            //       ],
-            //     ),
-            //   ),
-            // ),
-            // Container(
-            //   padding: EdgeInsets.all(5),
-            //   margin: EdgeInsets.all(12),
-            //   height: 50,
-            //   decoration: BoxDecoration(
-            //       color: Color(0xFFF37023),
-            //       borderRadius: BorderRadius.all(Radius.circular(15))),
-            //   child: Row(
-            //     children: [
-            //       GestureDetector(
-            //         onTap: () {
-            //           setState(() {
-            //             selectedBaggage = 0;
-            //           });
-            //         },
-            //         child: Container(
-            //           padding: EdgeInsets.symmetric(horizontal: 44),
-            //           margin: EdgeInsets.all(5),
-            //           decoration: BoxDecoration(
-            //               color: selectedBaggage == 0
-            //                   ? Colors.white
-            //                   : Color(0xFFFFF37023),
-            //               borderRadius: BorderRadius.all(Radius.circular(8))),
-            //           child: Text(
-            //             "MAA-BLR",
-            //             style: TextStyle(
-            //                 color: selectedBaggage == 0
-            //                     ? Colors.black
-            //                     : Colors.white,
-            //                 fontWeight: FontWeight.bold),
-            //           ),
-            //         ),
-            //       ),
-            //       GestureDetector(
-            //         onTap: () {
-            //           setState(() {
-            //             selectedBaggage = 1;
-            //           });
-            //         },
-            //         child: Container(
-            //           padding: EdgeInsets.symmetric(horizontal: 44),
-            //           margin: EdgeInsets.all(5),
-            //           decoration: BoxDecoration(
-            //               color: selectedBaggage == 1
-            //                   ? Colors.white
-            //                   : Color(0xFFFFF37023),
-            //               borderRadius: BorderRadius.all(Radius.circular(8))),
-            //           child: Text(
-            //             "BLR-MAA",
-            //             style: TextStyle(
-            //                 color: selectedBaggage == 1
-            //                     ? Colors.black
-            //                     : Colors.white,
-            //                 fontWeight: FontWeight.bold),
-            //           ),
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
+
+            // 🔶 Small Origin → Destination pill OUTSIDE (MakeMyTrip style)
+            // 🔶 Route pills - show all available routes (scrollable)
+            if (ssrData.response != null &&
+                ssrData.response.baggage != null &&
+                ssrData.response.baggage.isNotEmpty)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(
+                      ssrData.response.baggage.length,
+                      (index) {
+                        if (ssrData.response.baggage[index].isEmpty) {
+                          return SizedBox.shrink();
+                        }
+
+                        final route = ssrData.response.baggage[index][0];
+                        final routeText =
+                            '${route.origin} - ${route.destination}';
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedBaggage = index;
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: selectedBaggage == index
+                                    ? Color(0xFFF37023)
+                                    : Color(0xFFFFF4ED),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: selectedBaggage == index
+                                      ? Color(0xFFF37023)
+                                      : Color(0xFFF37023).withOpacity(0.3),
+                                  width: selectedBaggage == index ? 1.5 : 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                routeText,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: selectedBaggage == index
+                                      ? Colors.white
+                                      : Color(0xFFF37023),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+            // 🔶 Baggage Card (below the route pill)
             Card(
               margin: EdgeInsets.all(10),
               shape: RoundedRectangleBorder(
@@ -598,7 +519,6 @@ class _AdditionsState extends State<Additions> {
               ),
               color: Colors.white,
               child: Container(
-                // height: 170,
                 padding: EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -619,9 +539,20 @@ class _AdditionsState extends State<Additions> {
                     ),
                     SizedBox(height: 7),
                     Text("Add additional checkin baggage at low price"),
+                    SizedBox(height: 5),
+
+                    // 🔶 Passenger count info
+                    Text(
+                      "You can select up to $totalPassengers baggage(s)",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFF37023),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
                     Divider(color: Colors.grey),
                     Row(
-                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Kilogram',
                             style: TextStyle(
@@ -637,71 +568,155 @@ class _AdditionsState extends State<Additions> {
                       ],
                     ),
                     SizedBox(height: 5),
-                    ...List.generate(ssrData.response.baggage.length, (index) {
-                      return Container(
+
+                    // Display baggage for SELECTED route only
+                    if (ssrData.response.baggage.length > selectedBaggage)
+                      Container(
                         constraints: const BoxConstraints(
-                          maxHeight:
-                              300, // 👈 optional: scroll only if more items
+                          maxHeight: 300,
                         ),
                         child: SingleChildScrollView(
                           padding: EdgeInsets.zero,
                           physics: const BouncingScrollPhysics(),
-                          // 👈 scroll only if overflow
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            // 👈 adjusts height automatically
-                            children: [
-                              ...List.generate(
-                                ssrData.response.baggage[index].length,
-                                (innerindex) {
-                                  bool isChecked = false;
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 2),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          '${ssrData.response.baggage[index][innerindex].weight} kg',
+                            children: List.generate(
+                              ssrData.response.baggage[selectedBaggage].length,
+                              (innerindex) {
+                                // Initialize route map if not exists
+                                if (!selectedBaggageCount
+                                    .containsKey(currentRoute)) {
+                                  selectedBaggageCount[currentRoute] = {};
+                                }
+
+                                final currentCount = selectedBaggageCount[
+                                        currentRoute]![innerindex] ??
+                                    0;
+                                final totalSelected =
+                                    getTotalSelectedBaggageForRoute(
+                                        currentRoute);
+                                final canAdd = totalSelected < totalPassengers;
+                                final canRemove = currentCount > 0;
+
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          '${ssrData.response.baggage[selectedBaggage][innerindex].weight} kg',
+                                          style: TextStyle(fontSize: 14),
                                         ),
-                                        Text(
-                                          ssrData.response
-                                              .baggage[index][innerindex].price
-                                              .toString(),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          '₹${ssrData.response.baggage[selectedBaggage][innerindex].price}',
+                                          style: TextStyle(fontSize: 14),
                                         ),
-                                        StatefulBuilder(
-                                          builder: (context, setState) {
-                                            return Transform.scale(
-                                              scale: 0.9,
-                                              child: Checkbox(
-                                                value: isChecked,
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                                materialTapTargetSize:
-                                                    MaterialTapTargetSize
-                                                        .shrinkWrap,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    isChecked = value!;
-                                                  });
-                                                },
+                                      ),
+
+                                      // Counter buttons (icons only, no boxes)
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Minus icon
+                                          GestureDetector(
+                                            onTap: canRemove
+                                                ? () {
+                                                    setState(() {
+                                                      selectedBaggageCount[
+                                                                  currentRoute]![
+                                                              innerindex] =
+                                                          currentCount - 1;
+                                                      if (selectedBaggageCount[
+                                                                  currentRoute]![
+                                                              innerindex] ==
+                                                          0) {
+                                                        selectedBaggageCount[
+                                                                currentRoute]!
+                                                            .remove(innerindex);
+                                                      }
+                                                    });
+                                                  }
+                                                : null,
+                                            child: Icon(
+                                              Icons.remove_circle,
+                                              size: 24,
+                                              color: canRemove
+                                                  ? Color(0xFFF37023)
+                                                  : Colors.grey.shade400,
+                                            ),
+                                          ),
+
+                                          SizedBox(width: 8),
+
+                                          // Count display
+                                          Container(
+                                            width: 20,
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              '$currentCount',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
                                               ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                                            ),
+                                          ),
+
+                                          SizedBox(width: 8),
+
+                                          // Plus icon
+                                          GestureDetector(
+                                            onTap: canAdd
+                                                ? () {
+                                                    setState(() {
+                                                      selectedBaggageCount[
+                                                                  currentRoute]![
+                                                              innerindex] =
+                                                          currentCount + 1;
+                                                    });
+                                                  }
+                                                : () {
+                                                    // Show message when limit reached
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          'Maximum $totalPassengers baggage(s) allowed',
+                                                        ),
+                                                        duration: Duration(
+                                                            seconds: 2),
+                                                        backgroundColor:
+                                                            Color(0xFFF37023),
+                                                      ),
+                                                    );
+                                                  },
+                                            child: Icon(
+                                              Icons.add_circle,
+                                              size: 24,
+                                              color: canAdd
+                                                  ? Color(0xFFF37023)
+                                                  : Colors.grey.shade400,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      );
-                    }),
+                      ),
                     SizedBox(height: 8),
                   ],
                 ),
@@ -1113,6 +1128,11 @@ class _AdditionsState extends State<Additions> {
             resultindex: widget.resultindex,
             adultCount: widget.adultCount,
             childCount: widget.childCount,
-            infantCount: widget.infantCount));
+            infantCount: widget.infantCount,
+            onPayloadUpdated: (payload) {
+              setState(() {
+                selectedSeatPayload = payload;
+              });
+            }));
   }
 }

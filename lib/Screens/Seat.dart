@@ -10,6 +10,7 @@ class SeatSelectionScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final Function(List<Map<String, dynamic>>)? onPayloadUpdated;
 
   const SeatSelectionScreen({
     super.key,
@@ -18,6 +19,7 @@ class SeatSelectionScreen extends StatefulWidget {
     this.adultCount,
     this.childCount,
     this.infantCount,
+    this.onPayloadUpdated, // New prop
   });
 
   @override
@@ -257,6 +259,10 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
                         selectedSeats.add(code);
                       }
                     });
+                    if (widget.onPayloadUpdated != null) {
+                      widget.onPayloadUpdated!(
+                          buildSeatDynamicPayload()); // Call on every change (live, like meals)
+                    }
                   }
                 : null,
             child: Container(
@@ -395,22 +401,32 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
             ],
           ),
           SizedBox(height: 10),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepOrange,
-              minimumSize: const Size(double.infinity, 50),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                final adult = widget.adultCount;
+                print("adultadultadult");
+              });
+            },
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange,
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              onPressed: selectedSeats.isEmpty
+                  ? null
+                  : () {
+                      final seatPayload = buildSeatDynamicPayload();
+                      print("Processed Payload: $seatPayload");
+                      if (widget.onPayloadUpdated != null) {
+                        widget.onPayloadUpdated!(
+                            seatPayload); // Update parent first
+                      }
+                      Navigator.pop(context,
+                          {"seat": seatPayload}); // Pop with map (like meals)
+                    },
+              child: const Text("Processed"),
             ),
-            onPressed: selectedSeats.isEmpty
-                ? null
-                : () {
-                    // Build and print payload
-                    List<Map<String, dynamic>> seatPayload =
-                        buildSeatDynamicPayload();
-                    print("Processed Payload: $seatPayload");
-
-                    // TODO: send seatPayload to your API
-                  },
-            child: const Text("Processed"),
           ),
         ],
       ),

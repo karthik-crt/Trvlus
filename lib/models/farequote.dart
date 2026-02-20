@@ -242,7 +242,7 @@ class Fare {
   int serviceFeeDisplayType;
   String currency;
   double baseFare;
-  int tax;
+  double tax;
   List<ChargeBu> taxBreakup;
   int yqTax;
   int additionalTxnFeeOfrd;
@@ -302,7 +302,7 @@ class Fare {
             (json["ServiceFeeDisplayType"] as num?)?.toInt() ?? 0,
         currency: json["Currency"] ?? "",
         baseFare: (json["BaseFare"] as num?)?.toDouble() ?? 0,
-        tax: (json["Tax"] as num?)?.toInt() ?? 0,
+        tax: (json["Tax"] as num?)?.toDouble() ?? 0,
         taxBreakup: json["TaxBreakup"] != null
             ? List<ChargeBu>.from(
                 json["TaxBreakup"].map((x) => ChargeBu.fromJson(x)))
@@ -396,7 +396,7 @@ class FareBreakdown {
   String currency;
   int passengerType;
   int passengerCount;
-  int baseFare;
+  double baseFare;
   int tax;
   List<ChargeBu> taxBreakUp;
   int yqTax;
@@ -428,7 +428,7 @@ class FareBreakdown {
         currency: json["Currency"],
         passengerType: json["PassengerType"],
         passengerCount: json["PassengerCount"],
-        baseFare: (json["BaseFare"] as num).toInt(),
+        baseFare: (json["BaseFare"] as num?)?.toDouble() ?? 0,
         tax: (json["Tax"] as num).toInt(),
         taxBreakUp: json["TaxBreakUp"] != null
             ? List<ChargeBu>.from(
@@ -488,7 +488,7 @@ class FareRule {
         airline: json["Airline"],
         fareBasisCode: json["FareBasisCode"],
         fareRuleDetail: json["FareRuleDetail"],
-        fareRestriction: json["FareRestriction"],
+        fareRestriction: json["FareRestriction"] ?? "",
         fareFamilyCode: json["FareFamilyCode"],
         fareRuleIndex: json["FareRuleIndex"],
       );

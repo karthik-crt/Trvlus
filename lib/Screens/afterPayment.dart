@@ -29,7 +29,7 @@ class Afterpayment extends StatefulWidget {
   final double? tax;
   final double? convenienceFee;
   final bool? isLLC;
-  final int? coupouncode;
+  final num? coupouncode;
   final String? commonPublishedFare;
   final String? tboOfferedFare;
   final double? tboCommission;
@@ -37,6 +37,7 @@ class Afterpayment extends StatefulWidget {
   final double? trvlusCommission;
   final double? trvlusTds;
   final int? trvlusNetFare;
+  final double? othercharges;
 
   final List<Map<String, dynamic>>? passenger;
   final List<Map<String, dynamic>>? childpassenger;
@@ -107,6 +108,7 @@ class Afterpayment extends StatefulWidget {
       this.trvlusCommission,
       this.trvlusTds,
       this.trvlusNetFare,
+      this.othercharges,
       this.coupouncode})
       : super(key: key);
 
@@ -164,6 +166,7 @@ class _AfterpaymentState extends State<Afterpayment> {
     final trvlusCommission = widget.trvlusCommission;
     final trvlusTds = widget.trvlusTds;
     final trvlusNetFare = widget.trvlusNetFare;
+    final othercharges = widget.othercharges;
 
     setState(() {
       isLoading = true;
@@ -216,6 +219,7 @@ class _AfterpaymentState extends State<Afterpayment> {
             "",
             "",
             "",
+            "",
             "");
       } else {
         searchData = await ApiService().holdTicket(
@@ -241,6 +245,7 @@ class _AfterpaymentState extends State<Afterpayment> {
             childpassenger,
             infantpassenger,
             meal,
+            "",
             "",
             "",
             "",
@@ -305,6 +310,7 @@ class _AfterpaymentState extends State<Afterpayment> {
             "",
             "",
             "",
+            "",
             "");
         print("searchDataINBOUNDROUNDTRIP$searchData");
       } else {
@@ -331,6 +337,7 @@ class _AfterpaymentState extends State<Afterpayment> {
             childpassenger,
             infantpassenger,
             meal,
+            "",
             "",
             "",
             "",
@@ -405,7 +412,8 @@ class _AfterpaymentState extends State<Afterpayment> {
             tboTds,
             trvlusCommission,
             trvlusTds,
-            trvlusNetFare);
+            trvlusNetFare,
+            othercharges);
         setState(() {
           pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
           bookingId = (searchData?["data"]?["Response"]?["Response"]
@@ -459,7 +467,8 @@ class _AfterpaymentState extends State<Afterpayment> {
             tboTds,
             trvlusCommission,
             trvlusTds,
-            trvlusNetFare);
+            trvlusNetFare,
+            othercharges);
 
         setState(() {
           pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";

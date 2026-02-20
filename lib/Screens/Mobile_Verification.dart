@@ -50,7 +50,8 @@ class MobileVerificationScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final int? coupouncode;
+  final num? coupouncode;
+  final double? othercharges;
   final String? commonPublishedFare;
   final String? tboOfferedFare;
   final double? tboCommission;
@@ -101,6 +102,7 @@ class MobileVerificationScreen extends StatefulWidget {
       this.childCount,
       this.infantCount,
       this.coupouncode,
+      this.othercharges,
       this.commonPublishedFare,
       this.tboOfferedFare,
       this.tboCommission,
@@ -136,6 +138,8 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
 
   @override
   void initState() {
+    print("MOBILE VERIFY");
+    print("OTHER${widget.othercharges}");
     var ell = widget.airlineName;
     print("segmentsJsonsegmentsJson${widget.segmentsJson}");
 
@@ -387,6 +391,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                 trvlusCommission: widget.trvlusCommission,
                                 trvlusTds: widget.trvlusTds,
                                 trvlusNetFare: widget.trvlusNetFare,
+                                othercharges: widget.othercharges,
                               ));
                         }
                       : null,

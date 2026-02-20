@@ -19522,7 +19522,7 @@ class _FlightnameState extends State<Flightname> {
     {
       "airport_code": "KUL",
       "airport_name": "Lumpur International Airport",
-      "airport_city": "Kuala Lumpur (KUL)"
+      "airport_city": "Kuala Lumpur"
     },
     {
       "airport_code": "KUM",
@@ -35895,7 +35895,7 @@ class _FlightnameState extends State<Flightname> {
     {
       "airport_code": "SZB",
       "airport_name": "Sultan Abdul Aziz Shah Airport",
-      "airport_city": "Kuala Lumpur (KUL)"
+      "airport_city": "Kuala Lumpur"
     },
     {
       "airport_code": "SZC",

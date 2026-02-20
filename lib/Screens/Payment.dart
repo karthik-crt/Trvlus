@@ -59,13 +59,14 @@ class MakePaymentScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final int? coupouncode;
+  final num? coupouncode;
   final String? commonPublishedFare;
   final String? tboOfferedFare;
   final double? tboCommission;
   final double? tboTds;
   final double? trvlusCommission;
   final double? trvlusTds;
+  final double? othercharges;
   final int? trvlusNetFare;
   final bool? isLLC;
   final List<Map<String, dynamic>>? passenger;
@@ -129,6 +130,7 @@ class MakePaymentScreen extends StatefulWidget {
       this.trvlusCommission,
       this.trvlusTds,
       this.trvlusNetFare,
+      this.othercharges,
       this.passenger,
       this.childpassenger,
       this.infantpassenger,
@@ -154,23 +156,35 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   bool isLoading = true;
   double totalBaseFare = 0;
   double totalTax = 0;
+  double othercharges = 0;
   double overallFare = 0;
   double inbaseFare = 0;
   double intax = 0;
   int totaladultCount = 0;
   int totalchildCount = 0;
   int totalinfantCount = 0;
-  int coupouncode = 0;
+  num coupouncode = 0;
   double adultFare = 0;
   double childFare = 0;
   double infantFare = 0;
+  double totalBalance = 0;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getfarequotedata();
     getCountryCode();
+    loadBalance();
+  }
+
+  Future<void> loadBalance() async {
+    final prefs = await SharedPreferences.getInstance();
+    double? balance = prefs.getDouble("total_balance");
+    print("balancebalance$balance");
+
+    setState(() {
+      totalBalance = balance ?? 0.0; // ADD THIS
+    });
   }
 
   getfarequotedata() async {
@@ -204,6 +218,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
     final tax = fareQuote.response.results.fare.tax.toDouble();
+    final convenienceFee = countrycode.data.first.convenienceFee;
+    print("convenienceFee$convenienceFee");
 
     double adultBase = 0, adultTax = 0;
     double childBase = 0, childTax = 0;
@@ -255,14 +271,25 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         }
       }
     }
+
     setState(() {
-      isLoading = false;
+      print("Payment");
+      print("Payment${widget.basefare}");
+      print("Payment${widget.tax}");
       coupouncode = widget.coupouncode!;
+      othercharges = widget.othercharges!;
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
-      totalTax = tax + intax;
+      totalTax = tax + intax + othercharges;
       print("totalTax$totalTax");
-      overallFare = totalBaseFare + totalTax - coupouncode.round();
+      if (widget.coupouncode! > 0) {
+        overallFare = totalBaseFare + totalTax + convenienceFee - coupouncode;
+        print("overallFare1$overallFare");
+      } else {
+        overallFare = totalBaseFare + totalTax + othercharges + convenienceFee;
+        print("overallFare$overallFare");
+        print("convenienceFee${countrycode.data.first.convenienceFee}");
+      }
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
@@ -270,6 +297,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
+      isLoading = false;
     });
   }
 
@@ -279,15 +307,24 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     });
     countrycode = await ApiService().countryCode();
     convenienceFee = countrycode.data.first.convenienceFee;
+    await getfarequotedata();
+
     print("countrycode$countrycode");
     print("convenienceFee$convenienceFee");
-    setState(() {
-      isLoading = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F5F5),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFF37023),
+          ),
+        ),
+      );
+    }
     print("PAYMENT");
     print("segmentsJson${widget.segmentsJson}");
     final flight = widget.flight;
@@ -329,8 +366,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
             child: Container(
               // height: 15, // smaller circle
               // width: 15,
-              margin: EdgeInsets.all(5),
-              decoration: BoxDecoration(
+              margin: const EdgeInsets.all(5),
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Color(0xFFE8E8E8),
               ),
@@ -358,7 +395,546 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
               ),
               if (widget.segments != null) ...[
                 if (widget.segments!.length >= 2)
-                  Card(
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(
+                        () => Viewfulldetails(
+                          flight: {},
+                          city: widget.city,
+                          destination: widget.destination,
+                          airlineName: widget.airlineName,
+                          airlineCode: widget.airlineCode,
+                          flightNumber: widget.flightNumber,
+                          cityName: widget.cityName,
+                          cityCode: widget.cityCode,
+                          descityName: widget.descityName,
+                          descityCode: widget.descityCode,
+                          depDate: widget.depDate,
+                          depTime: widget.depTime,
+                          arrDate: widget.arrDate,
+                          arrTime: widget.arrTime,
+                          duration: widget.duration,
+                          refundable: widget.refundable,
+                          stop: widget.stop,
+                          airportName: widget.airportName,
+                          desairportName: widget.desairportName,
+                          segments: widget.segments,
+                          inboundFlight: widget.inboundFlight,
+                          outboundFlight: widget.outboundFlight,
+                        ),
+                      );
+                    },
+                    child: Card(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r)),
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(12.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 8.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          widget.segments!.first.first.origin
+                                              .airport.cityName,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 5,
+                                        ),
+                                        Text(
+                                          widget.segments!.first.first.origin
+                                              .airport.cityCode,
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Image.asset(
+                                      "assets/icon/roundtripright.png",
+                                      width: 25,
+                                      height: 15,
+                                      color: Colors.deepOrange,
+                                    ),
+                                    Image.asset(
+                                      "assets/icon/roundtripline.png",
+                                      width: 70,
+                                      height: 15,
+                                      color: Colors.grey,
+                                    ),
+                                    Image.asset(
+                                      "assets/icon/roundtripleft.png",
+                                      width: 25,
+                                      height: 15,
+                                      color: Colors.deepOrange,
+                                    )
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          widget.segments!.first.last
+                                              .destination.airport.cityName,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 5,
+                                        ),
+                                        Text(
+                                          widget.segments!.first.last
+                                              .destination.airport.cityCode,
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 5.h),
+                            SizedBox(height: 8.h),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DotDivider(
+                                dotSize: 1.h, // Adjust size
+                                spacing: 2.r, // Adjust spacing
+                                dotCount: 97, // Adjust number of dots
+                                color: Colors.grey, // Adjust color
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            GestureDetector(
+                              onTap: () {
+                                Get.to(
+                                  () => Viewfulldetails(
+                                    flight: {},
+                                    city: widget.city,
+                                    destination: widget.destination,
+                                    airlineName: widget.airlineName,
+                                    airlineCode: widget.airlineCode,
+                                    flightNumber: widget.flightNumber,
+                                    cityName: widget.cityName,
+                                    cityCode: widget.cityCode,
+                                    descityName: widget.descityName,
+                                    descityCode: widget.descityCode,
+                                    depDate: widget.depDate,
+                                    depTime: widget.depTime,
+                                    arrDate: widget.arrDate,
+                                    arrTime: widget.arrTime,
+                                    duration: widget.duration,
+                                    refundable: widget.refundable,
+                                    stop: widget.stop,
+                                    airportName: widget.airportName,
+                                    desairportName: widget.desairportName,
+                                    segments: widget.segments,
+                                    inboundFlight: widget.inboundFlight,
+                                    outboundFlight: widget.outboundFlight,
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'View full details',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: Color(0xFFF37023),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Padding(
+                                      padding: EdgeInsets.only(top: 4.h),
+                                      child: Image.asset(
+                                          "assets/images/Traingle.png"))
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(
+                        () => Viewfulldetails(
+                          flight: flight,
+                          city: widget.city,
+                          destination: widget.destination,
+                          airlineName: widget.airlineName,
+                          airlineCode: widget.airlineCode,
+                          flightNumber: widget.flightNumber,
+                          cityName: widget.cityName,
+                          cityCode: widget.cityCode,
+                          descityName: widget.descityName,
+                          descityCode: widget.descityCode,
+                          depDate: widget.depDate,
+                          depTime: widget.depTime,
+                          arrDate: widget.arrDate,
+                          arrTime: widget.arrTime,
+                          duration: widget.duration,
+                          refundable: widget.refundable,
+                          stop: widget.stop,
+                          airportName: widget.airportName,
+                          desairportName: widget.desairportName,
+                          segments: widget.segments,
+                        ),
+                      );
+                    },
+                    child: Card(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r)),
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(12.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Flight header
+                            Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  // adjust radius
+                                  child: Image.asset(
+                                    "assets/${widget.airlineCode ?? ""}.gif",
+                                    fit: BoxFit.fill,
+                                    height: 35,
+                                    width: 35,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Container(
+                                  width: 100,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.airlineName,
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14.sp,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
+                                          text: widget.airlineCode ?? "",
+                                          // first text
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                          // base style
+                                          children: [
+                                            TextSpan(text: " "),
+                                            TextSpan(
+                                              text: widget.flightNumber ?? "",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                      color:
+                                                          Colors.grey.shade700),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  " ${widget.refundable ?? ""}",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headlineSmall
+                                                  ?.copyWith(
+                                                    fontSize: 12.sp,
+                                                    color: primaryColor,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                const Spacer(),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Economy Class",
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12.sp,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        SizedBox(width: 6.w),
+                                        Image.asset("assets/images/star.png"),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DotDivider(
+                                dotSize: 1.h,
+                                spacing: 2.r,
+                                dotCount: 97,
+                                color: Colors.grey, // Adjust color
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.depTime ?? "",
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat("dd MMM yy").format(
+                                        DateTime.parse(
+                                            widget.depDate.toString()),
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Text(widget.stop ?? "",
+                                        style: TextStyle(fontSize: 12.sp)),
+                                    Image.asset(
+                                        'assets/images/flightColor.png'),
+                                    Text(widget.duration ?? "",
+                                        style: TextStyle(fontSize: 12.sp)),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      widget.arrTime ?? "",
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat("dd MMM yy").format(
+                                        DateTime.parse(
+                                            widget.arrDate.toString()),
+                                      ),
+                                      style: TextStyle(fontSize: 12.sp),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          widget.cityName,
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          widget.cityCode,
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          widget.descityName ?? "",
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Text(
+                                          widget.descityCode ?? "",
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DotDivider(
+                                dotSize: 1.h,
+                                spacing: 2.r,
+                                dotCount: 97,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            GestureDetector(
+                              onTap: () {
+                                Get.to(
+                                  () => Viewfulldetails(
+                                    flight: flight,
+                                    city: widget.city,
+                                    destination: widget.destination,
+                                    airlineName: widget.airlineName,
+                                    airlineCode: widget.airlineCode,
+                                    flightNumber: widget.flightNumber,
+                                    cityName: widget.cityName,
+                                    cityCode: widget.cityCode,
+                                    descityName: widget.descityName,
+                                    descityCode: widget.descityCode,
+                                    depDate: widget.depDate,
+                                    depTime: widget.depTime,
+                                    arrDate: widget.arrDate,
+                                    arrTime: widget.arrTime,
+                                    duration: widget.duration,
+                                    refundable: widget.refundable,
+                                    stop: widget.stop,
+                                    airportName: widget.airportName,
+                                    desairportName: widget.desairportName,
+                                    segments: widget.segments,
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'View full details',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: Color(0xFFF37023),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 2.h),
+                                    child: Image.asset(
+                                        "assets/images/Traingle.png"),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ] else ...[
+                GestureDetector(
+                  onTap: () {
+                    Get.to(
+                      () => Viewfulldetails(
+                        flight: {},
+                        city: widget.city,
+                        destination: widget.destination,
+                        airlineName: widget.airlineName,
+                        airlineCode: widget.airlineCode,
+                        flightNumber: widget.flightNumber,
+                        cityName: widget.cityName,
+                        cityCode: widget.cityCode,
+                        descityName: widget.descityName,
+                        descityCode: widget.descityCode,
+                        depDate: widget.depDate,
+                        depTime: widget.depTime,
+                        arrDate: widget.arrDate,
+                        arrTime: widget.arrTime,
+                        duration: widget.duration,
+                        refundable: widget.refundable,
+                        stop: widget.stop,
+                        airportName: widget.airportName,
+                        desairportName: widget.desairportName,
+                        segments: widget.segments,
+                        inboundFlight: widget.inboundFlight,
+                        outboundFlight: widget.outboundFlight,
+                      ),
+                    );
+                  },
+                  child: Card(
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r)),
@@ -378,8 +954,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                   Row(
                                     children: [
                                       Text(
-                                        widget.segments!.first.first.origin
-                                            .airport.cityName,
+                                        widget.outboundFlight!.segments.first
+                                            .first.origin.airport.cityName,
                                         style: TextStyle(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.bold,
@@ -390,8 +966,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                         width: 5,
                                       ),
                                       Text(
-                                        widget.segments!.first.first.origin
-                                            .airport.cityCode,
+                                        widget.outboundFlight!.segments.first
+                                            .first.origin.airport.cityCode,
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.bold,
@@ -431,8 +1007,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       Text(
-                                        widget.segments!.first.last.destination
-                                            .airport.cityName,
+                                        widget.outboundFlight!.segments.first
+                                            .last.destination.airport.cityName,
                                         style: TextStyle(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.bold,
@@ -443,8 +1019,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                         width: 5,
                                       ),
                                       Text(
-                                        widget.segments!.first.last.destination
-                                            .airport.cityCode,
+                                        widget.outboundFlight!.segments.first
+                                            .first.origin.airport.cityCode,
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.bold,
@@ -457,7 +1033,6 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 5.h),
                           SizedBox(height: 8.h),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -521,680 +1096,219 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                         ],
                       ),
                     ),
-                  )
-                else
-                  Card(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r)),
-                    elevation: 2,
-                    child: Padding(
-                      padding: EdgeInsets.all(12.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Flight header
-                          Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                // adjust radius
-                                child: Image.asset(
-                                  "assets/${widget.airlineCode ?? ""}.gif",
-                                  fit: BoxFit.cover,
-                                  height: 35,
-                                  width: 35,
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Container(
-                                width: 100,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.airlineName,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14.sp,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    RichText(
-                                      text: TextSpan(
-                                        text: widget.airlineCode ?? "",
-                                        // first text
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                        // base style
-                                        children: [
-                                          TextSpan(text: " "),
-                                          TextSpan(
-                                            text: widget.flightNumber ?? "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                    color:
-                                                        Colors.grey.shade700),
-                                          ),
-                                          TextSpan(
-                                            text: " ${widget.refundable ?? ""}",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headlineSmall
-                                                ?.copyWith(
-                                                  fontSize: 12.sp,
-                                                  color: primaryColor,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              // SizedBox(width: 43.w),
-                              // Image.asset(
-                              //   "assets/images/Line.png",
-                              // ),
-                              const Spacer(),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "Economy Class",
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12.sp,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(width: 6.w),
-                                      Image.asset("assets/images/star.png"),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8.h),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DotDivider(
-                              dotSize: 1.h,
-                              spacing: 2.r,
-                              dotCount: 97,
-                              color: Colors.grey, // Adjust color
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.depTime ?? "",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  Text(
-                                    DateFormat("dd MMM yy").format(
-                                      DateTime.parse(widget.depDate.toString()),
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                children: [
-                                  Text(widget.stop ?? "",
-                                      style: TextStyle(fontSize: 12.sp)),
-                                  Image.asset('assets/images/flightColor.png'),
-                                  Text(widget.duration ?? "",
-                                      style: TextStyle(fontSize: 12.sp)),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    widget.arrTime ?? "",
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  Text(
-                                    DateFormat("dd MMM yy").format(
-                                      DateTime.parse(widget.arrDate.toString()),
-                                    ),
-                                    style: TextStyle(fontSize: 12.sp),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        widget.cityName,
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        widget.cityCode,
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  //SizedBox(height: 4.h),
-                                  // Text(
-                                  //   flight["departure"],
-                                  //   style: TextStyle(
-                                  //     fontSize: 12.sp,
-                                  //     color: Colors.grey,
-                                  //   ),
-                                  // ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        widget.descityName ?? "",
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        widget.descityCode ?? "",
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  // Text(
-                                  //   flight["arrival"],
-                                  //   style: TextStyle(fontSize: 12.sp),
-                                  // ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8.h),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DotDivider(
-                              dotSize: 1.h,
-                              spacing: 2.r,
-                              dotCount: 97,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          GestureDetector(
-                            onTap: () {
-                              Get.to(
-                                () => Viewfulldetails(
-                                  flight: flight,
-                                  city: widget.city,
-                                  destination: widget.destination,
-                                  airlineName: widget.airlineName,
-                                  airlineCode: widget.airlineCode,
-                                  flightNumber: widget.flightNumber,
-                                  cityName: widget.cityName,
-                                  cityCode: widget.cityCode,
-                                  descityName: widget.descityName,
-                                  descityCode: widget.descityCode,
-                                  depDate: widget.depDate,
-                                  depTime: widget.depTime,
-                                  arrDate: widget.arrDate,
-                                  arrTime: widget.arrTime,
-                                  duration: widget.duration,
-                                  refundable: widget.refundable,
-                                  stop: widget.stop,
-                                  airportName: widget.airportName,
-                                  desairportName: widget.desairportName,
-                                  segments: widget.segments,
-                                ),
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'View full details',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    color: Color(0xFFF37023),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Padding(
-                                  padding: EdgeInsets.only(top: 2.h),
-                                  child:
-                                      Image.asset("assets/images/Traingle.png"),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ] else ...[
-                Card(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r)),
-                  elevation: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 8.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      widget.outboundFlight!.segments.first
-                                          .first.origin.airport.cityName,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 5,
-                                    ),
-                                    Text(
-                                      widget.outboundFlight!.segments.first
-                                          .first.origin.airport.cityCode,
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                Image.asset(
-                                  "assets/icon/roundtripright.png",
-                                  width: 25,
-                                  height: 15,
-                                  color: Colors.deepOrange,
-                                ),
-                                Image.asset(
-                                  "assets/icon/roundtripline.png",
-                                  width: 70,
-                                  height: 15,
-                                  color: Colors.grey,
-                                ),
-                                Image.asset(
-                                  "assets/icon/roundtripleft.png",
-                                  width: 25,
-                                  height: 15,
-                                  color: Colors.deepOrange,
-                                )
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      widget.outboundFlight!.segments.first.last
-                                          .destination.airport.cityName,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 5,
-                                    ),
-                                    Text(
-                                      widget.outboundFlight!.segments.first
-                                          .first.origin.airport.cityCode,
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8.h),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DotDivider(
-                            dotSize: 1.h, // Adjust size
-                            spacing: 2.r, // Adjust spacing
-                            dotCount: 97, // Adjust number of dots
-                            color: Colors.grey, // Adjust color
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        GestureDetector(
-                          onTap: () {
-                            Get.to(
-                              () => Viewfulldetails(
-                                flight: {},
-                                city: widget.city,
-                                destination: widget.destination,
-                                airlineName: widget.airlineName,
-                                airlineCode: widget.airlineCode,
-                                flightNumber: widget.flightNumber,
-                                cityName: widget.cityName,
-                                cityCode: widget.cityCode,
-                                descityName: widget.descityName,
-                                descityCode: widget.descityCode,
-                                depDate: widget.depDate,
-                                depTime: widget.depTime,
-                                arrDate: widget.arrDate,
-                                arrTime: widget.arrTime,
-                                duration: widget.duration,
-                                refundable: widget.refundable,
-                                stop: widget.stop,
-                                airportName: widget.airportName,
-                                desairportName: widget.desairportName,
-                                segments: widget.segments,
-                                inboundFlight: widget.inboundFlight,
-                                outboundFlight: widget.outboundFlight,
-                              ),
-                            );
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'View full details',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  color: Color(0xFFF37023),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14.sp,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Padding(
-                                  padding: EdgeInsets.only(top: 4.h),
-                                  child:
-                                      Image.asset("assets/images/Traingle.png"))
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 )
               ],
               SizedBox(
                 height: 8.h,
               ),
-              Card(
-                color: Colors.white,
-                child: Padding(
-                  padding: EdgeInsets.all(16.r),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('PAY THROUGH UPI',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10.sp,
-                              fontFamily: 'Inter')),
-                      SizedBox(height: 5.h),
-                      Divider(),
-                      ListTile(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 0),
-                        leading: Image.asset("assets/images/Gpay.png"),
-                        title: Text('Google Pay'),
-                        subtitle: Text(
-                          'save ₹49 by paying online',
-                          style: TextStyle(
-                            color: Color(0xFF138808),
-                          ),
-                        ),
-                        trailing: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedPaymentMethod = 'Google Pay';
-                            });
-                          },
-                          child: Icon(
-                            selectedPaymentMethod == 'Google Pay'
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
-                            color: selectedPaymentMethod == 'Google Pay'
-                                ? Color(0xFFF37023)
-                                : Colors.grey,
-                          ),
-                        ),
-                      ),
-                      ListTile(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 0),
-                        leading: Image.asset("assets/images/Pay_tm.png"),
-                        title: Text('Paytm'),
-                        trailing: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedPaymentMethod = 'Paytm';
-                            });
-                          },
-                          child: Icon(
-                            selectedPaymentMethod == 'Paytm'
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
-                            color: selectedPaymentMethod == 'Paytm'
-                                ? Color(0xFFF37023)
-                                : Colors.grey,
-                          ),
-                        ),
-                      ),
-                      ListTile(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 0),
-                        leading: Image.asset("assets/images/Phone_pay.png"),
-                        title: Text('Paytm'),
-                        trailing: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedPaymentMethod = 'PhonePay';
-                            });
-                          },
-                          child: Icon(
-                            selectedPaymentMethod == 'PhonePay'
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
-                            color: selectedPaymentMethod == 'PhonePay'
-                                ? Color(0xFFF37023)
-                                : Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 8.h,
-              ),
-              Card(
-                color: Colors.white,
-                child: Padding(
-                  padding: EdgeInsets.all(16.r),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('PAY THROUGH CARD',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text(
-                            "+ADD NEW CARD",
-                            style: TextStyle(color: Color(0xFFF37023)),
-                          )
-                        ],
-                      ),
-                      Divider(),
-                      ListTile(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 0),
-                        leading: Image.asset("assets/images/Card.png"),
-                        title: Text('HDFC Credit Card'),
-                        trailing: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedPaymentMethod = 'HDFC Credit Card';
-                            });
-                          },
-                          child: Icon(
-                            selectedPaymentMethod == 'HDFC Credit Card'
-                                ? Icons.check_circle
-                                : Icons.radio_button_unchecked,
-                            color: selectedPaymentMethod == 'HDFC Credit Card'
-                                ? Color(0xFFF37023)
-                                : Colors.grey,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 7.h),
-                      TextField(
-                        controller: _cardNumberController,
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(
-                          color: Colors.black,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(16),
-                          CardNumberInputFormatter(),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: 'XXXX XXXX XXXX XXXX',
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                          ),
-                          filled: true,
-
-                          fillColor: Color(0xFFF3F4F6),
-                          // Background color
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(
-                              color: Colors.grey,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(
-                              color: Colors.transparent,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(
-                              color: Colors.transparent,
-                              width: 2.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 8.h,
-              ),
-              Card(
-                color: Colors.white,
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "NET BANKING",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontFamily: 'Inter'),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedPaymentMethod = 'NET BANKING';
-                          });
-                        },
-                        child: Icon(
-                          selectedPaymentMethod == 'NET BANKING'
-                              ? Icons.check_circle
-                              : Icons.radio_button_unchecked,
-                          color: selectedPaymentMethod == 'NET BANKING'
-                              ? Color(0xFFF37023)
-                              : Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Card(
+              //   color: Colors.white,
+              //   child: Padding(
+              //     padding: EdgeInsets.all(16.r),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Text('PAY THROUGH UPI',
+              //             style: TextStyle(
+              //                 fontWeight: FontWeight.bold,
+              //                 fontSize: 10.sp,
+              //                 fontFamily: 'Inter')),
+              //         SizedBox(height: 5.h),
+              //         Divider(),
+              //         ListTile(
+              //           contentPadding: EdgeInsets.symmetric(horizontal: 0),
+              //           leading: Image.asset("assets/images/Gpay.png"),
+              //           title: Text('Google Pay'),
+              //           subtitle: Text(
+              //             'save ₹49 by paying online',
+              //             style: TextStyle(
+              //               color: Color(0xFF138808),
+              //             ),
+              //           ),
+              //           trailing: GestureDetector(
+              //             onTap: () {
+              //               setState(() {
+              //                 selectedPaymentMethod = 'Google Pay';
+              //               });
+              //             },
+              //             child: Icon(
+              //               selectedPaymentMethod == 'Google Pay'
+              //                   ? Icons.check_circle
+              //                   : Icons.radio_button_unchecked,
+              //               color: selectedPaymentMethod == 'Google Pay'
+              //                   ? Color(0xFFF37023)
+              //                   : Colors.grey,
+              //             ),
+              //           ),
+              //         ),
+              //         ListTile(
+              //           contentPadding: EdgeInsets.symmetric(horizontal: 0),
+              //           leading: Image.asset("assets/images/Pay_tm.png"),
+              //           title: Text('Paytm'),
+              //           trailing: GestureDetector(
+              //             onTap: () {
+              //               setState(() {
+              //                 selectedPaymentMethod = 'Paytm';
+              //               });
+              //             },
+              //             child: Icon(
+              //               selectedPaymentMethod == 'Paytm'
+              //                   ? Icons.check_circle
+              //                   : Icons.radio_button_unchecked,
+              //               color: selectedPaymentMethod == 'Paytm'
+              //                   ? Color(0xFFF37023)
+              //                   : Colors.grey,
+              //             ),
+              //           ),
+              //         ),
+              //         ListTile(
+              //           contentPadding: EdgeInsets.symmetric(horizontal: 0),
+              //           leading: Image.asset("assets/images/Phone_pay.png"),
+              //           title: Text('Paytm'),
+              //           trailing: GestureDetector(
+              //             onTap: () {
+              //               setState(() {
+              //                 selectedPaymentMethod = 'PhonePay';
+              //               });
+              //             },
+              //             child: Icon(
+              //               selectedPaymentMethod == 'PhonePay'
+              //                   ? Icons.check_circle
+              //                   : Icons.radio_button_unchecked,
+              //               color: selectedPaymentMethod == 'PhonePay'
+              //                   ? Color(0xFFF37023)
+              //                   : Colors.grey,
+              //             ),
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              // SizedBox(
+              //   height: 8.h,
+              // ),
+              // Card(
+              //   color: Colors.white,
+              //   child: Padding(
+              //     padding: EdgeInsets.all(16.r),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Row(
+              //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //           children: [
+              //             Text('PAY THROUGH CARD',
+              //                 style: TextStyle(fontWeight: FontWeight.bold)),
+              //             Text(
+              //               "+ADD NEW CARD",
+              //               style: TextStyle(color: Color(0xFFF37023)),
+              //             )
+              //           ],
+              //         ),
+              //         Divider(),
+              //         ListTile(
+              //           contentPadding: EdgeInsets.symmetric(horizontal: 0),
+              //           leading: Image.asset("assets/images/Card.png"),
+              //           title: Text('HDFC Credit Card'),
+              //           trailing: GestureDetector(
+              //             onTap: () {
+              //               setState(() {
+              //                 selectedPaymentMethod = 'HDFC Credit Card';
+              //               });
+              //             },
+              //             child: Icon(
+              //               selectedPaymentMethod == 'HDFC Credit Card'
+              //                   ? Icons.check_circle
+              //                   : Icons.radio_button_unchecked,
+              //               color: selectedPaymentMethod == 'HDFC Credit Card'
+              //                   ? Color(0xFFF37023)
+              //                   : Colors.grey,
+              //             ),
+              //           ),
+              //         ),
+              //         SizedBox(height: 7.h),
+              //         TextField(
+              //           controller: _cardNumberController,
+              //           keyboardType: TextInputType.number,
+              //           style: TextStyle(
+              //             color: Colors.black,
+              //           ),
+              //           inputFormatters: [
+              //             FilteringTextInputFormatter.digitsOnly,
+              //             LengthLimitingTextInputFormatter(16),
+              //             CardNumberInputFormatter(),
+              //           ],
+              //           decoration: InputDecoration(
+              //             hintText: 'XXXX XXXX XXXX XXXX',
+              //             hintStyle: TextStyle(
+              //               color: Colors.grey,
+              //             ),
+              //             filled: true,
+              //
+              //             fillColor: Color(0xFFF3F4F6),
+              //             // Background color
+              //             border: OutlineInputBorder(
+              //               borderRadius: BorderRadius.circular(8.0),
+              //               borderSide: BorderSide(
+              //                 color: Colors.grey,
+              //               ),
+              //             ),
+              //             enabledBorder: OutlineInputBorder(
+              //               borderRadius: BorderRadius.circular(8.0),
+              //               borderSide: BorderSide(
+              //                 color: Colors.transparent,
+              //               ),
+              //             ),
+              //             focusedBorder: OutlineInputBorder(
+              //               borderRadius: BorderRadius.circular(8.0),
+              //               borderSide: BorderSide(
+              //                 color: Colors.transparent,
+              //                 width: 2.0,
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              // SizedBox(
+              //   height: 8.h,
+              // ),
+              // Card(
+              //   color: Colors.white,
+              //   child: Padding(
+              //     padding:
+              //         EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              //     child: Row(
+              //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //       children: [
+              //         Text(
+              //           "NET BANKING",
+              //           style: TextStyle(
+              //               fontWeight: FontWeight.bold, fontFamily: 'Inter'),
+              //         ),
+              //         GestureDetector(
+              //           onTap: () {
+              //             setState(() {
+              //               selectedPaymentMethod = 'NET BANKING';
+              //             });
+              //           },
+              //           child: Icon(
+              //             selectedPaymentMethod == 'NET BANKING'
+              //                 ? Icons.check_circle
+              //                 : Icons.radio_button_unchecked,
+              //             color: selectedPaymentMethod == 'NET BANKING'
+              //                 ? Color(0xFFF37023)
+              //                 : Colors.grey,
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
               Card(
                 color: Colors.white,
                 child: Padding(
@@ -1321,7 +1435,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹$overallFare",
+                          "₹${overallFare.toStringAsFixed(0)}",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -1340,80 +1454,76 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                   ],
                 ),
                 SizedBox(height: 5.h),
-                ElevatedButton(
-                  onPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    prefs.getString("ResultIndex");
-                    print("ISLLC${widget.isLLC}");
-                    // await ApiService().ticket();
-                    print("ADULTCHILD${widget.meal}");
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => Afterpayment(
-                                  flightNumber: widget.flightNumber,
-                                  airlineName: widget.airlineName,
-                                  depTime: widget.depTime,
-                                  depDate: widget.depDate,
-                                  airportName: widget.airportName,
-                                  arrTime: widget.arrTime,
-                                  arrDate: widget.arrDate,
-                                  desairportName: widget.desairportName,
-                                  duration: widget.duration,
-                                  airlineCode: widget.airlineCode,
-                                  cityCode: widget.cityCode,
-                                  descityCode: widget.descityCode,
-                                  cityName: widget.cityName,
-                                  descityName: widget.descityName,
-                                  outboundFlight: widget.outboundFlight,
-                                  inboundFlight: widget.inboundFlight,
-                                  outresultindex: widget.outresultindex,
-                                  inresultindex: widget.inresultindex,
-                                  passenger: widget.passenger,
-                                  childpassenger: widget.childpassenger,
-                                  infantpassenger: widget.infantpassenger,
-                                  basefare: widget.basefare,
-                                  tax: widget.tax,
-                                  isLLC: widget.isLLC,
-                                  outBoundData: widget.outBoundData,
-                                  inBoundData: widget.inBoundData,
-                                  meal: widget.meal,
-                                  stop: widget.stop,
-                                  resultindex: widget.resultindex,
-                                  traceid: widget.traceid,
-                                  segmentsJson: widget.segmentsJson,
-                                  convenienceFee: convenienceFee,
-                                  coupouncode: widget.coupouncode,
-                                  commonPublishedFare:
-                                      widget.commonPublishedFare,
-                                  tboOfferedFare: widget.tboOfferedFare,
-                                  tboCommission: widget.tboCommission,
-                                  tboTds: widget.tboTds,
-                                  trvlusCommission: widget.trvlusCommission,
-                                  trvlusTds: widget.trvlusTds,
-                                  trvlusNetFare: widget.trvlusNetFare,
-                                )));
-                    // Get.to(MakePaymentScreen(
-                    //   flight: flight,
-                    //   city: widget.city,
-                    //   destination: widget.destination,
-                    // ));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 40.h),
-                    backgroundColor: Color(0xFFF37023),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.r),
+                if (totalBalance >= (widget.trvlusNetFare ?? 0))
+                  ElevatedButton(
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      prefs.getString("ResultIndex");
+                      print("ISLLC${widget.isLLC}");
+                      // await ApiService().ticket();
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Afterpayment(
+                                    flightNumber: widget.flightNumber,
+                                    airlineName: widget.airlineName,
+                                    depTime: widget.depTime,
+                                    depDate: widget.depDate,
+                                    airportName: widget.airportName,
+                                    arrTime: widget.arrTime,
+                                    arrDate: widget.arrDate,
+                                    desairportName: widget.desairportName,
+                                    duration: widget.duration,
+                                    airlineCode: widget.airlineCode,
+                                    cityCode: widget.cityCode,
+                                    descityCode: widget.descityCode,
+                                    cityName: widget.cityName,
+                                    descityName: widget.descityName,
+                                    outboundFlight: widget.outboundFlight,
+                                    inboundFlight: widget.inboundFlight,
+                                    outresultindex: widget.outresultindex,
+                                    inresultindex: widget.inresultindex,
+                                    passenger: widget.passenger,
+                                    childpassenger: widget.childpassenger,
+                                    infantpassenger: widget.infantpassenger,
+                                    basefare: widget.basefare,
+                                    tax: widget.tax,
+                                    isLLC: widget.isLLC,
+                                    outBoundData: widget.outBoundData,
+                                    inBoundData: widget.inBoundData,
+                                    meal: widget.meal,
+                                    stop: widget.stop,
+                                    resultindex: widget.resultindex,
+                                    traceid: widget.traceid,
+                                    segmentsJson: widget.segmentsJson,
+                                    convenienceFee: convenienceFee,
+                                    coupouncode: widget.coupouncode,
+                                    commonPublishedFare:
+                                        widget.commonPublishedFare,
+                                    tboOfferedFare: widget.tboOfferedFare,
+                                    tboCommission: widget.tboCommission,
+                                    tboTds: widget.tboTds,
+                                    trvlusCommission: widget.trvlusCommission,
+                                    trvlusTds: widget.trvlusTds,
+                                    trvlusNetFare: widget.trvlusNetFare,
+                                    othercharges: widget.othercharges,
+                                  )));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 40.h),
+                      backgroundColor: Color(0xFFF37023),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                    ),
+                    child: Text(
+                      "Proceed to pay",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    "Proceed to pay",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -1469,6 +1579,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           coupouncode: coupouncode,
           showConvenienceFee: true,
           convenienceFee: convenienceFee,
+          othercharges: othercharges,
+          meal: {},
+          seat: [],
+          baggage: 0.0,
         );
       },
     );

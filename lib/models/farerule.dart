@@ -99,7 +99,7 @@ class FareRules {
   late final String ReturnDate;
 
   FareRules.fromJson(Map<String, dynamic> json) {
-    Airline = json['Airline'];
+    Airline = json['Airline'] ?? "";
     DepartureTime = json['DepartureTime'];
     Destination = json['Destination'];
     FareBasisCode = json['FareBasisCode'];

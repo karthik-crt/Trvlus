@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/ProfilePage.dart';
 import 'package:trvlus/Screens/roundtrip.dart';
 
+import '../models/payment.dart';
 import '../models/search_data.dart';
 import '../utils/api_service.dart';
 import 'Search_Result_Page.dart';
@@ -55,6 +56,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   int departureIndex = -1;
   bool isLoading = false;
   late SearchData searchData;
+  Payment? payment;
 
   // State variables for From and To fields
   String fromAirport = "Delhi";
@@ -74,6 +76,19 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
 
       toAirport = tempAirport;
       toairportCode = tempCode;
+    });
+  }
+
+  paymentStatus() async {
+    setState(() {
+      isLoading = true;
+      print("hello");
+    });
+    print("hello");
+    payment = await ApiService().payment();
+    print("payment$payment");
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -176,6 +191,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     returnDate = DateTime.now().add(const Duration(days: 1));
     print('selectedReturnDate$selectedReturnDate');
     setPaxValue();
+    // paymentStatus();
     // _selectedDepDate = today.toString();
   }
 
@@ -390,7 +406,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
               children: [
                 Image.asset("assets/images/Group_1.png"),
                 Padding(
-                  padding: EdgeInsets.only(right: 40.w, bottom: 15.h),
+                  padding: EdgeInsets.only(right: 35.w, bottom: 15.h),
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 6.w,
@@ -401,7 +417,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(
-                      '₹0',
+                      '₹${0}',
                       style: TextStyle(color: Colors.white, fontSize: 9.sp),
                     ),
                   ),
@@ -413,19 +429,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
           Padding(
             padding: EdgeInsets.only(right: 16.w),
             child: GestureDetector(
-              onTap: () {
-                // Get.to(Roundtrip(
-                //   airportCode: '',
-                //   selectedReturnDate: '',
-                //   selectedDepDate: '',
-                //   toAirport: '',
-                //   fromAirport: '',
-                //   toairportCode: '',
-                //   selectedTripType: '',
-                //   adultCount: 1, search: '',
-                // ));
-                // Get.to(const Network());
-              },
+              onTap: () {},
               child: Image.asset("assets/images/Bell_1.png"),
             ),
           ),
@@ -464,11 +468,15 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                       onTap: () {
                         setState(() {
                           selectedTripType = "Round trip";
-                          if (selectedDepatureDate != null) {
-                            returnDate = selectedDepatureDate!.add(
-                              const Duration(days: 1),
-                            );
-                          }
+                          selectedDepatureDate ??= DateTime.now();
+                          returnDate = selectedDepatureDate!.add(
+                            const Duration(days: 1),
+                          );
+                          selectedReturnDate = returnDate;
+                          _selectedDepDates = [
+                            selectedDepatureDate!,
+                            returnDate!,
+                          ];
                         });
                       },
                     ),
@@ -567,16 +575,38 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                       onDateChanged: (date) {
                         setState(() {
                           _selectedDates = date;
+                          selectedDepatureDate = date;
                           print("departureDate$_selectedDates");
                           print("returnDate$returnDate");
-                          // Automatically update return date
                         });
                       },
-
+                      onReturnDateChanged: (date) {
+                        setState(() {
+                          returnDate = date;
+                          print("returnDateFromDeparturePicker$returnDate");
+                        });
+                      },
                       firstDate: DateTime.now(),
-                      selectedTripType: 'One Way',
+                      selectedTripType: selectedTripType,
                       // Start from today
-                      fareMap: fareMap, // ✅ pass the preprocessed map
+                      fareMap: fareMap,
+                      // ✅ pass the preprocessed map
+                      onTripTypeChanged: (String newTripType) {
+                        setState(() {
+                          selectedTripType = newTripType;
+                          if (newTripType == "Round trip") {
+                            selectedDepatureDate ??= DateTime.now();
+                            returnDate = selectedDepatureDate!.add(
+                              const Duration(days: 1),
+                            );
+                            selectedReturnDate = returnDate;
+                            _selectedDepDates = [
+                              selectedDepatureDate!,
+                              returnDate!,
+                            ];
+                          }
+                        });
+                      },
                     ),
                   ),
                   // Text("Return on$returnDate"),
@@ -601,6 +631,11 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                                   )
                                 : DateTime.now().add(const Duration(days: 1)),
                             selectedTripType: selectedTripType,
+                            onTripTypeChanged: (String newTripType) {
+                              setState(() {
+                                selectedTripType = newTripType;
+                              });
+                            },
                           )
                         : GestureDetector(
                             onTap: () {
@@ -610,12 +645,16 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                                 print(
                                     "selete departure date $selectedDepatureDate");
 
-                                if (selectedDepatureDate != null) {
-                                  returnDate = selectedDepatureDate!.add(
-                                    const Duration(days: 1),
-                                  );
-                                  print("returnDatehelo$returnDate");
-                                }
+                                selectedDepatureDate ??= DateTime.now();
+                                returnDate = selectedDepatureDate!.add(
+                                  const Duration(days: 1),
+                                );
+                                selectedReturnDate = returnDate;
+                                _selectedDepDates = [
+                                  selectedDepatureDate!,
+                                  returnDate!,
+                                ];
+                                print("returnDatehelo$returnDate");
                               });
                             },
                             child: Container(
@@ -843,17 +882,21 @@ class DatePickerField extends StatefulWidget {
   final String label;
   final DateTime? selectedDate;
   final Function(DateTime) onDateChanged;
+  final Function(DateTime)? onReturnDateChanged;
   final DateTime firstDate;
   final String selectedTripType;
   final Map<DateTime, double>? fareMap; // 👈 add this
+  final Function(String)? onTripTypeChanged; // Callback for changing trip type
 
   const DatePickerField({
     required this.label,
     required this.selectedDate,
     required this.onDateChanged,
+    this.onReturnDateChanged,
     required this.firstDate,
     required this.selectedTripType,
     this.fareMap,
+    this.onTripTypeChanged,
     Key? key,
   }) : super(key: key);
 
@@ -883,9 +926,23 @@ class _DatePickerFieldState extends State<DatePickerField> {
                 DateTime? tempReturnDate = returnDate;
                 print("tempReturnDate$tempReturnDate");
                 print("hello${widget.onDateChanged}");
+                String activeTab =
+                    widget.label == "Return on" ? "return" : "departure";
+
+                // Initialize currentTripType from widget
+                String currentTripType = widget.selectedTripType;
+
+                // Pre-populate _selectedDepDates so the calendar shows existing selections
+                if (currentTripType == 'Round trip') {
+                  _selectedDepDates = [
+                    if (selectedDepatureDate != null) selectedDepatureDate!,
+                    if (selectedReturnDate != null) selectedReturnDate!,
+                  ];
+                }
+
                 return StatefulBuilder(
                   builder: (context, localSetState) {
-                    print("Trip type is: ${widget.selectedTripType}");
+                    print("Trip type is: ${currentTripType}");
                     return Container(
                       height: 550,
                       child: Scaffold(
@@ -910,8 +967,16 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                 print("departureDate${widget.onDateChanged}");
                               }
                               if (selectedReturnDate != null) {
-                                widget.onDateChanged(selectedReturnDate!);
-                                print("departureDate${widget.onDateChanged}");
+                                if (widget.onReturnDateChanged != null) {
+                                  widget.onReturnDateChanged!(
+                                      selectedReturnDate!);
+                                } else {
+                                  widget.onDateChanged(selectedReturnDate!);
+                                }
+                                print("returnDate$selectedReturnDate");
+                              }
+                              if (widget.onTripTypeChanged != null) {
+                                widget.onTripTypeChanged!(currentTripType);
                               }
                               Navigator.pop(context);
                             },
@@ -933,7 +998,7 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                       Padding(
                                         padding: EdgeInsets.only(left: 9.w),
                                         child: Text(
-                                          widget.label == "Departure on"
+                                          activeTab == "departure"
                                               ? "Select Departure Date"
                                               : "Select Return Date",
                                           style: TextStyle(
@@ -961,7 +1026,9 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                     children: [
                                       GestureDetector(
                                         onTap: () {
-                                          localSetState(() {});
+                                          localSetState(() {
+                                            activeTab = "departure";
+                                          });
                                         },
                                         child: Padding(
                                           padding: EdgeInsets.only(
@@ -974,13 +1041,11 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                               vertical: 5.h,
                                             ),
                                             decoration: BoxDecoration(
-                                              color:
-                                                  widget.label == "Departure on"
-                                                      ? const Color(0xFFFFE7DA)
-                                                      : Colors.white,
+                                              color: activeTab == "departure"
+                                                  ? const Color(0xFFFFE7DA)
+                                                  : Colors.white,
                                               border: Border.all(
-                                                color: widget.label ==
-                                                        "Departure on"
+                                                color: activeTab == "departure"
                                                     ? const Color(0xFFE6E6E6)
                                                     : Colors.grey.shade300,
                                               ),
@@ -1032,72 +1097,160 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                           ),
                                         ),
                                       ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          localSetState(() {});
-                                        },
-                                        child: Container(
-                                          width: 160.w,
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 5.w,
-                                            vertical: 5.h,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: widget.label == "Return on"
-                                                ? const Color(0xFFFFE7DA)
-                                                : Colors.white,
-                                            border: Border.all(
-                                              color: widget.label == "Return on"
-                                                  ? const Color(0xFFE6E6E6)
-                                                  : Colors.grey.shade300,
+                                      // Return Tab or + Add Round Trip
+                                      if (currentTripType == "Round trip")
+                                        GestureDetector(
+                                          onTap: () {
+                                            localSetState(() {
+                                              activeTab = "return";
+                                            });
+                                          },
+                                          child: Container(
+                                            width: 160.w,
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 5.w,
+                                              vertical: 5.h,
                                             ),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Image.asset(
-                                                    "assets/images/takeoff1.png",
-                                                  ),
-                                                  SizedBox(width: 5.w),
-                                                  Text(
-                                                    "Return",
+                                            decoration: BoxDecoration(
+                                              color: activeTab == "return"
+                                                  ? const Color(0xFFFFE7DA)
+                                                  : Colors.white,
+                                              border: Border.all(
+                                                color: activeTab == "return"
+                                                    ? const Color(0xFFE6E6E6)
+                                                    : Colors.grey.shade300,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Image.asset(
+                                                      "assets/images/takeoff1.png",
+                                                    ),
+                                                    SizedBox(width: 5.w),
+                                                    Text(
+                                                      "Return",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .headlineSmall
+                                                          ?.copyWith(
+                                                            color: const Color(
+                                                              0xFFF37023,
+                                                            ),
+                                                            fontSize: 15.sp,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 4.h),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    text: selectedReturnDate ==
+                                                            null
+                                                        ? "Select date"
+                                                        : selectedReturnDate
+                                                            .toString()
+                                                            .substring(0, 11),
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .headlineSmall
                                                         ?.copyWith(
-                                                          color: const Color(
-                                                            0xFFF37023,
-                                                          ),
-                                                          fontSize: 15.sp,
+                                                          fontSize: 12.sp,
+                                                          color: Colors.black,
                                                         ),
                                                   ),
-                                                ],
-                                              ),
-                                              SizedBox(height: 4.h),
-                                              RichText(
-                                                text: TextSpan(
-                                                  text:
-                                                      selectedReturnDate == null
-                                                          ? "Select date"
-                                                          : selectedReturnDate
-                                                              .toString()
-                                                              .substring(0, 11),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headlineSmall
-                                                      ?.copyWith(
-                                                        fontSize: 12.sp,
-                                                        color: Colors.black,
-                                                      ),
                                                 ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        GestureDetector(
+                                          onTap: () {
+                                            localSetState(() {
+                                              // Switch to Round Trip
+                                              currentTripType = "Round trip";
+                                              activeTab = "return";
+
+                                              // Initialize return date if needed
+                                              selectedDepatureDate ??=
+                                                  DateTime.now();
+                                              // If returnDate is null or invalid, set it to dep + 1
+                                              if (selectedReturnDate == null ||
+                                                  selectedReturnDate!.isBefore(
+                                                      selectedDepatureDate!)) {
+                                                returnDate =
+                                                    selectedDepatureDate!.add(
+                                                        const Duration(
+                                                            days: 1));
+                                                selectedReturnDate = returnDate;
+                                              }
+
+                                              _selectedDepDates = [
+                                                selectedDepatureDate!,
+                                                selectedReturnDate!,
+                                              ];
+
+                                              // Update the parent immediately if possible, or wait till Done is clicked
+                                              // Here we update local state to reflect UI changes immediately
+                                            });
+                                          },
+                                          child: Container(
+                                            width: 160.w,
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 5.w,
+                                              vertical: 5.h,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
                                               ),
-                                            ],
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Image.asset(
+                                                      "assets/images/takeoff1.png",
+                                                    ),
+                                                    SizedBox(width: 5.w),
+                                                    Text(
+                                                      "Return",
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .headlineSmall
+                                                          ?.copyWith(
+                                                            color: const Color(
+                                                              0xFFF37023,
+                                                            ),
+                                                            fontSize: 15.sp,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 4.h),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    text: "+ Add Round Trip",
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headlineSmall
+                                                        ?.copyWith(
+                                                          fontSize: 12.sp,
+                                                          color: Colors.black,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -1109,14 +1262,14 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                       // todayHighlightColor: Colors.transparent,
                                       firstDate: widget.firstDate,
                                       lastDate: DateTime(2100),
+                                      // Always use single mode — we manually track departure/return
                                       calendarType:
-                                          widget.selectedTripType == 'One Way'
-                                              ? CalendarDatePicker2Type.single
-                                              : CalendarDatePicker2Type.range,
+                                          CalendarDatePicker2Type.single,
                                       calendarViewMode:
                                           CalendarDatePicker2Mode.scroll,
                                       hideScrollViewMonthWeekHeader: true,
-                                      selectedDayHighlightColor: Colors.orange,
+                                      selectedDayHighlightColor:
+                                          Colors.transparent,
                                       weekdayLabelTextStyle: const TextStyle(
                                         color: Colors.black,
                                         fontWeight: FontWeight.bold,
@@ -1128,6 +1281,11 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                       dayTextStyle: const TextStyle(
                                         color: Colors.black87,
                                         fontSize: 14,
+                                      ),
+                                      selectedDayTextStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                       disabledDayTextStyle: TextStyle(
                                         color: Colors.grey.withOpacity(0.5),
@@ -1148,79 +1306,152 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                             date.year, date.month, date.day);
                                         final fare = widget.fareMap?[dateOnly];
                                         // ✅ Check if this date is departure or return
-                                        bool isDeparture = _selectedDepDates
-                                                .isNotEmpty &&
-                                            dateOnly == _selectedDepDates.first;
+                                        bool isDeparture =
+                                            selectedDepatureDate != null &&
+                                                dateOnly ==
+                                                    DateTime(
+                                                      selectedDepatureDate!
+                                                          .year,
+                                                      selectedDepatureDate!
+                                                          .month,
+                                                      selectedDepatureDate!.day,
+                                                    );
 
                                         bool isReturn =
-                                            _selectedDepDates.length > 1 &&
+                                            selectedReturnDate != null &&
                                                 dateOnly ==
-                                                    _selectedDepDates.last;
+                                                    DateTime(
+                                                      selectedReturnDate!.year,
+                                                      selectedReturnDate!.month,
+                                                      selectedReturnDate!.day,
+                                                    );
                                         double circleSize =
                                             38; // adjust as needed
 
-                                        return Container(
-                                          width: circleSize,
-                                          height: circleSize,
-                                          decoration: (isDeparture || isReturn)
-                                              ? BoxDecoration(
-                                                  color: isDeparture
-                                                      ? Colors.orange
-                                                      : Colors.orange,
-                                                  // different color for return
-                                                  shape: BoxShape.circle,
-                                                )
-                                              : decoration,
-                                          // no decoration for today
+                                        // ✅ Check if date is in the range between departure and return
+                                        bool isInRange = false;
+                                        if (selectedDepatureDate != null &&
+                                            selectedReturnDate != null) {
+                                          final depOnly = DateTime(
+                                            selectedDepatureDate!.year,
+                                            selectedDepatureDate!.month,
+                                            selectedDepatureDate!.day,
+                                          );
+                                          final retOnly = DateTime(
+                                            selectedReturnDate!.year,
+                                            selectedReturnDate!.month,
+                                            selectedReturnDate!.day,
+                                          );
+                                          isInRange =
+                                              dateOnly.isAfter(depOnly) &&
+                                                  dateOnly.isBefore(retOnly);
+                                        }
+
+                                        return Stack(
                                           alignment: Alignment.center,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                "${date.day}",
-                                                style: (textStyle ??
-                                                        const TextStyle())
-                                                    .copyWith(
-                                                  // color: (isDisabled ?? false)
-                                                  //     ? Colors.grey
-                                                  //         .withOpacity(0.5)
-                                                  //     : Colors.white,
-                                                  fontWeight:
-                                                      (isDeparture || isReturn)
-                                                          ? FontWeight.bold
-                                                          : FontWeight.normal,
-                                                ),
-                                              ),
-                                              if (!isDisabled! &&
-                                                  fare != null) ...[
-                                                SizedBox(height: 2),
-                                                Text(
-                                                  '₹${fare.toStringAsFixed(0)}',
-                                                  style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: Colors.black,
-                                                    fontWeight: FontWeight.w600,
+                                          children: [
+                                            // Background Highlight Strip
+                                            if (selectedDepatureDate != null &&
+                                                selectedReturnDate != null &&
+                                                selectedDepatureDate !=
+                                                    selectedReturnDate)
+                                              if (isDeparture)
+                                                Positioned(
+                                                  left: circleSize / 2,
+                                                  right: 0,
+                                                  top: 0,
+                                                  bottom: 0,
+                                                  child: Container(
+                                                    color:
+                                                        const Color(0xFFFFE7DA),
                                                   ),
+                                                )
+                                              else if (isReturn)
+                                                Positioned(
+                                                  left: 0,
+                                                  right: circleSize / 2,
+                                                  top: 0,
+                                                  bottom: 0,
+                                                  child: Container(
+                                                    color:
+                                                        const Color(0xFFFFE7DA),
+                                                  ),
+                                                )
+                                              else if (isInRange)
+                                                Container(
+                                                  color:
+                                                      const Color(0xFFFFE7DA),
                                                 ),
-                                              ],
-                                            ],
-                                          ),
+
+                                            // Main Date Circle
+                                            Container(
+                                              width: circleSize,
+                                              height: circleSize,
+                                              decoration: (isDeparture ||
+                                                      isReturn)
+                                                  ? BoxDecoration(
+                                                      color: Colors.orange,
+                                                      shape: BoxShape.circle,
+                                                    )
+                                                  : decoration,
+                                              alignment: Alignment.center,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    "${date.day}",
+                                                    style: (textStyle ??
+                                                            const TextStyle())
+                                                        .copyWith(
+                                                      color: (isDeparture ||
+                                                              isReturn)
+                                                          ? Colors.white
+                                                          : null,
+                                                      fontWeight:
+                                                          (isDeparture ||
+                                                                  isReturn)
+                                                              ? FontWeight.bold
+                                                              : null,
+                                                    ),
+                                                  ),
+                                                  if (!isDisabled! &&
+                                                      fare != null) ...[
+                                                    SizedBox(height: 2),
+                                                    Text(
+                                                      '₹${fare.toStringAsFixed(0)}',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         );
                                       },
                                     ),
 
-                                    // ✅ Value handling based on trip type
-                                    value: widget.selectedTripType == 'One Way'
+                                    // ✅ Show the currently active date as selected in the calendar
+                                    value: currentTripType == 'One Way'
                                         ? (selectedDepatureDate != null
                                             ? [selectedDepatureDate!]
                                             : [])
-                                        : _selectedDepDates,
+                                        : (activeTab == "departure"
+                                            ? (selectedDepatureDate != null
+                                                ? [selectedDepatureDate!]
+                                                : [])
+                                            : (selectedReturnDate != null
+                                                ? [selectedReturnDate!]
+                                                : [])),
 
                                     onValueChanged: (List<DateTime> dates) {
                                       localSetState(() {
-                                        if (widget.selectedTripType ==
-                                            'One Way') {
+                                        if (currentTripType == 'One Way') {
                                           if (dates.isNotEmpty) {
                                             selectedDepatureDate = dates.first;
                                             print(
@@ -1229,31 +1460,61 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                           }
                                           selectedReturnDate = null;
                                         } else {
-                                          _selectedDepDates = dates;
+                                          // Round trip: only update the active tab's date
                                           if (dates.isNotEmpty) {
-                                            selectedDepatureDate = dates.first;
-                                            print(
-                                              "Round Trip -> Departure: $selectedDepatureDate",
-                                            );
-                                          }
-                                          if (dates.length > 1) {
-                                            selectedReturnDate = dates.last;
-                                            print(
-                                              "Round Trip -> Return: $selectedReturnDate",
-                                            );
+                                            if (activeTab == "departure") {
+                                              selectedDepatureDate =
+                                                  dates.first;
+                                              // If departure is moved past return, push return forward
+                                              if (selectedReturnDate != null &&
+                                                  !selectedDepatureDate!
+                                                      .isBefore(
+                                                          selectedReturnDate!)) {
+                                                selectedReturnDate =
+                                                    selectedDepatureDate!.add(
+                                                  const Duration(days: 1),
+                                                );
+                                              }
+                                              print(
+                                                "Round Trip -> Departure: $selectedDepatureDate",
+                                              );
+                                            } else {
+                                              selectedReturnDate = dates.first;
+                                              // If return is moved before departure, push departure back
+                                              if (selectedDepatureDate !=
+                                                      null &&
+                                                  !selectedReturnDate!.isAfter(
+                                                      selectedDepatureDate!)) {
+                                                selectedDepatureDate =
+                                                    selectedReturnDate!
+                                                        .subtract(
+                                                  const Duration(days: 1),
+                                                );
+                                              }
+                                              print(
+                                                "Round Trip -> Return: $selectedReturnDate",
+                                              );
+                                            }
+                                            // Update the list for consistency
+                                            _selectedDepDates = [
+                                              if (selectedDepatureDate != null)
+                                                selectedDepatureDate!,
+                                              if (selectedReturnDate != null)
+                                                selectedReturnDate!,
+                                            ];
                                           }
                                         }
                                       });
 
                                       // Debug logs
-                                      if (dates.isNotEmpty) {
+                                      if (selectedDepatureDate != null) {
                                         print(
-                                          "Selected Departure Date: ${DateFormat("yyyy-MM-dd").format(dates.first)}",
+                                          "Selected Departure Date: ${DateFormat("yyyy-MM-dd").format(selectedDepatureDate!)}",
                                         );
                                       }
-                                      if (dates.length > 1) {
+                                      if (selectedReturnDate != null) {
                                         print(
-                                          "Selected Return Date: ${DateFormat("yyyy-MM-dd").format(dates.last)}",
+                                          "Selected Return Date: ${DateFormat("yyyy-MM-dd").format(selectedReturnDate!)}",
                                         );
                                       }
                                     },

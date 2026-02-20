@@ -51,6 +51,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
       isLoading = true;
     });
     bookingdetailsid = await ApiService().getbookingdetailHistory(widget.id);
+    print("bookingdetailsid");
+    print({bookingdetailsid.data.first.coupounCode});
 
     // final adultCount =
     //     int.parse(bookingdetailsid.data.first.totalpassengers.toString());
@@ -64,12 +66,15 @@ class _TicketdetailsState extends State<Ticketdetails> {
         double.tryParse(bookingdetailsid.data.first.coupounCode.toString()) ??
             0.0;
     print("coupounCode$coupounCode");
+    final othercharges =
+        double.parse(bookingdetailsid.data.first.price.OtherCharges.toString());
+    print("othercharges$othercharges");
 
     // total = fare + tax + conveiencefee - coupounCode;
     print("conveiencefee$conveiencefee");
     print('farefare$fare');
     print('taxtax$tax');
-    total = fare + tax + conveiencefee - coupounCode;
+    total = fare + tax + conveiencefee + othercharges - coupounCode;
     print('total$total');
 
     adultFare = adultCount * fare;
@@ -236,7 +241,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
       ),
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Color(0xFFF37023)),
             )
           : SingleChildScrollView(
               child: Column(
@@ -1410,7 +1415,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                             Color(0xFF606060),
                                                         fontWeight:
                                                             FontWeight.bold)),
-                                                Text("₹${total.toInt()}",
+                                                Text(
+                                                    "₹${total.toStringAsFixed(0)}",
                                                     style: TextStyle(
                                                         fontSize: 17.sp,
                                                         fontWeight:

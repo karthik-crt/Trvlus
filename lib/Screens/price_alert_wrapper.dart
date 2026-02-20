@@ -14,7 +14,7 @@ class PriceAlertWrapper extends StatelessWidget {
     final controller = Get.find<PriceAlertController>();
 
     return Obx(() {
-      // IF price has increased
+      print("Obxxx${controller.isChanged.value}");
       if (controller.isChanged.value == true) {
         Future.microtask(() {
           showModalBottomSheet(

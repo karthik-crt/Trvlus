@@ -384,7 +384,7 @@ class FareBreakdown {
   String currency;
   int passengerType;
   int passengerCount;
-  int baseFare;
+  num baseFare;
   int tax;
   List<ChargeBu> taxBreakUp;
   double yqTax;
@@ -411,7 +411,7 @@ class FareBreakdown {
         currency: json["Currency"],
         passengerType: json["PassengerType"],
         passengerCount: json["PassengerCount"],
-        baseFare: (json["BaseFare"] as num).toInt(),
+        baseFare: json["BaseFare"].round(),
         tax: (json["Tax"] as num).toInt(),
         taxBreakUp: json["TaxBreakUp"] != null && json["TaxBreakUp"] is List
             ? List<ChargeBu>.from(

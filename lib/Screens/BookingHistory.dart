@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -9,7 +11,7 @@ import 'package:trvlus/utils/api_service.dart';
 
 import '../models/addstatus.dart';
 import 'DotDivider.dart';
-import 'Home_Page.dart';
+import 'ProfilePage.dart';
 import 'notification_service.dart';
 
 class BookingHistoryPage extends StatefulWidget {
@@ -54,34 +56,43 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
       isLoading = true;
     });
     bookingHistory = await ApiService().bookingHistory();
-    // cancelReasonData = await ApiService().addStatus();
-    // selectCancelReason = cancelReasonData.data.first.id.toString();
+    cancelReasonData = await ApiService().addStatus();
+    print("dsfsg${jsonEncode(cancelReasonData)}");
+    selectCancelReason = cancelReasonData.data.toString();
+    print("selectCancelReason${jsonEncode(selectCancelReason)}");
     setState(() {
       isLoading = false;
     });
   } //h
+
+  String getRequestTextFromId(int? id) {
+    if (id == 1) return "cancellation";
+    if (id == 2) return "refund";
+    if (id == 3) return "date change";
+    return "change request";
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F5F5),
-        title: Text(
-          "Booking history",
-          style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Inter',
-              fontSize: 14.sp),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.push(context,
-              MaterialPageRoute(builder: (context) => SearchFlightPage())),
-        ),
-        elevation: 1,
-      ),
+          backgroundColor: const Color(0xFFF5F5F5),
+          title: Text(
+            "Booking history",
+            style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Inter',
+                fontSize: 14.sp),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => ProfilePage())),
+          )
+          // elevation: 1,
+          ),
       // body: Center(
       //   child: Column(
       //     mainAxisAlignment: MainAxisAlignment.center, // Center vertically
@@ -100,7 +111,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
       // ),
       body: isLoading
           ? Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Color(0xFFF37023)),
             )
           : (bookingHistory.data == null || bookingHistory.data!.isEmpty)
               ? Center(
@@ -122,16 +133,28 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                       final booking = bookingHistory.data[index];
                       print("BOOKING HISTORY");
                       print("HISTORY BOOKING HISTORY");
-                      print(booking.passengerDetails.length);
-                      print(booking.journeyList.first.noofstop);
-                      print("BOOKING status");
-                      print(booking.status);
-                      print("customerStatus");
-                      print(booking.customerStatus);
-                      print("BOOKING HISTORY HISTORY");
-                      // print(booking.journeyList[index].duration);
-                      // print(booking.passengerDetails.first.baggage.length);
-                      // print(booking.passengerDetails.first.baggage);
+                      final journeys = booking.journeyList;
+
+                      int totalMinutes = 0;
+
+                      for (var j in journeys) {
+                        totalMinutes +=
+                            int.tryParse(j.duration.toString()) ?? 0;
+
+                        if (j.layOverTime != null &&
+                            j.layOverTime!.isNotEmpty) {
+                          final regex = RegExp(r'(\d+)h\s*(\d+)m');
+                          final match = regex.firstMatch(j.layOverTime!);
+                          if (match != null) {
+                            totalMinutes += (int.parse(match.group(1)!) * 60) +
+                                int.parse(match.group(2)!);
+                          }
+                        }
+                      }
+
+                      final totalDurationText =
+                          '${totalMinutes ~/ 60}h ${totalMinutes % 60}m';
+                      print("totalDurationText$totalDurationText");
                       final create = booking.createdAt;
                       final date = DateTime.parse(create);
                       createdDate = DateFormat('dd MMM, yyyy').format(date);
@@ -398,9 +421,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                     ),
                                     Column(
                                       children: [
-                                        Text(
-                                            booking
-                                                .journeyList.first.durationTime,
+                                        Text(totalDurationText,
                                             style: TextStyle(fontSize: 12.sp)),
                                         Image.asset(
                                             'assets/images/flightDetails.png'),
@@ -498,11 +519,14 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                 BorderRadius.circular(15.r),
                                           ),
                                           child: Text(
-                                            (booking.status ?? "")
+                                            (booking.customerStatus.isNotEmpty
+                                                    ? booking.customerStatus
+                                                    : booking.status)
                                                 .toUpperCase(),
                                             style: TextStyle(
                                               color: [
                                                 "FAILED",
+                                                "CANCELLED"
                                               ].contains((booking.status ?? "")
                                                       .toUpperCase())
                                                   ? Colors.red
@@ -517,40 +541,40 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                     SizedBox(
                                       height: 8,
                                     ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text("Customer Status",
-                                            style: TextStyle(fontSize: 12.sp)),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 10.w, vertical: 5.h),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFDEF6DB),
-                                            borderRadius:
-                                                BorderRadius.circular(15.r),
-                                          ),
-                                          child: Text(
-                                            (booking.customerStatus ?? "")
-                                                .toUpperCase(),
-                                            style: TextStyle(
-                                              color: [
-                                                "FAILED",
-                                                "CANCELLED"
-                                              ].contains(
-                                                      (booking.customerStatus ??
-                                                              "")
-                                                          .toUpperCase())
-                                                  ? Colors.red
-                                                  : const Color(0xFF138808),
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 10.sp,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    // Row(
+                                    //   mainAxisAlignment:
+                                    //       MainAxisAlignment.spaceBetween,
+                                    //   children: [
+                                    //     Text("Customer Status",
+                                    //         style: TextStyle(fontSize: 12.sp)),
+                                    //     Container(
+                                    //       padding: EdgeInsets.symmetric(
+                                    //           horizontal: 10.w, vertical: 5.h),
+                                    //       decoration: BoxDecoration(
+                                    //         color: const Color(0xFFDEF6DB),
+                                    //         borderRadius:
+                                    //             BorderRadius.circular(15.r),
+                                    //       ),
+                                    //       child: Text(
+                                    //         (booking.customerStatus ?? "")
+                                    //             .toUpperCase(),
+                                    //         style: TextStyle(
+                                    //           color: [
+                                    //             "FAILED",
+                                    //             "CANCELLED"
+                                    //           ].contains(
+                                    //                   (booking.customerStatus ??
+                                    //                           "")
+                                    //                       .toUpperCase())
+                                    //               ? Colors.red
+                                    //               : const Color(0xFF138808),
+                                    //           fontWeight: FontWeight.bold,
+                                    //           fontSize: 10.sp,
+                                    //         ),
+                                    //       ),
+                                    //     ),
+                                    //   ],
+                                    // ),
                                   ],
                                 ),
                               ),
@@ -626,22 +650,40 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                               SizedBox(height: 10.h),
                               Column(
                                 children: [
-                                  if (booking.verifystatus == "1")
+                                  // 🔔 Cancellation / Change Request Message
+                                  if (booking.verifystatus.toString() == "0")
                                     Container(
-                                      padding: const EdgeInsets.all(5),
-                                      height: 55,
+                                      padding: const EdgeInsets.all(8),
                                       width: MediaQuery.sizeOf(context).width,
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
                                         color: const Color(0xFFFFE9DD),
                                       ),
-                                      alignment: Alignment.center,
+                                      child: Text(
+                                        "Requested for Cancelled on $createdDate.\n"
+                                        "You will get a confirmation by our team shortly.",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+
+                                  if (booking.verifystatus.toString() == "1")
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      width: MediaQuery.sizeOf(context).width,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: const Color(0xFFFFE9DD),
+                                      ),
                                       child: Text(
                                         booking.cancel_description != null &&
                                                 booking.cancel_description!
+                                                    .trim()
                                                     .isNotEmpty
                                             ? booking.cancel_description!
-                                            : "Requested for cancellation on $createdDate.\nYou will get a confirmation by our team shortly.",
+                                            : "Your request has been approved by our team.",
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.black,

@@ -42,13 +42,14 @@ class OtpVerificationScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final int? coupouncode;
+  final num? coupouncode;
   final String? commonPublishedFare;
   final String? tboOfferedFare;
   final double? tboCommission;
   final double? tboTds;
   final double? trvlusCommission;
   final double? trvlusTds;
+  final double? othercharges;
   final int? trvlusNetFare;
   final String? mobileNumber;
   final bool? isLLC;
@@ -110,6 +111,7 @@ class OtpVerificationScreen extends StatefulWidget {
       this.trvlusCommission,
       this.trvlusTds,
       this.trvlusNetFare,
+      this.othercharges,
       this.mobileNumber,
       this.isLLC,
       this.outdepDate,
@@ -257,6 +259,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               trvlusCommission: widget.trvlusCommission,
               trvlusTds: widget.trvlusTds,
               trvlusNetFare: widget.trvlusNetFare,
+              othercharges: widget.othercharges,
             ));
       } else {
         Get.until((route) => route.settings.name == '/ProfilePage');

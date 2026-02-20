@@ -8,11 +8,14 @@ class PriceAlertBottomSheet extends StatefulWidget {
 }
 
 class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
-  int selectedindex = -1;
+  int selectedindex = 1;
 
   @override
   Widget build(BuildContext context) {
     final p = Get.find<PriceAlertController>();
+    print("p.isChanged${p.isChanged}");
+    print("p.newFare${p.newFare}");
+    print("p.oldFare${p.oldFare}");
 
     return Container(
       height: 450,
@@ -54,7 +57,7 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
                   children: [
                     Text("Old Fare"),
                     Text(
-                      "₹${p.oldFare.value}",
+                      "₹${p.oldFare.value.round()}",
                       style: TextStyle(color: Color(0xFFD10909)),
                     ),
                   ],
@@ -64,7 +67,7 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
                   children: [
                     Text("New Fare"),
                     Text(
-                      "₹${p.newFare.value}",
+                      "₹${p.newFare.value.round()}",
                       style: TextStyle(color: Color(0xFF138808)),
                     ),
                   ],
