@@ -595,7 +595,8 @@ class _LocalroundtripState extends State<Localroundtrip> {
     double percentage = detection * 0.02;
     double flatOffer = detection - percentage;
 
-    double netFare = publishFare + otherCharges - flatOffer;
+    double netFare = publishFare + otherCharges - flatOffer.round();
+    print("ONWARDS PRICE$netFare");
     return netFare;
   }
 
@@ -630,7 +631,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
     double detection = finalPlb - customerComm - tboTDS - tdsOnPlb;
     double percentage = detection * 0.02;
     double flatOffer = detection - percentage;
-
+    print("flatOfferflatOffer$flatOffer");
     return flatOffer;
   }
 
@@ -789,6 +790,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
         finalroundarrDateformat = DateFormat("dd MMM yy").format(arrDateTime);
 
         onwardNetFare = netFare;
+        print("onwardNetFareonwardNetFare");
         outboundFlatOffer = flatOffer; // ← NEW
       } else {
         selectedInbound = selectedFlight;
@@ -804,6 +806,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
       }
 
       totalNetFare = onwardNetFare + returnNetFare;
+      print("totalNetFaretotalNetFare$totalNetFare");
     });
   }
 
@@ -876,7 +879,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
                         fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    "₹ ${(totalNetFare.round())}",
+                    "₹ ${(totalNetFare)}",
                     style: TextStyle(color: Color(0xFF606060), fontSize: 20),
                   )
                 ],
@@ -1073,8 +1076,10 @@ class _LocalroundtripState extends State<Localroundtrip> {
             inresultindex: selectedInbound?.resultIndex,
             traceid: searchData.response.traceId,
             total: totalNetFare.toString(),
+            trvlusNetFare: totalNetFare.round(),
             basefare: null,
-            coupouncode: (outboundFlatOffer + inboundFlatOffer).round(),
+            coupouncode: (outboundFlatOffer.round() + inboundFlatOffer.round())
+                .toDouble(),
             coup: outboundFlatOffer,
             coupo: inboundFlatOffer,
           ),
@@ -1751,8 +1756,6 @@ class _FlightCardState extends State<FlightCard> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-
-                // Time and location details
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1908,19 +1911,18 @@ class _FlightCardState extends State<FlightCard> {
                         widget.flightVariants.asMap().entries.map((entry) {
                       final index = entry.key;
                       final variantFlight = entry.value;
-
-                      print("INbaseee${variantFlight.fare.baseFare}");
-                      print("INTaxx${variantFlight.fare.tax}");
-                      // Calculate price for this variant
                       double varPublishFare =
                           variantFlight.fare.publishedFare.toDouble();
+                      print("varPublishFare$varPublishFare");
                       String varOfferedFare =
                           variantFlight.fare.offeredFare.toString();
+                      print("varOfferedFare$varOfferedFare");
                       double varTboTDS =
                           variantFlight.fare.tdsOnCommission.toDouble();
+                      print("varTboTDS$varTboTDS");
                       final varCommissionEarned =
                           variantFlight.fare.commissionEarned.toDouble();
-
+                      print("varCommissionEarned$varCommissionEarned");
                       double varCustomerComm = 0.0;
                       if (customer!.data.isNotEmpty &&
                           varCommissionEarned > 0) {
@@ -1950,22 +1952,30 @@ class _FlightCardState extends State<FlightCard> {
                         }
                       }
                       print("varCustomerComm$varCustomerComm");
-
                       double varCustomertdsplb =
                           variantFlight.fare.tdsOnPlb.toDouble();
+                      print("varCustomertdsplb$varCustomertdsplb");
                       double varCustomerplbearned =
                           variantFlight.fare.plbEarned.toDouble();
+                      print("varCustomerplbearned$varCustomerplbearned");
                       double varfinalcommissionplb =
                           varCommissionEarned + varCustomerplbearned;
+                      print("varfinalcommissionplb$varfinalcommissionplb");
                       double varCustomercommissiondetection =
                           varfinalcommissionplb -
                               varCustomerComm -
                               varTboTDS -
                               varCustomertdsplb;
+                      print(
+                          "varCustomercommissiondetection$varCustomercommissiondetection");
                       int varFinalcustomercommission =
                           varCustomercommissiondetection.round();
+                      print(
+                          "varFinalcustomercommission$varFinalcustomercommission");
                       double varFinalcommissionpercentage =
                           varFinalcustomercommission * 0.02;
+                      print(
+                          "varFinalcommissionpercentage$varFinalcommissionpercentage");
                       double varFinalflatoffer =
                           varCustomercommissiondetection -
                               varFinalcommissionpercentage;
@@ -1974,6 +1984,7 @@ class _FlightCardState extends State<FlightCard> {
                       int varFinaloffFare =
                           (varPublishFare + varothercharges - varFinalflatoffer)
                               .round();
+                      print("varFinaloffFare$varFinaloffFare");
 
                       return Container(
                         margin: EdgeInsets.symmetric(vertical: 5),
@@ -1984,7 +1995,6 @@ class _FlightCardState extends State<FlightCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ✅ OLD DESIGN: Radio button at the top
                             Transform.scale(
                               scale: 1.2,
                               child: Radio(

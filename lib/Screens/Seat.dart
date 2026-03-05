@@ -10,17 +10,24 @@ class SeatSelectionScreen extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
+  final String? airlineCode;
   final Function(List<Map<String, dynamic>>)? onPayloadUpdated;
+  final List<Map<String, dynamic>>? initialPayload;
+  final Map<String, dynamic>? outBoundData;
+  final Map<String, dynamic>? inBoundData;
 
-  const SeatSelectionScreen({
-    super.key,
-    this.traceid,
-    this.resultindex,
-    this.adultCount,
-    this.childCount,
-    this.infantCount,
-    this.onPayloadUpdated, // New prop
-  });
+  const SeatSelectionScreen(
+      {super.key,
+      this.traceid,
+      this.resultindex,
+      this.adultCount,
+      this.childCount,
+      this.infantCount,
+      this.onPayloadUpdated,
+      this.initialPayload,
+      this.inBoundData,
+      this.airlineCode,
+      this.outBoundData});
 
   @override
   _SeatSelectionScreenState createState() => _SeatSelectionScreenState();
@@ -28,10 +35,11 @@ class SeatSelectionScreen extends StatefulWidget {
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen>
     with SingleTickerProviderStateMixin {
-  List<String> selectedSeats = [];
+  Map<int, List<String>> selectedSeatsBySegment = {};
   int seatPrice = 500;
   bool isLoading = true;
   late SsrData ssrseatData;
+  late SsrData inSsrSeatData;
 
   late TabController _tabController;
 
@@ -57,25 +65,94 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
     });
 
     try {
-      ssrseatData = await ApiService()
-          .ssr(widget.resultindex ?? "", widget.traceid ?? "");
+      bool isRoundTrip = widget.outBoundData != null &&
+          widget.inBoundData != null &&
+          widget.outBoundData!['outresultindex'] != null &&
+          widget.inBoundData!['inresultindex'] != null;
 
-      segments = ssrseatData.response.seatDynamic.first.segmentSeat;
+      if (isRoundTrip) {
+        // OUTBOUND
+        ssrseatData = await ApiService()
+            .ssr(widget.outBoundData!['outresultindex']!, widget.traceid!);
+
+        // INBOUND
+        inSsrSeatData = await ApiService()
+            .ssr(widget.inBoundData!['inresultindex']!, widget.traceid!);
+
+        segments = [];
+        // Iterate ALL seatDynamic items (API returns one item per direction
+        // group — outbound & inbound — same pattern as mealDynamic)
+        if (ssrseatData.response?.seatDynamic != null &&
+            ssrseatData.response!.seatDynamic.isNotEmpty) {
+          for (var sd in ssrseatData.response.seatDynamic) {
+            segments.addAll(sd.segmentSeat);
+          }
+        }
+        if (inSsrSeatData.response?.seatDynamic != null &&
+            inSsrSeatData.response!.seatDynamic.isNotEmpty) {
+          for (var sd in inSsrSeatData.response.seatDynamic) {
+            // Avoid duplicate segments already added from outbound SSR
+            for (var seg in sd.segmentSeat) {
+              final origin =
+                  seg.rowSeats.isNotEmpty && seg.rowSeats.first.seats.isNotEmpty
+                      ? seg.rowSeats.first.seats.first.origin
+                      : null;
+              final dest =
+                  seg.rowSeats.isNotEmpty && seg.rowSeats.first.seats.isNotEmpty
+                      ? seg.rowSeats.first.seats.first.destination
+                      : null;
+              final alreadyAdded = segments.any((s) =>
+                  s.rowSeats.isNotEmpty &&
+                  s.rowSeats.first.seats.isNotEmpty &&
+                  s.rowSeats.first.seats.first.origin == origin &&
+                  s.rowSeats.first.seats.first.destination == dest);
+              if (!alreadyAdded) segments.add(seg);
+            }
+          }
+        }
+      } else {
+        ssrseatData =
+            await ApiService().ssr(widget.resultindex!, widget.traceid!);
+
+        segments = [];
+        if (ssrseatData.response?.seatDynamic != null &&
+            ssrseatData.response!.seatDynamic.isNotEmpty) {
+          for (var sd in ssrseatData.response.seatDynamic) {
+            segments.addAll(sd.segmentSeat);
+          }
+        }
+      }
 
       _tabController = TabController(
         length: segments.length,
         vsync: this,
       );
 
+      for (int i = 0; i < segments.length; i++) {
+        selectedSeatsBySegment[i] = [];
+      }
+
+      // Build seat price map for both
       seatPriceMap.clear();
-      for (var seatDynamic in ssrseatData.response.seatDynamic) {
-        for (var segment in seatDynamic.segmentSeat) {
-          for (var row in segment.rowSeats) {
-            for (var seat in row.seats) {
-              seatPriceMap[seat.code] = (seat.price ?? 0).toDouble();
+
+      void fillSeatPrice(SsrData data) {
+        if (data.response?.seatDynamic == null ||
+            data.response!.seatDynamic.isEmpty) return;
+        for (var seatDynamic in data.response.seatDynamic) {
+          for (var segment in seatDynamic.segmentSeat) {
+            for (var row in segment.rowSeats) {
+              for (var seat in row.seats) {
+                seatPriceMap[seat.code] = (seat.price ?? 0).toDouble();
+              }
             }
           }
         }
+      }
+
+      fillSeatPrice(ssrseatData);
+
+      if (isRoundTrip) {
+        fillSeatPrice(inSsrSeatData);
       }
     } catch (e) {
       debugPrint("SSR error: $e");
@@ -89,10 +166,25 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
   List<Map<String, dynamic>> buildSeatDynamicPayload() {
     List<Map<String, dynamic>> seatPayload = [];
 
-    for (int i = 0; i < selectedSeats.length; i++) {
-      String seatCode = selectedSeats[i];
+    final allSeats = selectedSeatsBySegment.values.expand((e) => e).toList();
 
-      var seatInfo = ssrseatData.response.seatDynamic
+    for (int i = 0; i < allSeats.length; i++) {
+      String seatCode = allSeats[i];
+
+      bool isRoundTrip = widget.outBoundData != null &&
+          widget.inBoundData != null &&
+          widget.outBoundData!['outresultindex'] != null &&
+          widget.inBoundData!['inresultindex'] != null;
+
+      List allSeatDynamics = [];
+
+      allSeatDynamics.addAll(ssrseatData.response.seatDynamic);
+
+      if (isRoundTrip) {
+        allSeatDynamics.addAll(inSsrSeatData.response.seatDynamic);
+      }
+
+      var seatInfo = allSeatDynamics
           .expand((sd) => sd.segmentSeat)
           .expand((seg) => seg.rowSeats)
           .expand((row) => row.seats)
@@ -126,7 +218,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
         "Currency": seatInfo.currency,
         "Price": seatInfo.price ?? 0,
         "paxIndex": i,
-        "paxType": paxType, // ✅ Adult / Child / Infant
+        "paxType": paxType,
       });
     }
 
@@ -135,14 +227,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
 
   double getTotalPrice() {
     double total = 0;
-    for (var code in selectedSeats) {
+    for (var code in selectedSeatsBySegment.values.expand((e) => e)) {
       total += seatPriceMap[code] ?? seatPrice.toDouble();
     }
     return total;
   }
 
-  String getCurrentPassengerLabel() {
-    int index = selectedSeats.length + 1;
+  String getCurrentPassengerLabel(int segmentIndex) {
+    int index = (selectedSeatsBySegment[segmentIndex]?.length ?? 0) + 1;
 
     if (widget.adultCount! > 0) {
       if (index <= widget.adultCount!) {
@@ -179,7 +271,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
             Row(
               children: [
                 Text(
-                  getCurrentPassengerLabel(),
+                  getCurrentPassengerLabel(0),
                   style: TextStyle(color: Colors.black),
                 )
               ],
@@ -203,7 +295,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            getCurrentPassengerLabel(),
+            getCurrentPassengerLabel(_tabController.index),
             style: const TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.w500,
@@ -229,6 +321,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
 
   Widget buildSeatLayoutForSegment(int segmentIndex) {
     final segment = segments[segmentIndex];
+    final segmentSelected = selectedSeatsBySegment[segmentIndex] ?? [];
     final List<Widget> rowsWidgets = [];
 
     for (var row in segment.rowSeats) {
@@ -238,29 +331,29 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
         final bool isAvailable = seat.availablityType == 3;
         final String code = seat.code;
         final String seatLabel = seat.seatNo?.toString() ?? seat.code;
-        final bool isSelected = selectedSeats.contains(code);
+        final bool isSelected = segmentSelected.contains(code);
 
-        final Color bgColor = !isAvailable
-            ? Colors.grey.shade300
-            : (isSelected ? Colors.blue : Colors.white);
+        final Color bgColor = isAvailable
+            ? Colors.grey.shade400
+            : (isSelected ? Colors.deepOrange : Color(0xFFFFF4ED));
 
         seatWidgets.add(
           GestureDetector(
-            onTap: isAvailable
+            onTap: !isAvailable
                 ? () {
                     setState(() {
-                      if (selectedSeats.contains(code)) {
-                        selectedSeats.remove(code);
+                      final seats = selectedSeatsBySegment[segmentIndex] ??= [];
+                      if (seats.contains(code)) {
+                        seats.remove(code);
                       } else {
-                        if (selectedSeats.length >= maxSeatCount) {
-                          selectedSeats.clear();
+                        if (seats.length >= maxSeatCount) {
+                          seats.clear();
                         }
-                        selectedSeats.add(code);
+                        seats.add(code);
                       }
                     });
                     if (widget.onPayloadUpdated != null) {
-                      widget.onPayloadUpdated!(
-                          buildSeatDynamicPayload()); // Call on every change (live, like meals)
+                      widget.onPayloadUpdated!(buildSeatDynamicPayload());
                     }
                   }
                 : null,
@@ -270,7 +363,14 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
               width: 40,
               decoration: BoxDecoration(
                 color: bgColor,
-                border: Border.all(color: Colors.black26),
+                border: Border.all(
+                  color: isAvailable
+                      ? Colors.black26 // booked seats keep grey border
+                      : isSelected
+                          ? Colors.deepOrange // selected seat border
+                          : Colors.deepOrange
+                              .withOpacity(0.5), // available seat orange border
+                ),
                 borderRadius: BorderRadius.circular(6),
               ),
               alignment: Alignment.center,
@@ -318,7 +418,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         children: [
           buildSegmentTabs(),
@@ -351,84 +451,102 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
                         ),
             ),
           ),
-          const Divider(),
-          Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(Icons.crop_square, color: Colors.white, size: 20),
-                  const SizedBox(width: 5),
-                  const Text(
-                    "Available",
-                    style: TextStyle(color: Color(0xFF606060)),
-                  ),
-                  const SizedBox(width: 15),
-                  Icon(Icons.crop_square,
-                      color: Colors.grey.shade300, size: 20),
-                  const SizedBox(width: 5),
-                  const Text("Reserved",
-                      style: TextStyle(color: Color(0xFF606060))),
-                  const SizedBox(width: 15),
-                  const Icon(Icons.crop_square, color: Colors.blue, size: 20),
-                  const SizedBox(width: 5),
-                  const Text("Selected",
-                      style: TextStyle(color: Color(0xFF606060))),
-                ],
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.crop_square, color: Colors.blue, size: 20),
-                  const SizedBox(width: 5),
-                  const Text("Free",
-                      style: TextStyle(color: Color(0xFF606060))),
-                ],
-              )
-            ],
-          ),
-          SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text("Selected seats: ${selectedSeats.join(", ")}"),
-              ),
-              Text(
-                "Total Price: ₹${getTotalPrice().toInt()}",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                final adult = widget.adultCount;
-                print("adultadultadult");
-              });
-            },
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              onPressed: selectedSeats.isEmpty
-                  ? null
-                  : () {
-                      final seatPayload = buildSeatDynamicPayload();
-                      print("Processed Payload: $seatPayload");
-                      if (widget.onPayloadUpdated != null) {
-                        widget.onPayloadUpdated!(
-                            seatPayload); // Update parent first
-                      }
-                      Navigator.pop(context,
-                          {"seat": seatPayload}); // Pop with map (like meals)
-                    },
-              child: const Text("Processed"),
+          const Divider(height: 1),
+          Container(
+            color: const Color(0xFFFFF7F2),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                        child: _buildLegendItem(
+                            const Color(0xFFFFF4ED), "Available",
+                            isBorder: true, verticalOffset: 2.0)),
+                    Expanded(
+                        child:
+                            _buildLegendItem(Colors.grey.shade400, "Booked")),
+                    Expanded(
+                        child: _buildLegendItem(
+                            const Color(0xFFFF4D4D), "Emergency Exit",
+                            isText: "EXIT")),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                        child: _buildLegendItem(Colors.deepOrange, "Selected")),
+                    Expanded(
+                        child:
+                            _buildLegendItem(const Color(0xFF4CAF50), "Free")),
+                    Expanded(
+                        child: _buildLegendItem(Colors.white, "Maximum Space",
+                            isBorder: true, isText: "XL")),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "Selected seats: ${selectedSeatsBySegment.values.expand((e) => e).join(", ")}",
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black87),
+                      ),
+                    ),
+                    Text(
+                      "Total Price: ₹${getTotalPrice().toInt()}",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label,
+      {bool isBorder = false, String? isText, double verticalOffset = 0.0}) {
+    return Row(
+      children: [
+        Container(
+          height: 24,
+          width: 24,
+          margin: EdgeInsets.only(top: verticalOffset),
+          decoration: BoxDecoration(
+            color: color,
+            border: isBorder
+                ? Border.all(color: Colors.deepOrange.withOpacity(0.5))
+                : null,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          alignment: Alignment.center,
+          child: isText != null
+              ? Text(
+                  isText,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold),
+                )
+              : null,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: Color(0xFF606060), fontSize: 11),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

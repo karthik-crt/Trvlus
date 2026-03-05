@@ -490,7 +490,7 @@ class FareRule {
         fareRuleDetail: json["FareRuleDetail"],
         fareRestriction: json["FareRestriction"] ?? "",
         fareFamilyCode: json["FareFamilyCode"],
-        fareRuleIndex: json["FareRuleIndex"],
+        fareRuleIndex: json["FareRuleIndex"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {

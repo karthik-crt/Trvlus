@@ -57,13 +57,16 @@ class _RoundtripState extends State<Roundtrip> {
   List<Map<String, dynamic>> dates = [];
   int passengerCount = 0;
 
-  // ✅ NEW: Pagination variables
-  int _itemsPerPage = 10; // Load 10 items at a time
-  int _currentPage = 0; // Current page index
-  bool _isLoadingMore = false; // Loading more indicator
-  bool _hasMoreData = true; // Check if more data exists
-  List<dynamic> _displayedFlights = []; // Currently displayed flights
-  List<List<dynamic>> _allFilteredFlights = []; // All filtered flights
+  // EXPANDED CONCEPT
+  int selectedindex = -1;
+
+  // ✅ CHANGED: Pagination now works on grouped flight keys
+  int _itemsPerPage = 10;
+  int _currentPage = 0;
+  bool _isLoadingMore = false;
+  bool _hasMoreData = true;
+  List<String> _displayedFlightKeys = [];
+  Map<String, List<dynamic>> _groupedFlights = {};
 
   // FILTER
   late List<Map<String, dynamic>> uniqueAirlines;
@@ -75,7 +78,6 @@ class _RoundtripState extends State<Roundtrip> {
   String? filterorigin;
   String? filterdestination;
 
-  // ... (keep existing methods: getCommissionData, _fetchFlightsForDate, etc.)
   getCommissionData() async {
     setState(() {
       isLoading = true;
@@ -94,7 +96,6 @@ class _RoundtripState extends State<Roundtrip> {
     customer = await ApiService().getcustomercommission();
     print("COMMISIONcustomer${jsonEncode(customer)}");
     await getCommissionData();
-
     setState(() {
       isLoading = false;
     });
@@ -117,7 +118,6 @@ class _RoundtripState extends State<Roundtrip> {
         widget.infantCount);
     print("searchDatasearchData$depDate");
 
-    // Recompute unique airlines after fetching new data
     Set<String> codes = <String>{};
     uniqueAirlines = [
       {"name": "All Airlines", "code": null, "logo": "", "price": ""}
@@ -145,54 +145,27 @@ class _RoundtripState extends State<Roundtrip> {
     });
   }
 
-  getSearchData(
-    String airportCode,
-    String fromAirport,
-    String toairportCode,
-    String toAirport,
-    String selectedDepDate,
-    String selectedReturnDate,
-    String selectedTripType,
-    int adultCount,
-    int? childCount,
-    int? infantCount,
-  ) async {
-    await _fetchFlightsForDate(selectedDepDate); // Reuse the new method
-  }
-
   void _onDateSelected(String newDate) {
-    // Update currentDepDate for display
     setState(() {
       currentDepDate = newDate;
     });
-
-    // Update selection in dates list
     for (var d in dates) {
       d['isSelected'] = d['date'] == newDate;
     }
-
-    // Fetch new results
     _fetchFlightsForDate(newDate);
   }
 
   String _calculateTotalDuration(List currentSegment) {
     if (currentSegment.isEmpty) return '0h 0min';
-
     try {
       int totalMinutes;
-
       if (currentSegment.length == 1) {
-        // Direct flight → use leg duration
         totalMinutes = currentSegment.first.duration.toInt();
       } else {
-        // With stops → use accumulatedDuration on the LAST leg
         totalMinutes = currentSegment.last.accumulatedDuration.toInt();
       }
-
       int hours = totalMinutes ~/ 60;
       int mins = totalMinutes % 60;
-      print("Hellloooo");
-      print('${hours}h ${mins}min');
       return '${hours}h ${mins}min';
     } catch (e) {
       return 'N/A';
@@ -202,38 +175,29 @@ class _RoundtripState extends State<Roundtrip> {
   Future<void> loadCalendarPrices() async {
     try {
       final response = await ApiService().getCalendarFare(
-          widget.airportCode, // origin  → e.g., "DEL"
-          widget.toairportCode, // destination → e.g., "BOM"
-          selectedDepatureDate);
+          widget.airportCode, widget.toairportCode, selectedDepatureDate);
 
-      if (response['Response']['ResponseStatus'] != 1) {
-        return; // silent fail
-      }
+      if (response['Response']['ResponseStatus'] != 1) return;
 
       final List<dynamic> searchResults = response['Response']['SearchResults'];
-
-      // Group by date and find lowest fare per day
       Map<String, double> lowestFareByDate = {};
 
       for (var item in searchResults) {
-        String dateStr = item['DepartureDate']; // "2025-12-12T22:30:00"
-        String dateOnly = dateStr.substring(0, 10); // "2025-12-12"
+        String dateStr = item['DepartureDate'];
+        String dateOnly = dateStr.substring(0, 10);
         double fare = item['Fare'].toDouble();
-
         if (!lowestFareByDate.containsKey(dateOnly) ||
             fare < lowestFareByDate[dateOnly]!) {
           lowestFareByDate[dateOnly] = fare;
         }
       }
 
-      // Now update your existing DateScroller dates list
       final now = DateTime.now();
       final updatedDates = <Map<String, dynamic>>[];
 
       for (int i = 0; i < 16; i++) {
         DateTime date = now.add(Duration(days: i));
         String dateKey = DateFormat('yyyy-MM-dd').format(date);
-
         String dayName =
             ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday - 1];
         String monthName = [
@@ -250,27 +214,23 @@ class _RoundtripState extends State<Roundtrip> {
           "Nov",
           "Dec"
         ][date.month - 1];
-
         double? price = lowestFareByDate[dateKey];
         String priceText = price != null ? "₹${price.round()}" : "";
-
         updatedDates.add({
           "month": "$dayName, ${date.day} $monthName",
           "price": priceText,
           "isSelected": i == 0,
-          "date": dateKey, // NEW: Store the actual date key for callback
+          "date": dateKey,
         });
       }
 
-      // Update the DateScroller from outside (using a callback)
       if (mounted) {
         setState(() {
-          dates = updatedDates; // This will update your DateScroller
+          dates = updatedDates;
         });
       }
     } catch (e) {
       print("Calendar API Error: $e");
-      // Keep dummy data if API fails
     }
   }
 
@@ -284,16 +244,12 @@ class _RoundtripState extends State<Roundtrip> {
 
   String formatDate() {
     DateTime parsedDate = DateTime.parse(widget.selectedDepDate);
-    String formattedDate = DateFormat('dd MMM yy').format(parsedDate);
-    print("HElloooooo");
-    return formattedDate;
+    return DateFormat('dd MMM yy').format(parsedDate);
   }
 
   String returnDate() {
     DateTime parsedDate = DateTime.parse(widget.selectedReturnDate);
-    String formattedDate = DateFormat('dd MMM yy').format(parsedDate);
-    print("HElloooooo");
-    return formattedDate;
+    return DateFormat('dd MMM yy').format(parsedDate);
   }
 
   @override
@@ -308,7 +264,6 @@ class _RoundtripState extends State<Roundtrip> {
     final infant = widget.infantCount;
     passengerCount = adult + (child ?? 0) + (infant ?? 0);
 
-    // Compute unique airlines
     Set<String> codes = <String>{};
     uniqueAirlines = [
       {"name": "All Airlines", "code": null, "logo": "", "price": ""}
@@ -332,25 +287,70 @@ class _RoundtripState extends State<Roundtrip> {
     }
 
     loadCalendarPrices();
-
-    // ✅ NEW: Initialize pagination
     _initializePagination();
-
-    // ✅ NEW: Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
   }
 
-  // ✅ NEW: Initialize pagination with first 10 items
+  // ✅ NEW: Group flights with same airline + flight number + route + dep/arr time
+  // This deduplicates cards — same flight with different fare classes
+  // becomes one card with multiple variants in the expanded section.
+  Map<String, List<dynamic>> groupFlightsByAirlineAndNumber(
+      List<List<dynamic>> results) {
+    Map<String, List<dynamic>> groupedFlights = {};
+
+    for (var group in results) {
+      for (var flight in group) {
+        String airlineCode = flight.segments.first.first.airline.airlineCode;
+        String flightNumber = flight.segments.first.first.airline.flightNumber;
+
+        String depTime = flight.segments.first.first.origin.depTime
+            .toLocal()
+            .toString()
+            .substring(11, 16);
+        String arrTime = flight.segments.last.last.destination.arrTime
+            .toLocal()
+            .toString()
+            .substring(11, 16);
+
+        String originCode = flight.segments.first.first.origin.airport.cityCode;
+        String destCode =
+            flight.segments.last.last.destination.airport.cityCode;
+
+        // Key: airline + flight number + route + dep/arr times
+        String key =
+            "$airlineCode-$flightNumber-$originCode-$destCode-$depTime-$arrTime";
+
+        if (!groupedFlights.containsKey(key)) {
+          groupedFlights[key] = [];
+        }
+        groupedFlights[key]!.add(flight);
+      }
+    }
+
+    // Sort each group by lowest price first
+    groupedFlights.forEach((key, flights) {
+      flights.sort((a, b) {
+        double fareA =
+            a.fare.publishedFare.toDouble() + a.fare.otherCharges.toDouble();
+        double fareB =
+            b.fare.publishedFare.toDouble() + b.fare.otherCharges.toDouble();
+        return fareA.compareTo(fareB);
+      });
+    });
+
+    return groupedFlights;
+  }
+
   void _initializePagination() {
-    _allFilteredFlights = getFilteredResults();
-    _displayedFlights = [];
+    final filteredResults = getFilteredResults();
+    // ✅ Group flights before paginating
+    _groupedFlights = groupFlightsByAirlineAndNumber(filteredResults);
+    _displayedFlightKeys = [];
     _currentPage = 0;
     _hasMoreData = true;
     _loadMoreFlights();
   }
 
-  // ✅ NEW: Load more flights (10 at a time)
-// ✅ IMPROVED: Load more flights (faster, no delay)
   void _loadMoreFlights() {
     if (!_hasMoreData || _isLoadingMore) return;
 
@@ -358,17 +358,11 @@ class _RoundtripState extends State<Roundtrip> {
       _isLoadingMore = true;
     });
 
-    // Flatten all flights from groups
-    List<dynamic> allFlights = [];
-    for (var group in _allFilteredFlights) {
-      allFlights.addAll(group);
-    }
-
-    // Calculate start and end index
+    final allKeys = _groupedFlights.keys.toList();
     int startIndex = _currentPage * _itemsPerPage;
     int endIndex = startIndex + _itemsPerPage;
 
-    if (startIndex >= allFlights.length) {
+    if (startIndex >= allKeys.length) {
       setState(() {
         _hasMoreData = false;
         _isLoadingMore = false;
@@ -376,30 +370,24 @@ class _RoundtripState extends State<Roundtrip> {
       return;
     }
 
-    // ✅ REMOVED DELAY - Load immediately for smoother scrolling
-    final newItems = allFlights.sublist(
+    final newKeys = allKeys.sublist(
       startIndex,
-      endIndex > allFlights.length ? allFlights.length : endIndex,
+      endIndex > allKeys.length ? allKeys.length : endIndex,
     );
 
     setState(() {
-      _displayedFlights.addAll(newItems);
+      _displayedFlightKeys.addAll(newKeys);
       _currentPage++;
       _isLoadingMore = false;
-      _hasMoreData = endIndex < allFlights.length;
+      _hasMoreData = endIndex < allKeys.length;
     });
   }
 
-  // ✅ NEW: Scroll listener
-// ✅ IMPROVED: Scroll listener - triggers earlier for smoother experience
   void _onScroll() {
-    // Load more when user is 400px from bottom (increased from 200px)
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 400) {
       _loadMoreFlights();
     }
-
-    // Handle scroll to top button visibility (existing logic)
     if (_scrollController.position.userScrollDirection ==
             ScrollDirection.forward &&
         _isButtonVisible) {
@@ -415,7 +403,6 @@ class _RoundtripState extends State<Roundtrip> {
     }
   }
 
-  // ✅ MODIFIED: Reset pagination when filters change
   List<List<dynamic>> getFilteredResults() {
     var results = searchData.response.results;
     filterorigin =
@@ -460,7 +447,6 @@ class _RoundtripState extends State<Roundtrip> {
                 DateTime depTime =
                     flight.segments.first.first.origin.depTime.toLocal();
                 int hour = depTime.hour;
-
                 bool matches = false;
                 switch (_selectedDepartureTimeRange) {
                   case "Before 6 AM":
@@ -487,9 +473,8 @@ class _RoundtripState extends State<Roundtrip> {
       results = results
           .map((group) => group.where((flight) {
                 DateTime arrTime =
-                    flight.segments.first.last.destination.arrTime.toLocal();
+                    flight.segments.last.last.destination.arrTime.toLocal();
                 int hour = arrTime.hour;
-
                 bool matches = false;
                 switch (_selectedArrivalTimeRange) {
                   case "Before 6 AM":
@@ -514,13 +499,61 @@ class _RoundtripState extends State<Roundtrip> {
     return results;
   }
 
-  int get totalFlights =>
-      getFilteredResults().fold<int>(0, (sum, g) => sum + g.length);
+  // ✅ Now shows count of unique grouped flights, not raw duplicates
+  int get totalFlights => _groupedFlights.length;
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // ✅ HELPER: Reusable fare calculation for any flight variant
+  Map<String, dynamic> _calculateFare(dynamic flight) {
+    double publishFare = flight.fare.publishedFare.toDouble();
+    double tboTDS = flight.fare.tdsOnCommission.toDouble();
+    final commissionEarned = flight.fare.commissionEarned.toDouble();
+
+    double customerComm = 0.0;
+    if (customer.data.isNotEmpty && commissionEarned > 0) {
+      var commData = customer.data[0];
+      double earned = commissionEarned;
+      if (earned >= 0 && earned <= 50) {
+        customerComm = commData.commission_0_50?.toDouble() ?? 0.0;
+      } else if (earned <= 100) {
+        customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+      } else if (earned <= 150) {
+        customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+      } else if (earned <= 200) {
+        customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+      } else if (earned <= 250) {
+        customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+      } else if (earned <= 300) {
+        customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+      } else {
+        customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+      }
+    }
+
+    double customertdsplb = flight.fare.tdsOnPlb.toDouble();
+    double customerplbearned = flight.fare.plbEarned.toDouble();
+    double finalcommissionplb = commissionEarned + customerplbearned;
+    double customercommissiondetection =
+        finalcommissionplb - customerComm - tboTDS - customertdsplb;
+    double finalcommissionpercentage =
+        customercommissiondetection.round() * 0.02;
+    double finalflatoffer =
+        customercommissiondetection - finalcommissionpercentage;
+    int finalcoupouncode = finalflatoffer.round();
+    double othercharges = flight.fare.otherCharges;
+    int finaloffFare = (publishFare - finalflatoffer).round();
+
+    return {
+      'publishFare': publishFare,
+      'finaloffFare': finaloffFare,
+      'finalcoupouncode': finalcoupouncode,
+      'finalflatoffer': finalflatoffer,
+    };
   }
 
   @override
@@ -531,22 +564,16 @@ class _RoundtripState extends State<Roundtrip> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    color: Color(0xFFF37023),
-                  ),
+                  CircularProgressIndicator(color: Color(0xFFF37023)),
                   SizedBox(height: 10),
-                  Text(
-                    "Loading...",
-                    style: TextStyle(color: Colors.black),
-                  )
+                  Text("Loading...", style: TextStyle(color: Colors.black))
                 ],
               ),
             ),
           )
-        : _displayedFlights.isNotEmpty
+        : _displayedFlightKeys.isNotEmpty
             ? Scaffold(
                 appBar: AppBar(
-                  // ... (keep existing AppBar code)
                   automaticallyImplyLeading: false,
                   bottom: PreferredSize(
                     preferredSize: Size.fromHeight(30),
@@ -560,55 +587,41 @@ class _RoundtripState extends State<Roundtrip> {
                       ),
                       child: Row(
                         children: [
-                          /// Back Button
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
-                            child: Icon(
-                              Icons.arrow_back,
-                              color: Color(0xFFF37023),
-                            ),
+                            child: Icon(Icons.arrow_back,
+                                color: Color(0xFFF37023)),
                           ),
-
                           const SizedBox(width: 8),
-
-                          /// 🔥 THIS IS IMPORTANT
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                /// 🔥 Single Line Text (Like Makemytrip)
                                 Row(
                                   children: [
-                                    Text(
-                                      widget.fromAirport,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      softWrap: false,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                          color: Colors.black),
-                                    ),
+                                    Text(widget.fromAirport,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        softWrap: false,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.black)),
                                     Image.asset("assets/icon/swap.png",
                                         height: 13,
                                         width: 20,
                                         color: Colors.black),
-                                    Text(
-                                      widget.toAirport,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      softWrap: false,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                          color: Colors.black),
-                                    ),
+                                    Text(widget.toAirport,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        softWrap: false,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.black)),
                                   ],
                                 ),
-
                                 const SizedBox(height: 4),
-
-                                /// Second Row
                                 Text(
                                   "${formatDate()} - ${returnDate()} | $passengerCount Traveller | Economy",
                                   maxLines: 1,
@@ -619,24 +632,16 @@ class _RoundtripState extends State<Roundtrip> {
                               ],
                             ),
                           ),
-
                           const SizedBox(width: 8),
-
-                          /// Edit
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
                             child: Row(
                               children: [
-                                SvgPicture.asset(
-                                  'assets/icon/edit.svg',
-                                  color: Color(0xFFF37023),
-                                  height: 16,
-                                ),
+                                SvgPicture.asset('assets/icon/edit.svg',
+                                    color: Color(0xFFF37023), height: 16),
                                 const SizedBox(width: 4),
-                                const Text(
-                                  "Edit",
-                                  style: TextStyle(color: Color(0xFFF37023)),
-                                ),
+                                const Text("Edit",
+                                    style: TextStyle(color: Color(0xFFF37023))),
                               ],
                             ),
                           ),
@@ -666,29 +671,25 @@ class _RoundtripState extends State<Roundtrip> {
                                       TextSpan(
                                         text: totalFlights.toString(),
                                         style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.orange,
-                                        ),
+                                            fontFamily: 'Inter',
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange),
                                       ),
                                       TextSpan(text: " "),
                                       TextSpan(
                                         text: "AVAILABLE FLIGHTS",
                                         style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey,
-                                        ),
+                                            fontFamily: 'Inter',
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
                               SizedBox(width: 80.w),
-
-                              // ✅✅✅ ADD FILTER BUTTON HERE ✅✅✅
                               Container(
                                 height: 25.h,
                                 child: ElevatedButton.icon(
@@ -698,35 +699,27 @@ class _RoundtripState extends State<Roundtrip> {
                                       context: context,
                                       isScrollControlled: true,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(16)),
+                                          borderRadius: BorderRadius.vertical(
+                                              top: Radius.circular(16))),
+                                      builder: (context) => Container(
+                                        height: 620.h,
+                                        child: FilterBottomSheet(
+                                            airlines: uniqueAirlines,
+                                            currentSelectedIndex:
+                                                currentSelectedIndex,
+                                            filterorigin: filterorigin,
+                                            filterdestination:
+                                                filterdestination),
                                       ),
-                                      builder: (context) {
-                                        return Container(
-                                          height: 620.h,
-                                          child: FilterBottomSheet(
-                                              airlines: uniqueAirlines,
-                                              currentSelectedIndex:
-                                                  currentSelectedIndex,
-                                              filterorigin: filterorigin,
-                                              filterdestination:
-                                                  filterdestination),
-                                        );
-                                      },
                                     );
-
-                                    // Handle filter result
                                     if (filterData != null) {
                                       setState(() {
                                         int airlineIndex =
                                             filterData['airlineIndex'] ?? 0;
-                                        if (airlineIndex == 0) {
-                                          _selectedAirlineCode = null;
-                                        } else {
-                                          _selectedAirlineCode =
-                                              uniqueAirlines[airlineIndex]
-                                                  ['code'];
-                                        }
+                                        _selectedAirlineCode = airlineIndex == 0
+                                            ? null
+                                            : uniqueAirlines[airlineIndex]
+                                                ['code'];
                                         _selectedStops = filterData['stops'];
                                         _hideNonRefundable =
                                             filterData['hideNonRefundable'] ??
@@ -735,56 +728,41 @@ class _RoundtripState extends State<Roundtrip> {
                                             filterData['departureTime'];
                                         _selectedArrivalTimeRange =
                                             filterData['arrivalTime'];
-
-                                        // ✅ Reset pagination with filtered data
+                                        selectedindex = -1;
                                         _initializePagination();
                                       });
                                     }
                                   },
-                                  icon: Image.asset(
-                                    'assets/images/Filter.png',
-                                    alignment: Alignment.center,
-                                    height: 12.h,
-                                    width: 12.w,
-                                  ),
-                                  label: Text(
-                                    "Filter",
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 10.sp,
-                                      color: Color(0xFF606060),
-                                    ),
-                                  ),
+                                  icon: Image.asset('assets/images/Filter.png',
+                                      height: 12.h, width: 12.w),
+                                  label: Text("Filter",
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 10.sp,
+                                          color: Color(0xFF606060))),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.grey.shade100,
                                     elevation: 3,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30.r),
-                                    ),
+                                        borderRadius:
+                                            BorderRadius.circular(30.r)),
                                     padding: EdgeInsets.symmetric(
                                         vertical: 3.h, horizontal: 20.w),
                                   ),
                                 ),
                               ),
-                              // ✅✅✅ FILTER BUTTON ENDS HERE ✅✅✅
                             ],
                           ),
                         ),
-                        // ✅ NEW: Display paginated flights
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _displayedFlights.length + 1,
-                          // ✅ Always +1 for loading indicator
+                          // ✅ itemCount uses grouped keys count
+                          itemCount: _displayedFlightKeys.length + 1,
                           itemBuilder: (context, index) {
-                            print(
-                                "📋 Building item at index $index (total flights: ${_displayedFlights.length})");
-
-                            // ✅ Show loading indicator at bottom
-                            if (index == _displayedFlights.length) {
+                            if (index == _displayedFlightKeys.length) {
                               return _buildLoadingIndicator();
                             }
-
                             return _buildSingleFlightCard(index);
                           },
                         ),
@@ -792,43 +770,13 @@ class _RoundtripState extends State<Roundtrip> {
                     ),
                   ),
                 ),
-                // floatingActionButtonLocation:
-                //     FloatingActionButtonLocation.endFloat,
-                // floatingActionButton: AnimatedOpacity(
-                //   opacity: _isButtonVisible ? 1.0 : 0.0,
-                //   duration: const Duration(milliseconds: 300),
-                //   child: SizedBox(
-                //     height: 45.h,
-                //     width: 50.w,
-                //     child: FloatingActionButton(
-                //       onPressed: () {
-                //         _scrollController.animateTo(
-                //           0.0,
-                //           duration: const Duration(milliseconds: 300),
-                //           curve: Curves.easeOut,
-                //         );
-                //       },
-                //       child: Icon(
-                //         Icons.keyboard_arrow_up,
-                //         size: 30.r,
-                //         color: Colors.white,
-                //       ),
-                //       backgroundColor: const Color(0xFFF37023),
-                //       shape: const CircleBorder(),
-                //       elevation: 6,
-                //     ),
-                //   ),
-                // ),
               )
             : Scaffold(
                 body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(
-                        "assets/icon/noFlight.png",
-                        height: 70,
-                      ),
+                      Image.asset("assets/icon/noFlight.png", height: 70),
                       SizedBox(height: 10),
                       SizedBox(
                         width: 150,
@@ -847,8 +795,6 @@ class _RoundtripState extends State<Roundtrip> {
               );
   }
 
-  // ✅ NEW: Loading indicator widget
-// ✅ IMPROVED: Better loading indicator with text
   Widget _buildLoadingIndicator() {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
@@ -858,581 +804,687 @@ class _RoundtripState extends State<Roundtrip> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(
-                  color: Color(0xFFF37023),
-                  strokeWidth: 3,
-                ),
+                    color: Color(0xFFF37023), strokeWidth: 3),
                 SizedBox(height: 12.h),
-                Text(
-                  "Loading more flights...",
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF606060),
-                  ),
-                ),
+                Text("Loading more flights...",
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF606060))),
                 SizedBox(height: 4.h),
-                Text(
-                  "Please wait",
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12.sp,
-                    color: Color(0xFF909090),
-                  ),
-                ),
+                Text("Please wait",
+                    style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.sp,
+                        color: Color(0xFF909090))),
               ],
             )
           : SizedBox.shrink(),
     );
   }
 
-  // ✅ NEW: Build single flight card (extracted from your original code)
   Widget _buildSingleFlightCard(int index) {
-    final flight = _displayedFlights[index];
+    // ✅ Pull the group of fare variants for this card
+    final flightKey = _displayedFlightKeys[index];
+    final flightVariants = _groupedFlights[flightKey]!;
+    // ✅ The card always shows the lowest-priced variant
+    final lowestPriceFlight = flightVariants.first;
 
-    // Your existing flight card code here
-    final depTimeStr = flight.segments.first.first.origin.depTime.toString();
-    DateTime depDateTime = DateTime.parse(depTimeStr);
-    final depTimeFormatted = DateFormat("HH:mm").format(depDateTime);
+    final depTimeStr =
+        lowestPriceFlight.segments.first.first.origin.depTime.toString();
+    final depTimeFormatted =
+        DateFormat("HH:mm").format(DateTime.parse(depTimeStr));
+    final arrTimeStr =
+        lowestPriceFlight.segments.last.last.destination.arrTime.toString();
+    final arrTimeFormatted =
+        DateFormat("HH:mm").format(DateTime.parse(arrTimeStr));
 
-    final arrTimeStr = flight.segments.last.last.destination.arrTime.toString();
-    DateTime arrDateTime = DateTime.parse(arrTimeStr);
-    final arrTimeFormatted = DateFormat("HH:mm").format(arrDateTime);
+    // Fare for the lowest-price variant (shown on the card header)
+    final fareData = _calculateFare(lowestPriceFlight);
+    double publishFare = fareData['publishFare'];
+    int finaloffFare = fareData['finaloffFare'];
+    int finalcoupouncode = fareData['finalcoupouncode'];
 
-    // FARE CALCULATION
-    double publishFare = flight.fare.publishedFare.toDouble();
-    print("publishFare$publishFare");
-    String offeredFare = flight.fare.offeredFare.toString();
-    print("offeredFare$offeredFare");
-    double tboTDS = flight.fare.tdsOnCommission.toDouble();
-    print("tboTDS$tboTDS");
-
-    // Calculate customer commission (same logic as before)
-    final commissionEarned = flight.fare.commissionEarned.toDouble();
-    print("commissionEarned$commissionEarned");
-    double customerComm = 0.0;
-    if (customer.data.isNotEmpty && commissionEarned > 0) {
-      var commData = customer.data[0];
-      double earned = commissionEarned;
-      if (earned >= 0 && earned <= 50) {
-        customerComm = commData.commission_0_50?.toDouble() ?? 0.0;
-      } else if (earned <= 100) {
-        customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
-      } else if (earned <= 150) {
-        customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
-      } else if (earned <= 200) {
-        customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
-      } else if (earned <= 250) {
-        customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
-      } else if (earned <= 300) {
-        customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
-      } else {
-        customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
-      }
-    }
-    print("customerComm$customerComm");
-    double customertdsplb = flight.fare.tdsOnPlb.toDouble();
-    print("customertdsplb$customertdsplb");
-    double customerplbearned = flight.fare.plbEarned.toDouble();
-    print("customerplbearned$customerplbearned");
-    double finalcommissionplb = commissionEarned + customerplbearned;
-    print("finalcommissionplb$finalcommissionplb");
-    double customercommissiondetection =
-        finalcommissionplb - customerComm - tboTDS - customertdsplb;
-    print("customercommissiondetection$customercommissiondetection");
-    int finalcustomercommission = customercommissiondetection.round();
-    print("finalcustomercommission$finalcustomercommission");
-    double finalcommissionpercentage = finalcustomercommission * 0.02;
-    print("finalcommissionpercentage$finalcommissionpercentage");
-    int commissionpercentageround = finalcommissionpercentage.round();
-    print("commissionpercentageround$commissionpercentageround");
-    double finalflatoffer =
-        customercommissiondetection - finalcommissionpercentage;
-    print("finalflatoffer$finalflatoffer");
-    int finalcoupouncode = finalflatoffer.round();
-    print("finalcoupouncode$finalcoupouncode");
-    // int finaloffFare = (double.parse(offeredFare) +
-    //         double.parse(tboTDS.toString()) +
-    //         double.parse(finalcommissionpercentage
-    //             .toString()) +
-    //         double.parse(customerComm.toString()))
-    //     .round();
-    double othercharges = flight.fare.otherCharges;
-    print("othercharges$othercharges");
-    int finaloffFare = (publishFare + othercharges - finalflatoffer).round();
-    print("finaloffFare$finaloffFare");
-
-    // DURATION AND LAYOVER CALCULATION
-    int totalMinutes = flight.segments.first.first.duration.toInt();
-    int hours = totalMinutes ~/ 60;
-    int minutes = totalMinutes % 60;
-    String formattedDuration = "${hours}h ${minutes}m";
-    print("formattedDuration$formattedDuration");
-
-    final segments = flight.segments.first;
-    int numStops = segments.length - 1;
-
-    String displayTotalDuration = formattedDuration;
-    print("displayTotalDuration$displayTotalDuration");
-    if (numStops > 0) {
-      int totalTripMinutes = segments.last.accumulatedDuration.toInt();
-      int totalTripHours = totalTripMinutes ~/ 60;
-      int totalTripMins = totalTripMinutes % 60;
-      displayTotalDuration = "${totalTripHours}h ${totalTripMins}m";
-      print("displayTotalDuration$displayTotalDuration");
-    }
-
+    // ✅ EXPANDED CONCEPT: toggle on tap
     return GestureDetector(
       onTap: () {
-        Map<String, dynamic> outBoundData = {
-          "resultindex": flight.resultIndex,
-          "traceid": searchData.response.traceId,
-        };
-
-        print("International");
-        print(flight.fare.publishedFare);
-        Navigator.push(
-            context,
-            (MaterialPageRoute(
-                builder: (context) => FlightDetailsPage(
-                    flight: {},
-                    outBoundData: outBoundData,
-                    inBoundData: {},
-                    city: '',
-                    destination: '',
-                    airlineName:
-                        flight.segments.first.first.airline.airlineName,
-                    airlineCode:
-                        flight.segments.first.first.airline.airlineCode,
-                    airportName:
-                        flight.segments.first.first.origin.airport.airportName,
-                    flightNumber:
-                        flight.segments.first.first.airline.flightNumber,
-                    cityName:
-                        flight.segments.first.first.origin.airport.cityName,
-                    cityCode:
-                        flight.segments.first.first.origin.airport.cityCode,
-                    depDate:
-                        flight.segments.first.first.origin.depTime.toString(),
-                    depTime: depTimeFormatted,
-                    desairportName: flight
-                        .segments.first.first.destination.airport.airportName,
-                    descityName: flight
-                        .segments.first.first.destination.airport.cityName,
-                    descityCode: flight
-                        .segments.first.first.destination.airport.cityCode,
-                    segments: flight.segments,
-                    arrDate: flight.segments.last.last.destination.arrTime
-                        .toString(),
-                    arrTime: arrTimeFormatted,
-                    refundable: '',
-                    resultindex: flight.resultIndex,
-                    traceid: searchData.response.traceId,
-                    adultCount: widget.adultCount,
-                    childCount: widget.childCount,
-                    infantCount: widget.infantCount,
-                    coupouncode: finalcoupouncode,
-                    stop: (flight.segments!.first.length - 1) == 0
-                        ? "Non-Stop"
-                        : "${flight.segments!.first.length - 1} Stops",
-                    duration: '',
-                    basefare: flight.fare.baseFare,
-                    tax: flight.fare.tax,
-                    commonPublishedFare: flight.fare.publishedFare.toString(),
-                    isLLC: flight.isLcc))));
+        setState(() {
+          lowestPriceFlight.isExpanded = !lowestPriceFlight.isExpanded;
+          selectedindex = index;
+        });
       },
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(12.r),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 10),
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.white),
-                child: Column(
-                  children: [
-                    Container(
-                      height: 60,
-                      width: 400,
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
+      child: Padding(
+        padding: EdgeInsets.all(12.r),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10), color: Colors.white),
+              child: Column(
+                children: [
+                  // Price header — always shows lowest fare
+                  Container(
+                    height: 60,
+                    width: 400,
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
-                        color: Color(0xFFFFE7DA),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Round Trip",
+                        color: Color(0xFFFFE7DA)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Round Trip",
                             style: TextStyle(
                                 color: Color(0xFF1C1E1D),
                                 fontSize: 14,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            // ✅ ADD THIS
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              if (finaloffFare.round() <
-                                  flight.fare.publishedFare.round())
-                                Text(
-                                  "₹${flight.fare.publishedFare.toStringAsFixed(0)}",
-                                  style: const TextStyle(
-                                    decoration: TextDecoration.lineThrough,
-                                    fontSize: 12,
-                                  ),
-                                ),
+                                fontWeight: FontWeight.bold)),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (finaloffFare.round() <
+                                lowestPriceFlight.fare.publishedFare.round())
                               Text(
-                                "₹${finaloffFare.toStringAsFixed(0)}",
-                                style: TextStyle(
-                                  color: const Color(0xFFF37023),
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                "₹${lowestPriceFlight.fare.publishedFare.toStringAsFixed(0)}",
+                                style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    fontSize: 12),
                               ),
-                            ],
-                          )
-                        ],
-                      ),
+                            Text("₹${finaloffFare.toStringAsFixed(0)}",
+                                style: TextStyle(
+                                    color: const Color(0xFFF37023),
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        )
+                      ],
                     ),
-                    SizedBox(height: 10),
+                  ),
+                  SizedBox(height: 10),
 
-                    // ... (rest of your flight card UI - segments loop, etc.)
-                    // Copy the entire segments List.generate from your original code here
-                    ...List.generate(flight.segments.length, (segmentsindex) {
-                      var currentSegment = flight.segments[segmentsindex];
-                      if (currentSegment.isEmpty)
-                        return const SizedBox.shrink();
+                  // Segments loop — unchanged from original
+                  ...List.generate(lowestPriceFlight.segments.length,
+                      (segmentsindex) {
+                    var currentSegment =
+                        lowestPriceFlight.segments[segmentsindex];
+                    if (currentSegment.isEmpty) return const SizedBox.shrink();
 
-                      var firstLeg = currentSegment.first;
-                      var lastLeg = currentSegment.last;
+                    var firstLeg = currentSegment.first;
+                    var lastLeg = currentSegment.last;
 
-                      var depString =
-                          currentSegment.first.origin.depTime.toString();
-                      var arrString =
-                          currentSegment.last.destination.arrTime.toString();
+                    DateTime depDate = DateTime.parse(
+                        currentSegment.first.origin.depTime.toString());
+                    DateTime arrDate = DateTime.parse(
+                        currentSegment.last.destination.arrTime.toString());
 
-                      DateTime depDate = DateTime.parse(depString);
-                      DateTime arrDate = DateTime.parse(arrString);
+                    String finalDepDateFormat =
+                        DateFormat("EEE, dd MMM yy").format(depDate);
+                    String finalArrDateFormat =
+                        DateFormat("EEE, dd MMM yy").format(arrDate);
 
-                      String finalDepDateFormat =
-                          DateFormat("EEE, dd MMM yy").format(depDate);
-                      String finalArrDateFormat =
-                          DateFormat("EEE, dd MMM yy").format(arrDate);
+                    int totalStops = currentSegment.length - 1;
+                    String totalDuration =
+                        _calculateTotalDuration(currentSegment);
 
-                      int totalStops = currentSegment.length - 1;
-                      String totalDuration =
-                          _calculateTotalDuration(currentSegment);
-
-                      // Layover calculation
-                      // ✅ CORRECT - uses the current trip's segments
-                      List<String> layoverDetails = [];
-                      for (int i = 0; i < currentSegment.length - 1; i++) {
-                        // ← changed
-                        DateTime arrTime =
-                            currentSegment[i].destination.arrTime; // ← changed
-                        DateTime depTime =
-                            currentSegment[i + 1].origin.depTime; // ← changed
-                        int layoverMinutes =
-                            depTime.difference(arrTime).inMinutes;
-                        if (layoverMinutes > 0) {
-                          int h = layoverMinutes ~/ 60;
-                          int m = layoverMinutes % 60;
-                          String city = currentSegment[i + 1]
-                              .origin
-                              .airport
-                              .cityName; // ← changed
-                          layoverDetails.add("${h}h ${m}m layover at $city");
-                        }
+                    List<String> layoverDetails = [];
+                    for (int i = 0; i < currentSegment.length - 1; i++) {
+                      DateTime arrTime = currentSegment[i].destination.arrTime;
+                      DateTime depTime = currentSegment[i + 1].origin.depTime;
+                      int layoverMinutes =
+                          depTime.difference(arrTime).inMinutes;
+                      if (layoverMinutes > 0) {
+                        int h = layoverMinutes ~/ 60;
+                        int m = layoverMinutes % 60;
+                        String city =
+                            currentSegment[i + 1].origin.airport.cityName;
+                        layoverDetails.add("${h}h ${m}m layover at $city");
                       }
-                      print("Final layoverDetails: $layoverDetails");
+                    }
 
-                      String stopsText =
-                          totalStops == 0 ? 'NON STOP' : '$totalStops STOP';
-                      String airlineName = firstLeg.airline.airlineName;
-                      String airlineCode = firstLeg.airline.airlineCode;
-                      String flightNumber = firstLeg.airline.flightNumber;
+                    String stopsText =
+                        totalStops == 0 ? 'NON STOP' : '$totalStops STOP';
+                    String airlineName = firstLeg.airline.airlineName;
+                    String airlineCode = firstLeg.airline.airlineCode;
+                    String flightNumber = firstLeg.airline.flightNumber;
 
-                      return Column(
-                        children: [
-                          Container(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (totalStops > 0 && layoverDetails.isNotEmpty)
-                                  Row(
+                    return Column(
+                      children: [
+                        Container(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (totalStops > 0 && layoverDetails.isNotEmpty)
+                                Row(children: [
+                                  Text(layoverDetails.join(", "),
+                                      style: TextStyle(
+                                          color: Color(0xFFF37023),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold))
+                                ]),
+                              SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Image.asset("assets/$airlineCode.gif",
+                                      fit: BoxFit.fill, height: 35, width: 35),
+                                  SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        layoverDetails.join(", "),
-                                        style: TextStyle(
-                                            color: Color(0xFFF37023),
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold),
-                                      )
-                                    ],
-                                  ),
-                                SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Image.asset("assets/$airlineCode.gif",
-                                        fit: BoxFit.fill,
-                                        height: 35,
-                                        width: 35),
-                                    SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          airlineName,
+                                      Text(airlineName,
                                           style: TextStyle(
                                               color: Color(0xFF1C1E1D),
                                               fontSize: 14,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        RichText(
-                                          text: TextSpan(
-                                            text: airlineCode,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall
-                                                ?.copyWith(
-                                                    color:
-                                                        Colors.grey.shade700),
-                                            children: [
-                                              WidgetSpan(
-                                                child: Padding(
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal: 2.w,
-                                                      vertical: 4.h),
-                                                  child: Container(
+                                              fontWeight: FontWeight.bold)),
+                                      RichText(
+                                        text: TextSpan(
+                                          text: airlineCode,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                  color: Colors.grey.shade700),
+                                          children: [
+                                            WidgetSpan(
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 2.w,
+                                                    vertical: 4.h),
+                                                child: Container(
                                                     width: 4.w,
                                                     height: 3.h,
                                                     decoration:
                                                         const BoxDecoration(
-                                                      color: Colors.grey,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                  text: flightNumber,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headlineSmall
-                                                      ?.copyWith(
-                                                          fontSize: 12.sp,
-                                                          color: Colors.grey),
-                                                  children: [
-                                                    WidgetSpan(
-                                                      child: Padding(
-                                                        padding: EdgeInsets
-                                                            .symmetric(
-                                                                horizontal: 2.w,
-                                                                vertical: 4.h),
-                                                        child: Container(
-                                                          width: 4.w,
-                                                          height: 3.h,
-                                                          decoration:
-                                                              const BoxDecoration(
                                                             color: Colors.grey,
-                                                            shape:
-                                                                BoxShape.circle,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ]),
-                                              TextSpan(
-                                                text:
-                                                    flight.isRefundable == true
-                                                        ? "R"
-                                                        : "NR",
+                                                            shape: BoxShape
+                                                                .circle)),
+                                              ),
+                                            ),
+                                            TextSpan(
+                                                text: flightNumber,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .headlineSmall
                                                     ?.copyWith(
-                                                      fontSize: 12.sp,
-                                                      color: primaryColor,
+                                                        fontSize: 12.sp,
+                                                        color: Colors.grey),
+                                                children: [
+                                                  WidgetSpan(
+                                                    child: Padding(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              horizontal: 2.w,
+                                                              vertical: 4.h),
+                                                      child: Container(
+                                                          width: 4.w,
+                                                          height: 3.h,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  shape: BoxShape
+                                                                      .circle)),
                                                     ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
+                                                  ),
+                                                ]),
+                                            TextSpan(
+                                              text: lowestPriceFlight
+                                                          .isRefundable ==
+                                                      true
+                                                  ? "R"
+                                                  : "NR",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headlineSmall
+                                                  ?.copyWith(
+                                                      fontSize: 12.sp,
+                                                      color: primaryColor),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
                                           firstLeg.origin.depTime
                                               .toString()
                                               .substring(11, 16),
                                           style: TextStyle(
                                               color: Color(0xFF1C1E1D),
                                               fontSize: 18,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          finalDepDateFormat,
+                                              fontWeight: FontWeight.bold)),
+                                      Text(finalDepDateFormat,
                                           style: TextStyle(
                                               color: Color(0xFF909090),
-                                              fontSize: 10),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              firstLeg.origin.airport.cityName,
-                                              style: TextStyle(
-                                                  color: Color(0xFF1C1E1D),
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            SizedBox(width: 5),
-                                            Text(
-                                              firstLeg.origin.airport.cityCode,
-                                              style: TextStyle(
-                                                  color: Color(0xFF909090),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold),
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Text(
-                                          stopsText,
+                                              fontSize: 10)),
+                                      Row(children: [
+                                        Text(firstLeg.origin.airport.cityName,
+                                            style: TextStyle(
+                                                color: Color(0xFF1C1E1D),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold)),
+                                        SizedBox(width: 5),
+                                        Text(firstLeg.origin.airport.cityCode,
+                                            style: TextStyle(
+                                                color: Color(0xFF909090),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      ])
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(stopsText,
                                           style: TextStyle(
                                               color: Color(0xFF909090),
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 10),
-                                        ),
-                                        Image.asset(
-                                            'assets/images/flightStop.png'),
-                                        Text(
-                                          totalDuration,
+                                              fontSize: 10)),
+                                      Image.asset(
+                                          'assets/images/flightStop.png'),
+                                      Text(totalDuration,
                                           style: TextStyle(
                                               color: Color(0xFF909090),
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 10),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
+                                              fontSize: 10)),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
                                           lastLeg.destination.arrTime
                                               .toString()
                                               .substring(11, 16),
                                           style: TextStyle(
                                               color: Color(0xFF1C1E1D),
                                               fontSize: 18,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          finalArrDateFormat,
+                                              fontWeight: FontWeight.bold)),
+                                      Text(finalArrDateFormat,
                                           style: TextStyle(
                                               color: Color(0xFF909090),
-                                              fontSize: 10),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              lastLeg
-                                                  .destination.airport.cityName,
-                                              style: TextStyle(
-                                                  color: Color(0xFF1C1E1D),
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            SizedBox(width: 5),
-                                            Text(
-                                              lastLeg
-                                                  .destination.airport.cityCode,
-                                              style: TextStyle(
-                                                  color: Color(0xFF909090),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold),
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                if (segmentsindex == 0) ...[
-                                  SizedBox(height: 10),
-                                  SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: DotDivider(
+                                              fontSize: 10)),
+                                      Row(children: [
+                                        Text(
+                                            lastLeg
+                                                .destination.airport.cityName,
+                                            style: TextStyle(
+                                                color: Color(0xFF1C1E1D),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold)),
+                                        SizedBox(width: 5),
+                                        Text(
+                                            lastLeg
+                                                .destination.airport.cityCode,
+                                            style: TextStyle(
+                                                color: Color(0xFF909090),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold)),
+                                      ])
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              if (segmentsindex == 0) ...[
+                                SizedBox(height: 10),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DotDivider(
                                       dotSize: 1.h,
                                       spacing: 2.r,
                                       dotCount: 100,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                                GestureDetector(onTap: () {}, child: Text(""))
+                                      color: Colors.grey),
+                                ),
                               ],
-                            ),
+                              GestureDetector(onTap: () {}, child: Text(""))
+                            ],
                           ),
-                        ],
-                      );
-                    }),
-                    if (finaloffFare <= publishFare && finalcoupouncode != 0)
-                      Container(
-                        height: 25,
-                        padding: EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Color(0xFFDAE5FF),
                         ),
-                        child: Row(
-                          children: [
-                            SizedBox(width: 5),
-                            SvgPicture.asset(
-                              "assets/icon/promocode.svg",
-                              color: Color(0xFF5D89F0),
-                              height: 15,
-                              width: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              "Flat ₹$finalcoupouncode OFF—only on Trvuls.",
-                              style: TextStyle(
+                      ],
+                    );
+                  }),
+
+                  // ✅ EXPANDED SECTION: shows all fare variants for this flight
+                  if (lowestPriceFlight.isExpanded && selectedindex == index)
+                    Column(
+                      children: flightVariants.asMap().entries.map((entry) {
+                        final variantFlight = entry.value;
+
+                        // Per-variant fare calculation
+                        final varFareData = _calculateFare(variantFlight);
+                        int varFinaloffFare = varFareData['finaloffFare'];
+                        int varFinalcoupouncode =
+                            varFareData['finalcoupouncode'];
+                        double varPublishFare = varFareData['publishFare'];
+
+                        final varDepTimeFormatted = DateFormat("HH:mm").format(
+                            DateTime.parse(variantFlight
+                                .segments.first.first.origin.depTime
+                                .toString()));
+                        final varArrTimeFormatted = DateFormat("HH:mm").format(
+                            DateTime.parse(variantFlight
+                                .segments.last.last.destination.arrTime
+                                .toString()));
+
+                        int varNumStops =
+                            variantFlight.segments.first.length - 1;
+
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 5),
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: const Color(0xFFFFF4EF)),
+                          child: Column(
+                            children: [
+                              // Fare class name + price
+                              Container(
+                                height: 40,
+                                margin: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: const Color(0xFFFFE7DA)),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      variantFlight.segments.first.first
+                                              .supplierFareClass
+                                              .toString()
+                                              .isEmpty
+                                          ? "Round Trip"
+                                          : variantFlight.segments.first.first
+                                              .supplierFareClass
+                                              .toString(),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Color(0xFF1C1E1D)),
+                                    ),
+                                    Text("₹$varFinaloffFare",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: Color(0xFFF37023))),
+                                  ],
+                                ),
+                              ),
+                              // SSR details + Book Now button
+                              Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  children: [
+                                    Row(children: [
+                                      Image.asset('assets/ssr/bag.png',
+                                          height: 16),
+                                      const SizedBox(width: 10),
+                                      const SizedBox(
+                                          width: 100,
+                                          child: Text("Cabin Bag",
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 10))),
+                                      Text(
+                                          variantFlight
+                                              .segments.first.first.cabinBaggage
+                                              .toString(),
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 10)),
+                                    ]),
+                                    const SizedBox(height: 10),
+                                    Row(children: [
+                                      Image.asset('assets/ssr/checkin.png',
+                                          height: 16),
+                                      const SizedBox(width: 10),
+                                      const SizedBox(
+                                          width: 100,
+                                          child: Text("Check In",
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 10))),
+                                      Text(
+                                          variantFlight.segments.first.first
+                                                  .baggage.isEmpty
+                                              ? '0'
+                                              : variantFlight
+                                                  .segments.first.first.baggage,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 10)),
+                                    ]),
+                                    const SizedBox(height: 10),
+                                    Row(children: [
+                                      Image.asset('assets/ssr/seat.png',
+                                          height: 16),
+                                      const SizedBox(width: 10),
+                                      const SizedBox(
+                                          width: 100,
+                                          child: Text("Seats",
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 10))),
+                                      const Text("Included",
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 10)),
+                                    ]),
+                                    const SizedBox(height: 10),
+                                    Row(children: [
+                                      Image.asset('assets/ssr/meals.png',
+                                          height: 16),
+                                      const SizedBox(width: 10),
+                                      const SizedBox(
+                                          width: 100,
+                                          child: Text("Meals",
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 10))),
+                                      Text(
+                                          variantFlight.isFreeMealAvailable ==
+                                                  'true'
+                                              ? "Included"
+                                              : "Not Included",
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 10)),
+                                    ]),
+                                    const SizedBox(height: 20),
+                                    // Book Now — navigates with this variant's data
+                                    GestureDetector(
+                                      onTap: () {
+                                        Map<String, dynamic> outBoundData = {
+                                          "resultindex":
+                                              variantFlight.resultIndex,
+                                          "traceid":
+                                              searchData.response.traceId,
+                                        };
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    FlightDetailsPage(
+                                                      flight: {},
+                                                      outBoundData:
+                                                          outBoundData,
+                                                      inBoundData: {},
+                                                      city: '',
+                                                      destination: '',
+                                                      airlineName: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .airline
+                                                          .airlineName,
+                                                      airlineCode: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .airline
+                                                          .airlineCode,
+                                                      airportName: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .origin
+                                                          .airport
+                                                          .airportName,
+                                                      flightNumber:
+                                                          variantFlight
+                                                              .segments
+                                                              .first
+                                                              .first
+                                                              .airline
+                                                              .flightNumber,
+                                                      cityName: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .origin
+                                                          .airport
+                                                          .cityName,
+                                                      cityCode: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .origin
+                                                          .airport
+                                                          .cityCode,
+                                                      depDate: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .origin
+                                                          .depTime
+                                                          .toString(),
+                                                      depTime:
+                                                          varDepTimeFormatted,
+                                                      desairportName:
+                                                          variantFlight
+                                                              .segments
+                                                              .first
+                                                              .first
+                                                              .destination
+                                                              .airport
+                                                              .airportName,
+                                                      descityName: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .destination
+                                                          .airport
+                                                          .cityName,
+                                                      descityCode: variantFlight
+                                                          .segments
+                                                          .first
+                                                          .first
+                                                          .destination
+                                                          .airport
+                                                          .cityCode,
+                                                      segments: variantFlight
+                                                          .segments,
+                                                      arrDate: variantFlight
+                                                          .segments
+                                                          .last
+                                                          .last
+                                                          .destination
+                                                          .arrTime
+                                                          .toString(),
+                                                      arrTime:
+                                                          varArrTimeFormatted,
+                                                      refundable: '',
+                                                      resultindex: variantFlight
+                                                          .resultIndex,
+                                                      traceid: searchData
+                                                          .response.traceId,
+                                                      adultCount:
+                                                          widget.adultCount,
+                                                      childCount:
+                                                          widget.childCount,
+                                                      infantCount:
+                                                          widget.infantCount,
+                                                      coupouncode:
+                                                          varFinalcoupouncode,
+                                                      stop: varNumStops == 0
+                                                          ? "Non-Stop"
+                                                          : "$varNumStops Stops",
+                                                      duration: '',
+                                                      basefare: variantFlight
+                                                          .fare.baseFare,
+                                                      tax: variantFlight
+                                                          .fare.tax,
+                                                      commonPublishedFare:
+                                                          varPublishFare
+                                                              .toString(),
+                                                      isLLC:
+                                                          variantFlight.isLcc,
+                                                      trvlusNetFare:
+                                                          varFinaloffFare,
+                                                    )));
+                                      },
+                                      child: Container(
+                                        height: 40,
+                                        width: MediaQuery.sizeOf(context).width,
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            color: const Color(0xFFF37023)),
+                                        alignment: Alignment.center,
+                                        child: const Text("Book Now",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                  // Promo code banner
+                  if (finaloffFare <= publishFare && finalcoupouncode != 0)
+                    Container(
+                      height: 25,
+                      padding: EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Color(0xFFDAE5FF)),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 5),
+                          SvgPicture.asset("assets/icon/promocode.svg",
+                              color: Color(0xFF5D89F0), height: 15, width: 20),
+                          SizedBox(width: 10),
+                          Text("Flat ₹$finalcoupouncode OFF—only on Trvuls.",
+                              style: const TextStyle(
                                   fontSize: 10,
                                   color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                            )
-                          ],
-                        ),
-                      )
-                  ],
-                ),
-              )
-            ],
-          ),
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    )
+                ],
+              ),
+            )
+          ],
         ),
       ),
     );
@@ -1442,7 +1494,7 @@ class _RoundtripState extends State<Roundtrip> {
 class FilterBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> airlines;
   final int? currentSelectedIndex;
-  final bool initialHideNonRefundable; // <-- ADD
+  final bool initialHideNonRefundable;
   final String? filterorigin;
   final String? filterdestination;
 
@@ -1450,7 +1502,7 @@ class FilterBottomSheet extends StatefulWidget {
     Key? key,
     required this.airlines,
     this.currentSelectedIndex,
-    this.initialHideNonRefundable = false, // <-- ADD
+    this.initialHideNonRefundable = false,
     this.filterorigin,
     this.filterdestination,
   }) : super(key: key);
@@ -1464,23 +1516,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   int? selectedStops;
   String departureTime = "";
   String arrivalTime = "";
-
-  // final List<Map<String, String>> airlines = List.generate(
-  //   10,
-  //   (index) => {
-  //     "name": "Emirates",
-  //     "price": "₹500",
-  //     "logo": "assets/images/Emirates.png",
-  //   },
-  // );
   int? selectedAirlineIndex;
 
-  int? get selectedStopsValue => selectedStops; // Expose for return
-  bool get hideNonRefundableValue => hideNonRefundable; // Expose for return
+  int? get selectedStopsValue => selectedStops;
+
+  bool get hideNonRefundableValue => hideNonRefundable;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     selectedAirlineIndex = widget.currentSelectedIndex;
   }
@@ -1502,174 +1545,130 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Filters",
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20.sp,
-                            color: const Color(0xFF0A0A0A),
-                          ),
-                        ),
+                        Text("Filters",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20.sp,
+                                color: const Color(0xFF0A0A0A))),
                         IconButton(
                           icon: const Icon(Icons.close, color: Colors.black),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
+                          onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
                     SizedBox(height: 10.h),
-                    //SizedBox(height: 8.h),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 103, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
-                      ),
+                          dotSize: 1.h,
+                          spacing: 2.r,
+                          dotCount: 103,
+                          color: Colors.grey),
                     ),
                     SizedBox(height: 8.h),
-
-                    // "Hide non-refundable flights" switch
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Hide non-refundable flights",
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.normal,
-                            fontSize: 16.sp,
-                            color: const Color(0xFF606060),
-                          ),
-                        ),
+                        Text("Hide non-refundable flights",
+                            style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.normal,
+                                fontSize: 16.sp,
+                                color: const Color(0xFF606060))),
                         Switch(
                           value: hideNonRefundable,
-                          onChanged: (value) {
-                            setState(() {
-                              hideNonRefundable = value;
-                            });
-                          },
+                          onChanged: (value) =>
+                              setState(() => hideNonRefundable = value),
                           activeColor: const Color(0xFFF37023),
                         ),
                       ],
                     ),
-                    // SizedBox(height: 8.h),
                     SizedBox(height: 8.h),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 103, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
-                      ),
+                          dotSize: 1.h,
+                          spacing: 2.r,
+                          dotCount: 103,
+                          color: Colors.grey),
                     ),
                     SizedBox(height: 8.h),
-
-                    Text(
-                      "Stops",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
-                        color: const Color(0xFF909090),
-                      ),
-                    ),
+                    Text("Stops",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.sp,
+                            color: const Color(0xFF909090))),
                     SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _buildChip("Non Stop", 0),
-                        _buildChip("1 Stop", 1),
-                        _buildChip("2+ Stops", 2),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 15.h,
-                    ),
+                    Row(children: [
+                      _buildChip("Non Stop", 0),
+                      _buildChip("1 Stop", 1),
+                      _buildChip("2+ Stops", 2),
+                    ]),
+                    SizedBox(height: 15.h),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DotDivider(
-                        dotSize: 1.h,
-                        spacing: 2.r,
-                        dotCount: 103,
-                        color: Colors.grey,
-                      ),
+                          dotSize: 1.h,
+                          spacing: 2.r,
+                          dotCount: 103,
+                          color: Colors.grey),
                     ),
                     SizedBox(height: 15.h),
-                    Text(
-                      "DEPARTURE FROM ${widget.filterorigin}",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
-                        color: const Color(0xFF909090),
-                      ),
-                    ),
+                    Text("DEPARTURE FROM ${widget.filterorigin}",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.sp,
+                            color: const Color(0xFF909090))),
                     SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("Before 6 AM", "Before 6 AM"),
-                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
-                      ],
-                    ),
+                    Row(children: [
+                      _timeButton("Before 6 AM", "Before 6 AM"),
+                      _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
+                    ]),
                     SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
-                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
-                      ],
-                    ),
+                    Row(children: [
+                      _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
+                      _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
+                    ]),
                     SizedBox(height: 20.h),
-                    Text(
-                      "ARRIVAL AT ${widget.filterdestination}",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
-                        color: const Color(0xFF909090),
-                      ),
-                    ),
+                    Text("ARRIVAL AT ${widget.filterdestination}",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.sp,
+                            color: const Color(0xFF909090))),
                     SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("Before 6 AM", "Before 6 AM",
-                            isArrival: true),
-                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon",
-                            isArrival: true),
-                      ],
-                    ),
+                    Row(children: [
+                      _timeButton("Before 6 AM", "Before 6 AM",
+                          isArrival: true),
+                      _timeButton("6 AM-12 Noon", "6 AM-12 Noon",
+                          isArrival: true),
+                    ]),
                     SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM",
-                            isArrival: true),
-                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight",
-                            isArrival: true),
-                      ],
-                    ),
+                    Row(children: [
+                      _timeButton("12 Noon-6 PM", "12 Noon-6 PM",
+                          isArrival: true),
+                      _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight",
+                          isArrival: true),
+                    ]),
                     SizedBox(height: 15.h),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DotDivider(
-                        dotSize: 1.h, // Adjust size
-                        spacing: 2.r, // Adjust spacing
-                        dotCount: 103, // Adjust number of dots
-                        color: Colors.grey, // Adjust color
-                      ),
+                          dotSize: 1.h,
+                          spacing: 2.r,
+                          dotCount: 103,
+                          color: Colors.grey),
                     ),
                     SizedBox(height: 15.h),
-                    Text(
-                      "AIRLINES",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF909090),
-                      ),
-                    ),
+                    Text("AIRLINES",
+                        style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF909090))),
                     SizedBox(height: 8.h),
                     ListView.builder(
                       shrinkWrap: true,
@@ -1677,94 +1676,66 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       itemCount: widget.airlines.length,
                       itemBuilder: (context, index) {
                         if (index == 0) {
-                          // All Airlines row
                           return Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.w),
-                            child: Row(
-                              children: [
-                                Transform.scale(
-                                  scale: 1.3,
-                                  child: Radio<int>(
-                                    value: 0,
-                                    groupValue: selectedAirlineIndex,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedAirlineIndex = value;
-                                      });
-                                    },
-                                  ),
+                            child: Row(children: [
+                              Transform.scale(
+                                scale: 1.3,
+                                child: Radio<int>(
+                                  value: 0,
+                                  groupValue: selectedAirlineIndex,
+                                  onChanged: (value) => setState(
+                                      () => selectedAirlineIndex = value),
                                 ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: Text(
-                                    widget.airlines[0]["name"]!,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                                // No price for "All"
-                              ],
-                            ),
-                          );
-                        } else {
-                          // Regular airline row
-                          return Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8.w),
-                            child: Row(
-                              children: [
-                                Transform.scale(
-                                  scale: 1.3,
-                                  child: Radio<int>(
-                                    value: index,
-                                    groupValue: selectedAirlineIndex,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedAirlineIndex = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      if (widget.airlines[index]["logo"] !=
-                                              null &&
-                                          widget.airlines[index]["logo"]!
-                                              .isNotEmpty)
-                                        Image.asset(
-                                          widget.airlines[index]["logo"]!,
-                                          height: 24.h,
-                                          width: 24.w,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        widget.airlines[index]["name"]!,
-                                        style: TextStyle(
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                  child: Text(widget.airlines[0]["name"]!,
+                                      style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w500,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                          color: Colors.black))),
+                            ]),
+                          );
+                        } else {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.w),
+                            child: Row(children: [
+                              Transform.scale(
+                                scale: 1.3,
+                                child: Radio<int>(
+                                  value: index,
+                                  groupValue: selectedAirlineIndex,
+                                  onChanged: (value) => setState(
+                                      () => selectedAirlineIndex = value),
                                 ),
-                                Text(
-                                  widget.airlines[index]["price"] ?? "",
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: Row(children: [
+                                  if (widget.airlines[index]["logo"] != null &&
+                                      widget
+                                          .airlines[index]["logo"]!.isNotEmpty)
+                                    Image.asset(widget.airlines[index]["logo"]!,
+                                        height: 24.h,
+                                        width: 24.w,
+                                        fit: BoxFit.contain),
+                                  SizedBox(width: 8.w),
+                                  Text(widget.airlines[index]["name"]!,
+                                      style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black)),
+                                ]),
+                              ),
+                              Text(widget.airlines[index]["price"] ?? "",
                                   style: TextStyle(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black)),
+                            ]),
                           );
                         }
                       },
@@ -1784,25 +1755,21 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             Navigator.pop(context, {
               'airlineIndex': selectedAirlineIndex ?? 0,
               'stops': selectedStops,
-              'hideNonRefundable': hideNonRefundable, // <-- ADD THIS
-              'departureTime': departureTime, // ADD
+              'hideNonRefundable': hideNonRefundable,
+              'departureTime': departureTime,
               'arrivalTime': arrivalTime,
             });
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFF37023),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
-            ),
+                borderRadius: BorderRadius.circular(30.r)),
           ),
-          child: Text(
-            "Apply Filter",
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          child: Text("Apply Filter",
+              style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white)),
         ),
       ),
     );
@@ -1810,13 +1777,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   Widget _buildChip(String label, int value) {
     bool isSelected = selectedStops == value;
-
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedStops = value;
-        });
-      },
+      onTap: () => setState(() => selectedStops = value),
       child: Padding(
         padding: EdgeInsets.only(left: 10.w),
         child: Container(
@@ -1830,15 +1792,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             borderRadius: BorderRadius.circular(20.r),
           ),
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontFamily: 'Inter',
-              color: isSelected ? const Color(0xFFF37023) : Colors.black,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  fontFamily: 'Inter',
+                  color: isSelected ? const Color(0xFFF37023) : Colors.black,
+                  fontWeight: FontWeight.normal)),
         ),
       ),
     );
@@ -1846,7 +1805,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   Widget _timeButton(String label, String value, {bool isArrival = false}) {
     bool isSelected = isArrival ? arrivalTime == value : departureTime == value;
-
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -1872,15 +1830,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             borderRadius: BorderRadius.circular(3.r),
           ),
           padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontFamily: 'Inter',
-              color: isSelected ? const Color(0xFFF37023) : Colors.black,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  fontFamily: 'Inter',
+                  color: isSelected ? const Color(0xFFF37023) : Colors.black,
+                  fontWeight: FontWeight.normal)),
         ),
       ),
     );
@@ -1889,13 +1844,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
 class DateScroller extends StatefulWidget {
   final List<Map<String, dynamic>> dates;
-  final Function(String)? onDateSelected; // NEW: Callback for date selection
+  final Function(String)? onDateSelected;
 
-  const DateScroller({
-    Key? key,
-    required this.dates,
-    this.onDateSelected, // NEW
-  }) : super(key: key);
+  const DateScroller({Key? key, required this.dates, this.onDateSelected})
+      : super(key: key);
 
   @override
   _DateScrollerState createState() => _DateScrollerState();
@@ -1903,29 +1855,6 @@ class DateScroller extends StatefulWidget {
 
 class _DateScrollerState extends State<DateScroller> {
   final ScrollController _scrollController = ScrollController();
-
-  String _getMonth(DateTime date) {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec"
-    ];
-    return months[date.month - 1];
-  }
-
-  String _getWeekday(DateTime date) {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    return days[date.weekday - 1];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1936,26 +1865,17 @@ class _DateScrollerState extends State<DateScroller> {
         color: Colors.white,
         child: Row(
           children: widget.dates.asMap().entries.map((entry) {
-            final int index = entry.key; // ✅ get index here
-            final date = entry.value; // ✅ get the date map
-
+            final int index = entry.key;
+            final date = entry.value;
             return GestureDetector(
               onTap: () {
                 setState(() {
-                  for (var d in widget.dates) {
-                    d['isSelected'] = false;
-                  }
+                  for (var d in widget.dates) d['isSelected'] = false;
                   date['isSelected'] = true;
                 });
-
-                // ✅ AUTO SCROLL
-                _scrollController.animateTo(
-                  index * 100.w, // item width
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-
-                // Trigger callback to parent
+                _scrollController.animateTo(index * 100.w,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut);
                 if (widget.onDateSelected != null && date['date'] != null) {
                   widget.onDateSelected!(date['date'] as String);
                 }
@@ -1974,22 +1894,15 @@ class _DateScrollerState extends State<DateScroller> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        date['month'] as String? ?? '',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              date['isSelected'] ? Colors.black : Colors.black,
-                        ),
-                      ),
-                      Text(
-                        (date['price'] as String? ?? ''),
-                        style: TextStyle(
-                          color: date['isSelected']
-                              ? const Color(0xFFF37023)
-                              : const Color(0xFF909090),
-                        ),
-                      ),
+                      Text(date['month'] as String? ?? '',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black)),
+                      Text(date['price'] as String? ?? '',
+                          style: TextStyle(
+                              color: date['isSelected']
+                                  ? const Color(0xFFF37023)
+                                  : const Color(0xFF909090))),
                     ],
                   ),
                 ),

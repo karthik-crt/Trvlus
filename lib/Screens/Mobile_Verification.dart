@@ -2,6 +2,7 @@ import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controller/auth_controller.dart';
 import '../models/search_data.dart';
@@ -205,13 +206,13 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
             ),
             SizedBox(height: 10.h),
             Text(
-              'Please use the mobile number linked\nwith your Aadhaar',
+              'Please enter your mobile number',
               style: TextStyle(
                 fontSize: 16.sp,
                 color: Colors.grey[600],
               ),
             ),
-            SizedBox(height: 30.h),
+            SizedBox(height: 20.h),
             Obx(() {
               String errorText =
                   _mobileRegex.hasMatch(authController.mobileNumber.value)
@@ -280,7 +281,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                           }
                           return null;
                         },
-                        onChanged: (value) {
+                        onChanged: (value) async {
                           authController.setMobileNumber(value.trim());
                           setState(() {
                             enteredMobileNumber = value.trim();
@@ -291,6 +292,10 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                           print("Entered mobile number: $enteredMobileNumber");
                           print(widget.outresultindex);
                           print(widget.inresultindex);
+                          final prefs = await SharedPreferences.getInstance();
+                          prefs.setString("mobile", enteredMobileNumber);
+                          print("Stored Mobile: ${prefs.getString("mobile")}");
+                          print("Stored Mobile:");
                         },
                         style: TextStyle(color: Colors.black),
                         decoration: InputDecoration(

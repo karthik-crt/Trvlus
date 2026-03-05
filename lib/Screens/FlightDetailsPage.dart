@@ -367,11 +367,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       }
     }
     // INBOUNDFARE
+    double inothercharges = 0;
     if (widget.inresultindex != null) {
       final infareBreakdown = infareQuote.response.results.fareBreakdown;
       print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
       inbaseFare = infareQuote.response.results.fare.baseFare;
       intax = infareQuote.response.results.fare.tax.toDouble();
+      inothercharges = infareQuote.response.results.fare.otherCharges;
       for (var item in infareBreakdown) {
         if (item.passengerType == 1) {
           inadultBase = item.baseFare.toDouble();
@@ -393,20 +395,26 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       isLoading = false;
       coupouncode = widget.coupouncode!;
       print("coupouncode$coupouncode");
+      print("coupouncodeeee${widget.coup}");
+      print("coupouncode${widget.coupo}");
       totalBaseFare = baseFare + inbaseFare;
       print("totalBaseFaretotalBaseFare$totalBaseFare");
       othercharges = othercharges;
       print("othercharges$othercharges");
       print("totalFare$totalFare");
       print("coupouncodecoupouncode$coupouncode");
-      totalTax = tax + intax + othercharges;
+      totalTax = tax + intax + othercharges + inothercharges;
       print("totalTax$totalTax");
       print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
       double finalBaseFare =
           gextXvalue.isChanged.value == true ? newBaseFare : totalBaseFare;
       print("finalBaseFare$finalBaseFare");
+      print("finalBaseFarenewBaseFare$newBaseFare");
+      print("finalBaseFaretotalBaseFare$totalBaseFare");
       double finalTax = gextXvalue.isChanged.value == true ? newTax : totalTax;
       print("finalTax$finalTax");
+      print("finalTaxnewTax$newTax");
+      print("finalTaxtotalTax$totalTax");
       num finalCouponValue = gextXvalue.isChanged.value == true
           ? varFinalflatoffer
           : coupouncode.toDouble();
@@ -416,9 +424,11 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         print("With Coupoun Code");
         print("overallFare1$overallFare");
       } else {
-        overallFare = finalBaseFare + finalTax + othercharges;
+        overallFare = finalBaseFare + finalTax;
         print("overallFare$overallFare");
         print("Without Coupoun Code");
+        print("overallFare$finalBaseFare");
+        print("overallFare$finalTax");
         print("othercharges$othercharges");
       }
 
@@ -445,13 +455,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     });
   }
 
-  Future<void> checkLoginStatus() async {
+  Future<bool> checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final loggedIn = prefs.getBool('isLoggedIn') ?? false;
 
     if (loggedIn) {
-      // User already logged in → navigate to home or skip login
-      Navigator.pushReplacement(
+      // User already logged in → skip login screen, go straight to traveler details
+      Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => TravelerDetailsPage(
@@ -508,11 +518,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   othercharges: othercharges,
                 )),
       );
+      return true;
     } else {
-      // User not logged in → show mobile login screen inside this page
+      // User not logged in
       setState(() {
         _isLoggedIn = false;
       });
+      return false;
     }
   }
 
@@ -2005,11 +2017,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       ),
                       SizedBox(height: 5.h),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           print("RESULTINDEXRESULTINDEX");
                           print(widget.traceid);
                           print(widget.resultindex);
-                          checkLoginStatus();
+                          bool alreadyLoggedIn = await checkLoginStatus();
+                          if (alreadyLoggedIn) return;
+
                           Get.to(MobileVerificationScreen(
                             flight: flight,
                             city: widget.city,
@@ -2312,12 +2326,14 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       ),
                       // Check-in Bag
                       SizedBox(
-                        width: 60.w,
+                        width: 80.w,
                         child: Align(
                           alignment: Alignment.center,
                           child: Text(
-                            baggage,
-                            textAlign: TextAlign.center, // 👈 Important
+                            baggage?.trim().isNotEmpty == true
+                                ? baggage!.trim()
+                                : "0 Kgs",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11.sp,

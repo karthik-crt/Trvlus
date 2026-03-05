@@ -60,8 +60,9 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
 
     final tax = widget.tax?.round();
     print("totaltotal$tax");
-    final othertaxcharges =
-        ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
+    // final othertaxcharges =
+    //     ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
+    final othertaxcharges = (widget.tax ?? 0).round();
     print("othertaxcharges$othertaxcharges");
     print("coupoun${widget.coupouncode}");
     print("meal${widget.meal}");
@@ -153,6 +154,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
               childFare! +
               infantFare! +
               conveniencefee +
+              ssrTotal +
               taxtotal! -
               totalDiscount!)
           .round();
@@ -163,7 +165,8 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
           childFare! +
           infantFare! +
           conveniencefee +
-          othertaxtotal;
+          taxtotal! +
+          ssrTotal.round();
       print("no commission");
       print("overallFare$total");
       print("overallFare$adultFare");
@@ -243,7 +246,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                                "Adults (${widget.adultCount} X ₹${totalAdultFare.toInt()})",
+                                "Adults (${widget.adultCount} X ₹$totalAdultFare)",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
@@ -332,17 +335,19 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                           fontSize: 12.sp, color: Colors.grey)),
                                 ],
                               ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Baggage",
-                                    style: TextStyle(
-                                        fontSize: 12.sp, color: Colors.grey)),
-                                Text("${widget.baggage}",
-                                    style: TextStyle(
-                                        fontSize: 12.sp, color: Colors.grey)),
-                              ],
-                            ),
+                            if (widget.baggage > 0)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("Baggage",
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey)),
+                                  Text("${widget.baggage}",
+                                      style: TextStyle(
+                                          fontSize: 12.sp, color: Colors.grey)),
+                                ],
+                              ),
                             if (widget.meal != {} && mealTotal > 0)
                               Row(
                                 mainAxisAlignment:
@@ -430,46 +435,6 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                   ],
                 ),
               ),
-              SizedBox(height: 10.h),
-              // Container(
-              //   padding: EdgeInsets.all(12.w),
-              //   decoration: BoxDecoration(
-              //     color: Color(0xFFF5F5F5),
-              //     borderRadius: BorderRadius.circular(8.r),
-              //   ),
-              //   child: Column(
-              //     children: [
-              //       Row(
-              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //         children: [
-              //           Text("Taxes & Surcharges",
-              //               style: TextStyle(
-              //                   fontSize: 14.sp,
-              //                   fontWeight: FontWeight.bold,
-              //                   color: Colors.black)),
-              //           Text("₹5,000",
-              //               style: TextStyle(
-              //                   fontSize: 14.sp,
-              //                   fontWeight: FontWeight.bold,
-              //                   color: Color(0xFFF37023))),
-              //         ],
-              //       ),
-              //       Row(
-              //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //         children: [
-              //           Text("Airline taxes and surcharges",
-              //               style: TextStyle(
-              //                 fontSize: 12.sp,
-              //                 color: Colors.grey,
-              //               )),
-              //           Text("₹5,000",
-              //               style:
-              //                   TextStyle(fontSize: 12.sp, color: Colors.grey)),
-              //         ],
-              //       ),
-              //     ],q
-              //   ),
-              // ),
               SizedBox(height: 10.h),
               ElevatedButton(
                 onPressed: () {

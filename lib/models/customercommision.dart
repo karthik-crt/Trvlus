@@ -13,7 +13,7 @@ class Customercommission {
   late final List<Data> data;
 
   Customercommission.fromJson(Map<String, dynamic> json) {
-    statusCode = json['statusCode'] ?? "";
+    statusCode = json['statusCode'] ?? 0;
     statusMessage = json['statusMessage'];
     data = List.from(json['data']).map((e) => Data.fromJson(e)).toList();
   }

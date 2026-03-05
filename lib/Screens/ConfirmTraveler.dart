@@ -170,6 +170,11 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
   double childFare = 0;
   double infantFare = 0;
   num coupouncode = 0;
+  double mealTotal = 0.0;
+  double seatTotal = 0.0;
+  double baggageTotal = 0.0;
+  double ssrTotal = 0.0;
+  Map<String, dynamic>? baggageCount;
 
   @override
   void initState() {
@@ -1282,252 +1287,250 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       );
                     }).toList(),
                   ],
-                  SizedBox(height: 20.h),
-                  // Rest of the UI (Add Additional, GSTN Details, etc.) remains unchanged
-                  Text(
-                    'Add Additional',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15.sp,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Column(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        height: 60,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                  color: Colors.grey,
-                                  spreadRadius: 0.5,
-                                  blurRadius: 0.3,
-                                  offset: Offset(0, 0.5))
-                            ]),
-                        child: Row(
-                          children: [
-                            Image.asset(
-                              'assets/images/seat.png',
-                              height: 19,
-                              width: 25,
-                            ),
-                            SizedBox(width: 20),
-                            Text(
-                              "Seats",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 17,
-                                  color: Colors.black),
-                            ),
-                            Spacer(),
-                            GestureDetector(
-                              onTap: () async {
-                                print("TRACEID${widget.traceid}");
-                                print("RESULTINDEX${widget.resultindex}");
-                                print("adultCount${widget.adultCount}");
-                                print("childCount${widget.childCount}");
-                                print("infantCount${widget.infantCount}");
-
-                                var value = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => Additions(
-                                              traceid: widget.traceid,
-                                              resultindex: widget.resultindex,
-                                              adultCount: widget.adultCount,
-                                              childCount:
-                                                  widget.childCount ?? 0,
-                                              infantCount:
-                                                  widget.infantCount ?? 0,
-                                              outBoundData: widget.outBoundData,
-                                              inBoundData: widget.inBoundData,
-                                              inresultindex:
-                                                  widget.inresultindex,
-                                              outresultindex:
-                                                  widget.outresultindex,
-                                              seatPayload: [],
-                                            )));
-                                print("valuevaluevalue");
-                                print(widget.outresultindex);
-                                print(widget.inresultindex);
-                                print("MEALSBAGGAGESEAT$value");
-                                print("BAGGAGAAA$baggage");
-                                meal = value["meal"];
-                                print(meal);
-                                if (value.containsKey("seat")) {
-                                  seat =
-                                      value["seat"]; // New: store seat payload
-                                  print("hellooooo");
-                                }
-
-                                if (value.containsKey("baggage")) {
-                                  final baggageMap = value["baggage"];
-
-                                  if (baggageMap is Map) {
-                                    baggageMap.forEach((route, list) {
-                                      if (list is List) {
-                                        for (var item in list) {
-                                          final price = item["Price"];
-                                          if (price != null) {
-                                            totalBaggagePrice += price;
-                                            print(
-                                                "totalBaggagePrice$totalBaggagePrice");
-                                          }
-                                        }
-                                      }
-                                    });
-                                  }
-                                }
-
-                                print(
-                                    "Total Baggage Price: $totalBaggagePrice");
-                              },
-                              child: Text(
-                                "+ ADD",
-                                style: TextStyle(
-                                    color: Color(0xFFF37023),
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            )
-                          ],
-                        ),
+                  if (ssrData.response != null &&
+                      ((ssrData.response!.seatDynamic != null &&
+                              ssrData.response!.seatDynamic.isNotEmpty) ||
+                          (ssrData.response!.baggage != null &&
+                              ssrData.response!.baggage.isNotEmpty) ||
+                          (ssrData.response!.mealDynamic != null &&
+                              ssrData.response!.mealDynamic.isNotEmpty))) ...[
+                    SizedBox(height: 20.h),
+                    Text(
+                      'Add Additional',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp,
+                        fontFamily: 'Inter',
                       ),
-                      SizedBox(height: 15),
-                      if (ssrData.response != null &&
-                          ssrData.response!.baggage != null &&
-                          ssrData.response!.baggage.isNotEmpty)
-                        Container(
-                          height: 60,
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.grey,
-                                    spreadRadius: 0.5,
-                                    blurRadius: 0.3,
-                                    offset: Offset(0, 0.5))
-                              ]),
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'assets/images/baggage.png',
-                                height: 25,
-                                width: 25,
+                    ),
+                    SizedBox(height: 5),
+                    Column(
+                      children: [
+                        if (ssrData.response != null &&
+                            ssrData.response!.seatDynamic != null &&
+                            ssrData.response!.seatDynamic.isNotEmpty)
+                          GestureDetector(
+                            onTap: () async {
+                              print("TRACEID${widget.traceid}");
+                              print("RESULTINDEX${widget.resultindex}");
+                              print("adultCount${widget.adultCount}");
+                              print("childCount${widget.childCount}");
+                              print("infantCount${widget.infantCount}");
+                              print("trvlusNetFare${widget.trvlusNetFare}");
+
+                              var value = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Additions(
+                                          traceid: widget.traceid,
+                                          resultindex: widget.resultindex,
+                                          adultCount: widget.adultCount,
+                                          childCount: widget.childCount ?? 0,
+                                          infantCount: widget.infantCount ?? 0,
+                                          outBoundData: widget.outBoundData,
+                                          inBoundData: widget.inBoundData,
+                                          inresultindex: widget.inresultindex,
+                                          outresultindex: widget.outresultindex,
+                                          seatPayload: seat,
+                                          initialMealData: meal,
+                                          initialBaggageCount: baggageCount,
+                                          baseFare: widget.basefare,
+                                          coupouncode: widget.coupouncode,
+                                          othercharges: widget.othercharges,
+                                          finaloffFare: widget.trvlusNetFare,
+                                          initialTabIndex: 1)));
+                              if (value != null) {
+                                _handleAdditionsResult(value);
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              height: 60,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.grey,
+                                        spreadRadius: 0.5,
+                                        blurRadius: 0.3,
+                                        offset: Offset(0, 0.5))
+                                  ]),
+                              child: Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/images/seat.png',
+                                    height: 19,
+                                    width: 25,
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text(
+                                    "Seats",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                        color: Colors.black),
+                                  ),
+                                  Spacer(),
+                                  const Text(
+                                    "+ ADD",
+                                    style: TextStyle(
+                                        color: Color(0xFFF37023),
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 20),
-                              Text(
-                                "Baggage",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
-                                    color: Colors.black),
-                              ),
-                              Spacer(),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => Additions(
-                                                traceid: widget.traceid,
-                                                resultindex: widget.resultindex,
-                                                adultCount: widget.adultCount,
-                                                childCount: widget.childCount,
-                                                infantCount: widget.infantCount,
-                                                outBoundData:
-                                                    widget.outBoundData,
-                                                inBoundData: widget.inBoundData,
-                                                inresultindex:
-                                                    widget.inresultindex,
-                                                outresultindex:
-                                                    widget.outresultindex,
-                                                seatPayload: [],
-                                              )));
-                                },
-                                child: Text(
-                                  "+ ADD",
-                                  style: TextStyle(
-                                      color: Color(0xFFF37023),
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              )
-                            ],
+                            ),
                           ),
-                        ),
-                      SizedBox(height: 15),
-                      if (ssrData.response != null &&
-                          ssrData.response!.mealDynamic != null &&
-                          ssrData.response!.mealDynamic.isNotEmpty)
-                        Container(
-                          height: 60,
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.grey,
-                                    spreadRadius: 0.5,
-                                    blurRadius: 0.3,
-                                    offset: Offset(0, 0.5))
-                              ]),
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'assets/images/meals.png',
-                                height: 25,
-                                width: 25,
+                        SizedBox(height: 15),
+                        if (ssrData.response != null &&
+                            ssrData.response!.baggage != null &&
+                            ssrData.response!.baggage.isNotEmpty)
+                          GestureDetector(
+                            onTap: () async {
+                              var value = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Additions(
+                                            traceid: widget.traceid,
+                                            resultindex: widget.resultindex,
+                                            adultCount: widget.adultCount,
+                                            childCount: widget.childCount,
+                                            infantCount: widget.infantCount,
+                                            outBoundData: widget.outBoundData,
+                                            inBoundData: widget.inBoundData,
+                                            inresultindex: widget.inresultindex,
+                                            outresultindex:
+                                                widget.outresultindex,
+                                            seatPayload: seat,
+                                            initialMealData: meal,
+                                            initialBaggageCount: baggageCount,
+                                            baseFare: widget.basefare,
+                                            coupouncode: widget.coupouncode,
+                                            othercharges: widget.othercharges,
+                                            finaloffFare: widget.trvlusNetFare,
+                                            initialTabIndex: 0,
+                                          )));
+                              if (value != null) {
+                                _handleAdditionsResult(value);
+                              }
+                            },
+                            child: Container(
+                              height: 60,
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.grey,
+                                        spreadRadius: 0.5,
+                                        blurRadius: 0.3,
+                                        offset: Offset(0, 0.5))
+                                  ]),
+                              child: Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/images/baggage.png',
+                                    height: 25,
+                                    width: 25,
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text(
+                                    "Baggage",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                        color: Colors.black),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    "+ ADD",
+                                    style: TextStyle(
+                                        color: Color(0xFFF37023),
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 20),
-                              Text(
-                                "Meals",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
-                                    color: Colors.black),
-                              ),
-                              Spacer(),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => Additions(
-                                                traceid: widget.traceid,
-                                                resultindex: widget.resultindex,
-                                                adultCount: widget.adultCount,
-                                                childCount: widget.childCount,
-                                                infantCount: widget.infantCount,
-                                                outBoundData:
-                                                    widget.outBoundData,
-                                                inBoundData: widget.inBoundData,
-                                                inresultindex:
-                                                    widget.inresultindex,
-                                                outresultindex:
-                                                    widget.outresultindex,
-                                                seatPayload: [],
-                                              )));
-                                },
-                                child: Text(
-                                  "+ ADD",
-                                  style: TextStyle(
-                                      color: Color(0xFFF37023),
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              )
-                            ],
+                            ),
                           ),
-                        )
-                    ],
-                  ),
-                  SizedBox(height: 20),
+                        SizedBox(height: 15),
+                        if (ssrData.response != null &&
+                            ssrData.response!.mealDynamic != null &&
+                            ssrData.response!.mealDynamic.isNotEmpty)
+                          GestureDetector(
+                            onTap: () async {
+                              var value = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Additions(
+                                            traceid: widget.traceid,
+                                            resultindex: widget.resultindex,
+                                            adultCount: widget.adultCount,
+                                            childCount: widget.childCount,
+                                            infantCount: widget.infantCount,
+                                            outBoundData: widget.outBoundData,
+                                            inBoundData: widget.inBoundData,
+                                            inresultindex: widget.inresultindex,
+                                            outresultindex:
+                                                widget.outresultindex,
+                                            seatPayload: seat,
+                                            initialMealData: meal,
+                                            initialBaggageCount: baggageCount,
+                                            baseFare: widget.basefare,
+                                            coupouncode: widget.coupouncode,
+                                            othercharges: widget.othercharges,
+                                            finaloffFare: widget.trvlusNetFare,
+                                            initialTabIndex: 2,
+                                          )));
+                              if (value != null) {
+                                _handleAdditionsResult(value);
+                              }
+                            },
+                            child: Container(
+                              height: 60,
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.grey,
+                                        spreadRadius: 0.5,
+                                        blurRadius: 0.3,
+                                        offset: Offset(0, 0.5))
+                                  ]),
+                              child: Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/images/meals.png',
+                                    height: 25,
+                                    width: 25,
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text(
+                                    "Meals",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                        color: Colors.black),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    "+ ADD",
+                                    style: TextStyle(
+                                        color: Color(0xFFF37023),
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                  ],
                   Text(
                     "GSTN Details (Optional)",
                     style: TextStyle(
@@ -1584,206 +1587,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
-                  // PRICE ALERT
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     showModalBottomSheet(
-                  //         context: context,
-                  //         backgroundColor: Color(0xFFF5F5F5),
-                  //         shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(7)),
-                  //         builder: (BuildContext context) {
-                  //           selectedindex = -1;
-                  //           return StatefulBuilder(
-                  //             builder: (BuildContext context,
-                  //                 void Function(void Function()) setState) {
-                  //               return Padding(
-                  //                 padding: MediaQuery.viewInsetsOf(context),
-                  //                 child: Container(
-                  //                   padding: EdgeInsets.all(10),
-                  //                   child: SizedBox(
-                  //                     height: 450,
-                  //                     width: MediaQuery.sizeOf(context).width,
-                  //                     child: Column(
-                  //                       children: [
-                  //                         GestureDetector(
-                  //                           onTap: () {
-                  //                             Navigator.pop(context);
-                  //                           },
-                  //                           child: Align(
-                  //                               alignment: Alignment.topRight,
-                  //                               child: Icon(
-                  //                                   Icons.cancel_outlined)),
-                  //                         ),
-                  //                         Image.asset(
-                  //                           "assets/icon/priceAlert.png",
-                  //                           height: 70,
-                  //                           fit: BoxFit.fitHeight,
-                  //                           width: MediaQuery.sizeOf(context)
-                  //                               .width,
-                  //                         ),
-                  //                         Text(
-                  //                           "Price Alert!",
-                  //                           style: TextStyle(
-                  //                               color: Color(0xFF444444),
-                  //                               fontWeight: FontWeight.bold,
-                  //                               fontSize: 32),
-                  //                         ),
-                  //                         Align(
-                  //                           alignment: Alignment.center,
-                  //                           child: Text(
-                  //                               "airline has increased the price by ₹500 \n please review the new price before \n booking"),
-                  //                         ),
-                  //                         SizedBox(height: 10),
-                  //                         Container(
-                  //                           height: 60,
-                  //                           padding: EdgeInsets.all(10),
-                  //                           margin: EdgeInsets.all(15),
-                  //                           decoration: BoxDecoration(
-                  //                               borderRadius:
-                  //                                   BorderRadius.circular(10),
-                  //                               color: Colors.white),
-                  //                           child: Row(
-                  //                             mainAxisAlignment:
-                  //                                 MainAxisAlignment
-                  //                                     .spaceBetween,
-                  //                             children: [
-                  //                               Column(
-                  //                                 children: [
-                  //                                   Text("Old Fare"),
-                  //                                   Text(
-                  //                                     "₹5000",
-                  //                                     style: TextStyle(
-                  //                                       color:
-                  //                                           Color(0xFFD10909),
-                  //                                     ),
-                  //                                   ),
-                  //                                 ],
-                  //                               ),
-                  //                               Image.asset(
-                  //                                   "assets/icon/pricechange.png"),
-                  //                               Column(
-                  //                                 children: [
-                  //                                   Text("New Fare"),
-                  //                                   Text(
-                  //                                     "₹5000",
-                  //                                     style: TextStyle(
-                  //                                       color:
-                  //                                           Color(0xFF138808),
-                  //                                     ),
-                  //                                   ),
-                  //                                 ],
-                  //                               ),
-                  //                             ],
-                  //                           ),
-                  //                         ),
-                  //                         Row(
-                  //                           mainAxisAlignment:
-                  //                               MainAxisAlignment.spaceBetween,
-                  //                           children: [
-                  //                             Expanded(
-                  //                               child: GestureDetector(
-                  //                                 onTap: () {
-                  //                                   setState(() {
-                  //                                     selectedindex = 0;
-                  //                                   });
-                  //                                   print(
-                  //                                       "selectedIndex ${selectedindex}");
-                  //                                 },
-                  //                                 child: Container(
-                  //                                   margin: EdgeInsets.all(10),
-                  //                                   padding: EdgeInsets.all(5),
-                  //                                   height: 45,
-                  //                                   width: 100,
-                  //                                   decoration: BoxDecoration(
-                  //                                       borderRadius:
-                  //                                           BorderRadius
-                  //                                               .circular(25),
-                  //                                       border: Border.all(
-                  //                                           color:
-                  //                                               Colors.orange),
-                  //                                       color: selectedindex ==
-                  //                                               0
-                  //                                           ? Colors.deepOrange
-                  //                                           : Colors.white),
-                  //                                   child: Align(
-                  //                                       alignment:
-                  //                                           Alignment.center,
-                  //                                       child: Text(
-                  //                                         "Return",
-                  //                                         style: TextStyle(
-                  //                                             color:
-                  //                                                 selectedindex ==
-                  //                                                         0
-                  //                                                     ? Colors
-                  //                                                         .white
-                  //                                                     : Colors
-                  //                                                         .orange,
-                  //                                             fontWeight:
-                  //                                                 FontWeight
-                  //                                                     .bold),
-                  //                                       )),
-                  //                                 ),
-                  //                               ),
-                  //                             ),
-                  //                             Expanded(
-                  //                               child: GestureDetector(
-                  //                                 onTap: () {
-                  //                                   setState(() {
-                  //                                     selectedindex = 1;
-                  //                                   });
-                  //                                 },
-                  //                                 child: Container(
-                  //                                   margin: EdgeInsets.all(10),
-                  //                                   padding: EdgeInsets.all(5),
-                  //                                   height: 45,
-                  //                                   width: 100,
-                  //                                   decoration: BoxDecoration(
-                  //                                       borderRadius:
-                  //                                           BorderRadius
-                  //                                               .circular(25),
-                  //                                       border: Border.all(
-                  //                                         color: Colors.orange,
-                  //                                       ),
-                  //                                       color: selectedindex ==
-                  //                                               1
-                  //                                           ? Colors.deepOrange
-                  //                                           : Colors.white),
-                  //                                   child: Align(
-                  //                                       alignment:
-                  //                                           Alignment.center,
-                  //                                       child: Text(
-                  //                                         "Continue",
-                  //                                         style: TextStyle(
-                  //                                             fontWeight:
-                  //                                                 FontWeight
-                  //                                                     .bold,
-                  //                                             color: selectedindex ==
-                  //                                                     1
-                  //                                                 ? Colors.white
-                  //                                                 : Colors
-                  //                                                     .orange),
-                  //                                       )),
-                  //                                 ),
-                  //                               ),
-                  //                             )
-                  //                           ],
-                  //                         )
-                  //                       ],
-                  //                     ),
-                  //                   ),
-                  //                 ),
-                  //               );
-                  //             },
-                  //           );
-                  //         });
-                  //   },
-                  //   child: Text(
-                  //     "Price Alert",
-                  //     style: TextStyle(color: Colors.grey.shade900),
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -1864,8 +1667,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () async {
-                          // await ApiService().countryCode();
-                          // await ApiService().commissionPercentage();
                           print("passengerdetailsAdults$pax");
 
                           for (var i in passenger.entries) {
@@ -1925,6 +1726,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               outBoundData: widget.outBoundData,
                               inBoundData: widget.inBoundData,
                               meal: meal,
+                              seat: seat,
+                              baggage: totalBaggagePrice,
                               segmentsJson: widget.segmentsJson,
                               coupouncode: widget.coupouncode,
                               commonPublishedFare: widget.commonPublishedFare,
@@ -1981,6 +1784,77 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
               ],
             ),
           );
+  }
+
+  void _handleAdditionsResult(Map<String, dynamic> value) {
+    setState(() {
+      // Store meal data
+      if (value.containsKey("meal")) {
+        meal = value["meal"];
+      }
+
+      // Store seat data
+      if (value.containsKey("seat")) {
+        seat = value["seat"];
+      }
+
+      // Store baggage count for re-passing to Additions
+      if (value.containsKey("baggageCount")) {
+        baggageCount = value["baggageCount"];
+      }
+
+      // Reset and recalculate baggage total
+      totalBaggagePrice = 0.0;
+      if (value.containsKey("baggage")) {
+        final baggageMap = value["baggage"];
+        if (baggageMap is Map) {
+          baggageMap.forEach((route, list) {
+            if (list is List) {
+              for (var item in list) {
+                final price = item["Price"];
+                if (price != null) {
+                  totalBaggagePrice += (price as num).toDouble();
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Calculate meal total
+      mealTotal = 0.0;
+      if (meal.isNotEmpty) {
+        meal.forEach((route, passengerMap) {
+          if (passengerMap is Map) {
+            passengerMap.forEach((passengerKey, meals) {
+              if (meals is List) {
+                for (var m in meals) {
+                  mealTotal += ((m['Price'] as num?)?.toDouble() ?? 0.0);
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // Calculate seat total
+      seatTotal = 0.0;
+      for (var s in seat) {
+        seatTotal += ((s['Price'] as num?)?.toDouble() ?? 0.0);
+      }
+
+      // Recalculate overallFare: base fare + SSR additions
+      double baseFareTotal = totalBaseFare + totalTax;
+      if (coupouncode > 0) {
+        baseFareTotal -= coupouncode.toDouble();
+      } else {
+        baseFareTotal += othercharges;
+      }
+      overallFare = baseFareTotal + mealTotal + seatTotal + totalBaggagePrice;
+
+      print(
+          "Recalculated overallFare: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: $totalBaggagePrice)");
+    });
   }
 
   void showFareBreakupSheet(BuildContext context) {

@@ -4,6 +4,20 @@ import 'package:intl/intl.dart';
 import 'package:trvlus/utils/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
+  final String? firstName;
+  final String? lastName;
+  final String? email;
+  final String? mobile;
+  final String? dob;
+
+  EditProfilePage({
+    this.firstName,
+    this.lastName,
+    this.email,
+    this.mobile,
+    this.dob,
+  });
+
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
 }
@@ -39,6 +53,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
         selectedDate = picked;
         dateController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
       });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    firstNameController.text = widget.firstName ?? "";
+    lastNameController.text = widget.lastName ?? "";
+    emailController.text = widget.email ?? "";
+    mobileController.text = widget.mobile ?? "";
+    dobController.text = widget.dob ?? "";
+    print("Names");
+    print(widget.firstName);
+    print(widget.lastName);
+    print(widget.email);
+    print(widget.mobile);
+    print(widget.dob);
+
+    if (widget.dob != null && widget.dob!.isNotEmpty) {
+      DateTime parsedDate = DateTime.parse(widget.dob!);
+      dateController.text = DateFormat("dd-MM-yyyy").format(parsedDate);
     }
   }
 
@@ -258,7 +294,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             final mobile = mobileController.text;
             final dob = dateController.text;
             String fixDate(String inputDate) {
-              DateTime parsed = DateFormat("dd-MM-yyyy").parse(dob);
+              DateTime parsed = DateFormat("dd-MM-yyyy").parse(inputDate);
               return DateFormat("yyyy-MM-dd").format(parsed);
             }
 

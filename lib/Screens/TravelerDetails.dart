@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/price_alert_controller.dart';
 
 import '../models/farequote.dart' as farequote;
@@ -173,6 +175,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     getfarequotedata();
     print("fgcgfcf${widget.selectedpassenger}");
     setPassenger();
+    getmobile();
   }
 
   setPassenger() {
@@ -335,6 +338,12 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
     });
+  }
+
+  getmobile() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? mobile = prefs.getString("mobile");
+    print("mobile$mobile");
   }
 
   @override
@@ -900,10 +909,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                     fontSize: 14.sp,
                                   ),
                                 ),
-                                // const SizedBox(width: 5),
-                                // Padding(
-                                // padding: EdgeInsets.only(top: 2.h),
-                                // child: Image.asset("assets/images/Traingle.png"))
                               ],
                             ),
                           ),
@@ -2270,6 +2275,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
   void initState() {
     super.initState();
     print("AddTravelerPage");
+    loadMobile();
 
     print(widget.isPassportFullDetailRequiredAtBook);
     print(widget.isPassportRequiredAtTicket);
@@ -2314,6 +2320,17 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     } else {
       // Set default gender based on options
       selectedGender = genderOptions.first;
+    }
+  }
+
+  void loadMobile() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? mobile = prefs.getString("mobile");
+
+    print("Fetched Mobile in Traveler: $mobile");
+
+    if (mobile != null && mobile.isNotEmpty) {
+      mobileController.text = mobile;
     }
   }
 
@@ -2443,6 +2460,10 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 label: 'First Name(Givenname)',
                 hintText: 'Text here',
                 controller: firstNameController,
+                inputFormatters: [
+                  UpperCaseTextFormatter(),
+                ],
+                forceUpperCase: true,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'First Name is required';
@@ -2458,6 +2479,10 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 label: 'Last Name(Surname)',
                 hintText: 'Text here',
                 controller: lastNameController,
+                inputFormatters: [
+                  UpperCaseTextFormatter(),
+                ],
+                forceUpperCase: true,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Last Name is required';
@@ -2572,8 +2597,9 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 label: 'Mobile Number',
                 hintText: '',
                 controller: mobileController,
-                // prefixText: '+91 - ',
-                // keyboardType: TextInputType.phone,
+                // readOnly: true,
+                // 👈 ADD THIS
+                keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Mobile Number is required';
@@ -2596,6 +2622,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 controller: emailController,
                 // prefixText: '',
                 // keyboardType: TextInputType.phone,
+                forceUpperCase: false,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email is required'; // Email is optional
@@ -2985,6 +3012,9 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     bool readOnly = false,
     Function()? onTap,
     String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    bool forceUpperCase = false, // 👈 ADD THIS
   }) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -2992,6 +3022,11 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
         controller: controller,
         readOnly: readOnly,
         onTap: onTap,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        textCapitalization: forceUpperCase
+            ? TextCapitalization.characters
+            : TextCapitalization.none,
         validator: validator,
         decoration: InputDecoration(
           suffixIcon: (label == "Date of Birth *" || label == "Expiry Date*")
@@ -3117,4 +3152,17 @@ bool isInternationalFromFareQuote(farequote.FareQuotesData fareQuote) {
     }
   }
   return false;
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return newValue.copyWith(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
 }

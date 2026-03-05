@@ -149,7 +149,11 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                   Row(
                                     children: [
                                       Image.asset(
-                                          "assets/${widget.airlineCode ?? ""}.gif"),
+                                        "assets/${widget.airlineCode ?? ""}.gif",
+                                        fit: BoxFit.fill,
+                                        height: 35,
+                                        width: 35,
+                                      ),
                                       SizedBox(width: 12),
                                       Container(
                                         width: 100,

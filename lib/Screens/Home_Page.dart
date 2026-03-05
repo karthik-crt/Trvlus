@@ -412,14 +412,14 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                       horizontal: 6.w,
                       vertical: 2.h,
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF37003),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      '₹${0}',
-                      style: TextStyle(color: Colors.white, fontSize: 9.sp),
-                    ),
+                    // decoration: BoxDecoration(
+                    //   color: const Color(0xFFF37003),
+                    //   borderRadius: BorderRadius.circular(12.r),
+                    // ),
+                    // child: Text(
+                    //   '₹${0}',
+                    //   style: TextStyle(color: Colors.white, fontSize: 9.sp),
+                    // ),
                   ),
                 ),
               ],

@@ -302,7 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                                         null) {
                                                                       return child; // ✅ image loaded
                                                                     }
-                                                                    return Center(
+                                                                    return const Center(
                                                                       child:
                                                                           SizedBox(
                                                                         width:
@@ -311,6 +311,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                                                             20,
                                                                         child:
                                                                             CircularProgressIndicator(
+                                                                          color:
+                                                                              Colors.deepOrange,
                                                                           strokeWidth:
                                                                               2,
                                                                         ),
@@ -318,7 +320,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                                     );
                                                                   },
                                                                 )
-                                                              : Icon(
+                                                              : const Icon(
                                                                   Icons.person,
                                                                   size: 30)),
                                                     ),
@@ -334,7 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                                         .withOpacity(0.4),
                                                     shape: BoxShape.circle,
                                                   ),
-                                                  child: Center(
+                                                  child: const Center(
                                                     child: SizedBox(
                                                       width: 20,
                                                       height: 20,
@@ -505,11 +507,19 @@ class _ProfilePageState extends State<ProfilePage> {
                                     SizedBox(height: 15.h),
                                     ElevatedButton(
                                       onPressed: () async {
+                                        print("HElloooo");
+                                        print(profile.data.dateofbirth);
                                         final prefs = await SharedPreferences
                                             .getInstance();
                                         final userId =
                                             prefs.getString('user_id');
-                                        await Get.to(EditProfilePage());
+                                        await Get.to(EditProfilePage(
+                                          firstName: profile.data.firstName,
+                                          lastName: profile.data.lastName,
+                                          email: profile.data.email,
+                                          mobile: profile.data.mobile,
+                                          dob: profile.data.dateofbirth,
+                                        ));
                                         profile = await ApiService()
                                             .getprofileupdate(userId);
                                         setState(() {});

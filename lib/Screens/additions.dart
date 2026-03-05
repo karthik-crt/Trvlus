@@ -10,10 +10,12 @@ import '../models/search_data.dart';
 import '../models/ssr.dart';
 import '../utils/api_service.dart';
 import 'Seat.dart';
+import 'ShowModelSheet.dart';
 
 class Additions extends StatefulWidget {
   final String? traceid;
   final String? resultindex;
+  final int? finaloffFare;
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
@@ -24,6 +26,14 @@ class Additions extends StatefulWidget {
   final String? outresultindex;
   final List<Map<String, dynamic>> seatPayload;
   final String? inresultindex;
+  final Map<String, dynamic>? initialMealData;
+  final Map<String, dynamic>? initialBaggageCount;
+  final int? initialTabIndex; // 0=Baggage, 1=Seat, 2=Meals
+
+  final double? baseFare;
+  final double? tax;
+  final num? coupouncode;
+  final double? othercharges;
 
   const Additions(
       {super.key,
@@ -35,28 +45,57 @@ class Additions extends StatefulWidget {
       required this.outBoundData,
       required this.inBoundData,
       this.outresultindex,
+      this.finaloffFare,
       required this.seatPayload,
       this.inresultindex,
+      this.baseFare,
+      this.tax,
+      this.coupouncode,
+      this.othercharges,
       this.outboundFlight,
-      this.inboundFlight});
+      this.inboundFlight,
+      this.initialMealData,
+      this.initialBaggageCount,
+      this.initialTabIndex});
 
   @override
   State<Additions> createState() => _AdditionsState();
 }
 
 class _AdditionsState extends State<Additions> {
+  int totalPrice = 0;
   int selectedindex = 0;
   int selectedBaggage = 0;
+  double mealsTotal = 0.0; // ← add this
   int selectedbuild = 0;
 
   final List<String> rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   final int seatsPerRow = 4;
   final Set<String> selectedSeats = {};
 
+  double totalBaseFare = 0;
+  double totalTax = 0;
+  double othercharges = 0;
+  double overallFare = 0;
+  double inbaseFare = 0;
+  double intax = 0;
+  int totaladultCount = 0;
+  int totalchildCount = 0;
+  int totalinfantCount = 0;
+  double adultFare = 0;
+  double childFare = 0;
+  double infantFare = 0;
+  num coupouncode = 0;
+
   late SsrData ssrData;
   late SsrData inssrData;
   late farequote.FareQuotesData fareQuote;
+  late farequote.FareQuotesData infareQuote;
   late FareRuleData fare;
+
+  bool hasMealData = false;
+  bool hasInMealData = false;
+
   bool isLoading = true;
   int selectedPassengerType = 0; // 0 - Adult, 1 - Child
   Map<String, Map<String, dynamic>> selectedMealData = {};
@@ -66,6 +105,109 @@ class _AdditionsState extends State<Additions> {
   // Add this at the top of your _AdditionsState class
   Map<String, Map<int, int>> selectedBaggageCount =
       {}; // {route: {baggageIndex: count}}
+  List<List<dynamic>> get allBaggage {
+    List<List<dynamic>> merged = [];
+    if (ssrData.response?.baggage != null) {
+      merged.addAll(ssrData.response.baggage);
+    }
+    if (widget.inBoundData['inresultindex'] != null &&
+        !isLoading &&
+        inssrData.response?.baggage != null) {
+      merged.addAll(inssrData.response.baggage);
+    }
+    return merged;
+  }
+
+  // BAGGAGE
+  double calculateBaggageTotal() {
+    double total = 0.0;
+
+    selectedBaggageCount.forEach((route, baggageMap) {
+      baggageMap.forEach((baggageIndex, count) {
+        for (final baggageGroup in allBaggage) {
+          // ✅ use allBaggage
+          if (baggageGroup.isNotEmpty) {
+            final groupRoute =
+                '${baggageGroup[0].origin}-${baggageGroup[0].destination}';
+            if (groupRoute == route && baggageGroup.length > baggageIndex) {
+              final price = baggageGroup[baggageIndex].price ?? 0;
+              total += (price * count);
+              break;
+            }
+          }
+        }
+      });
+    });
+
+    return total;
+  }
+
+  // MEALS
+  double calculateMealsTotal() {
+    double total = 0.0;
+
+    selectedMealData.forEach((route, passengerMap) {
+      passengerMap.forEach((passengerKey, meals) {
+        if (meals is List<dynamic>) {
+          for (var meal in meals) {
+            final price = (meal['Price'] as num?)?.toDouble() ?? 0.0;
+            total += price;
+          }
+        }
+      });
+    });
+
+    return total;
+  }
+
+  void recalculateTotalPrice() {
+    int base = widget.finaloffFare ?? 0;
+
+    // ✅ Baggage - now searches both outbound and inbound
+    double baggageSum = 0.0;
+
+    selectedBaggageCount.forEach((route, baggageMap) {
+      baggageMap.forEach((baggageIndex, count) {
+        for (final baggageGroup in allBaggage) {
+          // ✅ use allBaggage
+          if (baggageGroup.isNotEmpty) {
+            final groupRoute =
+                '${baggageGroup[0].origin}-${baggageGroup[0].destination}';
+            if (groupRoute == route && baggageIndex < baggageGroup.length) {
+              final price = (baggageGroup[baggageIndex].price ?? 0).toDouble();
+              baggageSum += price * count;
+              break;
+            }
+          }
+        }
+      });
+    });
+
+    base += baggageSum.round();
+
+    // seats and meals stay same...
+    double seatSum = 0.0;
+    for (final seat in selectedSeatPayload) {
+      seatSum += (seat['Price'] as num?)?.toDouble() ?? 0.0;
+    }
+    base += seatSum.round();
+
+    double mealSum = 0.0;
+    selectedMealData.forEach((route, passengerMap) {
+      passengerMap.forEach((passengerKey, value) {
+        if (value is List) {
+          for (final meal in value) {
+            mealSum += (meal['Price'] as num?)?.toDouble() ?? 0.0;
+          }
+        }
+      });
+    });
+    base += mealSum.round();
+
+    setState(() {
+      totalPrice = base;
+    });
+  }
 
   int getTotalSelectedBaggageForRoute(String route) {
     if (!selectedBaggageCount.containsKey(route)) return 0;
@@ -160,7 +302,7 @@ class _AdditionsState extends State<Additions> {
       "Destination": meal.destination,
     });
 
-    setState(() {});
+    recalculateTotalPrice();
     print("Selected Meals: ${jsonEncode(selectedMealData)}");
   }
 
@@ -168,8 +310,39 @@ class _AdditionsState extends State<Additions> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    selectedSeatPayload = widget.seatPayload;
+    // Set the initial tab if provided
+    if (widget.initialTabIndex != null) {
+      selectedindex = widget.initialTabIndex!;
+    }
+    if (widget.initialMealData != null) {
+      // Create a deep copy or use as is, casting appropriately
+      try {
+        widget.initialMealData!.forEach((key, value) {
+          if (value is Map) {
+            selectedMealData[key] = Map<String, dynamic>.from(value);
+          }
+        });
+      } catch (e) {
+        print("Error initializing meal data: $e");
+      }
+    }
+    if (widget.initialBaggageCount != null) {
+      try {
+        widget.initialBaggageCount!.forEach((key, value) {
+          if (value is Map) {
+            selectedBaggageCount[key] =
+                Map<int, int>.from(value.cast<int, int>());
+          }
+        });
+      } catch (e) {
+        print("Error initializing baggage count: $e");
+      }
+    }
     getssrdata();
     print("seatdf${widget.seatPayload}");
+
+    totalPrice = widget.finaloffFare ?? 0;
   }
 
   getssrdata() async {
@@ -177,6 +350,7 @@ class _AdditionsState extends State<Additions> {
       isLoading = true;
       print("beforeOutput");
     });
+
     print(widget.traceid);
     print(widget.resultindex);
     print("ADULTCOUNTADULTCOUNT${widget.adultCount}");
@@ -190,7 +364,7 @@ class _AdditionsState extends State<Additions> {
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? ""));
       fareQuote = await ApiService().farequote(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
-      fareQuote = await ApiService().farequote(
+      infareQuote = await ApiService().farequote(
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
       ssrData = await ApiService().ssr(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
@@ -198,13 +372,101 @@ class _AdditionsState extends State<Additions> {
       inssrData = await ApiService()
           .ssr(widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
     } else {
+      fareQuote = await ApiService()
+          .farequote(widget.resultindex ?? "", widget.traceid ?? "");
       ssrData = await ApiService()
           .ssr(widget.resultindex ?? "", widget.traceid ?? "");
       debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
     }
+    final fareBreakdown = fareQuote.response.results.fareBreakdown;
+    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
+    final baseFare = fareQuote.response.results.fare.baseFare;
+    final tax = fareQuote.response.results.fare.tax.toDouble();
+
+    double adultBase = 0, adultTax = 0;
+    double childBase = 0, childTax = 0;
+    double infantBase = 0, infantTax = 0;
+    int adultCount = 0, childCount = 0;
+    int infantCount = 0;
+    // INBOUNDFARE
+    double inadultBase = 0, inadultTax = 0;
+    double inchildBase = 0, inchildTax = 0;
+    double ininfantBase = 0, ininfantTax = 0;
+    int inadultCount = 0, inchildCount = 0;
+    int ininfantCount = 0;
+
+    for (var item in fareBreakdown) {
+      if (item.passengerType == 1) {
+        adultBase = item.baseFare.toDouble();
+        adultTax = item.tax.toDouble();
+        adultCount = item.passengerCount.toInt();
+      } else if (item.passengerType == 2) {
+        childBase = item.baseFare.toDouble();
+        childTax = item.tax.toDouble();
+        childCount = item.passengerCount.toInt();
+      } else if (item.passengerType == 3) {
+        infantBase = item.baseFare.toDouble();
+        infantTax = item.tax.toDouble();
+        infantCount = item.passengerCount.toInt();
+      }
+    }
+    // INBOUNDFARE
+    if (widget.inBoundData['inresultindex'] != null) {
+      final infareBreakdown = infareQuote.response.results.fareBreakdown;
+      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
+      inbaseFare = infareQuote.response.results.fare.baseFare;
+      print("inbaseFare$inbaseFare");
+      intax = infareQuote.response.results.fare.tax.toDouble();
+      for (var item in infareBreakdown) {
+        if (item.passengerType == 1) {
+          inadultBase = item.baseFare.toDouble();
+          inadultTax = item.tax.toDouble();
+          inadultCount = item.passengerCount.toInt();
+        } else if (item.passengerType == 2) {
+          inchildBase = item.baseFare.toDouble();
+          inchildTax = item.tax.toDouble();
+          inchildCount = item.passengerCount.toInt();
+        } else if (item.passengerType == 3) {
+          ininfantBase = item.baseFare.toDouble();
+          ininfantTax = item.tax.toDouble();
+          ininfantCount = item.passengerCount.toInt();
+        }
+      }
+    }
 
     setState(() {
       isLoading = false;
+      coupouncode = widget.coupouncode!;
+      othercharges = widget.othercharges!;
+
+      totalBaseFare = baseFare + inbaseFare;
+      print("totalFare$totalBaseFare");
+      totalTax = tax + intax + othercharges;
+      print("totalTax$totalTax");
+      if (widget.coupouncode! > 0) {
+        overallFare = totalBaseFare + totalTax - coupouncode;
+        print("overallFare1$overallFare");
+      } else {
+        overallFare = totalBaseFare + totalTax + othercharges;
+        print("overallFare$overallFare");
+        print("overallFare$totalBaseFare");
+        print("overallFare$totalTax");
+        print("overallFare$othercharges");
+      }
+      totaladultCount = adultCount + inadultCount;
+      totalchildCount = childCount + inchildCount;
+      totalinfantCount = infantCount + ininfantCount;
+      adultFare = adultBase + inadultBase;
+      childFare = childBase + inchildBase;
+      infantFare = infantBase + ininfantBase;
+
+      // Default to Seat tab if baggage is not available
+      if (ssrData.response == null ||
+          ssrData.response!.baggage == null ||
+          ssrData.response!.baggage.isEmpty) {
+        selectedindex = 1;
+      }
+
       print("AferOutput");
     });
   }
@@ -232,6 +494,135 @@ class _AdditionsState extends State<Additions> {
             ),
           )
         : Scaffold(
+            bottomNavigationBar: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(0.r)),
+                    boxShadow: [],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Total Amount",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontFamily: 'Inter',
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  // Action for "View full details"
+                                  showFareBreakupSheet(context);
+                                },
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'View full details',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        color: Color(0xFFF37023),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14.sp,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5.w),
+                                    Icon(Icons.arrow_drop_up,
+                                        color: Color(0xFFF37023), size: 18),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "₹${totalPrice.toStringAsFixed(0)}",
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFF37023),
+                                ),
+                              ),
+                              Text(
+                                "Including GST+ taxes",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 5.h),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Same data bundle as back arrow
+                          Map<String, dynamic> threeValue = {
+                            "meal": selectedMealData,
+                            "seat": selectedSeatPayload,
+                            "baggage": getFormattedBaggageData(),
+                            "baggageCount": selectedBaggageCount,
+                          };
+                          print("Next pressed → passing data: $threeValue");
+                          Navigator.pop(context, threeValue);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(double.infinity, 40.h),
+                          backgroundColor: Color(0xFFF37023),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                        ),
+                        child: Text(
+                          "Next",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: -12.h,
+                  left: 135.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      showFareBreakupSheet(context);
+                    },
+                    child: Container(
+                      height: 28.h,
+                      width: 80.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Image.asset(
+                        "assets/images/TriangleButton.png",
+                        height: 24.h,
+                        width: 24.w,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: Color(0xFFE8E8E8),
             appBar: AppBar(
               backgroundColor: Color(0xFFE8E8E8),
@@ -250,7 +641,8 @@ class _AdditionsState extends State<Additions> {
                             Map<String, dynamic> threeValue = {
                               "meal": selectedMealData,
                               "seat": selectedSeatPayload,
-                              "baggage": getFormattedBaggageData()
+                              "baggage": getFormattedBaggageData(),
+                              "baggageCount": selectedBaggageCount
                               // Add this line for seats
                             };
                             print("threeValue$threeValue");
@@ -312,34 +704,35 @@ class _AdditionsState extends State<Additions> {
                         SizedBox(
                           width: 2,
                         ),
-                        Expanded(
-                            child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    selectedindex = 1;
-                                  });
-                                },
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  height: MediaQuery.sizeOf(context).height,
-                                  width: MediaQuery.sizeOf(context).width,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: selectedindex == 1
-                                          ? Color(0xFFFFE7DA)
-                                          : Colors.white,
-                                      border: Border.all(
+                        if (ssrData.response.seatDynamic.isNotEmpty)
+                          Expanded(
+                              child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedindex = 1;
+                                    });
+                                  },
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    height: MediaQuery.sizeOf(context).height,
+                                    width: MediaQuery.sizeOf(context).width,
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: selectedindex == 1
+                                            ? Color(0xFFFFE7DA)
+                                            : Colors.white,
+                                        border: Border.all(
+                                            color: selectedindex == 1
+                                                ? Color(0xFFF37023)
+                                                : Colors.grey.shade300)),
+                                    child: Text(
+                                      "Seat",
+                                      style: TextStyle(
                                           color: selectedindex == 1
                                               ? Color(0xFFF37023)
-                                              : Colors.grey.shade300)),
-                                  child: Text(
-                                    "Seat",
-                                    style: TextStyle(
-                                        color: selectedindex == 1
-                                            ? Color(0xFFF37023)
-                                            : Colors.black),
-                                  ),
-                                ))),
+                                              : Colors.black),
+                                    ),
+                                  ))),
                         SizedBox(
                           width: 2,
                         ),
@@ -381,9 +774,13 @@ class _AdditionsState extends State<Additions> {
                     ),
                   ),
                 ),
-                selectedindex == 0
+                selectedindex == 0 &&
+                        ssrData.response != null &&
+                        ssrData.response!.baggage != null &&
+                        ssrData.response!.baggage.isNotEmpty
                     ? buildBaggage()
-                    : selectedindex == 1
+                    : selectedindex == 1 &&
+                            ssrData.response.seatDynamic.isNotEmpty
                         ? Expanded(child: buildseat())
                         : (ssrData.response != null &&
                                 ssrData.response!.mealDynamic != null &&
@@ -392,30 +789,7 @@ class _AdditionsState extends State<Additions> {
                             ? Expanded(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                isOutbound = true;
-                                              });
-                                            },
-                                            child: Text("Outbound")),
-                                        if (widget.inBoundData != null)
-                                          GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  isOutbound = false;
-                                                });
-                                              },
-                                              child: Text("Inbound")),
-                                      ],
-                                    ),
-                                    buildmeals(isOutbound ? ssrData : inssrData)
-                                  ],
+                                  children: [buildmeals()],
                                 ),
                               )
                             : const SizedBox.shrink(),
@@ -424,99 +798,104 @@ class _AdditionsState extends State<Additions> {
   }
 
   buildBaggage() {
-    // Calculate total passenger count
+    print("Total baggage groups: ${ssrData.response.baggage.length}");
+    for (int i = 0; i < ssrData.response.baggage.length; i++) {
+      print("Group $i length: ${ssrData.response.baggage[i].length}");
+      if (ssrData.response.baggage[i].isNotEmpty) {
+        print(
+            "  Route: ${ssrData.response.baggage[i][0].origin}-${ssrData.response.baggage[i][0].destination}");
+      }
+    }
     final int totalPassengers = (widget.adultCount ?? 0) +
         (widget.childCount ?? 0) +
         (widget.infantCount ?? 0);
 
-    // Get current route
+    // ✅ Merge outbound + inbound baggage
+    List<List<dynamic>> allBaggage = [];
+
+    if (ssrData.response != null && ssrData.response.baggage != null) {
+      allBaggage.addAll(ssrData.response.baggage);
+    }
+
+    // Add inbound baggage if it's a round trip
+    if (widget.inBoundData['inresultindex'] != null &&
+        inssrData.response != null &&
+        inssrData.response.baggage != null) {
+      allBaggage.addAll(inssrData.response.baggage);
+    }
+
     String currentRoute = '';
-    if (ssrData.response != null &&
-        ssrData.response.baggage != null &&
-        ssrData.response.baggage.isNotEmpty &&
-        ssrData.response.baggage[selectedBaggage].isNotEmpty) {
+    if (allBaggage.isNotEmpty && allBaggage[selectedBaggage].isNotEmpty) {
       currentRoute =
-          '${ssrData.response.baggage[selectedBaggage][0].origin}-${ssrData.response.baggage[selectedBaggage][0].destination}';
+          '${allBaggage[selectedBaggage][0].origin}-${allBaggage[selectedBaggage][0].destination}';
     }
 
     return Column(
       children: [
         Column(
           children: [
-            SizedBox(
-              height: 15,
-            ),
+            SizedBox(height: 15),
 
-            // 🔶 Small Origin → Destination pill OUTSIDE (MakeMyTrip style)
-            // 🔶 Route pills - show all available routes (scrollable)
-            if (ssrData.response != null &&
-                ssrData.response.baggage != null &&
-                ssrData.response.baggage.isNotEmpty)
+            // Route pills
+            if (allBaggage.isNotEmpty)
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: List.generate(
-                      ssrData.response.baggage.length,
-                      (index) {
-                        if (ssrData.response.baggage[index].isEmpty) {
-                          return SizedBox.shrink();
-                        }
+                    children: List.generate(allBaggage.length, (index) {
+                      if (allBaggage[index].isEmpty) return SizedBox.shrink();
 
-                        final route = ssrData.response.baggage[index][0];
-                        final routeText =
-                            '${route.origin} - ${route.destination}';
+                      final route = allBaggage[index][0];
+                      final routeText =
+                          '${route.origin} - ${route.destination}';
 
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedBaggage = index;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedBaggage = index;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: selectedBaggage == index
+                                  ? Color(0xFFF37023)
+                                  : Color(0xFFFFF4ED),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
                                 color: selectedBaggage == index
                                     ? Color(0xFFF37023)
-                                    : Color(0xFFFFF4ED),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: selectedBaggage == index
-                                      ? Color(0xFFF37023)
-                                      : Color(0xFFF37023).withOpacity(0.3),
-                                  width: selectedBaggage == index ? 1.5 : 0.5,
-                                ),
+                                    : Color(0xFFF37023).withOpacity(0.3),
+                                width: selectedBaggage == index ? 1.5 : 0.5,
                               ),
-                              child: Text(
-                                routeText,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: selectedBaggage == index
-                                      ? Colors.white
-                                      : Color(0xFFF37023),
-                                ),
+                            ),
+                            child: Text(
+                              routeText,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: selectedBaggage == index
+                                    ? Colors.white
+                                    : Color(0xFFF37023),
                               ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ),
 
-            // 🔶 Baggage Card (below the route pill)
             Card(
               margin: EdgeInsets.all(10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                  borderRadius: BorderRadius.circular(10)),
               color: Colors.white,
               child: Container(
                 padding: EdgeInsets.all(10),
@@ -527,30 +906,23 @@ class _AdditionsState extends State<Additions> {
                       children: [
                         SvgPicture.asset('assets/icon/baggage.svg'),
                         SizedBox(width: 5),
-                        Text(
-                          "Baggage",
-                          style: TextStyle(
-                            color: Color(0xFF1C1E1D),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                        Text("Baggage",
+                            style: TextStyle(
+                                color: Color(0xFF1C1E1D),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
                       ],
                     ),
                     SizedBox(height: 7),
                     Text("Add additional checkin baggage at low price"),
                     SizedBox(height: 5),
-
-                    // 🔶 Passenger count info
                     Text(
                       "You can select up to $totalPassengers baggage(s)",
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFF37023),
-                        fontWeight: FontWeight.w600,
-                      ),
+                          fontSize: 12,
+                          color: Color(0xFFF37023),
+                          fontWeight: FontWeight.w600),
                     ),
-
                     Divider(color: Colors.grey),
                     Row(
                       children: [
@@ -558,9 +930,7 @@ class _AdditionsState extends State<Additions> {
                             style: TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold)),
-                        SizedBox(
-                          width: 80,
-                        ),
+                        SizedBox(width: 80),
                         Text('Price',
                             style: TextStyle(
                                 color: Colors.black,
@@ -569,21 +939,17 @@ class _AdditionsState extends State<Additions> {
                     ),
                     SizedBox(height: 5),
 
-                    // Display baggage for SELECTED route only
-                    if (ssrData.response.baggage.length > selectedBaggage)
+                    // ✅ Use allBaggage instead of ssrData.response.baggage
+                    if (allBaggage.length > selectedBaggage)
                       Container(
-                        constraints: const BoxConstraints(
-                          maxHeight: 300,
-                        ),
+                        constraints: const BoxConstraints(maxHeight: 250),
                         child: SingleChildScrollView(
-                          padding: EdgeInsets.zero,
                           physics: const BouncingScrollPhysics(),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: List.generate(
-                              ssrData.response.baggage[selectedBaggage].length,
+                              allBaggage[selectedBaggage].length,
                               (innerindex) {
-                                // Initialize route map if not exists
                                 if (!selectedBaggageCount
                                     .containsKey(currentRoute)) {
                                   selectedBaggageCount[currentRoute] = {};
@@ -610,88 +976,70 @@ class _AdditionsState extends State<Additions> {
                                       Expanded(
                                         flex: 3,
                                         child: Text(
-                                          '${ssrData.response.baggage[selectedBaggage][innerindex].weight} kg',
+                                          '${allBaggage[selectedBaggage][innerindex].weight} kg',
                                           style: TextStyle(fontSize: 14),
                                         ),
                                       ),
                                       Expanded(
                                         flex: 2,
                                         child: Text(
-                                          '₹${ssrData.response.baggage[selectedBaggage][innerindex].price}',
+                                          '₹${allBaggage[selectedBaggage][innerindex].price}',
                                           style: TextStyle(fontSize: 14),
                                         ),
                                       ),
-
-                                      // Counter buttons (icons only, no boxes)
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          // Minus icon
                                           GestureDetector(
                                             onTap: canRemove
                                                 ? () {
-                                                    setState(() {
+                                                    selectedBaggageCount[
+                                                                currentRoute]![
+                                                            innerindex] =
+                                                        currentCount - 1;
+                                                    if (selectedBaggageCount[
+                                                                currentRoute]![
+                                                            innerindex] ==
+                                                        0) {
                                                       selectedBaggageCount[
-                                                                  currentRoute]![
-                                                              innerindex] =
-                                                          currentCount - 1;
-                                                      if (selectedBaggageCount[
-                                                                  currentRoute]![
-                                                              innerindex] ==
-                                                          0) {
-                                                        selectedBaggageCount[
-                                                                currentRoute]!
-                                                            .remove(innerindex);
-                                                      }
-                                                    });
+                                                              currentRoute]!
+                                                          .remove(innerindex);
+                                                    }
+                                                    recalculateTotalPrice();
                                                   }
                                                 : null,
-                                            child: Icon(
-                                              Icons.remove_circle,
-                                              size: 24,
-                                              color: canRemove
-                                                  ? Color(0xFFF37023)
-                                                  : Colors.grey.shade400,
-                                            ),
+                                            child: Icon(Icons.remove_circle,
+                                                size: 24,
+                                                color: canRemove
+                                                    ? Color(0xFFF37023)
+                                                    : Colors.grey.shade400),
                                           ),
-
                                           SizedBox(width: 8),
-
-                                          // Count display
                                           Container(
                                             width: 20,
                                             alignment: Alignment.center,
-                                            child: Text(
-                                              '$currentCount',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
-                                            ),
+                                            child: Text('$currentCount',
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14)),
                                           ),
-
                                           SizedBox(width: 8),
-
-                                          // Plus icon
                                           GestureDetector(
                                             onTap: canAdd
                                                 ? () {
-                                                    setState(() {
-                                                      selectedBaggageCount[
-                                                                  currentRoute]![
-                                                              innerindex] =
-                                                          currentCount + 1;
-                                                    });
+                                                    selectedBaggageCount[
+                                                                currentRoute]![
+                                                            innerindex] =
+                                                        currentCount + 1;
+                                                    recalculateTotalPrice();
                                                   }
                                                 : () {
-                                                    // Show message when limit reached
                                                     ScaffoldMessenger.of(
                                                             context)
                                                         .showSnackBar(
                                                       SnackBar(
                                                         content: Text(
-                                                          'Maximum $totalPassengers baggage(s) allowed',
-                                                        ),
+                                                            'Maximum $totalPassengers baggage(s) allowed'),
                                                         duration: Duration(
                                                             seconds: 2),
                                                         backgroundColor:
@@ -699,13 +1047,11 @@ class _AdditionsState extends State<Additions> {
                                                       ),
                                                     );
                                                   },
-                                            child: Icon(
-                                              Icons.add_circle,
-                                              size: 24,
-                                              color: canAdd
-                                                  ? Color(0xFFF37023)
-                                                  : Colors.grey.shade400,
-                                            ),
+                                            child: Icon(Icons.add_circle,
+                                                size: 24,
+                                                color: canAdd
+                                                    ? Color(0xFFF37023)
+                                                    : Colors.grey.shade400),
                                           ),
                                         ],
                                       ),
@@ -728,41 +1074,55 @@ class _AdditionsState extends State<Additions> {
     );
   }
 
-  buildmeals(SsrData data) {
-    // 🥗 Check if mealDynamic data is available
-    if (data.response == null ||
-        data.response.mealDynamic == null ||
-        data.response.mealDynamic.isEmpty) {
-      return const SizedBox(); // 🔹 Don't display meals section
+  Widget buildmeals() {
+    List<dynamic> allMeals = [];
+
+    // Outbound meals
+    if (ssrData.response?.mealDynamic != null &&
+        ssrData.response!.mealDynamic.isNotEmpty) {
+      allMeals.addAll(ssrData.response.mealDynamic.expand((x) => x));
     }
 
-    // 🥗 Group meals by Origin-Destination
-    final meals = data.response.mealDynamic.expand((x) => x).toList();
-
-    // ✅ If still empty, skip rendering
-    if (meals.isEmpty) {
-      return const SizedBox();
+    // Inbound meals (only if round-trip exists)
+    if (widget.inBoundData['inresultindex'] != null &&
+        inssrData.response?.mealDynamic != null &&
+        inssrData.response!.mealDynamic.isNotEmpty) {
+      allMeals.addAll(inssrData.response.mealDynamic.expand((x) => x));
     }
 
+    if (allMeals.isEmpty) {
+      return const SizedBox(); // no meals at all → hide section
+    }
+
+    // ────────────────────────────────────────────────
+    // 2. Group meals by route string (DEL-IXB, IXB-CCU, etc.)
+    // ────────────────────────────────────────────────
     final Map<String, List<dynamic>> groupedMeals = {};
-    for (var meal in meals) {
+
+    for (var meal in allMeals) {
       final route = '${meal.origin}-${meal.destination}';
       groupedMeals.putIfAbsent(route, () => []).add(meal);
     }
 
-    final routes = groupedMeals.keys.toList();
+    final List<String> routes = groupedMeals.keys.toList();
 
     if (routes.isEmpty) {
       return const SizedBox();
     }
 
-    if (selectedbuild >= routes.length) selectedbuild = 0;
+    // Safety: if selected index is out of range → reset
+    if (selectedbuild >= routes.length || selectedbuild < 0) {
+      selectedbuild = 0;
+    }
 
+    // ────────────────────────────────────────────────
+    // 3. UI starts here
+    // ────────────────────────────────────────────────
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔶 Scrollable route buttons section
+          // Orange scrollable route selector ─ always scrollable if >1 route
           Container(
             padding: const EdgeInsets.all(5),
             margin: const EdgeInsets.all(12),
@@ -774,42 +1134,71 @@ class _AdditionsState extends State<Additions> {
             ),
             child: Builder(
               builder: (context) {
-                final isConnectingFlight = routes.length > 1;
-                final route = routes[selectedbuild];
+                // ────────────────────────────────────────────────
+                // Case 1: Non-stop (1 segment) → centered
+                // ────────────────────────────────────────────────
+                if (routes.length == 1) {
+                  return Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        routes[0],
+                        style: const TextStyle(
+                          color: Color(0xFFF37023),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
+                      ),
+                    ),
+                  );
+                }
 
-                // For connecting flights → scrollable route buttons
-                if (isConnectingFlight) {
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                // ────────────────────────────────────────────────
+                // Case 2: Exactly 1 stop (2 segments) → left + right corners
+                // ────────────────────────────────────────────────
+                if (routes.length == 2) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(routes.length, (index) {
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween, // ← pushes to corners
+                      children: List.generate(2, (index) {
                         final route = routes[index];
-                        String passengerType =
-                            selectedPassengerType == 0 ? "Adult" : "Child";
-                        String passengerKey = "$passengerType ${index + 1}";
                         return GestureDetector(
                           onTap: () {
                             setState(() {
                               selectedbuild = index;
-                              print("helloselectedbuild$selectedbuild");
                             });
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 30, vertical: 10),
+                                horizontal: 24, vertical: 12),
                             decoration: BoxDecoration(
                               color: selectedbuild == index
                                   ? Colors.white
                                   : const Color(0xFFF37023),
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(15)),
+                              borderRadius: BorderRadius.circular(20),
+                              border: selectedbuild == index
+                                  ? Border.all(color: Colors.white, width: 1.5)
+                                  : null,
                             ),
                             child: Text(
                               route,
                               style: TextStyle(
                                 color: selectedbuild == index
-                                    ? Colors.black
+                                    ? const Color(0xFFF37023)
                                     : Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -822,295 +1211,245 @@ class _AdditionsState extends State<Additions> {
                   );
                 }
 
-                // For non-stop flight → show single centered text
-                return Center(
-                  child: Text(
-                    route,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                // ────────────────────────────────────────────────
+                // Case 3: 2+ stops (3+ segments) → even spacing + scroll
+                // ────────────────────────────────────────────────
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(routes.length, (index) {
+                      final route = routes[index];
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedbuild = index;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          decoration: BoxDecoration(
+                            color: selectedbuild == index
+                                ? Colors.white
+                                : const Color(0xFFF37023),
+                            borderRadius: BorderRadius.circular(20),
+                            border: selectedbuild == index
+                                ? Border.all(color: Colors.white, width: 1.5)
+                                : null,
+                          ),
+                          child: Text(
+                            route,
+                            style: TextStyle(
+                              color: selectedbuild == index
+                                  ? const Color(0xFFF37023)
+                                  : Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 );
               },
             ),
           ),
-
           const SizedBox(height: 10),
 
-          // 🔘 Passenger type toggle buttons (ADDED)
+          // Passenger type selector (Adult / Child / Infant)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ADULT
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedPassengerType = 0;
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  margin: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: BoxDecoration(
-                    color: selectedPassengerType == 0
-                        ? const Color(0xFFF37023)
-                        : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    "Adult",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              // CHILD
-              if (widget.childCount! > 0)
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedPassengerType = 1;
-                    });
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                    decoration: BoxDecoration(
-                      color: selectedPassengerType == 1
-                          ? const Color(0xFFF37023)
-                          : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      "Child",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // INFANT  ✅ ADD THIS BLOCK
+              // Adult
+              _buildPassengerTypeButton(0, "Adult"),
+              // Child
+              if (widget.childCount! > 0) _buildPassengerTypeButton(1, "Child"),
+              // Infant (shows snackbar)
               if (widget.infantCount! > 0)
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedPassengerType = 2;
-                    });
-
-                    // SHOW MESSAGE WHEN INFANT CLICKED
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Meals are not available for infants."),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                    decoration: BoxDecoration(
-                      color: selectedPassengerType == 2
-                          ? const Color(0xFFF37023)
-                          : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      "Infant",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildPassengerTypeButton(2, "Infant"),
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // 🔽 Scrollable meals list
+          // ────────────────────────────────────────────────
+          // Horizontal scroll of passenger cards
+          // ────────────────────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: List.generate(
-                    selectedPassengerType == 0
-                        ? widget.adultCount!
+                  _getPassengerCountForType(selectedPassengerType),
+                  (index) {
+                    final passengerType = selectedPassengerType == 0
+                        ? "Adult"
                         : selectedPassengerType == 1
-                            ? widget.childCount!
-                            : 0, // INFANT → 0 meals
+                            ? "Child"
+                            : "Infant";
 
-                    (index) {
-                  String passengerType =
-                      selectedPassengerType == 0 ? "Adult" : "Child";
-                  String passengerKey = "$passengerType ${index + 1}";
+                    final passengerKey = "$passengerType ${index + 1}";
 
-                  return Container(
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 🟧 Meals title inside each box
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8, left: 4),
-                          child: Text(
-                            selectedPassengerType == 0
-                                ? "🍴 Selected meals for Adult ${index + 1}"
-                                : "🍴 Selected meals for Child ${index + 1}",
-                            style: const TextStyle(
-                              color: Color(0xFFF37023),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                    return Container(
+                      width: MediaQuery.of(context).size.width * 0.88,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.12),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10, left: 4),
+                            child: Text(
+                              selectedPassengerType == 2
+                                  ? "🍴 No meals available for Infant ${index + 1}"
+                                  : "🍴 Meals for $passengerType ${index + 1}",
+                              style: const TextStyle(
+                                color: Color(0xFFF37023),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
-                        ),
-
-                        // 🔹 Dynamic scrollable meal list inside each box
-                        Flexible(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              children: selectedPassengerType == 2
-                                  ? [
-                                      /* infant message */
-                                    ]
-                                  : groupedMeals[routes[selectedbuild]]!
+                          if (selectedPassengerType == 2)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 12),
+                              child: Text(
+                                "Infants do not require meal selection.",
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 14),
+                              ),
+                            )
+                          else
+                            Flexible(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: groupedMeals[routes[selectedbuild]]!
                                       .map((meal) {
-                                      final isMandatory = meal.code == "NoMeal";
-                                      final currentRoute =
-                                          routes[selectedbuild];
-                                      final passengerType =
-                                          selectedPassengerType == 0
-                                              ? "Adult"
-                                              : "Child";
-                                      final passengerKey =
-                                          "$passengerType ${index + 1}";
+                                    final isNoMeal = meal.code == "NoMeal";
+                                    final currentRoute = routes[selectedbuild];
 
-                                      bool isChecked =
-                                          selectedMealData[currentRoute]
-                                                      ?[passengerKey]
-                                                  ?.any((m) =>
-                                                      m["Code"] == meal.code) ??
-                                              false;
+                                    bool isChecked =
+                                        selectedMealData[currentRoute]
+                                                    ?[passengerKey]
+                                                ?.any((m) =>
+                                                    m["Code"] == meal.code) ??
+                                            false;
 
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 2, horizontal: 5),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              flex: 5,
-                                              child: Text(
-                                                meal.description.isEmpty
-                                                    ? "No Meal"
-                                                    : meal.airlineDescription,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 3, horizontal: 4),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: Text(
+                                              isNoMeal
+                                                  ? "No Meal"
+                                                  : (meal.airlineDescription ??
+                                                      meal.code ??
+                                                      "Meal"),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Flexible(
+                                            flex: 2,
+                                            child: Text(
+                                              isNoMeal
+                                                  ? "0"
+                                                  : '₹${meal.price ?? 0}',
+                                              style: TextStyle(
+                                                color: isNoMeal
+                                                    ? Colors.orange
+                                                    : Colors.black87,
+                                                fontWeight: isNoMeal
+                                                    ? FontWeight.w600
+                                                    : FontWeight.normal,
                                               ),
                                             ),
-                                            const SizedBox(width: 10),
-                                            Flexible(
-                                              flex: 2,
-                                              child: Text(
-                                                isMandatory
-                                                    ? "0.0"
-                                                    : '₹${meal.price}',
-                                                style: TextStyle(
-                                                  color: isMandatory
-                                                      ? Colors.orange
-                                                      : Colors.black,
-                                                  fontWeight: isMandatory
-                                                      ? FontWeight.w600
-                                                      : FontWeight.normal,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 5),
-                                            Transform.scale(
-                                              scale: 0.9,
-                                              child: Checkbox(
-                                                value: isMandatory
-                                                    ? true
-                                                    : isChecked,
-                                                onChanged: isMandatory
-                                                    ? null
-                                                    : (value) {
-                                                        final route =
-                                                            '${meal.origin}-${meal.destination}';
-                                                        final paxType =
-                                                            selectedPassengerType;
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Transform.scale(
+                                            scale: 0.95,
+                                            child: Checkbox(
+                                              value:
+                                                  isNoMeal ? true : isChecked,
+                                              activeColor:
+                                                  const Color(0xFFF37023),
+                                              onChanged: isNoMeal
+                                                  ? null
+                                                  : (bool? value) {
+                                                      final route =
+                                                          currentRoute;
+                                                      final paxType =
+                                                          selectedPassengerType;
 
-                                                        if (value!) {
-                                                          // 🔥 Allow only ONE meal per passenger
+                                                      if (value == true) {
+                                                        // Allow only ONE meal → clear previous
+                                                        selectedMealData[route]
+                                                                ?[passengerKey]
+                                                            ?.clear();
+                                                        storeSelectedMeal(
+                                                          route,
+                                                          paxType,
+                                                          meal,
+                                                          index,
+                                                        );
+                                                      } else {
+                                                        selectedMealData[route]
+                                                                ?[passengerKey]
+                                                            ?.removeWhere((m) =>
+                                                                m["Code"] ==
+                                                                meal.code);
+                                                        if (selectedMealData[
+                                                                        route]?[
+                                                                    passengerKey]
+                                                                ?.isEmpty ??
+                                                            true) {
                                                           selectedMealData[
-                                                                      route]?[
-                                                                  passengerKey]
-                                                              ?.clear();
-
-                                                          storeSelectedMeal(
-                                                              route,
-                                                              paxType,
-                                                              meal,
-                                                              index);
-                                                        } else {
-                                                          selectedMealData[
-                                                                      route]?[
-                                                                  passengerKey]
-                                                              ?.removeWhere((m) =>
-                                                                  m["Code"] ==
-                                                                  meal.code);
-                                                          if (selectedMealData[
-                                                                          route]
-                                                                      ?[
-                                                                      passengerKey]
-                                                                  ?.isEmpty ==
-                                                              true) {
-                                                            selectedMealData[
-                                                                    route]?[
-                                                                passengerKey] = [];
-                                                          }
+                                                                  route]?[
+                                                              passengerKey] = [];
                                                         }
-                                                        setState(() {});
-                                                      },
-                                              ),
+                                                      }
+                                                      recalculateTotalPrice();
+                                                      setState(
+                                                          () {}); // important!
+                                                    },
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -1119,20 +1458,104 @@ class _AdditionsState extends State<Additions> {
     );
   }
 
-  buildseat() {
+  Widget _buildPassengerTypeButton(int type, String label) {
+    final bool isSelected = selectedPassengerType == type;
+    final bool isInfant = type == 2;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedPassengerType = type;
+        });
+        if (isInfant) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Meals are not available for infants."),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF37023) : Colors.grey[300],
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _getPassengerCountForType(int type) {
+    if (type == 0) return widget.adultCount ?? 0;
+    if (type == 1) return widget.childCount ?? 0;
+    return 0; // infant → no meals
+  }
+
+  void showFareBreakupSheet(BuildContext context) {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (context) {
+        final double realBaggageTotal = calculateBaggageTotal(); // ← here
+        final double realMealsTotal = calculateMealsTotal(); // ← add this
+        return FareBreakupSheet(
+          basefare: totalBaseFare,
+          tax: totalTax,
+          adultCount: totaladultCount,
+          childCount: totalchildCount,
+          infantCount: totalinfantCount,
+          adultfare: adultFare,
+          childfare: childFare,
+          infantfare: infantFare,
+          total: overallFare,
+          adultTax: 0,
+          childTax: 0,
+          infantTax: 0,
+          convenienceFee: 0,
+          coupouncode: coupouncode,
+          ssrData: true,
+          meal: selectedMealData,
+          seat: selectedSeatPayload,
+          baggage: realBaggageTotal,
+          othercharges: othercharges,
+        );
+      },
+    );
+  }
+
+  Widget buildseat() {
     return SizedBox(
-        height: MediaQuery.sizeOf(context).height,
-        width: MediaQuery.sizeOf(context).width,
-        child: SeatSelectionScreen(
-            traceid: widget.traceid,
-            resultindex: widget.resultindex,
-            adultCount: widget.adultCount,
-            childCount: widget.childCount,
-            infantCount: widget.infantCount,
-            onPayloadUpdated: (payload) {
-              setState(() {
-                selectedSeatPayload = payload;
-              });
-            }));
+      height: MediaQuery.of(context).size.height,
+      width: MediaQuery.of(context).size.width,
+      child: SeatSelectionScreen(
+        traceid: widget.traceid,
+        resultindex: widget.resultindex,
+        adultCount: widget.adultCount,
+        childCount: widget.childCount,
+        infantCount: widget.infantCount,
+        initialPayload: selectedSeatPayload,
+        onPayloadUpdated: (newPayload) {
+          setState(() {
+            selectedSeatPayload = newPayload;
+          });
+          recalculateTotalPrice();
+        },
+        outBoundData: widget.outBoundData,
+        inBoundData: widget.inBoundData,
+      ),
+    );
   }
 }

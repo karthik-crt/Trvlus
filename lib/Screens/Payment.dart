@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -83,6 +84,8 @@ class MakePaymentScreen extends StatefulWidget {
   final Map<String, dynamic> outBoundData;
   final Map<String, dynamic> inBoundData;
   Map<String, dynamic> meal;
+  final List<Map<String, dynamic>> seat;
+  final double baggage;
 
   MakePaymentScreen(
       {required this.flight,
@@ -94,6 +97,8 @@ class MakePaymentScreen extends StatefulWidget {
       required this.cityName,
       required this.cityCode,
       required this.meal,
+      required this.seat,
+      required this.baggage,
       this.airlineCode,
       this.airportName,
       this.desairportName,
@@ -149,7 +154,7 @@ class MakePaymentScreen extends StatefulWidget {
 }
 
 class _MakePaymentScreenState extends State<MakePaymentScreen> {
-  String selectedPaymentMethod = 'Google Pay';
+  String selectedPaymentMethod = 'WALLET';
   final TextEditingController _cardNumberController = TextEditingController();
   late farequote.FareQuotesData fareQuote;
   late farequote.FareQuotesData infareQuote;
@@ -168,6 +173,30 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   double childFare = 0;
   double infantFare = 0;
   double totalBalance = 0;
+  double mealTotal = 0.0;
+  double seatTotal = 0.0;
+
+  // ── Add these for countdown ────────────────────────────────
+  late Timer _timer;
+  int _secondsRemaining = 30 * 60;
+
+  String get formattedTime {
+    int minutes = _secondsRemaining ~/ 60;
+    int seconds = _secondsRemaining % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  void startCountdown() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        setState(() {
+          _secondsRemaining--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -175,15 +204,19 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     super.initState();
     getCountryCode();
     loadBalance();
+    startCountdown(); // ← Start timer here
+    print("FAREEEEE");
+    print(totalBalance);
   }
 
   Future<void> loadBalance() async {
     final prefs = await SharedPreferences.getInstance();
     double? balance = prefs.getDouble("total_balance");
     print("balancebalance$balance");
+    print(widget.trvlusNetFare);
 
     setState(() {
-      totalBalance = balance ?? 0.0; // ADD THIS
+      totalBalance = balance ?? 0.0;
     });
   }
 
@@ -298,6 +331,33 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
       isLoading = false;
+
+      // Calculate meal total
+      mealTotal = 0.0;
+      if (widget.meal.isNotEmpty) {
+        widget.meal.forEach((route, passengerMap) {
+          if (passengerMap is Map) {
+            passengerMap.forEach((passengerKey, meals) {
+              if (meals is List) {
+                for (var m in meals) {
+                  mealTotal += ((m['Price'] as num?)?.toDouble() ?? 0.0);
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // Calculate seat total
+      seatTotal = 0.0;
+      for (var s in widget.seat) {
+        seatTotal += ((s['Price'] as num?)?.toDouble() ?? 0.0);
+      }
+
+      // Add SSR costs to overallFare
+      overallFare += mealTotal + seatTotal + widget.baggage;
+      print(
+          "overallFare with SSR: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: ${widget.baggage})");
     });
   }
 
@@ -1309,6 +1369,16 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
               //     ),
               //   ),
               // ),
+
+              Text(
+                "Session expires in $formattedTime",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.orange.shade900,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 16.h),
               Card(
                 color: Colors.white,
                 child: Padding(
@@ -1454,7 +1524,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                   ],
                 ),
                 SizedBox(height: 5.h),
-                if (totalBalance >= (widget.trvlusNetFare ?? 0))
+                // if (totalBalance >= (widget.trvlusNetFare ?? 0))
+                if ((widget.trvlusNetFare ?? 0) >= totalBalance)
                   ElevatedButton(
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
@@ -1580,9 +1651,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           showConvenienceFee: true,
           convenienceFee: convenienceFee,
           othercharges: othercharges,
-          meal: {},
-          seat: [],
-          baggage: 0.0,
+          ssrData: true,
+          meal: widget.meal,
+          seat: widget.seat,
+          baggage: widget.baggage,
         );
       },
     );

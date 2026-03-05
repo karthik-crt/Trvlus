@@ -321,6 +321,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
   List<List<dynamic>> getFilteredResults() {
     var results = searchData.response.results;
+    if (results.isEmpty) return []; // ← ADD THIS
+
     filterorigin =
         results.first.first.segments.first.first.origin.airport.cityName;
     filterdestination =
@@ -999,10 +1001,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                 double othercharges =
                                     lowestPriceFlight.fare.otherCharges;
                                 print("othercharges$othercharges");
-                                int finaloffFare = (publishFare +
-                                        othercharges -
-                                        finalflatoffer)
-                                    .round();
+                                int finaloffFare =
+                                    (publishFare - finalflatoffer).round();
                                 print("finaloffFare$finaloffFare");
 
                                 // Duration and stops calculation
@@ -1490,9 +1490,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                 ),
                                               ],
                                             ),
-
                                             const SizedBox(height: 10),
-
                                             // EXPANDED SECTION - Show ALL fare variants
                                             if (lowestPriceFlight.isExpanded &&
                                                 selectedindex == index)
@@ -1658,8 +1656,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                   print(
                                                       "othercharges$othercharges");
                                                   int varFinaloffFare =
-                                                      (varPublishFare +
-                                                              othercharges -
+                                                      (varPublishFare -
                                                               varFinalflatoffer)
                                                           .round();
 
@@ -2388,6 +2385,9 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                       .push(
                                                                     context,
                                                                     MaterialPageRoute(
+                                                                      settings:
+                                                                          RouteSettings(
+                                                                              name: '/flightDetails'),
                                                                       builder:
                                                                           (context) =>
                                                                               FlightDetailsPage(

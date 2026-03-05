@@ -27,6 +27,7 @@ import '../models/payment.dart' as paymentStatus;
 import '../models/search_data.dart' as search;
 import '../models/selecttraveler.dart' as traveller;
 import '../models/ssr.dart' as ssrdata;
+import '../models/user.dart' as userStatus;
 
 late GlobalKey<NavigatorState> _navigatorKey;
 
@@ -106,7 +107,8 @@ class ApiBaseHelper {
       case 500:
       default:
         throw FetchDataException(
-          'Error occurred while Communication with Server with StatusCode : ${response.statusCode}',
+          'Error occurred while Communication with Server with StatusCode : ${response
+              .statusCode}',
         );
     }
   }
@@ -180,8 +182,7 @@ class ApiBaseHelper {
     scaffold.showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<dynamic> post(
-    String url, [
+  Future<dynamic> post(String url, [
     dynamic body,
     Map<String, String>? customHeaders,
   ]) async {
@@ -207,9 +208,9 @@ class ApiBaseHelper {
         apiUrl,
         data: body,
         options: (url == "ticketInvoice" ||
-                url == "ticketsearch" ||
-                url == "noLccBook" ||
-                url == "cancel-req")
+            url == "ticketsearch" ||
+            url == "noLccBook" ||
+            url == "cancel-req")
             ? Options(headers: headers)
             : null,
       );
@@ -231,8 +232,7 @@ class ApiBaseHelper {
     return responseJson;
   }
 
-  Future<dynamic> postCalender(
-    String url, [
+  Future<dynamic> postCalender(String url, [
     dynamic body,
     Map<String, String>? customHeaders,
   ]) async {
@@ -260,8 +260,8 @@ class ApiBaseHelper {
         apiUrl,
         data: body,
         options: (url == "ticketInvoice" ||
-                url == "ticketsearch" ||
-                url == "noLccBook")
+            url == "ticketsearch" ||
+            url == "noLccBook")
             ? Options(headers: headers)
             : null,
       );
@@ -491,10 +491,8 @@ class ApiService {
   // }
 
   // FAREQUOTE
-  Future<fareQuote.FareQuotesData> farequote(
-    String resultIndex,
-    String traceid,
-  ) async {
+  Future<fareQuote.FareQuotesData> farequote(String resultIndex,
+      String traceid,) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     // final accessToken = prefs.getString("access_token");
@@ -555,15 +553,13 @@ class ApiService {
   }
 
   //HOMEPAGE DATE PICKER
-  Future<Map<String, dynamic>> getCalendarFare(
-    String origin,
-    String destination,
-    selectedDepatureDate,
-  ) async {
+  Future<Map<String, dynamic>> getCalendarFare(String origin,
+      String destination,
+      selectedDepatureDate,) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     String formattedDate =
-        DateFormat('yyyy-MM-dd').format(selectedDepatureDate);
+    DateFormat('yyyy-MM-dd').format(selectedDepatureDate);
     print("formattedDateformattedDate$formattedDate");
 
     if (tokenId == null) {
@@ -605,8 +601,7 @@ class ApiService {
 
   // HOLD TICKET BOOKING
 
-  Future<Map<String, dynamic>> holdTicket(
-      String resultIndex,
+  Future<Map<String, dynamic>> holdTicket(String resultIndex,
       String traceid,
       flightNumber,
       airlineName,
@@ -677,7 +672,10 @@ class ApiService {
       final expiry = passenger['Expiry'];
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -697,7 +695,9 @@ class ApiService {
         "DateOfBirth": "${formattedDOB}T00:00:00",
         "Gender": gender,
         "PassportNo": passenger['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "AddressLine1": "NA",
@@ -744,7 +744,10 @@ class ApiService {
       final expiry = childpassenger['Expiry'];
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -760,7 +763,9 @@ class ApiService {
           "DateOfBirth": "${formattedDOB}T00:00:00",
           "Gender": '1',
           "PassportNo": childpassenger['Passport No'] ?? "",
-          "PassportExpiry": formattedExpiry.trim().isNotEmpty
+          "PassportExpiry": formattedExpiry
+              .trim()
+              .isNotEmpty
               ? "${formattedExpiry}T00:00:00"
               : "",
           "AddressLine1": "NA",
@@ -802,7 +807,10 @@ class ApiService {
       final expiry = infantpassenger['Expiry'];
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -819,7 +827,9 @@ class ApiService {
           "DateOfBirth": "${formattedDOB}T00:00:00",
           "Gender": '1',
           "PassportNo": infantpassenger['Passport No'] ?? "",
-          "PassportExpiry": formattedExpiry.trim().isNotEmpty
+          "PassportExpiry": formattedExpiry
+              .trim()
+              .isNotEmpty
               ? "${formattedExpiry}T00:00:00"
               : "",
           "AddressLine1": "NA",
@@ -893,7 +903,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -918,7 +931,7 @@ class ApiService {
         "LastName": p['lastname'],
         "PaxType": 1,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": 1,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
@@ -926,7 +939,9 @@ class ApiService {
         "GSTNumber": "",
         "GSTCompanyEmail": "",
         "PassportNo": p['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
@@ -1005,7 +1020,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1018,7 +1036,7 @@ class ApiService {
         "LastName": cp['lastname'],
         "PaxType": 2,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": gender,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
@@ -1026,7 +1044,9 @@ class ApiService {
         "GSTNumber": "",
         "GSTCompanyEmail": "",
         "PassportNo": cp['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
@@ -1105,7 +1125,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1118,7 +1141,7 @@ class ApiService {
         "LastName": ip['lastname'],
         "PaxType": 3,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": gender,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
@@ -1126,7 +1149,9 @@ class ApiService {
         "GSTNumber": "",
         "GSTCompanyEmail": "",
         "PassportNo": ip['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
@@ -1179,9 +1204,9 @@ class ApiService {
 
       String firstCode = "CR${random.nextInt(100)}"; // 0–99
       String middleCode =
-          random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
+      random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
       String endCode =
-          random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
+      random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
 
       return "$firstCode-$middleCode-$endCode";
     }
@@ -1259,8 +1284,7 @@ class ApiService {
   }
 
   // DIRECTTICKET
-  Future<Map<String, dynamic>> ticket(
-      String resultIndex,
+  Future<Map<String, dynamic>> ticket(String resultIndex,
       String traceid,
       flightNumber,
       airlineName,
@@ -1330,7 +1354,9 @@ class ApiService {
       print("dateofbirth$dob");
 
       String formattedDOB = "";
-      if (dob != null && dob.toString().isNotEmpty) {
+      if (dob != null && dob
+          .toString()
+          .isNotEmpty) {
         final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
         formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
       } else {
@@ -1342,7 +1368,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1364,14 +1393,16 @@ class ApiService {
         "LastName": passenger['lastname'],
         "PaxType": 1,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": gender,
 
         // PASSPORT NO SAFE
         "PassportNo": passenger['Passport No'] ?? "",
 
         // PASSPORT EXPIRY SAFE
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
 
@@ -1421,7 +1452,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1434,10 +1468,12 @@ class ApiService {
           "LastName": childpassenger['lastname'],
           "PaxType": 2, // child
           "DateOfBirth":
-              formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+          formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
           "Gender": '1',
           "PassportNo": childpassenger['Passport No'] ?? "",
-          "PassportExpiry": formattedExpiry.trim().isNotEmpty
+          "PassportExpiry": formattedExpiry
+              .trim()
+              .isNotEmpty
               ? "${formattedExpiry}T00:00:00"
               : "",
           "AddressLine1": "NA",
@@ -1480,7 +1516,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1494,10 +1533,12 @@ class ApiService {
           "LastName": infantpassenger['lastname'],
           "PaxType": 3,
           "DateOfBirth":
-              formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+          formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
           "Gender": '1',
           "PassportNo": infantpassenger['Passport No'] ?? "",
-          "PassportExpiry": formattedExpiry.trim().isNotEmpty
+          "PassportExpiry": formattedExpiry
+              .trim()
+              .isNotEmpty
               ? "${formattedExpiry}T00:00:00"
               : "",
           "AddressLine1": "NA",
@@ -1532,9 +1573,9 @@ class ApiService {
 
       String firstCode = "CR${random.nextInt(100)}"; // 0–99
       String middleCode =
-          random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
+      random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
       String endCode =
-          random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
+      random.nextInt(1000000).toString().padLeft(6, '0'); // 000000–999999
 
       return "$firstCode-$middleCode-$endCode";
     }
@@ -1587,7 +1628,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1612,7 +1656,7 @@ class ApiService {
         "LastName": p['lastname'],
         "PaxType": 1,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": 1,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
@@ -1620,7 +1664,9 @@ class ApiService {
         "GSTNumber": "",
         "GSTCompanyEmail": "",
         "PassportNo": p['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
@@ -1699,7 +1745,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1712,7 +1761,7 @@ class ApiService {
         "LastName": cp['lastname'],
         "PaxType": 2,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": gender,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
@@ -1720,7 +1769,9 @@ class ApiService {
         "GSTNumber": "",
         "GSTCompanyEmail": "",
         "PassportNo": cp['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
@@ -1799,7 +1850,10 @@ class ApiService {
       print("expiry$expiry");
 
       String formattedExpiry = "";
-      if (expiry != null && expiry.toString().trim().isNotEmpty) {
+      if (expiry != null && expiry
+          .toString()
+          .trim()
+          .isNotEmpty) {
         final parsedExpiry = DateFormat('dd-MM-yyyy').parse(expiry);
         formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedExpiry);
       } else {
@@ -1812,7 +1866,7 @@ class ApiService {
         "LastName": ip['lastname'],
         "PaxType": 3,
         "DateOfBirth":
-            formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
+        formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
         "Gender": gender,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
@@ -1820,7 +1874,9 @@ class ApiService {
         "GSTNumber": "",
         "GSTCompanyEmail": "",
         "PassportNo": ip['Passport No'] ?? "",
-        "PassportExpiry": formattedExpiry.trim().isNotEmpty
+        "PassportExpiry": formattedExpiry
+            .trim()
+            .isNotEmpty
             ? "${formattedExpiry}T00:00:00"
             : "",
         "PassportIssueDate": "",
@@ -1899,7 +1955,7 @@ class ApiService {
         "booking_amount": trvlusNetFare
       }, // fill as per your app
       "user": userID, // replace with actual value
-      "role": 3, // replace with actual value
+      "role": 5, // replace with actual value
       "document_type": "Passport",
       "commission_amt": commisionPercentage, // double.parse if numeric
       "service_tax": 50,
@@ -1955,11 +2011,9 @@ class ApiService {
   }
 
   // HOLD-->TICKET BOOKING
-  Future<Map<String, dynamic>> ticketInvoice(
-    String pnr,
-    String bookingId,
-    traceid,
-  ) async {
+  Future<Map<String, dynamic>> ticketInvoice(String pnr,
+      String bookingId,
+      traceid,) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     final userID = prefs.getString('user_id');
@@ -1989,7 +2043,7 @@ class ApiService {
 
     // 🔥 Fix here
     final decode =
-        response is Map<String, dynamic> ? response : {"success": response};
+    response is Map<String, dynamic> ? response : {"success": response};
 
     debugPrint(
       "ticketInvoice response: ${jsonEncode(decode)}",
@@ -2065,18 +2119,16 @@ class ApiService {
   // SEARCHFLIGHT
   String? formattedReturnDate;
 
-  Future<search.SearchData> getSearchResult(
-    String airportCode,
-    String fromAirport,
-    String toairportCode,
-    String toAirport,
-    String selectedDepDate,
-    String selectedReturnDate,
-    String selectedTripType,
-    int adultCount,
-    int? childCount,
-    int? infantCount,
-  ) async {
+  Future<search.SearchData> getSearchResult(String airportCode,
+      String fromAirport,
+      String toairportCode,
+      String toAirport,
+      String selectedDepDate,
+      String selectedReturnDate,
+      String selectedTripType,
+      int adultCount,
+      int? childCount,
+      int? infantCount,) async {
     final prefs = await SharedPreferences.getInstance();
     final adult = adultCount;
     final child = childCount;
@@ -2103,30 +2155,30 @@ class ApiService {
       "PreferredAirlines": null,
       "Segments": triptype == 1
           ? [
-              {
-                "Origin": airportCode,
-                "Destination": toairportCode,
-                "FlightCabinClass": "1",
-                "PreferredDepartureTime": formatted + "T00:00:00",
-                "PreferredArrivalTime": formatted + "T00:00:00",
-              },
-            ]
+        {
+          "Origin": airportCode,
+          "Destination": toairportCode,
+          "FlightCabinClass": "1",
+          "PreferredDepartureTime": formatted + "T00:00:00",
+          "PreferredArrivalTime": formatted + "T00:00:00",
+        },
+      ]
           : [
-              {
-                "Origin": airportCode,
-                "Destination": toairportCode,
-                "FlightCabinClass": "1",
-                "PreferredDepartureTime": formatted + "T00:00:00",
-                "PreferredArrivalTime": formatted + "T00:00:00",
-              },
-              {
-                "Origin": toairportCode,
-                "Destination": airportCode,
-                "FlightCabinClass": "1",
-                "PreferredDepartureTime": "${formattedReturnDate}T00:00:00",
-                "PreferredArrivalTime": "${formattedReturnDate}T00:00:00",
-              },
-            ],
+        {
+          "Origin": airportCode,
+          "Destination": toairportCode,
+          "FlightCabinClass": "1",
+          "PreferredDepartureTime": formatted + "T00:00:00",
+          "PreferredArrivalTime": formatted + "T00:00:00",
+        },
+        {
+          "Origin": toairportCode,
+          "Destination": airportCode,
+          "FlightCabinClass": "1",
+          "PreferredDepartureTime": "${formattedReturnDate}T00:00:00",
+          "PreferredArrivalTime": "${formattedReturnDate}T00:00:00",
+        },
+      ],
       "Sources": null,
     };
     print("params$params");
@@ -2139,7 +2191,7 @@ class ApiService {
 
   // COMMISSION PERCENTAGE
   Future<commissionpercentage.ComissionPercentage>
-      commissionPercentage() async {
+  commissionPercentage() async {
     try {
       print("mobileCommission");
       // 🔹 Call API (no token check required)
@@ -2179,8 +2231,7 @@ class ApiService {
 
   // GET BookingHistory BY ID
   Future<bookinghistoryID.Getbookingdetailsid> getbookingdetailHistory(
-    id,
-  ) async {
+      id,) async {
     final response = await _helper.get("ticketbooking?id=$id");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
@@ -2201,19 +2252,18 @@ class ApiService {
   Future<profileupdatation.Getprofile> getprofileupdate(id) async {
     final response = await _helper.dio.get("updatemobileUser?id=$id");
     print("decodedecode$response");
+    print("getprofileupdate$response");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response.data;
     print("decodedecode$decode");
     return profileupdatation.getprofileFromJson(decode);
   }
 
-  Future<profileupdatation.Getprofile> profileupdate(
-    firstname,
-    lastname,
-    email,
-    mobile,
-    date,
-  ) async {
+  Future<profileupdatation.Getprofile> profileupdate(firstname,
+      lastname,
+      email,
+      mobile,
+      date,) async {
     final prefs = await SharedPreferences.getInstance();
     print("API CALLING");
     print("firstname$firstname");
@@ -2252,11 +2302,11 @@ class ApiService {
   }
 
   // PROFILE UPDATION
-  Future<profileupdatation.Getprofile> userprofileupdate(
-    id,
-    String imagePath,
-  ) async {
-    final fileName = imagePath.split('/').last;
+  Future<profileupdatation.Getprofile> userprofileupdate(id,
+      String imagePath,) async {
+    final fileName = imagePath
+        .split('/')
+        .last;
 
     final formData = FormData.fromMap({
       "user_images": await MultipartFile.fromFile(
@@ -2296,17 +2346,45 @@ class ApiService {
 
     final response = await _helper.get(
         "accountStatus?fromdate=2026-01-01&todate=2026-03-10&userid=$userID");
-    // final decode = _helper.decodeBase64Response(response);
+
     final decode = response;
 
     print("payment response${jsonEncode(decode)}");
-    final amount = response["data"][0]["amount"];
-    print("Amount is: $amount");
-    final pref = await SharedPreferences.getInstance();
 
-    await pref.setDouble("payment", amount);
+    // ✅ SAFE CHECK ADDED (No logic changed)
+    if (response["data"] != null &&
+        response["data"] is List &&
+        response["data"].isNotEmpty) {
+      final amount = response["data"][0]["amount"];
+      print("Amount is: $amount");
+
+      final pref = await SharedPreferences.getInstance();
+      await pref.setDouble(
+          "payment",
+          (amount is int)
+              ? amount.toDouble()
+              : double.tryParse(amount.toString()) ?? 0.0);
+    } else {
+      print("No payment data found");
+
+      final pref = await SharedPreferences.getInstance();
+      await pref.setDouble("payment", 0.0);
+    }
 
     return paymentStatus.paymentStatusFromJson(decode);
+  }
+
+  Future<userStatus.User> user() async {
+    print("USER API CALLING");
+
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('user_id');
+    print("USER API CALLING$userID");
+    final response = await _helper.get("user?id=$userID"); // ✅ FIXED
+    print("response$response");
+    final decode = response;
+    print("decodedecode$decode");
+    return userStatus.userFromJson(decode);
   }
 
   //   CANCEL REQUEST
@@ -2334,11 +2412,9 @@ class ApiService {
   }
 
   // SELECT TRAVELER
-  Future<void> selectTraveler(
-    List passenger,
-    List childpassenger,
-    List infantpassenger,
-  ) async {
+  Future<void> selectTraveler(List passenger,
+      List childpassenger,
+      List infantpassenger,) async {
     final prefs = await SharedPreferences.getInstance();
     final userID = prefs.getString('user_id');
 
@@ -2354,7 +2430,10 @@ class ApiService {
       final formattedDOB = DateFormat('yyyy-MM-dd').format(dob);
 
       String? formattedExpiry;
-      if (p['Expiry'] != null && p['Expiry'].toString().trim().isNotEmpty) {
+      if (p['Expiry'] != null && p['Expiry']
+          .toString()
+          .trim()
+          .isNotEmpty) {
         formattedExpiry = DateFormat('yyyy-MM-dd').format(
           DateFormat('dd-MM-yyyy').parse(p['Expiry']),
         );
@@ -2368,7 +2447,9 @@ class ApiService {
         "last_name": p['lastname'],
         "passport_no": p['Passport No'] ?? "",
         "passport_expiry":
-            formattedExpiry.trim().isNotEmpty ? formattedExpiry : null,
+        formattedExpiry
+            .trim()
+            .isNotEmpty ? formattedExpiry : null,
         "dob": formattedDOB,
         "gender": gender,
         "mobile": p['mobile'],
@@ -2426,8 +2507,8 @@ class ApiService {
   }
 
   // PATCH METHOD
-  Future<void> updatePassenger(
-      int passengerId, Map<String, dynamic> payload) async {
+  Future<void> updatePassenger(int passengerId,
+      Map<String, dynamic> payload) async {
     final response = await _helper.dio.patch(
       "passengers/create/?id=$passengerId",
       data: payload,
@@ -2470,7 +2551,7 @@ class ApiService {
           }
         } else {
           downloadsDir =
-              await getApplicationDocumentsDirectory(); // iOS fallback
+          await getApplicationDocumentsDirectory(); // iOS fallback
         }
 
         String filePath = "${downloadsDir.path}/ticket_$bookingId.pdf";
@@ -2511,7 +2592,7 @@ class ApiService {
           }
         } else {
           downloadsDir =
-              await getApplicationDocumentsDirectory(); // iOS fallback
+          await getApplicationDocumentsDirectory(); // iOS fallback
         }
 
         String filePath = "${downloadsDir.path}/invoice_$bookingId.pdf";
@@ -2555,10 +2636,8 @@ class ApiService {
   }
 }
 
-Map<String, dynamic> decodeBase64Response(
-  Map<String, dynamic> res,
-  String secretKey,
-) {
+Map<String, dynamic> decodeBase64Response(Map<String, dynamic> res,
+    String secretKey,) {
   try {
     // Parse Base64 IV
     final ivBytes = base64Decode(res['iv']);

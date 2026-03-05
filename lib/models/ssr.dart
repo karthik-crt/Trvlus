@@ -52,14 +52,27 @@ class ResponseData {
         return (e as List).map((item) => MealDynamic.fromJson(item)).toList();
       }).toList();
     } else if (json['Meal'] != null) {
-      // Wrap flat meal list into one nested list
-      parsedMealDynamic = [
-        (json['Meal'] as List)
-            .map((item) => MealDynamic.fromJson(item))
-            .toList()
-      ];
+      // parsedMealDynamic = [
+      //   (json['Meal'] as List)
+      //       .map((item) => MealDynamic(
+      //             airlineCode: item['AirlineCode'] ?? "",
+      //             flightNumber: item['FlightNumber'] ?? "",
+      //             wayType: item['WayType'] ?? 0,
+      //             code: item['Code'] ?? "",
+      //             description: item['Description']?.toString() ?? "",
+      //             airlineDescription: item['Description']?.toString() ?? "",
+      //             // ← use description as fallback
+      //             quantity: item['Quantity'] ?? 0,
+      //             currency: item['Currency'] ?? "",
+      //             price: item['Price'] != null
+      //                 ? double.tryParse(item['Price'].toString()) ?? 0
+      //                 : 0,
+      //             origin: item['Origin'] ?? "",
+      //             destination: item['Destination'] ?? "",
+      //           ))
+      //       .toList()
+      // ];
     }
-
     return ResponseData(
       responseStatus: json['ResponseStatus'],
       error: Error.fromJson(json['Error']),
@@ -163,7 +176,7 @@ class Baggage {
 
   factory Baggage.fromJson(Map<String, dynamic> json) {
     return Baggage(
-      airlineCode: json['AirlineCode'],
+      airlineCode: json['AirlineCode'] ?? "",
       flightNumber: json['FlightNumber'] ?? "",
       wayType: json['WayType'],
       code: json['Code'],
