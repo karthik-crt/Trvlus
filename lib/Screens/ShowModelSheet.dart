@@ -20,7 +20,7 @@ class FareBreakupSheet extends StatefulWidget {
   double convenienceFee = 0;
   final double? total;
   final Map<String, dynamic> meal;
-  final double baggage;
+  final Map<String, dynamic> baggage;
   final List<Map<String, dynamic>> seat;
 
   FareBreakupSheet(
@@ -129,6 +129,13 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
       });
     }
 
+    if (baggageData.isNotEmpty) {
+      baggageData.forEach((route, baggages) {
+        for (var baggage in baggages) {
+          baggageTotal += (baggage['Price'] ?? 0).toDouble();
+        }
+      });
+    }
 // Seat
     if (seatData != null) {
       for (var seat in seatData) {
@@ -139,9 +146,9 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("Meal: $mealTotal");
     print("Seat: $seatTotal");
     print("baggage: $baggageData");
-    print("Grand Total: ${mealTotal + seatTotal + baggageData}");
+    print("Grand Total: ${mealTotal + seatTotal + baggageTotal}");
 
-    final ssrTotal = mealTotal + seatTotal + baggageData;
+    final ssrTotal = mealTotal + seatTotal + baggageTotal;
     print("ssrTotal$ssrTotal");
 
     if (widget.coupouncode! > 0) {
@@ -335,7 +342,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                           fontSize: 12.sp, color: Colors.grey)),
                                 ],
                               ),
-                            if (widget.baggage > 0)
+                            if (widget.baggage.isNotEmpty)
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,

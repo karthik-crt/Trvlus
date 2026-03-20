@@ -44,7 +44,7 @@ class Data {
   late final String gstNumber;
   late final String mobile;
   late final String userImages;
-  late final Null dateofbirth;
+  late final String? dateofbirth; // ✅ changed from Null to String?
 
   Data.fromJson(Map<String, dynamic> json) {
     firstName = json['first_name'] ?? "";
@@ -53,7 +53,7 @@ class Data {
     gstNumber = json['gst_number'] ?? "";
     mobile = json['mobile'] ?? "";
     userImages = json['user_images'] ?? "";
-    dateofbirth = null;
+    dateofbirth = json['dateofbirth']; // ✅ actually reads from JSON now
   }
 
   Map<String, dynamic> toJson() {

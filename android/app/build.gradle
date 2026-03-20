@@ -32,7 +32,7 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 
 android {
     namespace "com.booking.trvlus"
-    compileSdkVersion 35
+    compileSdkVersion 36
 
 
     // ✅ Use NDK 28.1 (supports 16KB memory page size)
@@ -56,7 +56,7 @@ android {
     defaultConfig {
         applicationId "com.booking.trvlus"
         minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 35
+        targetSdkVersion 36
 //        targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

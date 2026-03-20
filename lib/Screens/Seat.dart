@@ -15,19 +15,22 @@ class SeatSelectionScreen extends StatefulWidget {
   final List<Map<String, dynamic>>? initialPayload;
   final Map<String, dynamic>? outBoundData;
   final Map<String, dynamic>? inBoundData;
+  final String? craftType; // ← add this
 
-  const SeatSelectionScreen(
-      {super.key,
-      this.traceid,
-      this.resultindex,
-      this.adultCount,
-      this.childCount,
-      this.infantCount,
-      this.onPayloadUpdated,
-      this.initialPayload,
-      this.inBoundData,
-      this.airlineCode,
-      this.outBoundData});
+  const SeatSelectionScreen({
+    super.key,
+    this.traceid,
+    this.resultindex,
+    this.adultCount,
+    this.childCount,
+    this.infantCount,
+    this.onPayloadUpdated,
+    this.initialPayload,
+    this.inBoundData,
+    this.airlineCode,
+    this.outBoundData,
+    this.craftType,
+  });
 
   @override
   _SeatSelectionScreenState createState() => _SeatSelectionScreenState();
@@ -118,7 +121,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
         if (ssrseatData.response?.seatDynamic != null &&
             ssrseatData.response!.seatDynamic.isNotEmpty) {
           for (var sd in ssrseatData.response.seatDynamic) {
-            segments.addAll(sd.segmentSeat);
+            for (var seg in sd.segmentSeat) {
+              segments.add(seg); // Add every segment from every seatDynamic
+            }
           }
         }
       }
@@ -166,60 +171,65 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
   List<Map<String, dynamic>> buildSeatDynamicPayload() {
     List<Map<String, dynamic>> seatPayload = [];
 
-    final allSeats = selectedSeatsBySegment.values.expand((e) => e).toList();
+    // Loop by segment
+    for (int segIndex = 0; segIndex < segments.length; segIndex++) {
+      final seatsInSegment = selectedSeatsBySegment[segIndex] ?? [];
 
-    for (int i = 0; i < allSeats.length; i++) {
-      String seatCode = allSeats[i];
+      for (int paxIndex = 0; paxIndex < seatsInSegment.length; paxIndex++) {
+        String seatCode = seatsInSegment[paxIndex];
 
-      bool isRoundTrip = widget.outBoundData != null &&
-          widget.inBoundData != null &&
-          widget.outBoundData!['outresultindex'] != null &&
-          widget.inBoundData!['inresultindex'] != null;
+        bool isRoundTrip = widget.outBoundData != null &&
+            widget.inBoundData != null &&
+            widget.outBoundData!['outresultindex'] != null &&
+            widget.inBoundData!['inresultindex'] != null;
 
-      List allSeatDynamics = [];
+        List allSeatDynamics = [];
+        allSeatDynamics.addAll(ssrseatData.response.seatDynamic);
+        if (isRoundTrip) {
+          allSeatDynamics.addAll(inSsrSeatData.response.seatDynamic);
+        }
 
-      allSeatDynamics.addAll(ssrseatData.response.seatDynamic);
+        var seatInfo = allSeatDynamics
+            .expand((sd) => sd.segmentSeat)
+            .expand((seg) => seg.rowSeats)
+            .expand((row) => row.seats)
+            .firstWhere((s) => s.code == seatCode);
 
-      if (isRoundTrip) {
-        allSeatDynamics.addAll(inSsrSeatData.response.seatDynamic);
+        String paxType;
+        if (paxIndex < widget.adultCount!) {
+          paxType = "Adult";
+        } else if (paxIndex < widget.adultCount! + widget.childCount!) {
+          paxType = "Child";
+        } else {
+          paxType = "Infant";
+        }
+
+        seatPayload.add({
+          "AirlineCode": seatInfo.airlineCode,
+          "FlightNumber":
+              int.tryParse(seatInfo.flightNumber) ?? seatInfo.flightNumber,
+          "CraftType":
+              (seatInfo.craftType != null && seatInfo.craftType!.isNotEmpty)
+                  ? seatInfo.craftType // use SSR value if available
+                  : widget.craftType ?? '',
+          "Origin": seatInfo.origin,
+          "Destination": seatInfo.destination,
+          "AvailablityType": seatInfo.availablityType,
+          "Description": seatInfo.description,
+          "Code": seatInfo.code,
+          "RowNo": int.tryParse(seatInfo.rowNo) ?? seatInfo.rowNo,
+          "SeatNo": seatInfo.seatNo,
+          "SeatType": seatInfo.seatType,
+          "SeatWayType": seatInfo.seatWayType,
+          "Compartment": seatInfo.compartment,
+          "Deck": seatInfo.deck,
+          "Currency": seatInfo.currency,
+          "Price": seatInfo.price ?? 0,
+          // "SeatId": seatInfo.seatId,
+          // "SeatNumber": seatInfo.seatNo,
+          // "paxIndex": paxIndex,
+        });
       }
-
-      var seatInfo = allSeatDynamics
-          .expand((sd) => sd.segmentSeat)
-          .expand((seg) => seg.rowSeats)
-          .expand((row) => row.seats)
-          .firstWhere((s) => s.code == seatCode);
-
-      String paxType;
-
-      if (i < widget.adultCount!) {
-        paxType = "Adult";
-      } else if (i < widget.adultCount! + widget.childCount!) {
-        paxType = "Child";
-      } else {
-        paxType = "Infant";
-      }
-
-      seatPayload.add({
-        "AirlineCode": seatInfo.airlineCode,
-        "FlightNumber": seatInfo.flightNumber,
-        "CraftType": seatInfo.craftType,
-        "Origin": seatInfo.origin,
-        "Destination": seatInfo.destination,
-        "AvailablityType": seatInfo.availablityType,
-        "Description": seatInfo.description,
-        "Code": seatInfo.code,
-        "RowNo": seatInfo.rowNo,
-        "SeatNo": seatInfo.seatNo,
-        "SeatType": seatInfo.seatType,
-        "SeatWayType": seatInfo.seatWayType,
-        "Compartment": seatInfo.compartment,
-        "Deck": seatInfo.deck,
-        "Currency": seatInfo.currency,
-        "Price": seatInfo.price ?? 0,
-        "paxIndex": i,
-        "paxType": paxType,
-      });
     }
 
     return seatPayload;
@@ -402,9 +412,12 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
       rowsWidgets.add(
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: seatWidgets,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: seatWidgets,
+            ),
           ),
         ),
       );

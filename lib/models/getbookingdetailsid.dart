@@ -308,7 +308,7 @@ class PassengerDetails {
         : null;
     GSTCompanyName = json['GSTCompanyName'] ?? "";
     PassportExpiry = json['PassportExpiry'] ?? "";
-    documentDetails = List.from(json['DocumentDetails'])
+    documentDetails = List.from(json['DocumentDetails'] ?? [])
         .map((e) => DocumentDetails.fromJson(e))
         .toList();
     GSTCompanyEmail = json['GSTCompanyEmail'] ?? "";
@@ -744,12 +744,12 @@ class SegmentAdditionalInfo {
   SegmentAdditionalInfo.fromJson(Map<String, dynamic> json) {
     NVA = json['NVA'];
     NVB = json['NVB'];
-    Meal = json['Meal'];
-    Seat = json['Seat'];
-    Baggage = json['Baggage'];
+    Meal = json['Meal'] ?? "";
+    Seat = json['Seat'] ?? "";
+    Baggage = json['Baggage'] ?? "";
     FareBasis = json['FareBasis'];
     CabinBaggage = json['CabinBaggage'];
-    SpecialService = json['SpecialService'];
+    SpecialService = json['SpecialService'] ?? "";
   }
 
   Map<String, dynamic> toJson() {

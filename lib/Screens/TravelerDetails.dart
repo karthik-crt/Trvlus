@@ -2032,10 +2032,10 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
           infantTax: 0,
           convenienceFee: 0,
           coupouncode: coupouncode,
+          othercharges: othercharges,
           meal: {},
           seat: [],
-          othercharges: othercharges,
-          baggage: 0.0,
+          baggage: {},
         );
       },
     );

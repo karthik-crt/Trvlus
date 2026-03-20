@@ -6,7 +6,7 @@ import 'package:trvlus/utils/api_service.dart';
 import '../models/payment.dart';
 import '../models/user.dart';
 import 'Home_Page.dart';
-import 'depositRequest.dart';
+import 'deposit_recharge_screen.dart';
 
 class Wallet extends StatefulWidget {
   const Wallet({super.key});
@@ -49,6 +49,7 @@ class _WalletState extends State<Wallet> {
     myUserId = prefs.getString('user_id');
 
     payment = await ApiService().payment();
+    payment.data.removeWhere((item) => item.roleName == "Secret");
     user = await ApiService().user();
 
     setState(() {
@@ -165,7 +166,8 @@ class _WalletState extends State<Wallet> {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => Depositrequest()));
+                                  builder: (context) =>
+                                      DepositRechargeScreen()));
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,

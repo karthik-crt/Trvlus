@@ -345,6 +345,8 @@ class Seat {
   final int compartment;
   final int deck;
   final String currency;
+  final String seatId;
+  final String seatNumber;
   final double price;
 
   Seat({
@@ -363,26 +365,30 @@ class Seat {
     required this.compartment,
     required this.deck,
     required this.currency,
+    required this.seatId,
+    required this.seatNumber,
     required this.price,
   });
 
   factory Seat.fromJson(Map<String, dynamic> json) {
     return Seat(
       airlineCode: json['AirlineCode'],
-      flightNumber: json['FlightNumber'],
+      flightNumber: json['FlightNumber'].toString(),
       craftType: json['CraftType'] ?? "",
       origin: json['Origin'],
       destination: json['Destination'],
       availablityType: json['AvailablityType'],
       description: json['Description'],
       code: json['Code'],
-      rowNo: json['RowNo'],
+      rowNo: json['RowNo'].toString(),
       seatNo: json['SeatNo'],
       seatType: json['SeatType'],
       seatWayType: json['SeatWayType'],
       compartment: json['Compartment'],
       deck: json['Deck'],
       currency: json['Currency'],
+      seatId: json['Code'],
+      seatNumber: json['SeatNo'] ?? "",
       price: json['Price'].runtimeType != double
           ? double.parse(json['Price'].toString())
           : json['Price'] ?? 0,
@@ -407,6 +413,8 @@ class Seat {
       'Deck': deck,
       'Currency': currency,
       'Price': price,
+      "SeatId": seatId,
+      "SeatNumber": seatNumber
     };
   }
 }

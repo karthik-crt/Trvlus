@@ -428,6 +428,18 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
           .where((g) => g.isNotEmpty)
           .toList();
     }
+    results = results
+        .map(
+          (group) => group
+              .where(
+                (flight) => !flight.segments.first.first.supplierFareClass
+                    .toString()
+                    .contains('.'),
+              )
+              .toList(),
+        )
+        .where((g) => g.isNotEmpty)
+        .toList();
     return results;
   }
 
@@ -924,12 +936,29 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                 print("commissionEarned$commissionEarned");
                                 double customerComm = 0.0;
                                 if (customer.data.isNotEmpty &&
-                                    commissionEarned > 0) {
+                                    commissionEarned >= 0) {
                                   var commData = customer.data[0];
                                   double earned = commissionEarned;
-                                  if (earned >= 0 && earned <= 50) {
+
+                                  if (earned == 0) {
                                     customerComm =
-                                        commData.commission_0_50?.toDouble() ??
+                                        commData.commission_0?.toDouble() ??
+                                            0.0;
+                                  } else if (earned <= 10) {
+                                    customerComm =
+                                        commData.commission_0_10?.toDouble() ??
+                                            0.0;
+                                  } else if (earned <= 20) {
+                                    customerComm =
+                                        commData.commission_10_20?.toDouble() ??
+                                            0.0;
+                                  } else if (earned <= 30) {
+                                    customerComm =
+                                        commData.commission_20_30?.toDouble() ??
+                                            0.0;
+                                  } else if (earned <= 50) {
+                                    customerComm =
+                                        commData.commission_30_50?.toDouble() ??
                                             0.0;
                                   } else if (earned <= 100) {
                                     customerComm = commData.commission_50_100
@@ -979,7 +1008,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                 print(
                                     "finalcustomercommission$finalcustomercommission");
                                 double finalcommissionpercentage =
-                                    finalcustomercommission * 0.02;
+                                    customercommissiondetection * 0.02;
                                 print(
                                     "finalcommissionpercentage$finalcommissionpercentage");
                                 int commissionpercentageround =
@@ -1541,15 +1570,36 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                   double varCustomerComm = 0.0;
                                                   if (customer
                                                           .data.isNotEmpty &&
-                                                      varCommissionEarned > 0) {
+                                                      varCommissionEarned >=
+                                                          0) {
                                                     var commData =
                                                         customer.data[0];
                                                     double earned =
                                                         varCommissionEarned;
-                                                    if (earned >= 0 &&
-                                                        earned <= 50) {
+
+                                                    if (earned == 0.0) {
                                                       varCustomerComm = commData
-                                                              .commission_0_50
+                                                              .commission_0
+                                                              ?.toDouble() ??
+                                                          0.0;
+                                                    } else if (earned <= 10) {
+                                                      varCustomerComm = commData
+                                                              .commission_0_10
+                                                              ?.toDouble() ??
+                                                          0.0;
+                                                    } else if (earned <= 20) {
+                                                      varCustomerComm = commData
+                                                              .commission_10_20
+                                                              ?.toDouble() ??
+                                                          0.0;
+                                                    } else if (earned <= 30) {
+                                                      varCustomerComm = commData
+                                                              .commission_20_30
+                                                              ?.toDouble() ??
+                                                          0.0;
+                                                    } else if (earned <= 50) {
+                                                      varCustomerComm = commData
+                                                              .commission_30_50
                                                               ?.toDouble() ??
                                                           0.0;
                                                     } else if (earned <= 100) {
@@ -1618,7 +1668,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                       "varFinalcustomercommission$varFinalcustomercommission");
                                                   double
                                                       varFinalcommissionpercentage =
-                                                      varFinalcustomercommission *
+                                                      varCustomercommissiondetection *
                                                           0.02;
                                                   print(
                                                       "varFinalcommissionpercentage$varFinalcommissionpercentage");

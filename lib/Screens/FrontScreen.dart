@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../utils/api_service.dart';
 import 'Home_Page.dart';
 
 class FrontScreen extends StatelessWidget {
@@ -83,11 +83,10 @@ class FrontScreen extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 40.w),
                     child: ElevatedButton(
                       onPressed: () async {
-                        await ApiService().flightAuthenticate();
-                        Get.to(SearchFlightPage());
-                        // await ApiService().userAuthenticate();
                         // await ApiService().flightAuthenticate();
-                        // await ApiService().authenticate();
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('is_first_launch', false);
+                        Get.to(SearchFlightPage());
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFFF37023),

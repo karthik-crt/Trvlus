@@ -159,6 +159,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       final verifyOTP =
           await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
       print("VERIFY$verifyOTP");
+      await ApiService().role();
       print("traceidtraceid${widget.traceid}");
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);

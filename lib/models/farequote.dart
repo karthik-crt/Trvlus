@@ -185,8 +185,8 @@ class Results {
             json["IsPassportFullDetailRequiredAtBook"] ?? false,
         resultFareType: json["ResultFareType"] ?? "",
         fare: Fare.fromJson(json["Fare"] ?? {}),
-        fareBreakdown: List<FareBreakdown>.from(
-            json["FareBreakdown"].map((x) => FareBreakdown.fromJson(x))),
+        fareBreakdown: List<FareBreakdown>.from((json["FareBreakdown"] ?? [])
+            .map((x) => FareBreakdown.fromJson(x))),
         segments: List<List<Segment>>.from(json["Segments"]
             .map((x) => List<Segment>.from(x.map((x) => Segment.fromJson(x))))),
         lastTicketDate: DateTime.parse(json["LastTicketDate"]),
@@ -611,7 +611,7 @@ class Segment {
 
   factory Segment.fromJson(Map<String, dynamic> json) => Segment(
         baggage: json["Baggage"] ?? "",
-        cabinBaggage: json["CabinBaggage"],
+        cabinBaggage: json["CabinBaggage"] ?? "",
         cabinClass: json["CabinClass"],
         supplierFareClass: json["SupplierFareClass"] ?? "",
         tripIndicator: json["TripIndicator"],

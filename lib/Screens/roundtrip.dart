@@ -515,11 +515,19 @@ class _RoundtripState extends State<Roundtrip> {
     final commissionEarned = flight.fare.commissionEarned.toDouble();
 
     double customerComm = 0.0;
-    if (customer.data.isNotEmpty && commissionEarned > 0) {
+    if (customer.data.isNotEmpty && commissionEarned >= 0) {
       var commData = customer.data[0];
       double earned = commissionEarned;
-      if (earned >= 0 && earned <= 50) {
-        customerComm = commData.commission_0_50?.toDouble() ?? 0.0;
+      if (earned == 0) {
+        customerComm = commData.commission_0?.toDouble() ?? 0.0;
+      } else if (earned <= 10) {
+        customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+      } else if (earned <= 20) {
+        customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+      } else if (earned <= 30) {
+        customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+      } else if (earned <= 50) {
+        customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
       } else if (earned <= 100) {
         customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
       } else if (earned <= 150) {

@@ -197,7 +197,11 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     });
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
-    print("coupocoupouncode$othercharges");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['tboCommission']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['segments']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['tboCommission']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['segments']}");
+    // print("FLIGHTDETAILPAGE SCREEN");
 
     // ROUNDTRIP
     if (widget.outresultindex != null && widget.inresultindex != null) {
@@ -268,11 +272,20 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           fareQuote.response.results.fare.commissionEarned;
       print("varCommissionEarned$varCommissionEarned");
       double varCustomerComm = 0.0;
-      if (customer.data.isNotEmpty && varCommissionEarned > 0) {
+      if (customer.data.isNotEmpty && varCommissionEarned >= 0) {
         var commData = customer.data[0];
         double earned = varCommissionEarned;
-        if (earned >= 0 && earned <= 50) {
-          varCustomerComm = commData.commission_0_50?.toDouble() ?? 0.0;
+
+        if (earned == 0.0) {
+          varCustomerComm = commData.commission_0?.toDouble() ?? 0.0;
+        } else if (earned <= 10) {
+          varCustomerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+        } else if (earned <= 20) {
+          varCustomerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+        } else if (earned <= 30) {
+          varCustomerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+        } else if (earned <= 50) {
+          varCustomerComm = commData.commission_30_50?.toDouble() ?? 0.0;
         } else if (earned <= 100) {
           varCustomerComm = commData.commission_50_100?.toDouble() ?? 0.0;
         } else if (earned <= 150) {
@@ -2551,7 +2564,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           othercharges: othercharges,
           meal: {},
           seat: [],
-          baggage: 0.0,
+          baggage: {},
         );
       },
     );

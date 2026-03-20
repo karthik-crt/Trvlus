@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/FrontScreen.dart';
 
 import '../utils/api_service.dart';
+import 'Home_Page.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -16,15 +17,29 @@ class _SplashScreenState extends State<SplashScreen> {
   String _statusMessage = "";
 
   @override
+  @override
   void initState() {
     super.initState();
 
-    Timer(Duration(seconds: 5), () {
-      Get.to(
-        FrontScreen(),
-        transition: Transition.rightToLeft,
-        duration: Duration(milliseconds: 600),
-      );
+    Timer(Duration(seconds: 5), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final bool isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
+
+      if (isFirstLaunch) {
+        // First time → Show FrontScreen
+        Get.to(
+          FrontScreen(),
+          transition: Transition.rightToLeft,
+          duration: Duration(milliseconds: 600),
+        );
+      } else {
+        // Already launched before → Go directly to SearchFlightPage
+        Get.to(
+          SearchFlightPage(),
+          transition: Transition.rightToLeft,
+          duration: Duration(milliseconds: 600),
+        );
+      }
     });
 
     _checkAndCallApiOnStart();
@@ -32,13 +47,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<bool> shouldCallApi() async {
     final prefs = await SharedPreferences.getInstance();
-    const String key = 'lastApiCallTime';
 
-    final int? lastCallTime = prefs.getInt(key);
-    final int now = DateTime.now().millisecondsSinceEpoch;
-    const int oneDayInMillis = 24 * 60 * 60 * 1000;
+    String? lastDate = prefs.getString("token_date");
+    String today = DateTime.now().toString().substring(0, 10);
 
-    return lastCallTime == null || (now - lastCallTime) >= oneDayInMillis;
+    return lastDate != today;
   }
 
   Future<void> callApiOnceDailyManually() async {
@@ -48,21 +61,19 @@ class _SplashScreenState extends State<SplashScreen> {
     if (await shouldCallApi()) {
       String? authenticateData =
           await ApiService().flightAuthenticate(); // Call the API
-      // await ApiService().userAuthenticate();
 
-      ///For GEtting agent token
       print("authenticateData: $authenticateData");
 
-      await prefs.setInt(key, DateTime.now().millisecondsSinceEpoch);
-
-      // Parse JSON and save TokenId
-
-      await prefs.setString('tokenId', authenticateData ?? "");
-      print("TokenId saved: $authenticateData");
-
-      print("API called and timestamp updated.");
-    } else {
-      print("API not called - less than 24 hours since last call.");
+      // ✅ Only save date if token was actually received
+      if (authenticateData != null && authenticateData.isNotEmpty) {
+        await prefs.setString('tokenId', authenticateData);
+        await prefs.setString(
+            "token_date", DateTime.now().toString().substring(0, 10));
+        print("TokenId saved: $authenticateData");
+        print("Token date saved");
+      } else {
+        print("❌ Token was null - date NOT saved, will retry tomorrow");
+      }
     }
   }
 

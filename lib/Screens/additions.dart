@@ -24,8 +24,8 @@ class Additions extends StatefulWidget {
   final Result? outboundFlight;
   final Result? inboundFlight;
   final String? outresultindex;
-  final List<Map<String, dynamic>> seatPayload;
   final String? inresultindex;
+  final List<Map<String, dynamic>> seatPayload;
   final Map<String, dynamic>? initialMealData;
   final Map<String, dynamic>? initialBaggageCount;
   final int? initialTabIndex; // 0=Baggage, 1=Seat, 2=Meals
@@ -101,6 +101,8 @@ class _AdditionsState extends State<Additions> {
   Map<String, Map<String, dynamic>> selectedMealData = {};
   List<Map<String, dynamic>> selectedSeatPayload = [];
   bool isOutbound = true;
+  String fareQuoteResultIndex = '';
+  String craftType = ''; // ← add this
 
   // Add this at the top of your _AdditionsState class
   Map<String, Map<int, int>> selectedBaggageCount =
@@ -241,20 +243,23 @@ class _AdditionsState extends State<Additions> {
             ssrData.response.baggage[routeIndex].length > baggageIndex) {
           final baggageItem =
               ssrData.response.baggage[routeIndex][baggageIndex];
+          print("description: ${baggageItem.description}");
+          print("weight: ${baggageItem.weight}");
 
           // Add each baggage item 'count' times
           for (int i = 0; i < count; i++) {
             formattedBaggage[route]!.add({
-              "AirlineCode": baggageItem.airlineCode ?? "SG",
-              "FlightNumber": baggageItem.flightNumber ?? "",
-              "WayType": baggageItem.wayType ?? 2,
-              "Code": baggageItem.code ?? "Baggage",
-              "Description": baggageItem.weight ?? 0,
-              "Weight": baggageItem.weight ?? 0,
-              "Currency": baggageItem.currency ?? "INR",
-              "Price": baggageItem.price ?? 0,
-              "Origin": baggageItem.origin ?? "",
-              "Destination": baggageItem.destination ?? "",
+              "AirlineCode": baggageItem.airlineCode,
+              "FlightNumber":
+                  int.tryParse(baggageItem.flightNumber.toString()) ?? 0,
+              "WayType": baggageItem.wayType,
+              "Code": baggageItem.code,
+              "Description": baggageItem.description, // raw int from SSR
+              "Weight": baggageItem.weight,
+              "Currency": baggageItem.currency,
+              "Price": baggageItem.price,
+              "Origin": baggageItem.origin,
+              "Destination": baggageItem.destination,
             });
           }
         }
@@ -378,6 +383,15 @@ class _AdditionsState extends State<Additions> {
           .ssr(widget.resultindex ?? "", widget.traceid ?? "");
       debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
     }
+    fareQuoteResultIndex = fareQuote.response.results.resultIndex;
+
+    String craftType = '';
+    try {
+      craftType = fareQuote.response.results.segments.first.first.craft ?? '';
+      print("CraftType from FareQuote: $craftType");
+    } catch (e) {
+      print("CraftType extraction failed: $e");
+    }
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
     print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
@@ -437,7 +451,7 @@ class _AdditionsState extends State<Additions> {
     setState(() {
       isLoading = false;
       coupouncode = widget.coupouncode!;
-      othercharges = widget.othercharges!;
+      othercharges = widget.othercharges ?? 0;
 
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalBaseFare");
@@ -571,6 +585,9 @@ class _AdditionsState extends State<Additions> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () {
+                          print("wigent${widget.resultindex}");
+                          // ApiService().bookTicket(selectedSeatPayload,
+                          //     widget.resultindex, widget.traceid);
                           // Same data bundle as back arrow
                           Map<String, dynamic> threeValue = {
                             "meal": selectedMealData,
@@ -1529,7 +1546,7 @@ class _AdditionsState extends State<Additions> {
           ssrData: true,
           meal: selectedMealData,
           seat: selectedSeatPayload,
-          baggage: realBaggageTotal,
+          baggage: selectedBaggageCount,
           othercharges: othercharges,
         );
       },
@@ -1546,6 +1563,8 @@ class _AdditionsState extends State<Additions> {
         adultCount: widget.adultCount,
         childCount: widget.childCount,
         infantCount: widget.infantCount,
+        craftType: craftType,
+        // ← pass it
         initialPayload: selectedSeatPayload,
         onPayloadUpdated: (newPayload) {
           setState(() {

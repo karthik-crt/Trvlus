@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/price_alert_controller.dart';
 
 import '../models/farequote.dart' as farequote;
@@ -150,7 +151,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
   double totalBaggagePrice = 0.0;
   List<Map<String, dynamic>> seat =
       []; // ✅ Correct type - matches seat payload structure
-
   late SsrData ssrData;
   late farequote.FareQuotesData fareQuote;
   late farequote.FareQuotesData infareQuote;
@@ -189,6 +189,10 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       print("beforeOutput");
     });
     print("CONFIRMTRAVELERRR");
+    final prefs = await SharedPreferences.getInstance();
+    double? paymentAmount = prefs.getDouble("payment");
+    print("Stored Amount: $paymentAmount");
+    print("baggagebaggage$totalBaggagePrice");
     print("islcc${widget.isLLC}");
     print("coupoun code${widget.coupouncode}");
     print("islcc${widget.basefare}");
@@ -285,7 +289,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     setState(() {
       isLoading = false;
       coupouncode = widget.coupouncode!;
-      othercharges = widget.othercharges!;
+      othercharges = widget.othercharges ?? 0;
 
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
@@ -309,16 +313,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
       print("AferOutput");
-    });
-  }
-
-  getCountryCode() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    setState(() {
-      isLoading = false;
     });
   }
 
@@ -1727,7 +1721,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               inBoundData: widget.inBoundData,
                               meal: meal,
                               seat: seat,
-                              baggage: totalBaggagePrice,
+                              baggage: baggage,
                               segmentsJson: widget.segmentsJson,
                               coupouncode: widget.coupouncode,
                               commonPublishedFare: widget.commonPublishedFare,
@@ -1804,21 +1798,20 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       }
 
       // Reset and recalculate baggage total
+      // Store full baggage map (like meal) + calculate price
       totalBaggagePrice = 0.0;
       if (value.containsKey("baggage")) {
-        final baggageMap = value["baggage"];
-        if (baggageMap is Map) {
-          baggageMap.forEach((route, list) {
-            if (list is List) {
-              for (var item in list) {
-                final price = item["Price"];
-                if (price != null) {
-                  totalBaggagePrice += (price as num).toDouble();
-                }
+        baggage = Map<String, dynamic>.from(value["baggage"]);
+        baggage.forEach((route, list) {
+          if (list is List) {
+            for (var item in list) {
+              final price = item["Price"];
+              if (price != null) {
+                totalBaggagePrice += (price as num).toDouble();
               }
             }
-          });
-        }
+          }
+        });
       }
 
       // Calculate meal total
@@ -1884,7 +1877,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           ssrData: true,
           meal: meal,
           seat: seat,
-          baggage: totalBaggagePrice,
+          baggage: baggage,
           othercharges: othercharges,
         );
       },

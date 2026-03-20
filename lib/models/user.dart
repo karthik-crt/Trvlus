@@ -154,7 +154,7 @@ class Data {
     firstName = json['first_name'];
     lastName = json['last_name'];
     role = json['role'];
-    userImages = json['user_images'];
+    userImages = json['user_images'] ?? '';
     userImage = json['user_image'];
     panCard = json['pan_card'];
     state = json['state'];

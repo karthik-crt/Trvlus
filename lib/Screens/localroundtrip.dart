@@ -567,11 +567,21 @@ class _LocalroundtripState extends State<Localroundtrip> {
     double otherCharges = flight.fare.otherCharges ?? 0.0;
 
     double customerComm = 0.0;
-    if (customer != null && customer!.data.isNotEmpty && commissionEarned > 0) {
+    if (customer != null &&
+        customer!.data.isNotEmpty &&
+        commissionEarned >= 0) {
       var commData = customer!.data[0];
       double earned = commissionEarned;
-      if (earned >= 0 && earned <= 50) {
-        customerComm = commData.commission_0_50?.toDouble() ?? 0.0;
+      if (earned == 0) {
+        customerComm = commData.commission_0?.toDouble() ?? 0.0;
+      } else if (earned <= 10) {
+        customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+      } else if (earned <= 20) {
+        customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+      } else if (earned <= 30) {
+        customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+      } else if (earned <= 50) {
+        customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
       } else if (earned <= 100) {
         customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
       } else if (earned <= 150) {
@@ -607,11 +617,21 @@ class _LocalroundtripState extends State<Localroundtrip> {
     double plbEarned = flight.fare.plbEarned.toDouble();
 
     double customerComm = 0.0;
-    if (customer != null && customer!.data.isNotEmpty && commissionEarned > 0) {
+    if (customer != null &&
+        customer!.data.isNotEmpty &&
+        commissionEarned >= 0) {
       var commData = customer!.data[0];
       double earned = commissionEarned;
-      if (earned >= 0 && earned <= 50) {
-        customerComm = commData.commission_0_50?.toDouble() ?? 0.0;
+      if (earned == 0) {
+        customerComm = commData.commission_0?.toDouble() ?? 0.0;
+      } else if (earned <= 10) {
+        customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+      } else if (earned <= 20) {
+        customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+      } else if (earned <= 30) {
+        customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+      } else if (earned <= 50) {
+        customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
       } else if (earned <= 100) {
         customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
       } else if (earned <= 150) {
@@ -619,7 +639,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
       } else if (earned <= 200) {
         customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
       } else if (earned <= 250) {
-        customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+        customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
       } else if (earned <= 300) {
         customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
       } else {
@@ -939,6 +959,74 @@ class _LocalroundtripState extends State<Localroundtrip> {
           .substring(11, 16);
       final refundable = selectedOutbound!.isRefundable == true ? "R" : "NR";
 
+      List<Map<String, dynamic>> _buildSegmentJson(Result flight) {
+        List<Map<String, dynamic>> segmentListJson = [];
+
+        for (var segmentGroup in flight.segments) {
+          final firstSegment = segmentGroup.first;
+          final lastSegment = segmentGroup.last;
+
+          final totalDurationMinutes = lastSegment.destination.arrTime
+              .difference(firstSegment.origin.depTime)
+              .inMinutes;
+          final totalHours = totalDurationMinutes ~/ 60;
+          final totalMinutes = totalDurationMinutes % 60;
+          final totalDurationText = "${totalHours}h ${totalMinutes}m";
+
+          final stop = (flight.segments.first.length - 1) == 0
+              ? "Non-Stop"
+              : "${flight.segments.first.length - 1} stop";
+
+          for (int segmentIndex = 0;
+              segmentIndex < segmentGroup.length;
+              segmentIndex++) {
+            final segment = segmentGroup[segmentIndex];
+
+            String layoverText = "";
+            if (segmentIndex > 0) {
+              final prevSegment = segmentGroup[segmentIndex - 1];
+              final layoverMinutes = segment.origin.depTime
+                  .difference(prevSegment.destination.arrTime)
+                  .inMinutes;
+              final h = layoverMinutes ~/ 60;
+              final m = layoverMinutes % 60;
+              layoverText =
+                  "${h}h ${m}m layover at ${prevSegment.destination.airport.cityName}";
+            }
+
+            final depTime = segment.origin.depTime;
+            final arrTime = segment.destination.arrTime;
+
+            segmentListJson.add({
+              "airlineName": segment.airline.airlineName,
+              "airlineCode": segment.airline.airlineCode,
+              "flightNumber": segment.airline.flightNumber,
+              "fromCity": segment.origin.airport.cityName,
+              "fromCode": segment.origin.airport.cityCode,
+              "toCity": segment.destination.airport.cityName,
+              "toCode": segment.destination.airport.cityCode,
+              "departure": DateFormat("dd MMM yy").format(depTime),
+              "depTime": depTime.toString().substring(11, 16),
+              "arrival": DateFormat("dd MMM yy").format(arrTime),
+              "arrTime": arrTime.toString().substring(11, 16),
+              "duration": segment.duration.toString(),
+              "durationTime": totalDurationText,
+              "fromAirport": segment.origin.airport.airportName,
+              "fromAirportCode": segment.origin.airport.airportCode,
+              "toAirport": segment.destination.airport.airportName,
+              "toAirportCode": segment.destination.airport.airportCode,
+              "layover": layoverText,
+              "noofstop": stop,
+              "baggage": segment.baggage,
+              "cabinBaggage": segment.cabinBaggage,
+            });
+          }
+        }
+
+        print("segmentListJson$segmentListJson");
+        return segmentListJson;
+      }
+
       Map<String, dynamic> outBoundData = {
         "flight": {},
         "destination":
@@ -970,7 +1058,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
             .segments.last.last.destination.airport.airportName,
         "basefare": selectedOutbound!.fare.baseFare,
         "tax": selectedOutbound!.fare.tax,
-        "segments": null,
+        "segments": _buildSegmentJson(selectedOutbound!),
         "adultCount": adultCount,
         "childCount": childCount,
         "infantCount": infantCount,
@@ -978,6 +1066,8 @@ class _LocalroundtripState extends State<Localroundtrip> {
         "traceid": searchData.response.traceId,
         "total": totalNetFare.toString(),
         "IsLCC": selectedOutbound?.isLcc,
+        "tboCommission": selectedOutbound!.fare.tdsOnCommission,
+        "netFare": onwardNetFare, // ← ADD THIS
       };
 
       // INBOUND
@@ -1028,7 +1118,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
             selectedInbound!.segments.last.last.destination.airport.airportName,
         "basefare": selectedInbound!.fare.baseFare,
         "tax": selectedInbound!.fare.tax,
-        "segments": null,
+        "segments": _buildSegmentJson(selectedInbound!),
         "adultCount": adultCount,
         "childCount": childCount,
         "infantCount": infantCount,
@@ -1036,8 +1126,15 @@ class _LocalroundtripState extends State<Localroundtrip> {
         "traceid": searchData.response.traceId,
         "total": totalNetFare.toString(),
         "IsLCC": selectedInbound?.isLcc,
+        "tboCommission": selectedInbound!.fare.tdsOnCommission,
+        "netFare": returnNetFare, // ← ADD THIS
       };
 
+      print("Navigator view fare");
+      print("FLIGHTDETAILPAGE SCREEN${outBoundData['tboCommission']}");
+      print("FLIGHTDETAILPAGE SCREEN${outBoundData['segments']}");
+      print("FLIGHTDETAILPAGE SCREEN${inBoundData['tboCommission']}");
+      print("FLIGHTDETAILPAGE SCREEN$inBoundData['segments']}");
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1126,27 +1223,41 @@ class _LocalroundtripState extends State<Localroundtrip> {
                     /// 🔥 Single Line Text (Like Makemytrip)
                     Row(
                       children: [
+                        /// Origin
                         Text(
                           widget.fromAirport,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          softWrap: false,
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Colors.black),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
                         ),
-                        Image.asset("assets/icon/swap.png",
-                            height: 13, width: 20, color: Colors.black),
-                        Text(
-                          widget.toAirport,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: false,
-                          style: const TextStyle(
+
+                        const SizedBox(width: 5),
+
+                        Image.asset(
+                          "assets/icon/swap.png",
+                          height: 13,
+                          width: 20,
+                          color: Colors.black,
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        /// Destination
+                        Expanded(
+                          child: Text(
+                            widget.toAirport,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: Colors.black),
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1163,7 +1274,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
 
               /// Edit
@@ -1531,11 +1641,19 @@ class _FlightCardState extends State<FlightCard> {
     final commissionEarned = displayFlight.fare.commissionEarned.toDouble();
     print("commissionEarned$commissionEarned");
     double customerComm = 0.0;
-    if (customer!.data.isNotEmpty && commissionEarned > 0) {
+    if (customer!.data.isNotEmpty && commissionEarned >= 0) {
       var commData = customer!.data[0];
       double earned = commissionEarned;
-      if (earned >= 0 && earned <= 50) {
-        customerComm = commData.commission_0_50?.toDouble() ?? 0.0;
+      if (earned == 0) {
+        customerComm = commData.commission_0?.toDouble() ?? 0.0;
+      } else if (earned <= 10) {
+        customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+      } else if (earned <= 20) {
+        customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+      } else if (earned <= 30) {
+        customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+      } else if (earned <= 50) {
+        customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
       } else if (earned <= 100) {
         customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
       } else if (earned <= 150) {
@@ -1574,10 +1692,10 @@ class _FlightCardState extends State<FlightCard> {
     print("finalcoupouncode$finalcoupouncode");
     double othercharges = displayFlight.fare.otherCharges;
     print("othercharges$othercharges");
-    int finaloffFare = (publishFare + othercharges - finalflatoffer).round();
+    int finaloffFare = (publishFare - finalflatoffer).round();
     print("intfinaloffFare$finaloffFare");
     double finaloffferFare = double.parse(
-      (publishFare + othercharges - finalflatoffer).toStringAsFixed(2),
+      (publishFare - finalflatoffer).toStringAsFixed(2),
     );
     print("finaloffferFare$finaloffferFare");
 
@@ -1925,12 +2043,24 @@ class _FlightCardState extends State<FlightCard> {
                       print("varCommissionEarned$varCommissionEarned");
                       double varCustomerComm = 0.0;
                       if (customer!.data.isNotEmpty &&
-                          varCommissionEarned > 0) {
+                          varCommissionEarned >= 0) {
                         var commData = customer!.data[0];
                         double earned = varCommissionEarned;
-                        if (earned >= 0 && earned <= 50) {
+                        if (earned == 0.0) {
                           varCustomerComm =
-                              commData.commission_0_50?.toDouble() ?? 0.0;
+                              commData.commission_0?.toDouble() ?? 0.0;
+                        } else if (earned <= 10) {
+                          varCustomerComm =
+                              commData.commission_0_10?.toDouble() ?? 0.0;
+                        } else if (earned <= 20) {
+                          varCustomerComm =
+                              commData.commission_10_20?.toDouble() ?? 0.0;
+                        } else if (earned <= 30) {
+                          varCustomerComm =
+                              commData.commission_20_30?.toDouble() ?? 0.0;
+                        } else if (earned <= 50) {
+                          varCustomerComm =
+                              commData.commission_30_50?.toDouble() ?? 0.0;
                         } else if (earned <= 100) {
                           varCustomerComm =
                               commData.commission_50_100?.toDouble() ?? 0.0;
@@ -1982,8 +2112,7 @@ class _FlightCardState extends State<FlightCard> {
                       print("varFinalflatoffer$varFinalflatoffer");
                       double varothercharges = variantFlight.fare.otherCharges;
                       int varFinaloffFare =
-                          (varPublishFare + varothercharges - varFinalflatoffer)
-                              .round();
+                          (varPublishFare - varFinalflatoffer).round();
                       print("varFinaloffFare$varFinaloffFare");
 
                       return Container(

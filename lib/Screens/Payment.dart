@@ -12,6 +12,7 @@ import 'package:trvlus/Screens/price_alert_controller.dart';
 import '../models/countrycode.dart';
 import '../models/farequote.dart' as farequote;
 import '../models/search_data.dart';
+import '../models/ssr.dart' as ssrdata;
 import '../utils/api_service.dart';
 import '../utils/constant.dart';
 import 'DotDivider.dart';
@@ -84,8 +85,8 @@ class MakePaymentScreen extends StatefulWidget {
   final Map<String, dynamic> outBoundData;
   final Map<String, dynamic> inBoundData;
   Map<String, dynamic> meal;
+  Map<String, dynamic> baggage;
   final List<Map<String, dynamic>> seat;
-  final double baggage;
 
   MakePaymentScreen(
       {required this.flight,
@@ -158,6 +159,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   late farequote.FareQuotesData fareQuote;
   late farequote.FareQuotesData infareQuote;
+  late ssrdata.SsrData ssrData;
+  late ssrdata.SsrData inssrData;
+
+  late ssrdata.SsrData ssr;
   bool isLoading = true;
   double totalBaseFare = 0;
   double totalTax = 0;
@@ -175,6 +180,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   double totalBalance = 0;
   double mealTotal = 0.0;
   double seatTotal = 0.0;
+  double baggageTotal = 0.0;
 
   // ── Add these for countdown ────────────────────────────────
   late Timer _timer;
@@ -210,14 +216,21 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   }
 
   Future<void> loadBalance() async {
-    final prefs = await SharedPreferences.getInstance();
-    double? balance = prefs.getDouble("total_balance");
-    print("balancebalance$balance");
-    print(widget.trvlusNetFare);
+    try {
+      final userData = await ApiService().user();
+      final balance = userData.data.first.walletTicketBooking;
+      print("balancebalance$balance");
+      print(widget.trvlusNetFare);
 
-    setState(() {
-      totalBalance = balance ?? 0.0;
-    });
+      setState(() {
+        totalBalance = balance;
+      });
+    } catch (e) {
+      print("Error loading balance: $e");
+      setState(() {
+        totalBalance = 0.0;
+      });
+    }
   }
 
   getfarequotedata() async {
@@ -231,10 +244,19 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
       infareQuote = await ApiService().farequote(
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+      ssrData = await ApiService().ssr(
+          widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      ssrData = await ApiService()
+          .ssr(widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
     } else {
       print("ONEWAYfareQuote");
       fareQuote = await ApiService()
           .farequote(widget.resultindex ?? "", widget.traceid ?? "");
+      ssrData = await ApiService()
+          .ssr(widget.resultindex ?? "", widget.traceid ?? "");
+      print(
+          "FlightDetailChangeInfo: ${fareQuote.response.flightDetailChangeInfo}");
+
       // PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
       print("farequotefarequote$farequote");
@@ -307,13 +329,17 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
 
     setState(() {
       print("Payment");
+      print("widget.seat${widget.seat}");
       print("Payment${widget.basefare}");
+      print("baggagebaggage${widget.baggage}");
+      print("baggagebaggage${widget.seat}");
       print("Payment${widget.tax}");
       coupouncode = widget.coupouncode!;
-      othercharges = widget.othercharges!;
+      othercharges = widget.othercharges ?? 0;
+      print("othercharges$othercharges");
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
-      totalTax = tax + intax + othercharges;
+      totalTax = tax + intax;
       print("totalTax$totalTax");
       if (widget.coupouncode! > 0) {
         overallFare = totalBaseFare + totalTax + convenienceFee - coupouncode;
@@ -354,10 +380,25 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         seatTotal += ((s['Price'] as num?)?.toDouble() ?? 0.0);
       }
 
+      baggageTotal = 0.0;
+      if (widget.baggage.isNotEmpty) {
+        widget.baggage.forEach((route, passengerMap) {
+          if (passengerMap is Map) {
+            passengerMap.forEach((passengerKey, meals) {
+              if (meals is List) {
+                for (var m in meals) {
+                  baggageTotal += ((m['Price'] as num?)?.toDouble() ?? 0.0);
+                }
+              }
+            });
+          }
+        });
+      }
+
       // Add SSR costs to overallFare
-      overallFare += mealTotal + seatTotal + widget.baggage;
+      overallFare += mealTotal + seatTotal + baggageTotal;
       print(
-          "overallFare with SSR: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: ${widget.baggage})");
+          "overallFare with SSR: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: ${baggageTotal})");
     });
   }
 
@@ -385,12 +426,13 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         ),
       );
     }
-    print("PAYMENT");
-    print("segmentsJson${widget.segmentsJson}");
+    // print("PAYMENT");
+    // print("segmentsJson${widget.segmentsJson}");
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
     final passenger = widget.flightNumber ?? "";
+    // print("SEATS${widget.seat}");
 
     if (widget.depDate != null) {
       final depDateformat = widget.depDate;
@@ -402,8 +444,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       final finalarrDateformat =
           DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     }
-    print(
-        "payment${widget.passenger} ${widget.childpassenger} ${widget.infantpassenger}");
+    // print(
+    //     "payment${widget.passenger} ${widget.childpassenger} ${widget.infantpassenger}");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -1524,8 +1566,11 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                   ],
                 ),
                 SizedBox(height: 5.h),
-                // if (totalBalance >= (widget.trvlusNetFare ?? 0))
-                if ((widget.trvlusNetFare ?? 0) >= totalBalance)
+                // Builder(builder: (_) {
+                //   print("DEBUG: totalBalance=$totalBalance, overallFare=$overallFare, condition=${totalBalance >= overallFare}");
+                //   return const SizedBox.shrink();
+                // }),
+                if (totalBalance >= overallFare)
                   ElevatedButton(
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
@@ -1563,6 +1608,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                     outBoundData: widget.outBoundData,
                                     inBoundData: widget.inBoundData,
                                     meal: widget.meal,
+                                    baggage: widget.baggage,
+                                    seat: widget.seat,
                                     stop: widget.stop,
                                     resultindex: widget.resultindex,
                                     traceid: widget.traceid,
