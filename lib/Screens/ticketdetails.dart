@@ -323,13 +323,13 @@ class _TicketdetailsState extends State<Ticketdetails> {
                               padding: EdgeInsets.symmetric(
                                   horizontal: 10.w, vertical: 5.h),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFDEF6DB),
+                                color: Color(0xFF00c292),
                                 borderRadius: BorderRadius.circular(15.r),
                               ),
                               child: Text(
                                 bookingdetailsid.data.first.status,
                                 style: TextStyle(
-                                  color: const Color(0xFF138808),
+                                  color: Colors.white,
                                   // Green text color
                                   fontWeight: FontWeight.bold,
                                   fontSize: 10.sp,
@@ -361,12 +361,15 @@ class _TicketdetailsState extends State<Ticketdetails> {
                             final isLastSegment =
                                 segmentIndex == journeys.length - 1;
 
-                            // Build the flight card children (your exact existing logic, without internal layover)
                             List<Widget> segmentChildren = [
                               Row(
                                 children: [
                                   Image.asset(
-                                      'assets/${journey.OperatorCode}.gif'),
+                                    'assets/${journey.OperatorCode}.gif',
+                                    fit: BoxFit.fill,
+                                    height: 35,
+                                    width: 35,
+                                  ),
                                   SizedBox(width: 12),
                                   Column(
                                     crossAxisAlignment:

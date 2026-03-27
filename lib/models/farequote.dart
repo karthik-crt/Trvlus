@@ -194,9 +194,15 @@ class Results {
         fareRules: List<FareRule>.from(
             json["FareRules"].map((x) => FareRule.fromJson(x))),
         airlineCode: json["AirlineCode"],
-        miniFareRules: List<List<MiniFareRule>>.from(json["MiniFareRules"].map(
-            (x) => List<MiniFareRule>.from(
-                x.map((x) => MiniFareRule.fromJson(x))))),
+        miniFareRules: json["MiniFareRules"] == null
+            ? []
+            : List<List<MiniFareRule>>.from(
+                json["MiniFareRules"].map(
+                  (x) => List<MiniFareRule>.from(
+                    x.map((x) => MiniFareRule.fromJson(x)),
+                  ),
+                ),
+              ),
         validatingAirline: json["ValidatingAirline"],
       );
 

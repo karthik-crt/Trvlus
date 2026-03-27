@@ -997,10 +997,12 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                     commissionEarned + customerplbearned;
                                 print("finalcommissionplb$finalcommissionplb");
                                 double customercommissiondetection =
-                                    finalcommissionplb -
-                                        customerComm -
-                                        tboTDS -
-                                        customertdsplb;
+                                    finalcommissionplb <= 0
+                                        ? 0.0
+                                        : finalcommissionplb -
+                                            customerComm -
+                                            tboTDS -
+                                            customertdsplb;
                                 print(
                                     "customercommissiondetection$customercommissiondetection");
                                 int finalcustomercommission =
@@ -1030,10 +1032,11 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                 double othercharges =
                                     lowestPriceFlight.fare.otherCharges;
                                 print("othercharges$othercharges");
-                                int finaloffFare =
-                                    (publishFare - finalflatoffer).round();
-                                print("finaloffFare$finaloffFare");
 
+                                int finaloffFare = tboTDS <= 0
+                                    ? (publishFare + customerComm).round()
+                                    : (publishFare - finalflatoffer).round();
+                                print("finaloffFare$finaloffFare");
                                 // Duration and stops calculation
                                 int totalMinutes = lowestPriceFlight
                                     .segments.first.first.duration
@@ -1705,8 +1708,12 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                           .fare.otherCharges;
                                                   print(
                                                       "othercharges$othercharges");
-                                                  int varFinaloffFare =
-                                                      (varPublishFare -
+                                                  int varFinaloffFare = varTboTDS <=
+                                                          0
+                                                      ? (varPublishFare +
+                                                              varCustomerComm)
+                                                          .round()
+                                                      : (varPublishFare -
                                                               varFinalflatoffer)
                                                           .round();
 
@@ -2637,6 +2644,18 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                             return "No data";
                                                                           }
                                                                         })(),
+                                                                        miniFareRules: currentFlight.miniFareRules.isNotEmpty
+                                                                            ? currentFlight.miniFareRules[0]
+                                                                                .map((rule) => {
+                                                                                      'Type': rule.type,
+                                                                                      'From': rule.from,
+                                                                                      'To': rule.to,
+                                                                                      'Details': rule.details,
+                                                                                      'JourneyPoints': rule.journeyPoints,
+                                                                                      'Unit': rule.unit,
+                                                                                    })
+                                                                                .toList()
+                                                                            : [],
                                                                         outBoundData: {},
                                                                         inBoundData: {},
                                                                         commonPublishedFare:

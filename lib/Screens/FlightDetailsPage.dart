@@ -56,6 +56,7 @@ class FlightDetailsPage extends StatefulWidget {
   final String? baggage;
   final String? cancellation;
   final String? journeypoint;
+  final List<dynamic>? miniFareRules; // ✅ correct  final String? journeypoint;
   final String? reissue;
   final double? basefare;
   final List<List<Segment>>? segments;
@@ -124,6 +125,7 @@ class FlightDetailsPage extends StatefulWidget {
       this.cabinBaggage,
       this.baggage,
       this.cancellation,
+      this.miniFareRules,
       this.journeypoint,
       this.reissue,
       this.basefare,
@@ -191,16 +193,20 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   double infantFare = 0;
   final gextXvalue = Get.put(PriceAlertController());
 
+  // final List<dynamic>? miniFareRules; // ✅ CORRECT
+
   getFareData() async {
     setState(() {
       isLoading = true;
     });
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['tboCommission']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['segments']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['tboCommission']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['segments']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCoupounCode']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCoupounCode']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusTds']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusTds']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
     // print("FLIGHTDETAILPAGE SCREEN");
 
     // ROUNDTRIP
@@ -416,7 +422,8 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       print("othercharges$othercharges");
       print("totalFare$totalFare");
       print("coupouncodecoupouncode$coupouncode");
-      totalTax = tax + intax + othercharges + inothercharges;
+      // totalTax = tax + intax + othercharges + inothercharges;
+      totalTax = tax + intax;
       print("totalTax$totalTax");
       print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
       double finalBaseFare =
@@ -437,7 +444,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         print("With Coupoun Code");
         print("overallFare1$overallFare");
       } else {
-        overallFare = finalBaseFare + finalTax;
+        overallFare = finalBaseFare + finalTax + (widget.trvlusCommission ?? 0);
         print("overallFare$overallFare");
         print("Without Coupoun Code");
         print("overallFare$finalBaseFare");
@@ -1790,91 +1797,91 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 GestureDetector(
-                                  onTap: () {
-                                    showModalBottomSheet<void>(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      // shape: RoundedRectangleBorder(
-                                      //   borderRadius: BorderRadius.vertical(
-                                      //       top: Radius.circular(16.r)),
-                                      // ),
-                                      shape: Border(
-                                          left: BorderSide.none,
-                                          right: BorderSide.none),
-                                      builder: (BuildContext context) {
-                                        return StatefulBuilder(
-                                          builder: (BuildContext context,
-                                              StateSetter setModalState) {
-                                            return Container(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 15, vertical: 25),
-                                              width: MediaQuery.sizeOf(context)
-                                                  .width,
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        "Promo Code",
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.black,
-                                                            fontSize: 20),
-                                                      ),
-                                                      GestureDetector(
-                                                        onTap: () =>
-                                                            Navigator.pop(
-                                                                context),
-                                                        child: Image.asset(
-                                                          "assets/icon/Close.png",
-                                                          height: 25,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 25),
-                                                  promoRowModal(
-                                                      0,
-                                                      "TRVLUS09",
-                                                      "₹4,555 save",
-                                                      "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
-                                                      setModalState),
-                                                  promoRowModal(
-                                                      1,
-                                                      "TRVLUS10",
-                                                      "₹4,555 save",
-                                                      "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
-                                                      setModalState),
-                                                  promoRowModal(
-                                                      2,
-                                                      "TRVLUS11",
-                                                      "₹4,555 save",
-                                                      "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
-                                                      setModalState),
-                                                  SizedBox(height: 20),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
+                                  // onTap: () {
+                                  //   showModalBottomSheet<void>(
+                                  //     context: context,
+                                  //     isScrollControlled: true,
+                                  //     // shape: RoundedRectangleBorder(
+                                  //     //   borderRadius: BorderRadius.vertical(
+                                  //     //       top: Radius.circular(16.r)),
+                                  //     // ),
+                                  //     shape: Border(
+                                  //         left: BorderSide.none,
+                                  //         right: BorderSide.none),
+                                  //     builder: (BuildContext context) {
+                                  //       return StatefulBuilder(
+                                  //         builder: (BuildContext context,
+                                  //             StateSetter setModalState) {
+                                  //           return Container(
+                                  //             padding: EdgeInsets.symmetric(
+                                  //                 horizontal: 15, vertical: 25),
+                                  //             width: MediaQuery.sizeOf(context)
+                                  //                 .width,
+                                  //             child: Column(
+                                  //               mainAxisSize: MainAxisSize.min,
+                                  //               children: [
+                                  //                 Row(
+                                  //                   mainAxisAlignment:
+                                  //                       MainAxisAlignment
+                                  //                           .spaceBetween,
+                                  //                   children: [
+                                  //                     Text(
+                                  //                       "Promo Code",
+                                  //                       style: TextStyle(
+                                  //                           fontWeight:
+                                  //                               FontWeight.bold,
+                                  //                           color: Colors.black,
+                                  //                           fontSize: 20),
+                                  //                     ),
+                                  //                     GestureDetector(
+                                  //                       onTap: () =>
+                                  //                           Navigator.pop(
+                                  //                               context),
+                                  //                       child: Image.asset(
+                                  //                         "assets/icon/Close.png",
+                                  //                         height: 25,
+                                  //                       ),
+                                  //                     ),
+                                  //                   ],
+                                  //                 ),
+                                  //                 SizedBox(height: 25),
+                                  //                 promoRowModal(
+                                  //                     0,
+                                  //                     "TRVLUS09",
+                                  //                     "₹4,555 save",
+                                  //                     "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
+                                  //                     setModalState),
+                                  //                 promoRowModal(
+                                  //                     1,
+                                  //                     "TRVLUS10",
+                                  //                     "₹4,555 save",
+                                  //                     "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
+                                  //                     setModalState),
+                                  //                 promoRowModal(
+                                  //                     2,
+                                  //                     "TRVLUS11",
+                                  //                     "₹4,555 save",
+                                  //                     "s provide the test data (atleast 3 loans) \n for starting the renewal flow test by",
+                                  //                     setModalState),
+                                  //                 SizedBox(height: 20),
+                                  //               ],
+                                  //             ),
+                                  //           );
+                                  //         },
+                                  //       );
+                                  //     },
+                                  //   );
+                                  // },
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text(
-                                        "CHANGE",
-                                        style: TextStyle(
-                                          color: Color(0xFFF37023),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                      // Text(
+                                      //   "CHANGE",
+                                      //   style: TextStyle(
+                                      //     color: Color(0xFFF37023),
+                                      //     fontWeight: FontWeight.bold,
+                                      //   ),
+                                      // ),
                                       Text(
                                         "₹${gextXvalue.isChanged.value == true ? varFinalflatoffer.round() : widget.coupouncode?.round()} saved",
                                         style: TextStyle(
@@ -2383,48 +2390,63 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   }
 
   Widget _buildCancellationPolicy() {
+    final raw = widget.miniFareRules;
+    final rules = (raw is List ? raw : [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Cancellation')
+        .toList();
+    if (rules.isEmpty) return SizedBox.shrink(); // ✅ hide entire card
+
     return _buildSectionCard(
       "Cancellation Charges",
       [
-        Text(
-          "Cancellation between (IST)",
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: Colors.grey,
-          ),
-        ),
+        Text("Cancellation between (IST)",
+            style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
         SizedBox(height: 8.h),
         Divider(),
-        //SizedBox(height: 8.h),
         SizedBox(height: 8.h),
-        _buildPolicyRow(
-          "0-4 hrs to departure: ${widget.journeypoint ?? ""}",
-          widget.cancellation ?? "",
-
-          // valueColor: Color(0xFFF32323),
-        ),
-        SizedBox(height: 12.h),
-        _buildPolicyRow("4hrs - 4 days to departure:", "No Data"),
-        SizedBox(height: 12.h),
-        _buildPolicyRow("4 - 999 days to departure:", "No Data"),
+        if (rules.isEmpty)
+          _buildPolicyRow("No cancellation data", "", "")
+        else
+          ...rules.map((rule) {
+            final from = rule['From'] ?? '0';
+            final to = rule['To'] ?? '';
+            final journey = rule['JourneyPoints'] ?? '';
+            final details = rule['Details'] ?? '';
+            final label = to.toString().isEmpty
+                ? "$from hrs+ before departure"
+                : "$from – $to hrs before departure";
+            return _buildPolicyRow(label, journey, details);
+          }).toList(),
       ],
     );
   }
 
   Widget _buildDateChange() {
+    final raw = widget.miniFareRules;
+    final rules = (raw is List ? raw : [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Reissue')
+        .toList();
+    if (rules.isEmpty) return SizedBox.shrink(); // ✅ hide entire card
+
     return _buildDateChangeCard(
       "Date Change Charges",
       [
         SizedBox(height: 8.h),
-        _buildPolicyRow(
-          "0-4 hrs to departure: ${widget.journeypoint ?? ""}",
-          widget.reissue ?? "",
-          // valueColor: Color(0xFFF32323),
-        ),
-        SizedBox(height: 12.h),
-        _buildPolicyRow("4hrs - 4 days to departure:", "No Data"),
-        SizedBox(height: 12.h),
-        _buildPolicyRow("4 - 999 days to departure:", "No Data"),
+        if (rules.isEmpty)
+          _buildPolicyRow("No reissue data", "", "")
+        else
+          ...rules.map((rule) {
+            final from = rule['From'] ?? '0';
+            final to = rule['To'] ?? '';
+            final journey = rule['JourneyPoints'] ?? '';
+            final details = rule['Details'] ?? '';
+            final label = to.toString().isEmpty
+                ? "$from hrs+ before departure"
+                : "$from – $to hrs before departure";
+            return _buildPolicyRow(label, journey, details);
+          }).toList(),
       ],
     );
   }
@@ -2497,32 +2519,40 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     );
   }
 
-  Widget _buildPolicyRow(String label, String value,
+  Widget _buildPolicyRow(String label, String journey, String value,
       {Color valueColor = Colors.black}) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+      margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
-        color: Color(0xFFF5F5F5), // Light gray background for each row
+        color: Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 12.sp, fontFamily: 'Inter', color: Color(0xFFF32323)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(fontSize: 11.sp, color: Color(0xFFF32323))),
+              if (journey.isNotEmpty)
+                Text(journey,
+                    style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
+            ],
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14.sp,
-              color: valueColor,
-              fontWeight: FontWeight.bold,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor)),
+              Text("per adult",
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
+            ],
           ),
         ],
       ),
@@ -2562,6 +2592,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
               ? varFinalflatoffer
               : coupouncode,
           othercharges: othercharges,
+          trvlusCommission: widget.trvlusCommission,
           meal: {},
           seat: [],
           baggage: {},

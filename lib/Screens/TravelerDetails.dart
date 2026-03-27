@@ -318,13 +318,14 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       othercharges = widget.othercharges ?? 0.0;
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
-      totalTax = tax + intax + othercharges;
+      // totalTax = tax + intax + othercharges;
+      totalTax = tax + intax;
       print("totalTax$totalTax");
       if (widget.coupouncode! > 0) {
         overallFare = totalBaseFare + totalTax - coupouncode;
         print("overallFare1$overallFare");
       } else {
-        overallFare = totalBaseFare + totalTax + othercharges;
+        overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
         print("overallFare$overallFare");
         print("overallFare$totalBaseFare");
         print("overallFare$totalTax");
@@ -1232,7 +1233,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                       isPassportRequiredAtTicket,
                                   isPassportFullDetailRequiredAtBook:
                                       isPassportFullDetailRequiredAtBook,
-                                  adultCount: adultTravelers.length + 1,
+                                  adultCount: index + 1,
                                   selectedpassenger: widget.selectedpassenger,
                                   traceid: widget.traceid,
                                   resultindex: widget.resultindex,
@@ -2033,6 +2034,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
           convenienceFee: 0,
           coupouncode: coupouncode,
           othercharges: othercharges,
+          trvlusCommission: widget.trvlusCommission,
           meal: {},
           seat: [],
           baggage: {},

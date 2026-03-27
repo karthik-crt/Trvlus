@@ -9,6 +9,7 @@ class FareBreakupSheet extends StatefulWidget {
   final int? infantCount;
   final num? coupouncode;
   final double? othercharges;
+  final double? trvlusCommission;
   final double? adultfare;
   final double? childfare;
   final double? infantfare;
@@ -31,6 +32,7 @@ class FareBreakupSheet extends StatefulWidget {
       this.infantCount,
       this.coupouncode,
       this.othercharges,
+      this.trvlusCommission,
       this.adultfare,
       this.childfare,
       this.infantfare,
@@ -62,7 +64,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("totaltotal$tax");
     // final othertaxcharges =
     //     ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
-    final othertaxcharges = (widget.tax ?? 0).round();
+    final othertaxcharges = (widget.tax ?? 0).toInt();
     print("othertaxcharges$othertaxcharges");
     print("coupoun${widget.coupouncode}");
     print("meal${widget.meal}");
@@ -72,7 +74,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("dgtgsgre${widget.tax}");
     print("dgtgsgre${widget.othercharges}");
 
-    final adultFare = widget.adultfare?.round();
+    final adultFare = widget.adultfare?.toInt();
     final childFare = widget.childfare?.round();
     final infantFare = widget.infantfare?.round();
     final conveniencefee = widget.convenienceFee.toInt();
@@ -114,8 +116,11 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
 
     // MEAL SEAT BAGGAGE CALCULATION
     final mealData = widget.meal;
+    print("mealData$mealData");
     final seatData = widget.seat;
+    print("seatData$seatData");
     final baggageData = widget.baggage;
+    print("baggageData$baggageData");
 
 // Meal
     if (mealData != null) {
@@ -173,7 +178,8 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
           infantFare! +
           conveniencefee +
           taxtotal! +
-          ssrTotal.round();
+          ssrTotal.round() +
+          (widget.trvlusCommission ?? 0).toInt();
       print("no commission");
       print("overallFare$total");
       print("overallFare$adultFare");
@@ -237,7 +243,8 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                 fontSize: 15.sp,
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold)),
-                        Text("₹${widget.basefare!.toStringAsFixed(0)}",
+                        Text(
+                            "₹${(widget.basefare! + (widget.trvlusCommission ?? 0)).toInt()}",
                             style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
@@ -350,7 +357,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                   Text("Baggage",
                                       style: TextStyle(
                                           fontSize: 12.sp, color: Colors.grey)),
-                                  Text("${widget.baggage}",
+                                  Text("₹${baggageTotal.toStringAsFixed(0)}",
                                       style: TextStyle(
                                           fontSize: 12.sp, color: Colors.grey)),
                                 ],

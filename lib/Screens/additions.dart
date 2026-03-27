@@ -226,46 +226,45 @@ class _AdditionsState extends State<Additions> {
       formattedBaggage[route] = [];
 
       baggageMap.forEach((baggageIndex, count) {
-        // Find the correct route index for this baggage
-        int routeIndex = 0;
-        for (int i = 0; i < ssrData.response.baggage.length; i++) {
-          if (ssrData.response.baggage[i].isNotEmpty) {
+        List<List<dynamic>> allSSRBaggage = [];
+
+        if (ssrData.response?.baggage != null) {
+          allSSRBaggage.addAll(ssrData.response.baggage);
+        }
+        if (widget.inBoundData['inresultindex'] != null &&
+            inssrData.response?.baggage != null) {
+          allSSRBaggage.addAll(inssrData.response.baggage);
+        }
+        for (int i = 0; i < allSSRBaggage.length; i++) {
+          if (allSSRBaggage[i].isNotEmpty) {
             String currentRoute =
-                '${ssrData.response.baggage[i][0].origin}-${ssrData.response.baggage[i][0].destination}';
-            if (currentRoute == route) {
-              routeIndex = i;
+                '${allSSRBaggage[i][0].origin}-${allSSRBaggage[i][0].destination}';
+
+            if (currentRoute == route &&
+                allSSRBaggage[i].length > baggageIndex) {
+              final baggageItem = allSSRBaggage[i][baggageIndex];
+
+              for (int j = 0; j < count; j++) {
+                formattedBaggage[route]!.add({
+                  "AirlineCode": baggageItem.airlineCode,
+                  "FlightNumber":
+                      int.tryParse(baggageItem.flightNumber.toString()) ?? 0,
+                  "WayType": baggageItem.wayType,
+                  "Code": baggageItem.code,
+                  "Description": baggageItem.description,
+                  "Weight": baggageItem.weight,
+                  "Currency": baggageItem.currency,
+                  "Price": baggageItem.price,
+                  "Origin": baggageItem.origin,
+                  "Destination": baggageItem.destination,
+                });
+              }
               break;
             }
           }
         }
-
-        if (ssrData.response.baggage.length > routeIndex &&
-            ssrData.response.baggage[routeIndex].length > baggageIndex) {
-          final baggageItem =
-              ssrData.response.baggage[routeIndex][baggageIndex];
-          print("description: ${baggageItem.description}");
-          print("weight: ${baggageItem.weight}");
-
-          // Add each baggage item 'count' times
-          for (int i = 0; i < count; i++) {
-            formattedBaggage[route]!.add({
-              "AirlineCode": baggageItem.airlineCode,
-              "FlightNumber":
-                  int.tryParse(baggageItem.flightNumber.toString()) ?? 0,
-              "WayType": baggageItem.wayType,
-              "Code": baggageItem.code,
-              "Description": baggageItem.description, // raw int from SSR
-              "Weight": baggageItem.weight,
-              "Currency": baggageItem.currency,
-              "Price": baggageItem.price,
-              "Origin": baggageItem.origin,
-              "Destination": baggageItem.destination,
-            });
-          }
-        }
       });
     });
-
     return formattedBaggage;
   }
 
@@ -1546,7 +1545,7 @@ class _AdditionsState extends State<Additions> {
           ssrData: true,
           meal: selectedMealData,
           seat: selectedSeatPayload,
-          baggage: selectedBaggageCount,
+          baggage: getFormattedBaggageData(),
           othercharges: othercharges,
         );
       },

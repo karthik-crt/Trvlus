@@ -293,13 +293,14 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
 
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
-      totalTax = tax + intax + othercharges;
+      // totalTax = tax + intax + othercharges;
+      totalTax = tax + intax;
       print("totalTax$totalTax");
       if (widget.coupouncode! > 0) {
         overallFare = totalBaseFare + totalTax - coupouncode;
         print("overallFare1$overallFare");
       } else {
-        overallFare = totalBaseFare + totalTax + othercharges;
+        overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
         print("overallFare$overallFare");
         print("overallFare$totalBaseFare");
         print("overallFare$totalTax");
@@ -1879,6 +1880,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           seat: seat,
           baggage: baggage,
           othercharges: othercharges,
+          trvlusCommission: widget.trvlusCommission,
         );
       },
     );

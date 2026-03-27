@@ -82,29 +82,38 @@ class _CustomerSupportState extends State<CustomerSupport> {
                   color: Color(0xFFFFFFFF)),
               child: Column(
                 mainAxisSize: MainAxisSize.min, // ← ADD THIS
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle, color: Color(0xFFFFE7DA)),
-                    child: Image.asset(
-                      'assets/images/support.png',
-                      height: 30,
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle, color: Color(0xFFFFE7DA)),
+                          child: Image.asset(
+                            'assets/images/support.png',
+                            height: 30,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    "Contact Support",
-                    style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF1C1E1D),
-                        fontWeight: FontWeight.bold),
+                  Center(
+                    child: Text(
+                      "Contact Support",
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF1C1E1D),
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
                   Divider(),
                   SizedBox(
                     height: 10,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Customer Support Mail"),
                       Text(
@@ -115,20 +124,8 @@ class _CustomerSupportState extends State<CustomerSupport> {
                       )
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Customer Care Number"),
-                      Text(
-                        customer.data.first.mobile,
-                        style: TextStyle(
-                            color: Color(0xFF303030),
-                            fontWeight: FontWeight.bold),
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Customer Account Support"),
                       Text(
@@ -139,8 +136,20 @@ class _CustomerSupportState extends State<CustomerSupport> {
                       )
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Customer Care Number"),
+                      Text(
+                        customer.data.first.mobile,
+                        style: TextStyle(
+                            color: Color(0xFF303030),
+                            fontWeight: FontWeight.bold),
+                      )
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Customer Mobile"),
                       Text(

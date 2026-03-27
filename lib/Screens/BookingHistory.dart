@@ -148,7 +148,13 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                             .toList()[index];
                         print("BOOKING HISTORY");
                         print("HISTORY BOOKING HISTORY");
+                        final displayStatus = (booking.customerStatus.isNotEmpty
+                                ? booking.customerStatus
+                                : booking.status)
+                            .toUpperCase();
                         final journeys = booking.journeyList;
+                        final destJourney =
+                            _getDestinationJourney(booking); // ✅ ADD THIS
 
                         int totalMinutes = 0;
 
@@ -199,7 +205,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                   children: [
                                     Image.asset(
                                       "assets/${booking.journeyList.first.operatorCode ?? ""}.gif",
-                                      fit: BoxFit.cover,
+                                      fit: BoxFit.fill,
                                       height: 35,
                                       width: 35,
                                     ),
@@ -244,7 +250,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                         color: Colors.orange),
                                               ),
                                               TextSpan(
-                                                text: " NR",
+                                                text: "NR",
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .headlineSmall
@@ -369,8 +375,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              booking
-                                                  .journeyList.last.toCityName,
+                                              destJourney.toCityName,
                                               style: TextStyle(
                                                 fontSize: 14.sp,
                                                 fontWeight: FontWeight.bold,
@@ -379,8 +384,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                             ),
                                             SizedBox(width: 4.w),
                                             Text(
-                                              booking.journeyList.last
-                                                  .toAirportCode,
+                                              destJourney.toAirportCode,
                                               style: TextStyle(
                                                 fontSize: 12.sp,
                                                 color: Colors.grey,
@@ -392,8 +396,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                           width: 100,
                                           child: Text(
                                             textAlign: TextAlign.end,
-                                            booking
-                                                .journeyList.last.toAirportName,
+                                            destJourney.toAirportName,
                                             style: TextStyle(fontSize: 12.sp),
                                           ),
                                         ),
@@ -741,7 +744,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                 SizedBox(height: 10.h),
 
                                 // 🔸 Change Request Row
-                                if (!bookingDate.isBefore(todayDateOnly))
+                                if (!bookingDate.isBefore(todayDateOnly) &&
+                                    !["CANCELLED", "FAILED"]
+                                        .contains(displayStatus))
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -983,6 +988,30 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
         return DateTime.now();
       }
     }
+  }
+
+  JourneyList _getDestinationJourney(booking) {
+    final journeys = booking.journeyList as List<JourneyList>;
+
+    if (journeys.isEmpty || journeys.length == 1) return journeys.last;
+
+    // Check if it's a combined round trip in one booking
+    // by seeing if last leg lands back at first leg's origin
+    final firstOrigin = journeys.first.fromAirportCode; // "BLR"
+    final lastDest = journeys.last.toAirportCode; // "BLR"
+
+    if (firstOrigin == lastDest) {
+      // International round trip combined in one response
+      // → find leg that matches booking's destinationCityName (IATA code)
+      final destCode = booking.destinationCityName; // "RUH"
+      return journeys.firstWhere(
+        (j) => j.toAirportCode == destCode,
+        orElse: () => journeys[journeys.length ~/ 2],
+      );
+    }
+
+    // One-way OR local round trip (separate bookings) → last leg is correct
+    return journeys.last;
   }
 }
 

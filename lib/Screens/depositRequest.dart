@@ -419,6 +419,7 @@ class _DepositStatusState extends State<DepositStatus> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFE6E6E6),
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -438,48 +439,59 @@ class _DepositStatusState extends State<DepositStatus> {
                         width: MediaQuery.sizeOf(context).width,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: Colors.lightBlue.shade200,
+                          color: Colors.white,
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               "₹ ${item.amount}",
                               style: const TextStyle(
-                                color: Colors.black,
+                                color: Colors.blueAccent,
                                 fontSize: 25,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 5),
-                            Text(
-                              item.approvedBy == 0 ? "Pending" : "Approved",
-                              style: TextStyle(
-                                color: item.approvedBy == 0
-                                    ? Colors.red
-                                    : Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Divider(),
+                            // Text(
+                            //   item.approvedBy == 0 ? "Pending" : "Approved",
+                            //   style: TextStyle(
+                            //     color: item.approvedBy == 0
+                            //         ? Colors.red
+                            //         : Colors.green,
+                            //     fontWeight: FontWeight.bold,
+                            //   ),
+                            // ),
+                            // const Divider(),
+                            // Row(
+                            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            //   children: [
+                            //     const Text(
+                            //       "Payment Type :",
+                            //       style: TextStyle(color: Colors.black),
+                            //     ),
+                            //     Text(
+                            //       item.modeOfPayment,
+                            //       style: const TextStyle(color: Colors.black),
+                            //     ),
+                            //   ],
+                            // ),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  "Payment Type :",
-                                  style: TextStyle(color: Colors.black),
+                                Icon(
+                                  Icons.date_range,
+                                  size: 15,
                                 ),
-                                Text(
-                                  item.modeOfPayment,
-                                  style: const TextStyle(color: Colors.black),
+                                SizedBox(
+                                  width: 5,
                                 ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
                                 const Text(
                                   "Date :",
                                   style: TextStyle(color: Colors.black),
+                                ),
+                                SizedBox(
+                                  width: 5,
                                 ),
                                 Text(
                                   DateFormat('dd MMM yy').format(
@@ -489,11 +501,21 @@ class _DepositStatusState extends State<DepositStatus> {
                               ],
                             ),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                Image.asset(
+                                  "assets/icon/tag.png",
+                                  height: 13,
+                                ),
+                                SizedBox(
+                                  width: 5,
+                                ),
                                 const Text(
                                   "Reference ID :",
                                   style: TextStyle(color: Colors.black),
+                                ),
+                                SizedBox(
+                                  width: 5,
                                 ),
                                 Text(
                                   item.referenceNumber ?? '',
@@ -501,18 +523,42 @@ class _DepositStatusState extends State<DepositStatus> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 15),
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.phone, size: 15),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Need Help? Contact Support",
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ],
-                            ),
+                            const SizedBox(height: 5),
+                            const Divider(),
+                            const SizedBox(height: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5), // add padding
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color: Colors.orangeAccent.shade100,
+                              ),
+                              child: Row(
+                                mainAxisSize:
+                                    MainAxisSize.min, // 👈 this is the key fix
+                                children: [
+                                  Icon(Icons.access_time_filled_rounded),
+                                  const Text(
+                                    "Status : ",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    item.approvedBy == 0
+                                        ? "Pending"
+                                        : "Approved",
+                                    style: TextStyle(
+                                      color: item.approvedBy == 0
+                                          ? Colors.red
+                                          : Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
                           ],
                         ),
                       );

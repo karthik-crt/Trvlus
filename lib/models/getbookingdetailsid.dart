@@ -392,7 +392,7 @@ class Fare {
     required this.TotalSpecialServiceCharges,
   });
 
-  late final int Tax;
+  late final double Tax;
   late final double YQTax;
   late final double BaseFare;
   late final List<ChargeBU> chargeBU;
@@ -419,7 +419,7 @@ class Fare {
   late final int TotalSpecialServiceCharges;
 
   Fare.fromJson(Map<String, dynamic> json) {
-    Tax = json['Tax'];
+    Tax = (json['Tax'] as num).toDouble();
     YQTax = (json['YQTax'] as num).toDouble();
     BaseFare = (json['BaseFare'] as num).toDouble();
     chargeBU =
@@ -885,7 +885,7 @@ class Price {
     required this.TotalSpecialServiceCharges,
   });
 
-  late final int Tax;
+  late final double Tax;
   late final int YQTax;
   late final int BaseFare;
   late final List<ChargeBU> chargeBU;
@@ -912,7 +912,7 @@ class Price {
   late final int TotalSpecialServiceCharges;
 
   Price.fromJson(Map<String, dynamic> json) {
-    Tax = json['Tax'];
+    Tax = (json['Tax'] as num).toDouble();
     YQTax = (json['YQTax'] as num).toInt();
     BaseFare = (json['BaseFare'] as num).toInt();
     chargeBU =

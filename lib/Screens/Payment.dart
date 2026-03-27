@@ -328,12 +328,16 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     }
 
     setState(() {
-      print("Payment");
-      print("widget.seat${widget.seat}");
-      print("Payment${widget.basefare}");
-      print("baggagebaggage${widget.baggage}");
-      print("baggagebaggage${widget.seat}");
-      print("Payment${widget.tax}");
+      print("PAYMENT");
+      print(
+          "FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCoupounCode']}");
+      print(
+          "FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCoupounCode']}");
+      print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusTds']}");
+      print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusTds']}");
+      print(
+          "FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
+      print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
       coupouncode = widget.coupouncode!;
       othercharges = widget.othercharges ?? 0;
       print("othercharges$othercharges");
@@ -345,7 +349,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         overallFare = totalBaseFare + totalTax + convenienceFee - coupouncode;
         print("overallFare1$overallFare");
       } else {
-        overallFare = totalBaseFare + totalTax + othercharges + convenienceFee;
+        overallFare = totalBaseFare +
+            totalTax +
+            convenienceFee +
+            (widget.trvlusCommission ?? 0);
         print("overallFare$overallFare");
         print("convenienceFee${countrycode.data.first.convenienceFee}");
       }
@@ -1702,6 +1709,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           meal: widget.meal,
           seat: widget.seat,
           baggage: widget.baggage,
+          trvlusCommission: widget.trvlusCommission,
         );
       },
     );

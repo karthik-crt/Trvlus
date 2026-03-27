@@ -130,9 +130,12 @@ class _AfterpaymentState extends State<Afterpayment> {
   // TICKET API CALLING
   getSearchData() async {
     print("TICKET API CALLING");
-    print("segmentsJsonsegmentsJson${widget.segmentsJson}");
-    print("baggagebaggagebaggage${widget.baggage}");
-    print("baggagebaggagebaggage${widget.seat}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCoupounCode']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCoupounCode']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusTds']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusTds']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
+    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
     print(widget.stop);
     print(widget.isLLC);
     print(widget.resultindex);
@@ -223,16 +226,26 @@ class _AfterpaymentState extends State<Afterpayment> {
           "",
           widget.outBoundData['segments'],
           conveniencefee,
-          "",
-          "",
-          "",
+          widget.outBoundData['trvlusCoupounCode'],
+          widget.outBoundData['publishFare'],
+          widget.outBoundData['offeredFare'],
           widget.outBoundData['tboCommission'],
-          "",
-          "",
-          "",
-          widget.outBoundData['netFare'],
+          widget.outBoundData['tboTds'],
+          widget.outBoundData['trvlusCommission'],
+          widget.outBoundData['trvlusTds'],
+          widget.outBoundData['trvlusNetFare'],
           othercharges,
         );
+        setState(() {
+          pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+          bookingId = (searchData?["data"]?["Response"]?["Response"]
+                      ?["BookingId"])
+                  ?.toString() ??
+              "0";
+          statusMessage = (searchData?["statusMessage"]);
+        });
+        // await ApiService().ticketInvoice(
+        //     pnr, bookingId.toString(), widget.outBoundData['traceid'], "", "");
       } else {
         searchData = await ApiService().holdTicket(
             widget.outBoundData['outresultindex'],
@@ -262,14 +275,14 @@ class _AfterpaymentState extends State<Afterpayment> {
             "",
             widget.outBoundData['segments'],
             conveniencefee,
-            "",
-            "",
-            "",
+            widget.outBoundData['trvlusCoupounCode'],
+            widget.outBoundData['publishFare'],
+            widget.outBoundData['offeredFare'],
             widget.outBoundData['tboCommission'],
-            "",
-            "",
-            "",
-            widget.outBoundData['netFare'],
+            widget.outBoundData['tboTds'],
+            widget.outBoundData['trvlusCommission'],
+            widget.outBoundData['trvlusTds'],
+            widget.outBoundData['trvlusNetFare'],
             "");
 
         final pnr =
@@ -284,10 +297,19 @@ class _AfterpaymentState extends State<Afterpayment> {
         print("bookingIdbookingId: $bookingId");
         print("statusCodestatusCode: $statusCode");
 
+        // setState(() {
+        //   pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+        //   bookingId = (searchData?["data"]?["Response"]?["Response"]
+        //               ?["BookingId"])
+        //           ?.toString() ??
+        //       "0";
+        //   statusMessage = (searchData?["statusMessage"]);
+        // });
+
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING");
-        await ApiService()
-            .ticketInvoice(pnr, bookingId.toString(), traceid, "", "");
+        await ApiService().ticketInvoice(pnr, bookingId.toString(), traceid,
+            widget.outBoundData['netFare'], conveniencefee);
       }
 
       print("searchDataROUNDTRIP$searchData");
@@ -320,17 +342,33 @@ class _AfterpaymentState extends State<Afterpayment> {
           "",
           widget.inBoundData['segments'],
           conveniencefee,
-          "",
-          "",
-          "",
+          widget.inBoundData['trvlusCoupounCode'],
+          widget.inBoundData['publishFare'],
+          widget.inBoundData['offeredFare'],
           widget.inBoundData['tboCommission'],
-          "",
-          "",
-          "",
-          widget.inBoundData['netFare'],
+          widget.inBoundData['tboTds'],
+          widget.inBoundData['trvlusCommission'],
+          widget.inBoundData['trvlusTds'],
+          widget.inBoundData['trvlusNetFare'],
           othercharges,
         );
         print("searchDataINBOUNDROUNDTRIP$searchData");
+        setState(() {
+          pnr =
+              "$pnr${(searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? ""}";
+          bookingId =
+              "$bookingId ${(searchData?["data"]?["Response"]?["Response"]?["BookingId"])?.toString() ?? "0"}";
+          statusMessage = (searchData?["statusMessage"]);
+        });
+
+        // await ApiService().ticketInvoice(
+        //     (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "",
+        //     (searchData?["data"]?["Response"]?["Response"]?["BookingId"])
+        //             ?.toString() ??
+        //         "0",
+        //     widget.inBoundData['traceid'],
+        //     "",
+        //     "");
       } else {
         searchData = await ApiService().holdTicket(
             widget.inBoundData['inresultindex'],
@@ -360,31 +398,38 @@ class _AfterpaymentState extends State<Afterpayment> {
             "",
             widget.inBoundData['segments'],
             conveniencefee,
-            "",
-            "",
-            "",
+            widget.inBoundData['trvlusCoupounCode'],
+            widget.inBoundData['publishFare'],
+            widget.inBoundData['offeredFare'],
             widget.inBoundData['tboCommission'],
-            "",
-            "",
-            "",
-            widget.inBoundData['netFare'],
+            widget.inBoundData['tboTds'],
+            widget.inBoundData['trvlusCommission'],
+            widget.inBoundData['trvlusTds'],
+            widget.inBoundData['trvlusNetFare'],
             "");
 
-        pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        bookingId = (searchData?["data"]?["Response"]?["Response"]
-                    ?["BookingId"])
-                ?.toString() ??
-            "0";
+        print(
+            "BookingId from hold pnr: ${(searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? ""}");
+        final pnr =
+            (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+        final bookingId =
+            (searchData?["data"]?["Response"]?["Response"]?["BookingId"]) ?? 0;
+        final statusCode = (searchData?["statusCode"]) ?? 0;
         final api = searchData;
-        print("API CALLING API$api");
-
-        print("BookingId from hold pnr: $pnr");
-        print("bookingIdbookingId: $bookingId");
+        // setState(() {
+        //   final pnr =
+        //       (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+        //   final bookingId = (searchData?["data"]?["Response"]?["Response"]
+        //           ?["BookingId"]) ??
+        //       0;
+        //   final statusCode = (searchData?["statusCode"]) ?? 0;
+        //   final api = searchData;
+        // });
 
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING");
-        await ApiService()
-            .ticketInvoice(pnr, bookingId.toString(), traceid, "", "");
+        await ApiService().ticketInvoice(pnr, bookingId.toString(), traceid,
+            widget.inBoundData['netFare'], conveniencefee);
       }
     } else {
       // ONEWAY

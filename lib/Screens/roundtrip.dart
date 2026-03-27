@@ -511,6 +511,7 @@ class _RoundtripState extends State<Roundtrip> {
   // ✅ HELPER: Reusable fare calculation for any flight variant
   Map<String, dynamic> _calculateFare(dynamic flight) {
     double publishFare = flight.fare.publishedFare.toDouble();
+    double offeredFare = flight.fare.offeredFare.toDouble();
     double tboTDS = flight.fare.tdsOnCommission.toDouble();
     final commissionEarned = flight.fare.commissionEarned.toDouble();
 
@@ -558,6 +559,9 @@ class _RoundtripState extends State<Roundtrip> {
 
     return {
       'publishFare': publishFare,
+      'offeredFare': offeredFare,
+      'tboTDS': tboTDS,
+      'commissionEarned': commissionEarned,
       'finaloffFare': finaloffFare,
       'finalcoupouncode': finalcoupouncode,
       'finalflatoffer': finalflatoffer,
@@ -1178,6 +1182,10 @@ class _RoundtripState extends State<Roundtrip> {
                         int varFinalcoupouncode =
                             varFareData['finalcoupouncode'];
                         double varPublishFare = varFareData['publishFare'];
+                        double varOfferedare = varFareData['offeredFare'];
+                        double varTds = varFareData['tboTDS'];
+                        double varCommissionEarned =
+                            varFareData['commissionEarned'];
 
                         final varDepTimeFormatted = DateFormat("HH:mm").format(
                             DateTime.parse(variantFlight
@@ -1316,12 +1324,119 @@ class _RoundtripState extends State<Roundtrip> {
                                     // Book Now — navigates with this variant's data
                                     GestureDetector(
                                       onTap: () {
+                                        List<Map<String, dynamic>>
+                                            segmentListJson = [];
+
+                                        for (var segmentGroup
+                                            in variantFlight.segments) {
+                                          final firstSegment =
+                                              segmentGroup.first;
+                                          final lastSegment = segmentGroup.last;
+                                          final totalDurationMinutes =
+                                              lastSegment.destination.arrTime
+                                                  .difference(firstSegment
+                                                      .origin.depTime)
+                                                  .inMinutes;
+                                          final totalHours =
+                                              totalDurationMinutes ~/ 60;
+                                          final totalMins =
+                                              totalDurationMinutes % 60;
+                                          final totalDurationText =
+                                              "${totalHours}h ${totalMins}m";
+
+                                          for (var segment in segmentGroup) {
+                                            String layoverText = "";
+                                            int segmentIndex =
+                                                segmentGroup.indexOf(segment);
+
+                                            if (segmentIndex > 0) {
+                                              final prevSegment = segmentGroup[
+                                                  segmentIndex - 1];
+                                              DateTime prevArrival = prevSegment
+                                                  .destination.arrTime;
+                                              DateTime nextDeparture =
+                                                  segment.origin.depTime;
+                                              final layoverMinutes =
+                                                  nextDeparture
+                                                      .difference(prevArrival)
+                                                      .inMinutes;
+                                              final hours =
+                                                  layoverMinutes ~/ 60;
+                                              final mins = layoverMinutes % 60;
+                                              layoverText =
+                                                  "${hours}h ${mins}m layover at ${prevSegment.destination.airport.cityName}";
+                                            }
+
+                                            final DateTime depTime =
+                                                segment.origin.depTime;
+                                            final String formattedDepDate =
+                                                DateFormat("dd MMM yy")
+                                                    .format(depTime);
+                                            final DateTime arrTime =
+                                                segment.destination.arrTime;
+                                            final String formattedArrDate =
+                                                DateFormat("dd MMM yy")
+                                                    .format(arrTime);
+
+                                            final stop = (variantFlight.segments
+                                                            .first.length -
+                                                        1) ==
+                                                    0
+                                                ? "Non-Stop"
+                                                : "${variantFlight.segments.first.length - 1} stop";
+
+                                            segmentListJson.add({
+                                              "airlineName":
+                                                  segment.airline.airlineName,
+                                              "airlineCode":
+                                                  segment.airline.airlineCode,
+                                              "flightNumber":
+                                                  segment.airline.flightNumber,
+                                              "fromCity": segment
+                                                  .origin.airport.cityName,
+                                              "fromCode": segment
+                                                  .origin.airport.cityCode,
+                                              "toCity": segment
+                                                  .destination.airport.cityName,
+                                              "toCode": segment
+                                                  .destination.airport.cityCode,
+                                              "departure": formattedDepDate,
+                                              "depTime": segment.origin.depTime
+                                                  .toString()
+                                                  .substring(11, 16),
+                                              "arrival": formattedArrDate,
+                                              "arrTime": segment
+                                                  .destination.arrTime
+                                                  .toString()
+                                                  .substring(11, 16),
+                                              "duration":
+                                                  segment.duration.toString(),
+                                              "durationTime": totalDurationText,
+                                              "fromAirport": segment
+                                                  .origin.airport.airportName,
+                                              "fromAirportCode": segment
+                                                  .origin.airport.airportCode,
+                                              "toAirport": segment.destination
+                                                  .airport.airportName,
+                                              "toAirportCode": segment
+                                                  .destination
+                                                  .airport
+                                                  .airportCode,
+                                              "layover": layoverText,
+                                              "noofstop": stop,
+                                              "baggage": segment.baggage,
+                                              "cabinBaggage":
+                                                  segment.cabinBaggage,
+                                            });
+                                          }
+                                        }
                                         Map<String, dynamic> outBoundData = {
                                           "resultindex":
                                               variantFlight.resultIndex,
                                           "traceid":
                                               searchData.response.traceId,
                                         };
+
                                         Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -1385,22 +1500,22 @@ class _RoundtripState extends State<Roundtrip> {
                                                       desairportName:
                                                           variantFlight
                                                               .segments
-                                                              .first
-                                                              .first
+                                                              .last
+                                                              .last
                                                               .destination
                                                               .airport
                                                               .airportName,
                                                       descityName: variantFlight
                                                           .segments
-                                                          .first
-                                                          .first
+                                                          .last
+                                                          .last
                                                           .destination
                                                           .airport
                                                           .cityName,
                                                       descityCode: variantFlight
                                                           .segments
-                                                          .first
-                                                          .first
+                                                          .last
+                                                          .last
                                                           .destination
                                                           .airport
                                                           .cityCode,
@@ -1436,9 +1551,18 @@ class _RoundtripState extends State<Roundtrip> {
                                                           .fare.baseFare,
                                                       tax: variantFlight
                                                           .fare.tax,
+                                                      segmentsJson:
+                                                          segmentListJson,
                                                       commonPublishedFare:
                                                           varPublishFare
                                                               .toString(),
+                                                      tboOfferedFare:
+                                                          varOfferedare
+                                                              .toString(),
+                                                      tboTds: varTds,
+                                                      tboCommission:
+                                                          varCommissionEarned,
+                                                      trvlusCommission: 10,
                                                       isLLC:
                                                           variantFlight.isLcc,
                                                       trvlusNetFare:

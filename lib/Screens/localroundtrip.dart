@@ -930,6 +930,78 @@ class _LocalroundtripState extends State<Localroundtrip> {
     );
   }
 
+  double _calculateCustomerComm(Result flight) {
+    double commissionEarned = flight.fare.commissionEarned.toDouble();
+    double customerComm = 0.0;
+    if (customer != null &&
+        customer!.data.isNotEmpty &&
+        commissionEarned >= 0) {
+      var commData = customer!.data[0];
+      double earned = commissionEarned;
+      if (earned == 0) {
+        customerComm = commData.commission_0?.toDouble() ?? 0.0;
+      } else if (earned <= 10) {
+        customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+      } else if (earned <= 20) {
+        customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+      } else if (earned <= 30) {
+        customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+      } else if (earned <= 50) {
+        customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
+      } else if (earned <= 100) {
+        customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+      } else if (earned <= 150) {
+        customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+      } else if (earned <= 200) {
+        customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+      } else if (earned <= 250) {
+        customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+      } else if (earned <= 300) {
+        customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+      } else {
+        customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+      }
+    }
+    print("commissionEarned$commissionEarned");
+    print("customerComm$customerComm");
+    return customerComm;
+  }
+
+  double _calculateCouponCode(Result flight) {
+    double commissionEarned = flight.fare.commissionEarned.toDouble();
+    double tboTDS = flight.fare.tdsOnCommission.toDouble();
+    double tdsOnPlb = flight.fare.tdsOnPlb.toDouble();
+    double plbEarned = flight.fare.plbEarned.toDouble();
+
+    double customerComm = _calculateCustomerComm(flight);
+
+    double finalPlb = commissionEarned + plbEarned;
+    double detection = finalPlb - customerComm - tboTDS - tdsOnPlb;
+    int finalCustomerCommission = detection.round();
+    double percentage = finalCustomerCommission * 0.02;
+    double flatOffer = detection - percentage;
+
+    print("trvlusCouponCode: $flatOffer");
+    return flatOffer;
+  }
+
+  double _calculateTrvlusTds(Result flight) {
+    double commissionEarned = flight.fare.commissionEarned.toDouble();
+    double tboTDS = flight.fare.tdsOnCommission.toDouble();
+    double tdsOnPlb = flight.fare.tdsOnPlb.toDouble();
+    double plbEarned = flight.fare.plbEarned.toDouble();
+
+    double customerComm = _calculateCustomerComm(flight);
+
+    double finalPlb = commissionEarned + plbEarned;
+    double detection = finalPlb - customerComm - tboTDS - tdsOnPlb;
+    int finalCustomerCommission = detection.round();
+    double trvlusTds = finalCustomerCommission * 0.02;
+
+    print("trvlusTds for flight: $trvlusTds");
+    return trvlusTds;
+  }
+
   void _handleViewFareTap() {
     if (selectedOutbound != null && selectedInbound != null) {
       String formatDate(String? dateStr) {
@@ -941,6 +1013,12 @@ class _LocalroundtripState extends State<Localroundtrip> {
           return '';
         }
       }
+
+      final outCustomerComm = _calculateCustomerComm(selectedOutbound!);
+      final inCustomerComm = _calculateCustomerComm(selectedInbound!);
+
+      print("OUT trvlusCommission: $outCustomerComm");
+      print("IN  trvlusCommission: $inCustomerComm");
 
       final outdepDate = selectedOutbound!.segments.first.first.origin.depTime
           .toString()
@@ -1066,8 +1144,14 @@ class _LocalroundtripState extends State<Localroundtrip> {
         "traceid": searchData.response.traceId,
         "total": totalNetFare.toString(),
         "IsLCC": selectedOutbound?.isLcc,
-        "tboCommission": selectedOutbound!.fare.tdsOnCommission,
-        "netFare": onwardNetFare, // ← ADD THIS
+        "publishFare": selectedOutbound!.fare.publishedFare,
+        "offeredFare": selectedOutbound!.fare.offeredFare,
+        "tboTds": selectedOutbound!.fare.tdsOnCommission,
+        "tboCommission": selectedOutbound!.fare.commissionEarned,
+        "trvlusCoupounCode": _calculateCouponCode(selectedOutbound!),
+        "trvlusTds": _calculateTrvlusTds(selectedOutbound!),
+        "trvlusCommission": _calculateCustomerComm(selectedOutbound!),
+        "trvlusNetFare": onwardNetFare,
       };
 
       // INBOUND
@@ -1126,8 +1210,14 @@ class _LocalroundtripState extends State<Localroundtrip> {
         "traceid": searchData.response.traceId,
         "total": totalNetFare.toString(),
         "IsLCC": selectedInbound?.isLcc,
-        "tboCommission": selectedInbound!.fare.tdsOnCommission,
-        "netFare": returnNetFare, // ← ADD THIS
+        "publishFare": selectedInbound!.fare.publishedFare,
+        "offeredFare": selectedInbound!.fare.offeredFare,
+        "tboTds": selectedInbound!.fare.tdsOnCommission,
+        "tboCommission": selectedInbound!.fare.commissionEarned,
+        "trvlusCoupounCode": _calculateCouponCode(selectedInbound!),
+        "trvlusTds": _calculateTrvlusTds(selectedInbound!),
+        "trvlusCommission": _calculateCustomerComm(selectedInbound!),
+        "trvlusNetFare": returnNetFare,
       };
 
       print("Navigator view fare");
