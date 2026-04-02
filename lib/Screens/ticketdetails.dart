@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:core';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../models/full_booking_history.dart';
 import '../models/getbookingdetailsid.dart';
 import '../utils/api_service.dart';
 import '../utils/constant.dart';
@@ -25,6 +27,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
   bool istravel = false;
   bool isLoading = false;
   late Getbookingdetailsid bookingdetailsid;
+  late FlightBookingHistory fetchbookingdetails;
   int adultCount = 0;
   int childCount = 0;
   int infantCount = 0;
@@ -36,6 +39,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
   double childFare = 0;
   double infantFare = 0;
   double total = 0; // declare variable here
+  List<dynamic> miniFareRules = [];
+  bool isShowDateChange = false; // ADD THIS
 
   @override
   void initState() {
@@ -53,6 +58,17 @@ class _TicketdetailsState extends State<Ticketdetails> {
     bookingdetailsid = await ApiService().getbookingdetailHistory(widget.id);
     print("bookingdetailsid");
     print({bookingdetailsid.data.first.coupounCode});
+    print("helllo${bookingdetailsid.data.first.cancellationCharge}");
+    print("helllo${bookingdetailsid.data.first.pnr}");
+    print("helllo${bookingdetailsid.data.first.bookingId}");
+    final pnr = bookingdetailsid.data.first.pnr;
+    final bookingid = bookingdetailsid.data.first.bookingId;
+    fetchbookingdetails =
+        await ApiService().fetchallBookingdata(pnr, bookingid);
+    print("fetchbookingdetails$fetchbookingdetails");
+    // Extract MiniFareRules
+    // final miniFareRules =
+    //     fetchbookingdetails.data.response.flightItinerary.miniFareRules;
 
     // final adultCount =
     //     int.parse(bookingdetailsid.data.first.totalpassengers.toString());
@@ -69,19 +85,36 @@ class _TicketdetailsState extends State<Ticketdetails> {
     final othercharges =
         double.parse(bookingdetailsid.data.first.price.OtherCharges.toString());
     print("othercharges$othercharges");
+    final customerCommission =
+        double.parse(bookingdetailsid.data.first.commissionAmt.toString());
+    print("customerCommission$customerCommission");
 
     // total = fare + tax + conveiencefee - coupounCode;
     print("conveiencefee$conveiencefee");
     print('farefare$fare');
     print('taxtax$tax');
-    total = fare + tax + conveiencefee + othercharges - coupounCode;
-    print('total$total');
+    total = fare + tax + conveiencefee + customerCommission - coupounCode;
+    print('finaltotal$total');
 
     adultFare = adultCount * fare;
     print("TOTAL COUNT $adultFare");
 
     setState(() {
       isLoading = false;
+      miniFareRules =
+          fetchbookingdetails.data.response.flightItinerary.miniFareRules ?? [];
+      print("miniFareRules length: ${miniFareRules.length}");
+      print("miniFareRules type: ${miniFareRules.runtimeType}");
+      final r = miniFareRules.first as MiniFareRule;
+      print("type: ${r.type}");
+      print("from: ${r.from}");
+      print("to: ${r.to}");
+      print("details: ${r.details}");
+      print("journeyPoints: ${r.journeyPoints}");
+      if (miniFareRules.isNotEmpty) {
+        print("first item type: ${miniFareRules.first.runtimeType}");
+        print("first item: ${miniFareRules.first}");
+      }
     });
     passengerCount();
   }
@@ -147,79 +180,144 @@ class _TicketdetailsState extends State<Ticketdetails> {
   }
 
   Widget _buildCancellationPolicy() {
+    final raw = miniFareRules;
+    final rules = (raw is List ? raw : [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Cancellation')
+        .toList();
+    if (rules.isEmpty) return SizedBox.shrink(); // ✅ hide entire card
+
     return _buildSectionCard(
       "Cancellation Charges",
       [
-        Row(
-          children: [
-            Text(
-              "Cancellation between (IST)",
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.grey,
-              ),
-            ),
-            Spacer(),
-            Text(
-              isShowCal ? "View Less" : "View More",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            Icon(
-              isShowCal ? Icons.arrow_drop_up : Icons.arrow_drop_down_outlined,
-              color: Colors.grey.shade700,
-              size: 20,
-            )
-          ],
-        ),
+        Text("Cancellation between (IST)",
+            style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
         SizedBox(height: 8.h),
-        isShowCal
-            ? Column(
-                children: [
-                  const Divider(),
-                  //SizedBox(height: 8.h),
-                  SizedBox(height: 8.h),
-                  _buildPolicyRow(
-                    "0-4 hrs to departure:",
-                    "Non Refundable",
-                    valueColor: Color(0xFFF32323),
-                  ),
-                  SizedBox(height: 12.h),
-                  _buildPolicyRow("4hrs - 4 days to departure:", "₹4,555"),
-                  SizedBox(height: 12.h),
-                  _buildPolicyRow("4 - 999 days to departure:", "₹4,555"),
-                ],
-              )
-            : Container()
+        Divider(),
+        SizedBox(height: 8.h),
+        if (rules.isEmpty)
+          _buildPolicyRow("No cancellation data", "", "")
+        else
+          ...miniFareRules
+              .map((rule) => rule as MiniFareRule)
+              .where((r) => r.type == 'Cancellation')
+              .map((r) {
+            final from = r.from ?? '0';
+            final to = r.to ?? '';
+            final details = r.details ?? '';
+            final journey = r.journeyPoints ?? '';
+            final label = to.isEmpty
+                ? "$from hrs+ before departure"
+                : "$from – $to hrs before departure";
+            return Column(
+              children: [
+                _buildPolicyRow(label, journey, details),
+                SizedBox(height: 12.h),
+              ],
+            );
+          }).toList(),
       ],
     );
   }
 
-  Widget _buildPolicyRow(String label, String value,
+  Widget _buildDateChange() {
+    final rules = miniFareRules
+        .map((r) => r as MiniFareRule)
+        .where((r) => r.type == 'Reissue')
+        .toList();
+    if (rules.isEmpty) return SizedBox.shrink();
+
+    return _buildDateChangeCard(
+      "Date Change Charges",
+      [
+        SizedBox(height: 8.h),
+        ...rules.map((r) {
+          final from = r.from ?? '0';
+          final to = r.to ?? '';
+          final details = r.details ?? '';
+          final journey = r.journeyPoints ?? '';
+          final label = to.isEmpty
+              ? "$from hrs+ before departure"
+              : "$from – $to hrs before departure";
+          return Column(
+            children: [
+              _buildPolicyRow(label, journey, details),
+              SizedBox(height: 12.h),
+            ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  _buildDateChangeCard(String title, List<Widget> content) {
+    return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                SvgPicture.asset("assets/icon/datechange.svg"),
+                SizedBox(width: 8.w),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            ...content,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolicyRow(String label, String journey, String value,
       {Color valueColor = Colors.black}) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+      margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
-        color: Color(0xFFF5F5F5), // Light gray background for each row
+        color: Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 12.sp, fontFamily: 'Inter', color: Color(0xFF909090)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(fontSize: 11.sp, color: Color(0xFFF32323))),
+              if (journey.isNotEmpty)
+                Text(journey,
+                    style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
+            ],
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14.sp,
-              color: valueColor,
-              fontWeight: FontWeight.bold,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: valueColor)),
+              Text("per adult",
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
+            ],
           ),
         ],
       ),
@@ -323,7 +421,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                               padding: EdgeInsets.symmetric(
                                   horizontal: 10.w, vertical: 5.h),
                               decoration: BoxDecoration(
-                                color: Color(0xFF00c292),
+                                color: Colors.green,
                                 borderRadius: BorderRadius.circular(15.r),
                               ),
                               child: Text(
@@ -678,7 +776,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                           }
                           return flightSections;
                         }(),
-                        SizedBox(height: 10.h),
+                        // SizedBox(height: 10.h),
                       ],
                     ),
                   ),
@@ -827,33 +925,34 @@ class _TicketdetailsState extends State<Ticketdetails> {
                       ),
                     ),
                   ),
-                  // GestureDetector(
-                  //     onTap: () {
-                  //       setState(() {
-                  //         isShowCal = !isShowCal;
-                  //       });
-                  //     },
-                  //     child: _buildCancellationPolicy()),
+                  GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isShowCal = !isShowCal;
+                        });
+                      },
+                      child: _buildCancellationPolicy()),
                   SizedBox(
                     height: 5,
                   ),
 
                   // Cancellation charges
-                  Container(
-                    margin: EdgeInsets.all(13),
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white),
-                    child: GestureDetector(
-                      onTap: () {
-                        print("isshowcal");
-                        setState(() {
-                          isShowCal = !isShowCal;
-                        });
-                      },
-                      child: Column(
-                        children: [
+                  if (miniFareRules
+                      .any((r) => (r as MiniFareRule).type == 'Cancellation'))
+                    Container(
+                      margin: EdgeInsets.all(13),
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white),
+                      child: GestureDetector(
+                        onTap: () {
+                          print("isshowcal");
+                          setState(() {
+                            isShowCal = !isShowCal;
+                          });
+                        },
+                        child: Column(children: [
                           Row(
                             children: [
                               Image.asset('assets/images/cancellation.png'),
@@ -894,27 +993,117 @@ class _TicketdetailsState extends State<Ticketdetails> {
                               ? Column(
                                   children: [
                                     const Divider(),
-                                    //SizedBox(height: 8.h),
                                     SizedBox(height: 8.h),
-                                    _buildPolicyRow(
-                                      "0-4 hrs to departure:",
-                                      "Non Refundable",
-                                      valueColor: Color(0xFFF32323),
-                                    ),
-                                    SizedBox(height: 12.h),
-                                    _buildPolicyRow(
-                                        "4hrs - 4 days to departure:",
-                                        "₹4,555"),
-                                    SizedBox(height: 12.h),
-                                    _buildPolicyRow(
-                                        "4 - 999 days to departure:", "₹4,555"),
+                                    ...miniFareRules
+                                        .map((rule) => rule as MiniFareRule)
+                                        .where((r) => r.type == 'Cancellation')
+                                        .map((r) {
+                                      final from = r.from ?? '0';
+                                      final to = r.to ?? '';
+                                      final details = r.details ?? '';
+                                      final journey = r.journeyPoints ?? '';
+                                      final label = to.isEmpty
+                                          ? "$from hrs+ before departure"
+                                          : "$from – $to hrs before departure";
+                                      return Column(
+                                        children: [
+                                          _buildPolicyRow(
+                                              label, journey, details),
+                                          SizedBox(height: 12.h),
+                                        ],
+                                      );
+                                    }).toList(),
                                   ],
                                 )
                               : Container()
-                        ],
+                        ]),
                       ),
                     ),
+                  SizedBox(
+                    height: 5,
                   ),
+                  // Date Change charges
+                  if (miniFareRules
+                      .any((r) => (r as MiniFareRule).type == 'Reissue'))
+                    Container(
+                      margin: EdgeInsets.all(13),
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isShowDateChange = !isShowDateChange;
+                          });
+                        },
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                SvgPicture.asset("assets/icon/datechange.svg"),
+                                SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Date Change Charges",
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      "date change between (IST)",
+                                      style: TextStyle(fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                                Spacer(),
+                                Text(
+                                  isShowDateChange ? "View Less" : "View More",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                                Icon(
+                                  isShowDateChange
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down_outlined,
+                                  color: Colors.grey.shade700,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                            isShowDateChange
+                                ? Column(
+                                    children: [
+                                      const Divider(),
+                                      SizedBox(height: 8.h),
+                                      ...miniFareRules
+                                          .map((rule) => rule as MiniFareRule)
+                                          .where((r) => r.type == 'Reissue')
+                                          .map((r) {
+                                        final from = r.from ?? '0';
+                                        final to = r.to ?? '';
+                                        final details = r.details ?? '';
+                                        final journey = r.journeyPoints ?? '';
+                                        final label = to.isEmpty
+                                            ? "$from hrs+ before departure"
+                                            : "$from – $to hrs before departure";
+                                        return Column(
+                                          children: [
+                                            _buildPolicyRow(
+                                                label, journey, details),
+                                            SizedBox(height: 12.h),
+                                          ],
+                                        );
+                                      }).toList(),
+                                    ],
+                                  )
+                                : Container()
+                          ],
+                        ),
+                      ),
+                    ),
 
                   // Traveler Details
                   Container(
@@ -1220,7 +1409,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                     fontWeight:
                                                         FontWeight.bold)),
                                             Text(
-                                                '₹${bookingdetailsid.data.first.price.BaseFare.toInt()}',
+                                                '₹${bookingdetailsid.data.first.price.BaseFare.toInt() + bookingdetailsid.data.first.commissionAmt}',
                                                 style: TextStyle(
                                                     fontSize: 14.sp,
                                                     fontWeight: FontWeight.bold,

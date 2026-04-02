@@ -545,7 +545,18 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                 horizontal: 10.w,
                                                 vertical: 5.h),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFDEF6DB),
+                                              color: () {
+                                                if (["FAILED", "CANCELLED"]
+                                                    .contains(displayStatus)) {
+                                                  return Colors
+                                                      .red; // light red background
+                                                } else if (displayStatus ==
+                                                    "CONFIRMED") {
+                                                  return Colors.green;
+                                                } else {
+                                                  return Colors.grey.shade200;
+                                                }
+                                              }(),
                                               borderRadius:
                                                   BorderRadius.circular(15.r),
                                             ),
@@ -568,11 +579,10 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                     "FAILED",
                                                     "CANCELLED"
                                                   ].contains(displayStatus)) {
-                                                    return Colors.red;
+                                                    return Colors.white;
                                                   } else if (displayStatus ==
                                                       "CONFIRMED") {
-                                                    return const Color(
-                                                        0xFF138808);
+                                                    return Colors.white;
                                                   } else {
                                                     return Colors.grey;
                                                   }
@@ -874,69 +884,108 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                                         .center,
                                                                 child:
                                                                     GestureDetector(
-                                                                  onTap:
-                                                                      () async {
-                                                                    String
-                                                                        remark =
-                                                                        remarkController
-                                                                            .text
-                                                                            .trim(); // get the text
-                                                                    print(
-                                                                        "User typed remark: $remark");
-                                                                    // print("hellooo${booking.verifystatus});
-                                                                    // Check if user selected a reason
-                                                                    if (selectCancelReason ==
-                                                                            null ||
-                                                                        selectCancelReason!
-                                                                            .isEmpty) {
-                                                                      // Show error message
-                                                                      setState(
-                                                                          () {
-                                                                        showError =
-                                                                            true;
-                                                                      });
-                                                                      return; // Stop further execution
-                                                                    }
+                                                                  onTap: isLoading
+                                                                      ? null // ✅ prevent multiple clicks
+                                                                      : () async {
+                                                                          String
+                                                                              remark =
+                                                                              remarkController.text.trim();
+                                                                          print(
+                                                                              "User typed remark: $remark");
 
-                                                                    // Reset error if a reason is selected
-                                                                    setState(
-                                                                        () {
-                                                                      showError =
-                                                                          false;
-                                                                    });
+                                                                          // ✅ Validate reason
+                                                                          if (selectCancelReason == null ||
+                                                                              selectCancelReason!.isEmpty) {
+                                                                            setState(() {
+                                                                              showError = true;
+                                                                            });
+                                                                            return;
+                                                                          }
 
-                                                                    // Call API
-                                                                    await ApiService().cancelRequest(
-                                                                        pnr: booking
-                                                                            .pnr,
-                                                                        appref: booking
-                                                                            .appReference,
-                                                                        bookingID:
-                                                                            booking
-                                                                                .bookingId,
-                                                                        status: booking
-                                                                            .status,
-                                                                        remark:
-                                                                            remark,
-                                                                        selectCancelReason:
-                                                                            selectCancelReason
-                                                                        // reason: selectCancelReason, // pass selected reason
-                                                                        );
+                                                                          setState(
+                                                                              () {
+                                                                            showError =
+                                                                                false;
+                                                                            isLoading =
+                                                                                true; // ✅ start loader
+                                                                          });
 
-                                                                    Navigator.pop(
-                                                                        context);
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    "Send",
-                                                                    style:
-                                                                        TextStyle(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontSize:
-                                                                          20,
-                                                                    ),
-                                                                  ),
+                                                                          try {
+                                                                            // ✅ API call
+                                                                            var response =
+                                                                                await ApiService().cancelRequest(
+                                                                              pnr: booking.pnr,
+                                                                              appref: booking.appReference,
+                                                                              bookingID: booking.bookingId,
+                                                                              status: booking.status,
+                                                                              remark: remark,
+                                                                              selectCancelReason: selectCancelReason,
+                                                                            );
+
+                                                                            print("Cancel API response: $response");
+
+                                                                            setState(() {
+                                                                              isLoading = false; // ✅ stop loader
+                                                                            });
+
+                                                                            // ✅ Success
+                                                                            if (response != null &&
+                                                                                (response['status'] == 'success' || response['statusCode'] == '1')) {
+                                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                                const SnackBar(
+                                                                                  content: Text("Cancellation request sent successfully"),
+                                                                                ),
+                                                                              );
+
+                                                                              Navigator.pop(context); // ✅ close screen
+                                                                            } else {
+                                                                              // ❌ Failure
+                                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                                SnackBar(
+                                                                                  content: Text(
+                                                                                    response?['message'] ?? "Cancellation failed",
+                                                                                  ),
+                                                                                ),
+                                                                              );
+                                                                            }
+                                                                          } catch (e) {
+                                                                            setState(() {
+                                                                              isLoading = false; // ✅ stop loader on error
+                                                                            });
+
+                                                                            print("Error: $e");
+
+                                                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                                              const SnackBar(
+                                                                                content: Text("Something went wrong"),
+                                                                              ),
+                                                                            );
+                                                                          }
+                                                                        },
+                                                                  child: isLoading
+                                                                      ? const SizedBox(
+                                                                          height:
+                                                                              20,
+                                                                          width:
+                                                                              20,
+                                                                          child:
+                                                                              CircularProgressIndicator(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            strokeWidth:
+                                                                                2,
+                                                                          ),
+                                                                        )
+                                                                      : const Text(
+                                                                          "Send",
+                                                                          style:
+                                                                              TextStyle(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            fontSize:
+                                                                                20,
+                                                                          ),
+                                                                        ),
                                                                 ),
                                                               ),
                                                             ],

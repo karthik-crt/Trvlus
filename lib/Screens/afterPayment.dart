@@ -126,6 +126,7 @@ class _AfterpaymentState extends State<Afterpayment> {
   String pnr = '';
   String bookingId = '';
   String statusMessage = '';
+  double totalAmount = 0;
 
   // TICKET API CALLING
   getSearchData() async {
@@ -175,7 +176,8 @@ class _AfterpaymentState extends State<Afterpayment> {
     final tboCommission = widget.tboCommission;
     final tboTds = widget.tboTds;
     final trvlusCommission = widget.trvlusCommission;
-    final trvlusTds = widget.trvlusTds;
+    final trvlusTds = widget.tboTds == 0.0 ? 0.0 : widget.trvlusTds;
+    // final trvlusTds = widget.trvlusTds;
     final trvlusNetFare = widget.trvlusNetFare;
     final othercharges = widget.othercharges;
     final isLcc = widget.isLLC;
@@ -626,6 +628,9 @@ class _AfterpaymentState extends State<Afterpayment> {
     getSearchData();
     // selecttravelerData();
     print('passengerdetailsall${widget.passenger}');
+    totalAmount = (widget.trvlusNetFare?.toDouble() ?? 0.0) +
+        (widget.convenienceFee ?? 0.0);
+
     super.initState();
   }
 
@@ -640,8 +645,18 @@ class _AfterpaymentState extends State<Afterpayment> {
                   CircularProgressIndicator(color: Color(0xFFF37023)),
                   SizedBox(height: 10),
                   Text(
-                    "Checking Payment Status...",
-                    style: TextStyle(color: Colors.black),
+                    "Checking Payment",
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22),
+                  ),
+                  Text(
+                    "Status...",
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22),
                   ),
                 ],
               ),
@@ -681,58 +696,61 @@ class _AfterpaymentState extends State<Afterpayment> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     // crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.construction, size: 50),
-                      // Image.asset(
-                      //   "assets/icon/left.png",
-                      //   height: 200,
-                      //   width: 60,
-                      // ),
-                      // Image.asset(
-                      //   "assets/icon/successpayment.png",
-                      //   height: 200,
-                      //   width: 80,
-                      // ),
-                      // Image.asset(
-                      //   "assets/icon/right.png",
-                      //   height: 200,
-                      //   width: 60,
-                      // )
+                      // Icon(Icons.construction, size: 50),
+                      Image.asset(
+                        "assets/icon/left.png",
+                        height: 100,
+                        width: 60,
+                      ),
+                      Image.asset(
+                        "assets/icon/successpayment.png",
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                      Image.asset(
+                        "assets/icon/right.png",
+                        height: 100,
+                        width: 60,
+                      )
                     ],
                   ),
-                  SizedBox(height: 25),
+                  SizedBox(height: 10),
+                  // Text(
+                  //   "This is a test payment.\nPayment integration will be live soon.",
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     color: Colors.black,
+                  //     fontSize: 18,
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
+                  // Text("PNR : $pnr"),
+                  // Text("BOOKINGID : $bookingId"),
+                  // Text("statusMessage :$statusMessage"),
+
                   Text(
-                    "This is a test payment.\nPayment integration will be live soon.",
-                    textAlign: TextAlign.center,
+                    "Payment Successfull",
                     style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.black,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Text(
+                    "₹${totalAmount.toStringAsFixed(0)}",
+                    style: TextStyle(
+                        color: Color(0xFFF37023),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24),
                   ),
                   Text("PNR : $pnr"),
                   Text("BOOKINGID : $bookingId"),
-                  Text("statusMessage :$statusMessage"),
-
-                  // Text(
-                  //   "Payment Successfull",
-                  //   style: TextStyle(
-                  //       color: Colors.black,
-                  //       fontSize: 22,
-                  //       fontWeight: FontWeight.bold),
-                  // ),
-                  // SizedBox(
-                  //   height: 10,
-                  // ),
-                  // Text(
-                  //   "₹8,000",
-                  //   style: TextStyle(
-                  //       color: Color(0xFFF37023),
-                  //       fontWeight: FontWeight.bold,
-                  //       fontSize: 24),
-                  // ),
                   // Text(
                   //   "Transaction ID :985y348y385",
                   //   style: TextStyle(color: Color(0xFF909090)),

@@ -48,6 +48,7 @@ class TravelerDetailsPage extends StatefulWidget {
   final double? tax;
   final List<List<Segment>>? segments;
   final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
+  final List<dynamic>? miniFareRules; // ✅ correct  final String? journeypoint;
   final Map<String, dynamic>? selectedpassenger; // 4th page uses this
   final String? resultindex;
   final String? traceid;
@@ -105,6 +106,7 @@ class TravelerDetailsPage extends StatefulWidget {
       this.basefare,
       this.segments,
       this.segmentsJson,
+      this.miniFareRules,
       this.resultindex,
       this.traceid,
       this.outboundFlight,
@@ -1949,6 +1951,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                           outresultindex: widget.outresultindex,
                           inresultindex: widget.inresultindex,
                           segmentsJson: widget.segmentsJson,
+                          miniFareRules: widget.miniFareRules,
                           coupouncode: widget.coupouncode,
                           commonPublishedFare: widget.commonPublishedFare,
                           tboOfferedFare: widget.tboOfferedFare,

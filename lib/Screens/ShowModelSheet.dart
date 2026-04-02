@@ -60,7 +60,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     double baggageTotal = 0.0;
     int total = 0;
 
-    final tax = widget.tax?.round();
+    final tax = widget.tax;
     print("totaltotal$tax");
     // final othertaxcharges =
     //     ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
@@ -74,7 +74,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("dgtgsgre${widget.tax}");
     print("dgtgsgre${widget.othercharges}");
 
-    final adultFare = widget.adultfare?.toInt();
+    final adultFare = widget.adultfare;
     final childFare = widget.childfare?.round();
     final infantFare = widget.infantfare?.round();
     final conveniencefee = widget.convenienceFee.toInt();
@@ -113,6 +113,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final double convenienceFee =
         widget.showConvenienceFee ? (widget.convenienceFee ?? 0) : 0;
     print("convenienceFee$convenienceFee");
+    print("trvlusCommissiontrvlusCommission${widget.trvlusCommission}");
 
     // MEAL SEAT BAGGAGE CALCULATION
     final mealData = widget.meal;
@@ -173,13 +174,14 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
       print("overallFare1$total");
     } else {
       print("helloooohelo");
-      total = adultFare! +
-          childFare! +
-          infantFare! +
-          conveniencefee +
-          taxtotal! +
-          ssrTotal.round() +
-          (widget.trvlusCommission ?? 0).toInt();
+      total = (adultFare! +
+              childFare! +
+              infantFare! +
+              conveniencefee +
+              taxtotal! +
+              ssrTotal +
+              (widget.trvlusCommission ?? 0).toInt())
+          .round();
       print("no commission");
       print("overallFare$total");
       print("overallFare$adultFare");
@@ -244,7 +246,8 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold)),
                         Text(
-                            "₹${(widget.basefare! + (widget.trvlusCommission ?? 0)).toInt()}",
+                            "₹${(widget.basefare! + (widget.coupouncode == null || widget.coupouncode! <= 0 ? (widget.trvlusCommission ?? 0) : 0)).toInt()}",
+                            // "₹${(widget.basefare! + (widget.trvlusCommission ?? 0)).toInt()}",
                             style: TextStyle(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,

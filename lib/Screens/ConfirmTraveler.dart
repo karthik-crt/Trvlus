@@ -46,6 +46,7 @@ class ConfirmTravelerDetails extends StatefulWidget {
   final double? tax;
   final List<List<Segment>>? segments;
   final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
+  final List<dynamic>? miniFareRules;
   final List<Map<String, dynamic>>? initialData;
   final List<Map<String, dynamic>>? childData;
   final List<Map<String, dynamic>>? infantData;
@@ -105,6 +106,7 @@ class ConfirmTravelerDetails extends StatefulWidget {
       this.basefare,
       this.segments,
       this.segmentsJson,
+      this.miniFareRules,
       this.initialData,
       this.childData,
       this.infantData,
@@ -189,6 +191,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       print("beforeOutput");
     });
     print("CONFIRMTRAVELERRR");
+    print("CONFIRMTRAVELERRR${widget.miniFareRules}");
     final prefs = await SharedPreferences.getInstance();
     double? paymentAmount = prefs.getDouble("payment");
     print("Stored Amount: $paymentAmount");
@@ -1694,6 +1697,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               desairportName: widget.desairportName,
                               basefare: widget.basefare,
                               segments: widget.segments,
+                              miniFareRules: widget.miniFareRules,
                               initialData: widget.initialData,
                               resultindex: widget.resultindex,
                               traceid: widget.traceid,

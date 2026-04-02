@@ -20,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     Timer(Duration(seconds: 5), () async {
       final prefs = await SharedPreferences.getInstance();
       final bool isFirstLaunch = prefs.getBool('is_first_launch') ?? true;

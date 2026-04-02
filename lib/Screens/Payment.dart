@@ -49,6 +49,7 @@ class MakePaymentScreen extends StatefulWidget {
   final double? basefare;
   final double? tax;
   final List<List<Segment>>? segments;
+  final List<dynamic>? miniFareRules; // ✅ correct  final String? journeypoint;
   final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
   final List<Map<String, dynamic>>? initialData;
   final String? resultindex;
@@ -115,6 +116,7 @@ class MakePaymentScreen extends StatefulWidget {
       this.duration,
       this.basefare,
       this.segments,
+      this.miniFareRules,
       this.segmentsJson,
       this.initialData,
       this.resultindex,

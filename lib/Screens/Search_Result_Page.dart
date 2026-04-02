@@ -2608,18 +2608,6 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                             .response
                                                                             .traceId,
                                                                         // ✅ Use the variant's coupon
-                                                                        reissue:
-                                                                            (() {
-                                                                          try {
-                                                                            if (currentFlight.miniFareRules.isNotEmpty) {
-                                                                              return currentFlight.miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details ?? "No data";
-                                                                            } else {
-                                                                              return "No data";
-                                                                            }
-                                                                          } catch (e) {
-                                                                            return "No data";
-                                                                          }
-                                                                        })(),
                                                                         journeypoint:
                                                                             (() {
                                                                           try {
@@ -2632,6 +2620,19 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                             return "No data";
                                                                           }
                                                                         })(),
+                                                                        reissue:
+                                                                            (() {
+                                                                          try {
+                                                                            if (currentFlight.miniFareRules.isNotEmpty) {
+                                                                              return currentFlight.miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details ?? "No data";
+                                                                            } else {
+                                                                              return "No data";
+                                                                            }
+                                                                          } catch (e) {
+                                                                            return "No data";
+                                                                          }
+                                                                        })(),
+
                                                                         cancellation:
                                                                             (() {
                                                                           try {

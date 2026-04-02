@@ -201,12 +201,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     });
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCoupounCode']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCoupounCode']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusTds']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusTds']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
+    print("sgrrege${widget.miniFareRules}");
+    print("sgrrege${widget.cancellation}");
+    print("sgrrege${widget.reissue}");
     // print("FLIGHTDETAILPAGE SCREEN");
 
     // ROUNDTRIP
@@ -527,6 +524,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                   outBoundData: widget.outBoundData,
                   inBoundData: widget.inBoundData,
                   segmentsJson: widget.segmentsJson,
+                  miniFareRules: widget.miniFareRules,
                   coupouncode: widget.coupouncode,
                   commonPublishedFare: widget.commonPublishedFare,
                   tboOfferedFare: widget.tboOfferedFare,
