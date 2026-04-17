@@ -18,7 +18,6 @@ import 'BookingHistory.dart';
 import 'EditProfile.dart';
 import 'Mobile_Verification.dart';
 import 'NotificationScreen.dart';
-import 'countryCode.dart';
 import 'legal.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -381,51 +380,53 @@ class _ProfilePageState extends State<ProfilePage> {
                                       children: [
                                         SizedBox(width: 7.w),
                                         GestureDetector(
-                                          onTap: () async {
-                                            final selected =
-                                                await showModalBottomSheet<
-                                                    Map<String, String>>(
-                                              context: context,
-                                              shape:
-                                                  const RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(5),
-                                                  topRight: Radius.circular(5),
-                                                ),
-                                              ),
-                                              builder: (BuildContext context) {
-                                                return const countryCode(
-                                                    type: "country");
-                                              },
-                                            );
-
-                                            if (selected != null) {
-                                              print(
-                                                  "Selected Country Map: $selected");
-
-                                              setState(() {
-                                                _selectedCountry =
-                                                    selected["name"]!;
-                                                _selectedFlag =
-                                                    selected["flag"]!;
-                                                _selectedcurrency = selected[
-                                                    "currency"]!; // ✅ updates currency too
-                                              });
-
-                                              final prefs =
-                                                  await SharedPreferences
-                                                      .getInstance();
-                                              await prefs.setString(
-                                                  'selected_country',
-                                                  _selectedCountry);
-                                              await prefs.setString(
-                                                  'selected_flag',
-                                                  _selectedFlag);
-                                              await prefs.setString(
-                                                  'selected_currency',
-                                                  _selectedcurrency);
-                                            }
-                                          },
+                                          onTap: null,
+                                          // onTap: ()
+                                          // async {
+                                          //   final selected =
+                                          //       await showModalBottomSheet<
+                                          //           Map<String, String>>(
+                                          //     context: context,
+                                          //     shape:
+                                          //         const RoundedRectangleBorder(
+                                          //       borderRadius: BorderRadius.only(
+                                          //         topLeft: Radius.circular(5),
+                                          //         topRight: Radius.circular(5),
+                                          //       ),
+                                          //     ),
+                                          //     builder: (BuildContext context) {
+                                          //       return const countryCode(
+                                          //           type: "country");
+                                          //     },
+                                          //   );
+                                          //
+                                          //   if (selected != null) {
+                                          //     print(
+                                          //         "Selected Country Map: $selected");
+                                          //
+                                          //     setState(() {
+                                          //       _selectedCountry =
+                                          //           selected["name"]!;
+                                          //       _selectedFlag =
+                                          //           selected["flag"]!;
+                                          //       _selectedcurrency = selected[
+                                          //           "currency"]!; // ✅ updates currency too
+                                          //     });
+                                          //
+                                          //     final prefs =
+                                          //         await SharedPreferences
+                                          //             .getInstance();
+                                          //     await prefs.setString(
+                                          //         'selected_country',
+                                          //         _selectedCountry);
+                                          //     await prefs.setString(
+                                          //         'selected_flag',
+                                          //         _selectedFlag);
+                                          //     await prefs.setString(
+                                          //         'selected_currency',
+                                          //         _selectedcurrency);
+                                          //   }
+                                          // },
                                           child: Row(
                                             children: [
                                               Image.asset(
@@ -447,50 +448,52 @@ class _ProfilePageState extends State<ProfilePage> {
                                         const Text("|"),
                                         SizedBox(width: 8.w),
                                         GestureDetector(
-                                          onTap: () async {
-                                            final selectedCurrency =
-                                                await showModalBottomSheet<
-                                                    Map<String, String>>(
-                                              context: context,
-                                              shape:
-                                                  const RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(5),
-                                                  topRight: Radius.circular(5),
-                                                ),
-                                              ),
-                                              builder: (BuildContext context) {
-                                                return const countryCode(); // type defaults to currency
-                                              },
-                                            );
-
-                                            if (selectedCurrency != null) {
-                                              setState(() {
-                                                _selectedCountry = selectedCurrency[
-                                                    "name"]!; // optional: if you want country update too
-                                                _selectedFlag =
-                                                    selectedCurrency["flag"]!;
-                                                _selectedcurrency =
-                                                    selectedCurrency[
-                                                        "currency"]!; // ✅ extract string
-                                              });
-
-                                              final prefs =
-                                                  await SharedPreferences
-                                                      .getInstance();
-                                              await prefs.setString(
-                                                  'selected_country',
-                                                  _selectedCountry);
-                                              await prefs.setString(
-                                                  'selected_flag',
-                                                  _selectedFlag);
-                                              await prefs.setString(
-                                                  'selected_currency',
-                                                  _selectedcurrency);
-                                              print(
-                                                  "Saved selected currency: $_selectedcurrency");
-                                            }
-                                          },
+                                          onTap: null,
+                                          // onTap: ()
+                                          // async {
+                                          //   final selectedCurrency =
+                                          //       await showModalBottomSheet<
+                                          //           Map<String, String>>(
+                                          //     context: context,
+                                          //     shape:
+                                          //         const RoundedRectangleBorder(
+                                          //       borderRadius: BorderRadius.only(
+                                          //         topLeft: Radius.circular(5),
+                                          //         topRight: Radius.circular(5),
+                                          //       ),
+                                          //     ),
+                                          //     builder: (BuildContext context) {
+                                          //       return const countryCode(); // type defaults to currency
+                                          //     },
+                                          //   );
+                                          //
+                                          //   if (selectedCurrency != null) {
+                                          //     setState(() {
+                                          //       _selectedCountry = selectedCurrency[
+                                          //           "name"]!; // optional: if you want country update too
+                                          //       _selectedFlag =
+                                          //           selectedCurrency["flag"]!;
+                                          //       _selectedcurrency =
+                                          //           selectedCurrency[
+                                          //               "currency"]!; // ✅ extract string
+                                          //     });
+                                          //
+                                          //     final prefs =
+                                          //         await SharedPreferences
+                                          //             .getInstance();
+                                          //     await prefs.setString(
+                                          //         'selected_country',
+                                          //         _selectedCountry);
+                                          //     await prefs.setString(
+                                          //         'selected_flag',
+                                          //         _selectedFlag);
+                                          //     await prefs.setString(
+                                          //         'selected_currency',
+                                          //         _selectedcurrency);
+                                          //     print(
+                                          //         "Saved selected currency: $_selectedcurrency");
+                                          //   }
+                                          // },
                                           child: Text(
                                             _selectedcurrency ??
                                                 "Select Currency",

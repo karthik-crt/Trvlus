@@ -136,6 +136,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
   String enteredMobileNumber = '';
 
   final FocusNode _mobileFocus = FocusNode();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -185,243 +186,274 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 50.h),
-            Image.asset(
-              'assets/images/Home_Logo.png',
-              width: 120.w,
-            ),
-            SizedBox(height: 40.h),
-            Text(
-              "Verify Mobile",
-              style: TextStyle(
-                fontSize: 24.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            SizedBox(height: 10.h),
-            Text(
-              'Please enter your mobile number',
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 20.h),
-            Obx(() {
-              String errorText =
-                  _mobileRegex.hasMatch(authController.mobileNumber.value)
-                      ? ''
-                      : 'Enter a valid 10-digit Indian mobile number';
-              print("errorText$errorText");
-              print("traceidtraceid${widget.traceid}");
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 50.h),
+                Image.asset(
+                  'assets/images/Home_Logo.png',
+                  width: 120.w,
+                ),
+                SizedBox(height: 40.h),
+                Text(
+                  "Verify Mobile",
+                  style: TextStyle(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'Please enter your mobile number',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 20.h),
+                Obx(() {
+                  String errorText =
+                      _mobileRegex.hasMatch(authController.mobileNumber.value)
+                          ? ''
+                          : 'Enter a valid 10-digit Indian mobile number';
+                  print("errorText$errorText");
+                  print("traceidtraceid${widget.traceid}");
 
-              return Row(
-                children: [
-                  GestureDetector(
-                    onTap: _openCountryPicker,
-                    child: Container(
-                      width: 120.w,
-                      height: 50.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5.r),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  return Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _openCountryPicker,
+                        child: Container(
+                          width: 120.w,
+                          height: 50.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(5.r),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text("Country Code"),
-                              SizedBox(height: 5.h),
-                              if (_selectedCountry != null)
-                                Text(
-                                  '${_selectedCountry!.flagEmoji} +${_selectedCountry!.phoneCode}',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              SizedBox(width: 5.w),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Country Code"),
+                                  SizedBox(height: 5.h),
+                                  if (_selectedCountry != null)
+                                    Text(
+                                      '${_selectedCountry!.flagEmoji} +${_selectedCountry!.phoneCode}',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  SizedBox(width: 5.w),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 15),
+                                child: Icon(Icons.expand_more,
+                                    color: Colors.grey[600]),
+                              ),
                             ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 15),
-                            child: Icon(Icons.expand_more,
-                                color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Container(
-                      height: 50.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5.r),
-                        border:
-                            Border.all(color: Colors.grey[300]!, width: 1.0),
-                      ),
-                      child: TextFormField(
-                        focusNode: _mobileFocus,
-                        controller: _mobileController,
-                        validator: (value) {
-                          if (value != null && !_mobileRegex.hasMatch(value)) {
-                            return 'Enter a valid 10-digit Indian mobile number';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) async {
-                          authController.setMobileNumber(value.trim());
-                          setState(() {
-                            enteredMobileNumber = value.trim();
-                            if (value.length == 10) {
-                              _mobileFocus.unfocus(); // removes cursor
-                            }
-                          });
-                          print("Entered mobile number: $enteredMobileNumber");
-                          print(widget.outresultindex);
-                          print(widget.inresultindex);
-                          final prefs = await SharedPreferences.getInstance();
-                          prefs.setString("mobile", enteredMobileNumber);
-                          print("Stored Mobile: ${prefs.getString("mobile")}");
-                          print("Stored Mobile:");
-                        },
-                        style: TextStyle(color: Colors.black),
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 15.w,
-                            vertical: 15.h,
-                          ),
-                          fillColor: Colors.white,
-                          hintText: 'Mobile number',
-                          hintStyle: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 16.sp,
-                          ),
-                          border: InputBorder.none,
-                          suffixIcon: Icon(
-                            Icons.check_circle,
-                            color: _mobileRegex
-                                    .hasMatch(authController.mobileNumber.value)
-                                ? Colors.green
-                                : Colors.grey[300],
-                            size: 20.sp,
-                          ),
-                          counterText: '',
                         ),
-                        keyboardType: TextInputType.phone,
-                        maxLength: 10,
                       ),
-                    ),
-                  ),
-                ],
-              );
-            }),
-            SizedBox(height: 80.h),
-            Center(
-              child: Obx(() {
-                bool isMobileValid =
-                    _mobileRegex.hasMatch(authController.mobileNumber.value);
-                return ElevatedButton(
-                  onPressed: isMobileValid
-                      ? () async {
-                          await ApiService().otpRequest(enteredMobileNumber);
-                          print(
-                              "Final entered mobile: ${authController.mobileNumber.value}");
-                          print(widget.outresultindex);
-                          print(widget.inresultindex);
-                          Get.to(() => OtpVerificationScreen(
-                                flight: {},
-                                mobileNumber: enteredMobileNumber,
-                                city: widget.city,
-                                destination: widget.destination,
-                                airlineName: widget.airlineName,
-                                airlineCode: widget.airlineCode,
-                                flightNumber: widget.flightNumber,
-                                cityName: widget.cityName,
-                                cityCode: widget.cityCode,
-                                descityName: widget.descityName,
-                                descityCode: widget.descityCode,
-                                depDate: widget.depDate,
-                                depTime: widget.depTime,
-                                arrDate: widget.arrDate,
-                                arrTime: widget.arrTime,
-                                duration: widget.duration,
-                                refundable: widget.refundable,
-                                stop: widget.stop,
-                                airportName: widget.airportName,
-                                desairportName: widget.desairportName,
-                                basefare: widget.basefare,
-                                segments: widget.segments,
-                                resultindex: widget.resultindex,
-                                traceid: widget.traceid,
-                                outboundFlight: widget.outboundFlight,
-                                inboundFlight: widget.inboundFlight,
-                                total: widget.total,
-                                tax: widget.tax,
-                                adultCount: widget.adultCount,
-                                childCount: widget.childCount,
-                                infantCount: widget.infantCount,
-                                isLLC: widget.isLLC,
-                                outdepDate: widget.outdepDate,
-                                outdepTime: widget.outdepTime,
-                                outarrDate: widget.outarrDate,
-                                outarrTime: widget.outarrTime,
-                                indepDate: widget.indepDate,
-                                indepTime: widget.indepTime,
-                                inarrDate: widget.inarrDate,
-                                inarrTime: widget.inarrTime,
-                                outBoundData: widget.outBoundData,
-                                inBoundData: widget.inBoundData,
-                                outresultindex: widget.outresultindex,
-                                inresultindex: widget.inresultindex,
-                                segmentsJson: widget.segmentsJson,
-                                islogin: widget.islogin,
-                                coupouncode: widget.coupouncode,
-                                commonPublishedFare: widget.commonPublishedFare,
-                                tboOfferedFare: widget.tboOfferedFare,
-                                tboCommission: widget.tboCommission,
-                                tboTds: widget.tboTds,
-                                trvlusCommission: widget.trvlusCommission,
-                                trvlusTds: widget.trvlusTds,
-                                trvlusNetFare: widget.trvlusNetFare,
-                                othercharges: widget.othercharges,
-                              ));
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isMobileValid ? Colors.orange : Colors.grey[200],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.r),
-                    ),
-                    padding:
-                        EdgeInsets.symmetric(vertical: 15.h, horizontal: 120.w),
-                  ),
-                  child: Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      color: isMobileValid ? Colors.white : Colors.grey[500],
-                    ),
-                  ),
-                );
-              }),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Container(
+                          height: 50.h,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(5.r),
+                            border: Border.all(
+                                color: Colors.grey[300]!, width: 1.0),
+                          ),
+                          child: TextFormField(
+                            focusNode: _mobileFocus,
+                            controller: _mobileController,
+                            validator: (value) {
+                              if (value != null &&
+                                  !_mobileRegex.hasMatch(value)) {
+                                return 'Enter a valid 10-digit Indian mobile number';
+                              }
+                              return null;
+                            },
+                            onChanged: (value) async {
+                              authController.setMobileNumber(value.trim());
+                              setState(() {
+                                enteredMobileNumber = value.trim();
+                                if (value.length == 10) {
+                                  _mobileFocus.unfocus(); // removes cursor
+                                }
+                              });
+                              print(
+                                  "Entered mobile number: $enteredMobileNumber");
+                              print(widget.outresultindex);
+                              print(widget.inresultindex);
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              prefs.setString("mobile", enteredMobileNumber);
+                              print(
+                                  "Stored Mobile: ${prefs.getString("mobile")}");
+                              print("Stored Mobile:");
+                            },
+                            style: TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 15.w,
+                                vertical: 15.h,
+                              ),
+                              fillColor: Colors.white,
+                              hintText: 'Mobile number',
+                              hintStyle: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 16.sp,
+                              ),
+                              border: InputBorder.none,
+                              suffixIcon: Icon(
+                                Icons.check_circle,
+                                color: _mobileRegex.hasMatch(
+                                        authController.mobileNumber.value)
+                                    ? Colors.green
+                                    : Colors.grey[300],
+                                size: 20.sp,
+                              ),
+                              counterText: '',
+                            ),
+                            keyboardType: TextInputType.phone,
+                            maxLength: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                SizedBox(height: 80.h),
+                Center(
+                  child: Obx(() {
+                    bool isMobileValid = _mobileRegex
+                        .hasMatch(authController.mobileNumber.value);
+                    return ElevatedButton(
+                      onPressed: isMobileValid
+                          ? () async {
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              try {
+                                await ApiService()
+                                    .otpRequest(enteredMobileNumber);
+                                print(
+                                    "Final entered mobile: ${authController.mobileNumber.value}");
+                                Get.to(() => OtpVerificationScreen(
+                                      flight: {},
+                                      mobileNumber: enteredMobileNumber,
+                                      city: widget.city,
+                                      destination: widget.destination,
+                                      airlineName: widget.airlineName,
+                                      airlineCode: widget.airlineCode,
+                                      flightNumber: widget.flightNumber,
+                                      cityName: widget.cityName,
+                                      cityCode: widget.cityCode,
+                                      descityName: widget.descityName,
+                                      descityCode: widget.descityCode,
+                                      depDate: widget.depDate,
+                                      depTime: widget.depTime,
+                                      arrDate: widget.arrDate,
+                                      arrTime: widget.arrTime,
+                                      duration: widget.duration,
+                                      refundable: widget.refundable,
+                                      stop: widget.stop,
+                                      airportName: widget.airportName,
+                                      desairportName: widget.desairportName,
+                                      basefare: widget.basefare,
+                                      segments: widget.segments,
+                                      resultindex: widget.resultindex,
+                                      traceid: widget.traceid,
+                                      outboundFlight: widget.outboundFlight,
+                                      inboundFlight: widget.inboundFlight,
+                                      total: widget.total,
+                                      tax: widget.tax,
+                                      adultCount: widget.adultCount,
+                                      childCount: widget.childCount,
+                                      infantCount: widget.infantCount,
+                                      isLLC: widget.isLLC,
+                                      outdepDate: widget.outdepDate,
+                                      outdepTime: widget.outdepTime,
+                                      outarrDate: widget.outarrDate,
+                                      outarrTime: widget.outarrTime,
+                                      indepDate: widget.indepDate,
+                                      indepTime: widget.indepTime,
+                                      inarrDate: widget.inarrDate,
+                                      inarrTime: widget.inarrTime,
+                                      outBoundData: widget.outBoundData,
+                                      inBoundData: widget.inBoundData,
+                                      outresultindex: widget.outresultindex,
+                                      inresultindex: widget.inresultindex,
+                                      segmentsJson: widget.segmentsJson,
+                                      islogin: widget.islogin,
+                                      coupouncode: widget.coupouncode,
+                                      commonPublishedFare:
+                                          widget.commonPublishedFare,
+                                      tboOfferedFare: widget.tboOfferedFare,
+                                      tboCommission: widget.tboCommission,
+                                      tboTds: widget.tboTds,
+                                      trvlusCommission: widget.trvlusCommission,
+                                      trvlusTds: widget.trvlusTds,
+                                      trvlusNetFare: widget.trvlusNetFare,
+                                      othercharges: widget.othercharges,
+                                    ));
+                              } catch (e) {
+                                print("OTP request error: $e");
+                              } finally {
+                                if (mounted) {
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              }
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isMobileValid ? Colors.orange : Colors.grey[200],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            vertical: 15.h, horizontal: 120.w),
+                      ),
+                      child: Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          color:
+                              isMobileValid ? Colors.white : Colors.grey[500],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                SizedBox(height: 20.h),
+              ],
             ),
-            SizedBox(height: 20.h),
-          ],
-        ),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.orange,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

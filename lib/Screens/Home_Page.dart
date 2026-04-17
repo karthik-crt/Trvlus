@@ -14,6 +14,7 @@ import 'package:trvlus/Screens/roundtrip.dart';
 
 import '../models/payment.dart';
 import '../models/search_data.dart';
+import '../models/user.dart';
 import '../utils/api_service.dart';
 import 'Search_Result_Page.dart';
 import 'WalletScreen.dart';
@@ -29,6 +30,11 @@ DateTime? formattedDate;
 int adults = 1;
 int children = 0;
 int infants = 0;
+String fromAirport = "Delhi";
+String airportCode = "DEL";
+String fromCode = "DEL, Delhi Airport India";
+String toAirport = "Bengaluru";
+String toairportCode = "BLR";
 
 String _selectedDepDate = '';
 String _dateCount = '';
@@ -55,15 +61,12 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   int selectedIndex = -1;
   int departureIndex = -1;
   bool isLoading = false;
+  bool isPaymentLoading = false; // 👈 Add this
   late SearchData searchData;
   Payment? payment;
+  late User user;
 
   // State variables for From and To fields
-  String fromAirport = "Delhi";
-  String airportCode = "DEL";
-  String fromCode = "DEL, Delhi Airport India";
-  String toAirport = "Bengaluru";
-  String toairportCode = "BLR";
 
   // Function to swap From and To fields
   void _swapFields() {
@@ -79,38 +82,72 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     });
   }
 
+  // paymentStatus() async {
+  //   setState(() {
+  //     isPaymentLoading = true; // 👈 use separate flag
+  //     print("hello");
+  //   });
+  //   print("hello");
+  //   // payment = await ApiService().payment();
+  //   user = await ApiService().user();
+  //   double walletAmount = user.data.first.walletTicketBooking;
+  //   print("walletAmount$walletAmount");
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.setDouble("payment", walletAmount);
+  //   print("user$user");
+  //   print("payment$payment");
+  //   setState(() {
+  //     isPaymentLoading = false; // 👈 use separate flag
+  //   });
+  // }
   paymentStatus() async {
     setState(() {
-      isLoading = true;
-      print("hello");
+      isPaymentLoading = true;
     });
-    print("hello");
-    payment = await ApiService().payment();
-    print("payment$payment");
-    setState(() {
-      isLoading = false;
-    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      print("No access_token — guest user, skipping");
+      setState(() {
+        isPaymentLoading = false;
+      });
+      return;
+    }
+
+    try {
+      user = await ApiService().user();
+      double walletAmount = user.data.first.walletTicketBooking;
+      await prefs.setDouble("payment", walletAmount);
+    } catch (e) {
+      print("paymentStatus error (new user or no data): $e");
+      // New user has no wallet data yet — just set 0
+      await prefs.setDouble("payment", 0.0);
+    } finally {
+      setState(() {
+        isPaymentLoading = false;
+      });
+    }
   }
 
   getSearchData() async {
     setState(() {
       isLoading = true;
     });
-    String formattedDate = DateFormat(
-      "yyyy-MM-dd",
-    ).format(selectedDepatureDate!);
+    String formattedDate =
+        DateFormat("yyyy-MM-dd").format(selectedDepatureDate!.toLocal());
     print("formattedDate$formattedDate");
 
     String? formattedReturnDate;
     if (selectedReturnDate != null) {
-      formattedReturnDate = DateFormat(
-        "yyyy-MM-dd",
-      ).format(selectedReturnDate!);
+      formattedReturnDate =
+          DateFormat("yyyy-MM-dd").format(selectedReturnDate!.toLocal());
       print("heloooooooo$formattedReturnDate");
     }
 
     // String date = selectedReturnDate.toString().substring(0, 10);
-    print("datedate$date");
+    // print("datedate$date");
     final prefs = await SharedPreferences.getInstance();
     searchData = await ApiService().getSearchResult(
         airportCode,
@@ -163,7 +200,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     // convert to map
     fareMap.clear();
     for (var result in searchResults) {
-      final date = DateTime.parse(result['DepartureDate']);
+      final date = DateTime.parse(result['DepartureDate']).toLocal();
       print("date$date");
       final key = DateTime(date.year, date.month, date.day); // remove time
       fareMap[key] = result['Fare'].toDouble(); // use normalized key
@@ -176,6 +213,8 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   @override
   void initState() {
     super.initState();
+    paymentStatus();
+
     // _requestNotifi\cationPermission();
     // date();
     final now = DateTime.now();
@@ -189,9 +228,14 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     print("dad$selectedDepatureDate");
 
     returnDate = DateTime.now().add(const Duration(days: 1));
+    // Only set selectedReturnDate if it's a Round trip
+    if (selectedTripType == "Round trip") {
+      selectedReturnDate = returnDate;
+    } else {
+      selectedReturnDate = null;
+    }
     print('selectedReturnDate$selectedReturnDate');
     setPaxValue();
-    // paymentStatus();
     // _selectedDepDate = today.toString();
   }
 
@@ -242,17 +286,15 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
               //     .toString();
               // print("finaldataset$dataset");
               // format departure date once
-              String formattedDate = DateFormat(
-                "yyyy-MM-dd",
-              ).format(selectedDepatureDate!);
+              String formattedDate = DateFormat("yyyy-MM-dd")
+                  .format(selectedDepatureDate!.toLocal());
               print("formattedDate$selectedReturnDate");
 
               String? formattedReturnDate;
               print("formattedReturnDate$formattedReturnDate");
               if (selectedReturnDate != null) {
-                formattedReturnDate = DateFormat(
-                  "yyyy-MM-dd",
-                ).format(selectedReturnDate!);
+                formattedReturnDate = DateFormat("yyyy-MM-dd")
+                    .format(selectedReturnDate!.toLocal());
               }
 
               if (selectedTripType == "One way") {
@@ -598,14 +640,15 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                             selectedTripType = newTripType;
                             if (newTripType == "Round trip") {
                               selectedDepatureDate ??= DateTime.now();
-                              returnDate = selectedDepatureDate!.add(
-                                const Duration(days: 1),
-                              );
-                              selectedReturnDate = returnDate;
-                              _selectedDepDates = [
-                                selectedDepatureDate!,
-                                returnDate!,
-                              ];
+                              if (selectedReturnDate == null ||
+                                  selectedReturnDate!.isBefore(
+                                      selectedDepatureDate!
+                                          .add(const Duration(minutes: 1)))) {
+                                returnDate = selectedDepatureDate!.add(
+                                  const Duration(days: 1),
+                                );
+                                selectedReturnDate = returnDate;
+                              }
                             }
                           });
                         },
@@ -1083,9 +1126,11 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                                     text: selectedDepatureDate ==
                                                             null
                                                         ? "Select date"
-                                                        : selectedDepatureDate
-                                                            .toString()
-                                                            .substring(0, 11),
+                                                        : DateFormat(
+                                                                "yyyy-MM-dd")
+                                                            .format(
+                                                                selectedDepatureDate!
+                                                                    .toLocal()),
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .headlineSmall
@@ -1154,9 +1199,11 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                                     text: selectedReturnDate ==
                                                             null
                                                         ? "Select date"
-                                                        : selectedReturnDate
-                                                            .toString()
-                                                            .substring(0, 11),
+                                                        : DateFormat(
+                                                                "yyyy-MM-dd")
+                                                            .format(
+                                                                selectedReturnDate!
+                                                                    .toLocal()),
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .headlineSmall
@@ -1321,7 +1368,8 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                                     );
 
                                         bool isReturn =
-                                            selectedReturnDate != null &&
+                                            currentTripType == "Round trip" &&
+                                                selectedReturnDate != null &&
                                                 dateOnly ==
                                                     DateTime(
                                                       selectedReturnDate!.year,
@@ -1333,7 +1381,8 @@ class _DatePickerFieldState extends State<DatePickerField> {
 
                                         // ✅ Check if date is in the range between departure and return
                                         bool isInRange = false;
-                                        if (selectedDepatureDate != null &&
+                                        if (currentTripType == "Round trip" &&
+                                            selectedDepatureDate != null &&
                                             selectedReturnDate != null) {
                                           final depOnly = DateTime(
                                             selectedDepatureDate!.year,
@@ -1354,7 +1403,9 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                           alignment: Alignment.center,
                                           children: [
                                             // Background Highlight Strip
-                                            if (selectedDepatureDate != null &&
+                                            if (currentTripType ==
+                                                    "Round trip" &&
+                                                selectedDepatureDate != null &&
                                                 selectedReturnDate != null &&
                                                 selectedDepatureDate !=
                                                     selectedReturnDate)
@@ -1440,7 +1491,7 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                     ),
 
                                     // ✅ Show the currently active date as selected in the calendar
-                                    value: currentTripType == 'One Way'
+                                    value: currentTripType == 'One way'
                                         ? (selectedDepatureDate != null
                                             ? [selectedDepatureDate!]
                                             : [])
@@ -1454,11 +1505,11 @@ class _DatePickerFieldState extends State<DatePickerField> {
 
                                     onValueChanged: (List<DateTime> dates) {
                                       localSetState(() {
-                                        if (currentTripType == 'One Way') {
+                                        if (currentTripType == 'One way') {
                                           if (dates.isNotEmpty) {
                                             selectedDepatureDate = dates.first;
                                             print(
-                                              "One Way -> Departure: $selectedDepatureDate",
+                                              "One way -> Departure: $selectedDepatureDate",
                                             );
                                           }
                                           selectedReturnDate = null;

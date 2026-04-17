@@ -56,8 +56,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
   @override
   void initState() {
     super.initState();
-    maxSeatCount =
-        widget.adultCount! + widget.childCount! + widget.infantCount!;
+    maxSeatCount = widget.adultCount! + widget.childCount!;
     print("maxSeatCount$maxSeatCount");
     getseatdata();
   }
@@ -225,9 +224,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
           "Deck": seatInfo.deck,
           "Currency": seatInfo.currency,
           "Price": seatInfo.price ?? 0,
-          // "SeatId": seatInfo.seatId,
-          // "SeatNumber": seatInfo.seatNo,
-          // "paxIndex": paxIndex,
         });
       }
     }
@@ -260,11 +256,11 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
       index -= widget.childCount!;
     }
 
-    if (widget.infantCount! > 0) {
-      return "Select Seat For Infant $index";
-    }
+    // if (widget.infantCount! > 0) {
+    //   return "Select Seat For Infant $index";
+    // }
 
-    return "Select Seat For Adult 1";
+    return "Seat Selected";
   }
 
   Widget buildSegmentTabs() {

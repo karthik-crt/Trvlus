@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -595,6 +596,25 @@ class _AdditionsState extends State<Additions> {
                             "baggageCount": selectedBaggageCount,
                           };
                           print("Next pressed → passing data: $threeValue");
+                          void printLargeJson(dynamic data) {
+                            final jsonString =
+                                const JsonEncoder.withIndent('  ')
+                                    .convert(data);
+                            const int chunkSize = 800;
+
+                            for (int i = 0;
+                                i < jsonString.length;
+                                i += chunkSize) {
+                              print(jsonString.substring(
+                                i,
+                                i + chunkSize > jsonString.length
+                                    ? jsonString.length
+                                    : i + chunkSize,
+                              ));
+                            }
+                          }
+
+                          printLargeJson("threeValue$threeValue");
                           Navigator.pop(context, threeValue);
                         },
                         style: ElevatedButton.styleFrom(
@@ -822,9 +842,8 @@ class _AdditionsState extends State<Additions> {
             "  Route: ${ssrData.response.baggage[i][0].origin}-${ssrData.response.baggage[i][0].destination}");
       }
     }
-    final int totalPassengers = (widget.adultCount ?? 0) +
-        (widget.childCount ?? 0) +
-        (widget.infantCount ?? 0);
+    final int totalPassengers =
+        (widget.adultCount ?? 0) + (widget.childCount ?? 0);
 
     // ✅ Merge outbound + inbound baggage
     List<List<dynamic>> allBaggage = [];

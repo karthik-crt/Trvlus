@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/search_data.dart';
+import '../models/user.dart';
 import '../utils/api_service.dart';
 import 'TravelerDetails.dart';
 
@@ -137,6 +138,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Timer? _timer;
   bool _isExpired = false;
   bool _isLoading = true;
+  late User user;
+  bool _isVerifying = false;
 
   @override
   void dispose() {
@@ -152,133 +155,289 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Future<void> _verifyOtp() async {
     if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
-      String otp = _otpControllers.map((c) => c.text).join();
-      print("segmentsJsonsegmentsJson${widget.segmentsJson}");
-      print("OTPPPPP$otp");
-      // Calling VerifyOTP API
-      final verifyOTP =
-          await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
-      print("VERIFY$verifyOTP");
-      await ApiService().role();
-      print("traceidtraceid${widget.traceid}");
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
-      print(widget.outresultindex);
-      print(widget.inresultindex);
-      print("hellloo${widget.islogin}");
-      if (widget.islogin != false) {
-        // Get.to(() => SelectTraveller(
-        //       flight: {},
-        //       city: widget.city,
-        //       destination: widget.destination,
-        //       airlineName: widget.airlineName,
-        //       airlineCode: widget.airlineCode,
-        //       flightNumber: widget.flightNumber,
-        //       cityName: widget.cityName,
-        //       cityCode: widget.cityCode,
-        //       descityName: widget.descityName,
-        //       descityCode: widget.descityCode,
-        //       depDate: widget.depDate,
-        //       depTime: widget.depTime,
-        //       arrDate: widget.arrDate,
-        //       arrTime: widget.arrTime,
-        //       duration: widget.duration,
-        //       refundable: widget.refundable,
-        //       stop: widget.stop,
-        //       airportName: widget.airportName,
-        //       desairportName: widget.desairportName,
-        //       basefare: widget.basefare,
-        //       segments: widget.segments,
-        //       resultindex: widget.resultindex,
-        //       traceid: widget.traceid,
-        //       outboundFlight: widget.outboundFlight,
-        //       inboundFlight: widget.inboundFlight,
-        //       total: widget.total,
-        //       tax: widget.tax,
-        //       adultCount: widget.adultCount,
-        //       childCount: widget.childCount,
-        //       infantCount: widget.infantCount,
-        //       isLLC: widget.isLLC,
-        //       outdepDate: widget.outdepDate,
-        //       outdepTime: widget.outdepTime,
-        //       outarrDate: widget.outarrDate,
-        //       outarrTime: widget.outarrTime,
-        //       indepDate: widget.indepDate,
-        //       indepTime: widget.indepTime,
-        //       inarrDate: widget.inarrDate,
-        //       inarrTime: widget.inarrTime,
-        //       outBoundData: widget.outBoundData,
-        //       inBoundData: widget.inBoundData,
-        //       outresultindex: widget.outresultindex,
-        //       inresultindex: widget.inresultindex,
-        //       segmentsJson: widget.segmentsJson,
-        //       coupouncode: widget.coupouncode,
-        //     ));
-        Get.offAll(
-            () => TravelerDetailsPage(
-                  flight: {},
-                  city: widget.city,
-                  destination: widget.destination,
-                  airlineName: widget.airlineName,
-                  airlineCode: widget.airlineCode,
-                  flightNumber: widget.flightNumber,
-                  cityName: widget.cityName,
-                  cityCode: widget.cityCode,
-                  descityName: widget.descityName,
-                  descityCode: widget.descityCode,
-                  depDate: widget.depDate,
-                  depTime: widget.depTime,
-                  arrDate: widget.arrDate,
-                  arrTime: widget.arrTime,
-                  duration: widget.duration,
-                  refundable: widget.refundable,
-                  stop: widget.stop,
-                  airportName: widget.airportName,
-                  desairportName: widget.desairportName,
-                  basefare: widget.basefare,
-                  segments: widget.segments,
-                  resultindex: widget.resultindex,
-                  traceid: widget.traceid,
-                  outboundFlight: widget.outboundFlight,
-                  inboundFlight: widget.inboundFlight,
-                  total: widget.total,
-                  tax: widget.tax,
-                  adultCount: widget.adultCount,
-                  childCount: widget.childCount,
-                  infantCount: widget.infantCount,
-                  isLLC: widget.isLLC,
-                  outdepDate: widget.outdepDate,
-                  outdepTime: widget.outdepTime,
-                  outarrDate: widget.outarrDate,
-                  outarrTime: widget.outarrTime,
-                  indepDate: widget.indepDate,
-                  indepTime: widget.indepTime,
-                  inarrDate: widget.inarrDate,
-                  inarrTime: widget.inarrTime,
-                  outBoundData: widget.outBoundData,
-                  inBoundData: widget.inBoundData,
-                  outresultindex: widget.outresultindex,
-                  inresultindex: widget.inresultindex,
-                  segmentsJson: widget.segmentsJson,
-                  coupouncode: widget.coupouncode,
-                  commonPublishedFare: widget.commonPublishedFare,
-                  tboOfferedFare: widget.tboOfferedFare,
-                  tboCommission: widget.tboCommission,
-                  tboTds: widget.tboTds,
-                  trvlusCommission: widget.trvlusCommission,
-                  trvlusTds: widget.trvlusTds,
-                  trvlusNetFare: widget.trvlusNetFare,
-                  othercharges: widget.othercharges,
-                ),
-            predicate: (route) =>
-                route.settings.name == '/flightDetails' || route.isFirst);
-      } else {
-        Get.until((route) => route.settings.name == '/ProfilePage');
+      setState(() {
+        _isVerifying = true;
+      });
+
+      try {
+        String otp = _otpControllers.map((c) => c.text).join();
+        print("segmentsJsonsegmentsJson${widget.segmentsJson}");
+        print("OTPPPPP$otp");
+
+        final verifyOTP =
+            await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
+        final pref = await SharedPreferences.getInstance();
+        final accessToken = pref.getString("access_token");
+        print("accessTokenaccessToken$accessToken");
+        print("VERIFY$verifyOTP");
+        await ApiService().role();
+        user = await ApiService().user();
+        double walletAmount = user.data.first.walletTicketBooking;
+        print("walletAmount$walletAmount");
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setDouble("payment", walletAmount);
+        print("traceidtraceid${widget.traceid}");
+        await prefs.setBool('isLoggedIn', true);
+        print(widget.outresultindex);
+        print(widget.inresultindex);
+        print("hellloo${widget.islogin}");
+
+        if (widget.islogin != false) {
+          // Get.to(() => SelectTraveller(
+          //       flight: {},
+          //       city: widget.city,
+          //       destination: widget.destination,
+          //       airlineName: widget.airlineName,
+          //       airlineCode: widget.airlineCode,
+          //       flightNumber: widget.flightNumber,
+          //       cityName: widget.cityName,
+          //       cityCode: widget.cityCode,
+          //       descityName: widget.descityName,
+          //       descityCode: widget.descityCode,
+          //       depDate: widget.depDate,
+          //       depTime: widget.depTime,
+          //       arrDate: widget.arrDate,
+          //       arrTime: widget.arrTime,
+          //       duration: widget.duration,
+          //       refundable: widget.refundable,
+          //       stop: widget.stop,
+          //       airportName: widget.airportName,
+          //       desairportName: widget.desairportName,
+          //       basefare: widget.basefare,
+          //       segments: widget.segments,
+          //       resultindex: widget.resultindex,
+          //       traceid: widget.traceid,
+          //       outboundFlight: widget.outboundFlight,
+          //       inboundFlight: widget.inboundFlight,
+          //       total: widget.total,
+          //       tax: widget.tax,
+          //       adultCount: widget.adultCount,
+          //       childCount: widget.childCount,
+          //       infantCount: widget.infantCount,
+          //       isLLC: widget.isLLC,
+          //       outdepDate: widget.outdepDate,
+          //       outdepTime: widget.outdepTime,
+          //       outarrDate: widget.outarrDate,
+          //       outarrTime: widget.outarrTime,
+          //       indepDate: widget.indepDate,
+          //       indepTime: widget.indepTime,
+          //       inarrDate: widget.inarrDate,
+          //       inarrTime: widget.inarrTime,
+          //       outBoundData: widget.outBoundData,
+          //       inBoundData: widget.inBoundData,
+          //       outresultindex: widget.outresultindex,
+          //       inresultindex: widget.inresultindex,
+          //       segmentsJson: widget.segmentsJson,
+          //       coupouncode: widget.coupouncode,
+          //     ));
+          Get.offAll(
+              () => TravelerDetailsPage(
+                    flight: {},
+                    city: widget.city,
+                    destination: widget.destination,
+                    airlineName: widget.airlineName,
+                    airlineCode: widget.airlineCode,
+                    flightNumber: widget.flightNumber,
+                    cityName: widget.cityName,
+                    cityCode: widget.cityCode,
+                    descityName: widget.descityName,
+                    descityCode: widget.descityCode,
+                    depDate: widget.depDate,
+                    depTime: widget.depTime,
+                    arrDate: widget.arrDate,
+                    arrTime: widget.arrTime,
+                    duration: widget.duration,
+                    refundable: widget.refundable,
+                    stop: widget.stop,
+                    airportName: widget.airportName,
+                    desairportName: widget.desairportName,
+                    basefare: widget.basefare,
+                    segments: widget.segments,
+                    resultindex: widget.resultindex,
+                    traceid: widget.traceid,
+                    outboundFlight: widget.outboundFlight,
+                    inboundFlight: widget.inboundFlight,
+                    total: widget.total,
+                    tax: widget.tax,
+                    adultCount: widget.adultCount,
+                    childCount: widget.childCount,
+                    infantCount: widget.infantCount,
+                    isLLC: widget.isLLC,
+                    outdepDate: widget.outdepDate,
+                    outdepTime: widget.outdepTime,
+                    outarrDate: widget.outarrDate,
+                    outarrTime: widget.outarrTime,
+                    indepDate: widget.indepDate,
+                    indepTime: widget.indepTime,
+                    inarrDate: widget.inarrDate,
+                    inarrTime: widget.inarrTime,
+                    outBoundData: widget.outBoundData,
+                    inBoundData: widget.inBoundData,
+                    outresultindex: widget.outresultindex,
+                    inresultindex: widget.inresultindex,
+                    segmentsJson: widget.segmentsJson,
+                    coupouncode: widget.coupouncode,
+                    commonPublishedFare: widget.commonPublishedFare,
+                    tboOfferedFare: widget.tboOfferedFare,
+                    tboCommission: widget.tboCommission,
+                    tboTds: widget.tboTds,
+                    trvlusCommission: widget.trvlusCommission,
+                    trvlusTds: widget.trvlusTds,
+                    trvlusNetFare: widget.trvlusNetFare,
+                    othercharges: widget.othercharges,
+                  ),
+              predicate: (route) =>
+                  route.settings.name == '/flightDetails' || route.isFirst);
+        } else {
+          Get.until((route) => route.settings.name == '/ProfilePage');
+        }
+      } catch (e) {
+        print("OTP verify error: $e");
+        setState(() {
+          _isVerifying = false;
+        });
       }
     } else {
       print("Enter complete OTP");
     }
   }
+
+  // Future<void> _verifyOtp() async {
+  //   if (_otpControllers.every((controller) => controller.text.isNotEmpty)) {
+  //     setState(() {
+  //       _isVerifying = true; // show loader
+  //     });
+  //     String otp = _otpControllers.map((c) => c.text).join();
+  //     print("segmentsJsonsegmentsJson${widget.segmentsJson}");
+  //     print("OTPPPPP$otp");
+  //     // Calling VerifyOTP API
+  //     final verifyOTP =
+  //         await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
+  //     print("VERIFY$verifyOTP");
+  //     await ApiService().role();
+  //     user = await ApiService().user();
+  //     double walletAmount = user.data.first.walletTicketBooking;
+  //     print("walletAmount$walletAmount");
+  //     final prefs = await SharedPreferences.getInstance();
+  //     await prefs.setDouble("payment", walletAmount);
+  //     print("traceidtraceid${widget.traceid}");
+  //     await prefs.setBool('isLoggedIn', true);
+  //     print(widget.outresultindex);
+  //     print(widget.inresultindex);
+  //     print("hellloo${widget.islogin}");
+  //     if (widget.islogin != false) {
+  //       // Get.to(() => SelectTraveller(
+  //       //       flight: {},
+  //       //       city: widget.city,
+  //       //       destination: widget.destination,
+  //       //       airlineName: widget.airlineName,
+  //       //       airlineCode: widget.airlineCode,
+  //       //       flightNumber: widget.flightNumber,
+  //       //       cityName: widget.cityName,
+  //       //       cityCode: widget.cityCode,
+  //       //       descityName: widget.descityName,
+  //       //       descityCode: widget.descityCode,
+  //       //       depDate: widget.depDate,
+  //       //       depTime: widget.depTime,
+  //       //       arrDate: widget.arrDate,
+  //       //       arrTime: widget.arrTime,
+  //       //       duration: widget.duration,
+  //       //       refundable: widget.refundable,
+  //       //       stop: widget.stop,
+  //       //       airportName: widget.airportName,
+  //       //       desairportName: widget.desairportName,
+  //       //       basefare: widget.basefare,
+  //       //       segments: widget.segments,
+  //       //       resultindex: widget.resultindex,
+  //       //       traceid: widget.traceid,
+  //       //       outboundFlight: widget.outboundFlight,
+  //       //       inboundFlight: widget.inboundFlight,
+  //       //       total: widget.total,
+  //       //       tax: widget.tax,
+  //       //       adultCount: widget.adultCount,
+  //       //       childCount: widget.childCount,
+  //       //       infantCount: widget.infantCount,
+  //       //       isLLC: widget.isLLC,
+  //       //       outdepDate: widget.outdepDate,
+  //       //       outdepTime: widget.outdepTime,
+  //       //       outarrDate: widget.outarrDate,
+  //       //       outarrTime: widget.outarrTime,
+  //       //       indepDate: widget.indepDate,
+  //       //       indepTime: widget.indepTime,
+  //       //       inarrDate: widget.inarrDate,
+  //       //       inarrTime: widget.inarrTime,
+  //       //       outBoundData: widget.outBoundData,
+  //       //       inBoundData: widget.inBoundData,
+  //       //       outresultindex: widget.outresultindex,
+  //       //       inresultindex: widget.inresultindex,
+  //       //       segmentsJson: widget.segmentsJson,
+  //       //       coupouncode: widget.coupouncode,
+  //       //     ));
+  //       Get.offAll(
+  //           () => TravelerDetailsPage(
+  //                 flight: {},
+  //                 city: widget.city,
+  //                 destination: widget.destination,
+  //                 airlineName: widget.airlineName,
+  //                 airlineCode: widget.airlineCode,
+  //                 flightNumber: widget.flightNumber,
+  //                 cityName: widget.cityName,
+  //                 cityCode: widget.cityCode,
+  //                 descityName: widget.descityName,
+  //                 descityCode: widget.descityCode,
+  //                 depDate: widget.depDate,
+  //                 depTime: widget.depTime,
+  //                 arrDate: widget.arrDate,
+  //                 arrTime: widget.arrTime,
+  //                 duration: widget.duration,
+  //                 refundable: widget.refundable,
+  //                 stop: widget.stop,
+  //                 airportName: widget.airportName,
+  //                 desairportName: widget.desairportName,
+  //                 basefare: widget.basefare,
+  //                 segments: widget.segments,
+  //                 resultindex: widget.resultindex,
+  //                 traceid: widget.traceid,
+  //                 outboundFlight: widget.outboundFlight,
+  //                 inboundFlight: widget.inboundFlight,
+  //                 total: widget.total,
+  //                 tax: widget.tax,
+  //                 adultCount: widget.adultCount,
+  //                 childCount: widget.childCount,
+  //                 infantCount: widget.infantCount,
+  //                 isLLC: widget.isLLC,
+  //                 outdepDate: widget.outdepDate,
+  //                 outdepTime: widget.outdepTime,
+  //                 outarrDate: widget.outarrDate,
+  //                 outarrTime: widget.outarrTime,
+  //                 indepDate: widget.indepDate,
+  //                 indepTime: widget.indepTime,
+  //                 inarrDate: widget.inarrDate,
+  //                 inarrTime: widget.inarrTime,
+  //                 outBoundData: widget.outBoundData,
+  //                 inBoundData: widget.inBoundData,
+  //                 outresultindex: widget.outresultindex,
+  //                 inresultindex: widget.inresultindex,
+  //                 segmentsJson: widget.segmentsJson,
+  //                 coupouncode: widget.coupouncode,
+  //                 commonPublishedFare: widget.commonPublishedFare,
+  //                 tboOfferedFare: widget.tboOfferedFare,
+  //                 tboCommission: widget.tboCommission,
+  //                 tboTds: widget.tboTds,
+  //                 trvlusCommission: widget.trvlusCommission,
+  //                 trvlusTds: widget.trvlusTds,
+  //                 trvlusNetFare: widget.trvlusNetFare,
+  //                 othercharges: widget.othercharges,
+  //               ),
+  //           predicate: (route) =>
+  //               route.settings.name == '/flightDetails' || route.isFirst);
+  //     } else {
+  //       Get.until((route) => route.settings.name == '/ProfilePage');
+  //     }
+  //   }else {
+  //     print("Enter complete OTP");
+  //   }
+  // }
 
   @override
   void initState() {
@@ -477,7 +636,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           ),
 
           // ✅ Loader Overlay (Correct Position)
-          if (_isLoading)
+          if (_isLoading || _isVerifying)
             Container(
               color: Colors.black.withOpacity(0.3),
               child: const Center(

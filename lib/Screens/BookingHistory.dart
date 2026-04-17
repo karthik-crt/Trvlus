@@ -41,6 +41,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
   String? createdDate = '';
   final remarkController = TextEditingController();
   bool isLoading = false;
+  bool isBottomSheetLoading = false; // ✅ ADD THIS
   late BookingHistory bookingHistory;
   late CancelReasonData cancelReasonData;
 
@@ -717,8 +718,10 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                           color: const Color(0xFFFFE9DD),
                                         ),
                                         child: Text(
-                                          "Requested for Cancelled on $createdDate.\n"
-                                          "You will get a confirmation by our team shortly.",
+                                          // "Requested for Cancelled on $createdDate.\n"
+                                          // "You will get a confirmation by our team shortly.",
+                                          "Your request has been submitted successfully.\n"
+                                          "Our team will confirm it shortly.",
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.black,
@@ -884,34 +887,29 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                                         .center,
                                                                 child:
                                                                     GestureDetector(
-                                                                  onTap: isLoading
-                                                                      ? null // ✅ prevent multiple clicks
+                                                                  onTap: isBottomSheetLoading
+                                                                      ? null
                                                                       : () async {
                                                                           String
                                                                               remark =
                                                                               remarkController.text.trim();
-                                                                          print(
-                                                                              "User typed remark: $remark");
 
-                                                                          // ✅ Validate reason
                                                                           if (selectCancelReason == null ||
                                                                               selectCancelReason!.isEmpty) {
-                                                                            setState(() {
-                                                                              showError = true;
-                                                                            });
+                                                                            setModalState(() =>
+                                                                                showError = true);
                                                                             return;
                                                                           }
 
-                                                                          setState(
+                                                                          setModalState(
                                                                               () {
                                                                             showError =
                                                                                 false;
-                                                                            isLoading =
-                                                                                true; // ✅ start loader
+                                                                            isBottomSheetLoading =
+                                                                                true; // ✅ show loader in bottom sheet only
                                                                           });
 
                                                                           try {
-                                                                            // ✅ API call
                                                                             var response =
                                                                                 await ApiService().cancelRequest(
                                                                               pnr: booking.pnr,
@@ -924,45 +922,34 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
 
                                                                             print("Cancel API response: $response");
 
-                                                                            setState(() {
-                                                                              isLoading = false; // ✅ stop loader
+                                                                            setModalState(() {
+                                                                              isBottomSheetLoading = false; // ✅ stop loader
                                                                             });
 
-                                                                            // ✅ Success
                                                                             if (response != null &&
                                                                                 (response['status'] == 'success' || response['statusCode'] == '1')) {
-                                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                                const SnackBar(
-                                                                                  content: Text("Cancellation request sent successfully"),
-                                                                                ),
-                                                                              );
+                                                                              Navigator.pop(context); // ✅ close bottom sheet AFTER loader stops
 
-                                                                              Navigator.pop(context); // ✅ close screen
+                                                                              // ✅ refresh booking list
+                                                                              await getBookingData();
                                                                             } else {
-                                                                              // ❌ Failure
                                                                               ScaffoldMessenger.of(context).showSnackBar(
                                                                                 SnackBar(
-                                                                                  content: Text(
-                                                                                    response?['message'] ?? "Cancellation failed",
-                                                                                  ),
+                                                                                  content: Text(response?['message'] ?? "Request failed"),
                                                                                 ),
                                                                               );
                                                                             }
                                                                           } catch (e) {
-                                                                            setState(() {
-                                                                              isLoading = false; // ✅ stop loader on error
+                                                                            setModalState(() {
+                                                                              isBottomSheetLoading = false;
                                                                             });
-
                                                                             print("Error: $e");
-
                                                                             ScaffoldMessenger.of(context).showSnackBar(
-                                                                              const SnackBar(
-                                                                                content: Text("Something went wrong"),
-                                                                              ),
+                                                                              const SnackBar(content: Text("Something went wrong")),
                                                                             );
                                                                           }
                                                                         },
-                                                                  child: isLoading
+                                                                  child: isBottomSheetLoading // ✅ was isLoading before
                                                                       ? const SizedBox(
                                                                           height:
                                                                               20,
@@ -978,13 +965,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                                         )
                                                                       : const Text(
                                                                           "Send",
-                                                                          style:
-                                                                              TextStyle(
-                                                                            color:
-                                                                                Colors.white,
-                                                                            fontSize:
-                                                                                20,
-                                                                          ),
+                                                                          style: TextStyle(
+                                                                              color: Colors.white,
+                                                                              fontSize: 20),
                                                                         ),
                                                                 ),
                                                               ),

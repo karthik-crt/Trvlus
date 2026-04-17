@@ -183,6 +183,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   double mealTotal = 0.0;
   double seatTotal = 0.0;
   double baggageTotal = 0.0;
+  final c = Get.find<PriceAlertController>();
 
   // ── Add these for countdown ────────────────────────────────
   late Timer _timer;
@@ -347,27 +348,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       print("totalFare$totalFare");
       totalTax = tax + intax;
       print("totalTax$totalTax");
-      if (widget.coupouncode! > 0) {
-        overallFare = totalBaseFare + totalTax + convenienceFee - coupouncode;
-        print("overallFare1$overallFare");
-      } else {
-        overallFare = totalBaseFare +
-            totalTax +
-            convenienceFee +
-            (widget.trvlusCommission ?? 0);
-        print("overallFare$overallFare");
-        print("convenienceFee${countrycode.data.first.convenienceFee}");
-      }
-      totaladultCount = adultCount + inadultCount;
-      totalchildCount = childCount + inchildCount;
-      totalinfantCount = infantCount + ininfantCount;
-      adultFare = adultBase + inadultBase;
-      childFare = childBase + inchildBase;
-      infantFare = infantBase + ininfantBase;
-      print("overallFare$overallFare");
-      isLoading = false;
-
-      // Calculate meal total
+      // MEALS SEAT BAGGAGE
       mealTotal = 0.0;
       if (widget.meal.isNotEmpty) {
         widget.meal.forEach((route, passengerMap) {
@@ -388,14 +369,22 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       for (var s in widget.seat) {
         seatTotal += ((s['Price'] as num?)?.toDouble() ?? 0.0);
       }
+      print("seatTotal$seatTotal");
 
+      print("baggageTotal${widget.baggage}");
       baggageTotal = 0.0;
       if (widget.baggage.isNotEmpty) {
-        widget.baggage.forEach((route, passengerMap) {
-          if (passengerMap is Map) {
-            passengerMap.forEach((passengerKey, meals) {
-              if (meals is List) {
-                for (var m in meals) {
+        widget.baggage.forEach((route, value) {
+          if (value is List) {
+            // ✅ Direct list: {BLR-DEL: [{...}]}
+            for (var m in value) {
+              baggageTotal += ((m['Price'] as num?)?.toDouble() ?? 0.0);
+            }
+          } else if (value is Map) {
+            // passenger-keyed map: {BLR-DEL: {pax1: [{...}]}}
+            value.forEach((passengerKey, baggage) {
+              if (baggage is List) {
+                for (var m in baggage) {
                   baggageTotal += ((m['Price'] as num?)?.toDouble() ?? 0.0);
                 }
               }
@@ -403,11 +392,44 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           }
         });
       }
-
-      // Add SSR costs to overallFare
-      overallFare += mealTotal + seatTotal + baggageTotal;
+      print("baggageTotal$baggageTotal");
       print(
-          "overallFare with SSR: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: ${baggageTotal})");
+          "overallFare with SSR: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: $baggageTotal)");
+
+      if (widget.coupouncode! > 0) {
+        overallFare = c.finalBaseFare +
+            c.finalTax +
+            convenienceFee +
+            mealTotal +
+            seatTotal +
+            baggageTotal -
+            c.finalCouponValue;
+        print("overallFare1$overallFare");
+        print("totalBaseFare$totalBaseFare");
+        print("totalTax$totalTax");
+        print("convenienceFee$convenienceFee");
+        print("mealTotal$mealTotal");
+        print("seatTotal$seatTotal");
+        print("baggageTotal$baggageTotal");
+        print("overallFare1$coupouncode");
+      } else {
+        overallFare = totalBaseFare +
+            totalTax +
+            convenienceFee +
+            (widget.trvlusCommission ?? 0);
+        print("overallFare$overallFare");
+        print("convenienceFee${countrycode.data.first.convenienceFee}");
+      }
+      totaladultCount = adultCount + inadultCount;
+      totalchildCount = childCount + inchildCount;
+      totalinfantCount = infantCount + ininfantCount;
+      adultFare = adultBase + inadultBase;
+      childFare = childBase + inchildBase;
+      infantFare = infantBase + ininfantBase;
+      print("overallFare$overallFare");
+      isLoading = false;
+
+      // Calculate meal total
     });
   }
 
@@ -1691,8 +1713,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       ),
       builder: (context) {
         return FareBreakupSheet(
-          basefare: totalBaseFare,
-          tax: totalTax,
+          basefare: c.finalBaseFare,
+          tax: c.finalTax,
           adultCount: totaladultCount,
           childCount: totalchildCount,
           infantCount: totalinfantCount,
@@ -1703,7 +1725,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           adultTax: 0,
           childTax: 0,
           infantTax: 0,
-          coupouncode: coupouncode,
+          coupouncode: c.finalCouponValue,
           showConvenienceFee: true,
           convenienceFee: convenienceFee,
           othercharges: othercharges,

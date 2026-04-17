@@ -66,6 +66,9 @@ dependencies:
   webview_flutter: ^4.13.0
   webview_flutter_android:
   webview_flutter_wkwebview:
+  fluttertoast: ^8.2.4
+  sms_autofill: ^2.4.1
+
 
 
 

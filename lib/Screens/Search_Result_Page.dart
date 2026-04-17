@@ -108,20 +108,15 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   late SsrData ssrdata;
 
   getCommissionData() async {
-    setState(() {
-      isLoading = true;
-    });
     commission = await ApiService().commissionPercentage();
     print("getCommissionData${jsonEncode(commission)}");
+    print("selectedReturnDateHOME$selectedRetDate");
     setState(() {
       isLoading = false;
     });
   }
 
   getCustomerCommission() async {
-    setState(() {
-      isLoading = true;
-    });
     customer = await ApiService().getcustomercommission();
     print("COMMISIONcustomer${jsonEncode(customer)}");
     await getCommissionData();
@@ -148,6 +143,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
       widget.infantCount,
     );
     print("searchDatasearchData$depDate");
+    print("selectedReturnDateHOME${widget.selectedReturnDate}");
 
     // Recompute unique airlines after fetching new data
     Set<String> codes = <String>{};
@@ -207,9 +203,34 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     _fetchFlightsForDate(newDate);
   }
 
+  Future<void> dialog(String errorMessage, Color color) async {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              "Token Check HOME PAGE",
+              style: TextStyle(color: Colors.red),
+            ),
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: color),
+            ),
+            actions: [
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Ok"))
+            ],
+          );
+        });
+  }
+
   @override
   void initState() {
     getCustomerCommission();
+    print("SELECTED TYPE${widget.selectedTripType}");
 
     currentDepDate = widget.selectedDepDate; // Initialize current date
     loadCalendarPrices();
@@ -218,6 +239,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     final infant = widget.infantCount;
     passengerCount = adult + child! + infant!;
     print("passengerCount$passengerCount");
+    print("DEP DATE${widget.selectedDepDate}");
     if (widget.searchData != null) {
       searchData = widget.searchData!;
     }
@@ -2057,9 +2079,41 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                           .value =
                                                                       varFinaloffFare
                                                                           .toDouble();
-
+                                                                  controller
+                                                                          .selectedDepDate =
+                                                                      widget
+                                                                          .selectedDepDate;
+                                                                  controller
+                                                                          .selectedReturnDate =
+                                                                      widget
+                                                                          .selectedReturnDate;
+                                                                  controller
+                                                                          .fromAirport =
+                                                                      fromAirport;
+                                                                  controller
+                                                                          .toAirport =
+                                                                      toAirport;
+                                                                  controller
+                                                                          .airportCode =
+                                                                      airportCode;
+                                                                  controller
+                                                                          .toairportCode =
+                                                                      toairportCode;
+                                                                  controller
+                                                                          .searchData =
+                                                                      searchData;
+                                                                  controller
+                                                                          .selectedTripType =
+                                                                      widget
+                                                                          .selectedTripType;
                                                                   print(
                                                                       "Passing old fare to details page: ${controller.oldFare.value}");
+                                                                  print(
+                                                                      "SELECTED DEP DATE${controller.selectedDepDate}");
+                                                                  print(
+                                                                      "SELECTED RET DATE${controller.selectedReturnDate}");
+                                                                  print(
+                                                                      "SELECTED selectedTripType${controller.selectedTripType}");
 
                                                                   // ✅ Use variantFlight directly (it's already the current flight)
                                                                   var currentFlight =
@@ -2664,10 +2718,10 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                         // ✅ Use variant's prices
                                                                         tboOfferedFare:
                                                                             varOfferedFare,
-                                                                        tboCommission:
-                                                                            varCommissionEarned,
                                                                         tboTds:
                                                                             varTboTDS,
+                                                                        tboCommission:
+                                                                            varCommissionEarned,
                                                                         trvlusCommission:
                                                                             varCustomerComm,
                                                                         trvlusTds:

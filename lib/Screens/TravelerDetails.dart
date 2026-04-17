@@ -23,6 +23,10 @@ List<Map<String, dynamic>> infantTravelers = [];
 String finaldepDateformat = '';
 String finalarrDateformat = '';
 double totalFare = 0;
+final dateFieldFocusNode = FocusNode();
+// Add this in your state
+final expiryFocusNode = FocusNode();
+final dateFocusNode = FocusNode();
 
 class TravelerDetailsPage extends StatefulWidget {
   final Map<String, dynamic> flight;
@@ -169,6 +173,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   double childFare = 0;
   double infantFare = 0;
   num coupouncode = 0;
+  final c = Get.put(PriceAlertController());
 
   @override
   void initState() {
@@ -176,6 +181,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     super.initState();
     getfarequotedata();
     print("fgcgfcf${widget.selectedpassenger}");
+    print("BASEFARE${widget.basefare}");
+    print(widget.coupouncode);
     setPassenger();
     getmobile();
   }
@@ -247,10 +254,12 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       var isPriceChanged = fareQuote.response.isPriceChanged;
       print("isPriceChangedisPriceChanged$isPriceChanged");
 
-      Get.find<PriceAlertController>().checkFare(
-        farequote,
-        isPriceChanged,
-      );
+      Get.find<PriceAlertController>().newFare.value;
+      print("NEW FARE${Get.find<PriceAlertController>().newFare.value}");
+      // Get.find<PriceAlertController>().checkFare(
+      //   farequote,
+      //   isPriceChanged,
+      // );
     }
 
     // FARECALCULATION
@@ -324,7 +333,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       totalTax = tax + intax;
       print("totalTax$totalTax");
       if (widget.coupouncode! > 0) {
-        overallFare = totalBaseFare + totalTax - coupouncode;
+        overallFare = totalBaseFare + totalTax + othercharges - coupouncode;
         print("overallFare1$overallFare");
       } else {
         overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
@@ -341,6 +350,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
     });
+    final c = Get.find<PriceAlertController>();
   }
 
   getmobile() async {
@@ -1187,12 +1197,23 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                           horizontal: 12.w, vertical: 10.h),
                       child: Row(
                         children: [
-                          Text(
-                            '${traveler['gender']} ${traveler['Firstname']} ${traveler['lastname']}',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                          // Text(
+                          //   '${traveler['gender']} ${traveler['Firstname']} ${traveler['lastname']}',
+                          //   style: TextStyle(
+                          //     fontSize: 14.sp,
+                          //     fontWeight: FontWeight.bold,
+                          //     color: Colors.black,
+                          //   ),
+                          // ),
+                          SizedBox(
+                            width: 260,
+                            child: Text(
+                              '${traveler['gender']} ${traveler['Firstname']} ${traveler['lastname']}',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                           SizedBox(width: 8.w),
@@ -1500,7 +1521,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                         isPassportRequiredAtTicket,
                                     isPassportFullDetailRequiredAtBook:
                                         isPassportFullDetailRequiredAtBook,
-                                    childCount: childTravelers.length + 1,
+                                    childCount: index + 1,
                                     selectedpassenger: null,
                                   ),
                                 );
@@ -1524,7 +1545,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 GestureDetector(
                   onTap: () async {
                     final maxChild = widget.childCount?.toInt() ?? 0;
-                    print("Max Adults: $maxChild");
+                    print("Max child: $maxChild");
 
                     // ✅ Check if we can still add new adults
                     if (childTravelers.length < maxChild) {
@@ -1696,7 +1717,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                         isPassportRequiredAtTicket,
                                     isPassportFullDetailRequiredAtBook:
                                         isPassportFullDetailRequiredAtBook,
-                                    infantCount: infantTravelers.length + 1,
+                                    infantCount: index + 1,
                                     selectedpassenger: null,
                                   ),
                                 );
@@ -1854,7 +1875,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          "₹${overallFare.toStringAsFixed(0)}",
+                          "₹${c.overallFare.toStringAsFixed(0)}",
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -2011,6 +2032,10 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   }
 
   void showFareBreakupSheet(BuildContext context) {
+    final c = Get.find<PriceAlertController>();
+    print("c.finalBaseFare${c.finalBaseFare}");
+    print("c.finalTax${c.finalTax}");
+
     showModalBottomSheet(
       backgroundColor: Colors.white,
       context: context,
@@ -2022,8 +2047,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
         print(widget.othercharges);
         print("sdfdfsf");
         return FareBreakupSheet(
-          basefare: totalBaseFare,
-          tax: totalTax,
+          basefare: c.finalBaseFare,
+          tax: c.finalTax,
           adultCount: totaladultCount,
           childCount: totalchildCount,
           infantCount: totalinfantCount,
@@ -2035,7 +2060,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
           childTax: 0,
           infantTax: 0,
           convenienceFee: 0,
-          coupouncode: coupouncode,
+          coupouncode: c.finalCouponValue,
           othercharges: othercharges,
           trvlusCommission: widget.trvlusCommission,
           meal: {},
@@ -2340,6 +2365,8 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
   }
 
   Future<void> _selectDate(BuildContext context, String travelerType) async {
+    dateFocusNode.requestFocus(); // focus stays on DOB field
+
     final now = DateTime.now();
 
     DateTime firstDate;
@@ -2379,9 +2406,11 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
         dateController.text = DateFormat("dd-MM-yyyy").format(picked);
       });
     }
+    dateFocusNode.unfocus(); // 👈 unfocus after selection done
   }
 
   Future<void> _expiryDate(BuildContext context) async {
+    expiryFocusNode.requestFocus();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -2395,6 +2424,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
         expiryController.text = DateFormat("dd-MM-yyyy").format(selectedDate!);
       });
     }
+    expiryFocusNode.unfocus(); // 👈 unfocus after selection done
   }
 
   @override
@@ -2501,6 +2531,8 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 controller: dateController,
                 readOnly: true,
                 // important for date picker
+                focusNode: dateFocusNode,
+                // 👈 Add this
                 onTap: () => _selectDate(context, widget.travelerType ?? ""),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -2527,6 +2559,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                   hintText: '',
                   controller: expiryController,
                   readOnly: true,
+                  focusNode: expiryFocusNode,
                   onTap: () => _expiryDate(context),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -2571,6 +2604,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                   hintText: '',
                   controller: expiryController,
                   readOnly: true,
+                  focusNode: expiryFocusNode,
                   onTap: () => _expiryDate(context),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -3016,6 +3050,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     TextEditingController? controller,
     bool readOnly = false,
     Function()? onTap,
+    FocusNode? focusNode, // 👈 Add this parameter
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
@@ -3027,6 +3062,8 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
         controller: controller,
         readOnly: readOnly,
         onTap: onTap,
+        focusNode: focusNode,
+        // 👈 Pass it here
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         textCapitalization: forceUpperCase

@@ -25,7 +25,7 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+FlutterLocalNotificationsPlugin();
 
 Future<void> _requestNotificationPermission() async {
   PermissionStatus status = await Permission.notification.status;
@@ -53,10 +53,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const AndroidInitializationSettings androidSettings =
-      AndroidInitializationSettings('@mipmap/app_logo');
+  AndroidInitializationSettings('@mipmap/app_logo');
 
   const InitializationSettings initSettings =
-      InitializationSettings(android: androidSettings);
+  InitializationSettings(android: androidSettings);
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: Colors.white,
   ));
@@ -75,7 +75,7 @@ void main() async {
 
   // ✅ Handle case when app is launched from notification
   final NotificationAppLaunchDetails? details =
-      await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+  await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
 
   if (details?.didNotificationLaunchApp ?? false) {
     final String? filePath = details?.notificationResponse?.payload;
@@ -122,6 +122,8 @@ class _MyAppState extends State<MyApp> {
           routes: {
             '/': (context) => SplashScreen(),
             '/home': (context) => FrontScreen(),
+            '/login': (context) => SplashScreen(),
+            // ✅ point to your login/splash screen
           },
         );
       },

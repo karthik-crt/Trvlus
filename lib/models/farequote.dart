@@ -114,7 +114,7 @@ class Results {
   Fare fare;
   List<FareBreakdown> fareBreakdown;
   List<List<Segment>> segments;
-  DateTime lastTicketDate;
+  DateTime? lastTicketDate;
   dynamic ticketAdvisory;
   List<FareRule> fareRules;
   String airlineCode;
@@ -189,7 +189,10 @@ class Results {
             .map((x) => FareBreakdown.fromJson(x))),
         segments: List<List<Segment>>.from(json["Segments"]
             .map((x) => List<Segment>.from(x.map((x) => Segment.fromJson(x))))),
-        lastTicketDate: DateTime.parse(json["LastTicketDate"]),
+        lastTicketDate: (json["LastTicketDate"] != null &&
+                json["LastTicketDate"].toString().isNotEmpty)
+            ? DateTime.tryParse(json["LastTicketDate"])
+            : null,
         ticketAdvisory: json["TicketAdvisory"],
         fareRules: List<FareRule>.from(
             json["FareRules"].map((x) => FareRule.fromJson(x))),
@@ -234,7 +237,7 @@ class Results {
             List<dynamic>.from(fareBreakdown.map((x) => x.toJson())),
         "Segments": List<dynamic>.from(
             segments.map((x) => List<dynamic>.from(x.map((x) => x.toJson())))),
-        "LastTicketDate": lastTicketDate.toIso8601String(),
+        "LastTicketDate": lastTicketDate?.toIso8601String(),
         "TicketAdvisory": ticketAdvisory,
         "FareRules": List<dynamic>.from(fareRules.map((x) => x.toJson())),
         "AirlineCode": airlineCode,

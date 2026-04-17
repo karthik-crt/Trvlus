@@ -83,7 +83,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final infanttax = widget.infantTax;
     final taxtotal = tax;
     print("taxtotal$taxtotal");
-    final othercharges = widget.othercharges?.round();
+    final othercharges = widget.othercharges;
     print("othercharges$othercharges");
     final othertaxtotal = tax! + othercharges!;
     print("othertaxtotal$othertaxtotal");
@@ -168,7 +168,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
               infantFare! +
               conveniencefee +
               ssrTotal +
-              taxtotal! -
+              othertaxtotal -
               totalDiscount!)
           .round();
       print("overallFare1$total");
@@ -314,7 +314,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                     fontSize: 14.sp,
                                     color: Colors.black,
                                     fontWeight: FontWeight.bold)),
-                            Text("₹$othertaxcharges",
+                            Text("₹${othertaxtotal.toInt()}",
                                 style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.bold,

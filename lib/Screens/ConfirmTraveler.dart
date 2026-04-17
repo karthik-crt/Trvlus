@@ -177,6 +177,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
   double baggageTotal = 0.0;
   double ssrTotal = 0.0;
   Map<String, dynamic>? baggageCount;
+  final c = Get.find<PriceAlertController>();
 
   @override
   void initState() {
@@ -1234,7 +1235,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     );
                   }).toList(),
                   // Remove the "Child" section since you only want adults
-                  if (widget.childCount! > 0 && widget.childData == []) ...[
+                  if (widget.childCount! > 0) ...[
                     Text(
                       "Child",
                       style: TextStyle(
@@ -1260,7 +1261,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     }).toList(),
                   ],
 
-                  if (widget.infantCount! > 0 && widget.infantData == []) ...[
+                  if (widget.infantCount! > 0) ...[
                     Text(
                       "Infant",
                       style: TextStyle(
@@ -1644,7 +1645,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "₹${overallFare.toStringAsFixed(0)}",
+                                "₹${c.overallFare.toStringAsFixed(0)}",
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
@@ -1865,8 +1866,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       ),
       builder: (context) {
         return FareBreakupSheet(
-          basefare: totalBaseFare,
-          tax: totalTax,
+          basefare: c.finalBaseFare,
+          tax: c.finalTax,
           adultCount: totaladultCount,
           childCount: totalchildCount,
           infantCount: totalinfantCount,
@@ -1878,7 +1879,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           childTax: 0,
           infantTax: 0,
           convenienceFee: 0,
-          coupouncode: coupouncode,
+          coupouncode: c.finalCouponValue,
           ssrData: true,
           meal: meal,
           seat: seat,
@@ -1934,13 +1935,16 @@ class TravelerCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14.sp,
-                    color: Colors.black,
+                SizedBox(
+                  width: 260,
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.sp,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
                 Text(
@@ -2032,8 +2036,14 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
               ),
               minimumSize: Size(double.infinity, 38.h),
             ),
-            onPressed: () {
+            onPressed: () async {
               // Handle Apply filter logic
+              await ApiService().gstRequest(
+                  gstnumber: gstNumberController.text,
+                  gstholdername: gstHolderNameController.text,
+                  gstpincode: gstPincodeController.text,
+                  gstaddress: gstAddressController.text);
+
               print("GST Number: ${gstNumberController.text}");
               print("GST Holder Name: ${gstHolderNameController.text}");
               print("GST Pincode: ${gstPincodeController.text}");

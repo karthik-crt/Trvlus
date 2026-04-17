@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../models/commission_history.dart';
 import '../models/full_booking_history.dart';
 import '../models/getbookingdetailsid.dart';
 import '../utils/api_service.dart';
@@ -28,6 +29,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
   bool isLoading = false;
   late Getbookingdetailsid bookingdetailsid;
   late FlightBookingHistory fetchbookingdetails;
+  late Commissionhistory commissionHistory;
   int adultCount = 0;
   int childCount = 0;
   int infantCount = 0;
@@ -39,6 +41,8 @@ class _TicketdetailsState extends State<Ticketdetails> {
   double childFare = 0;
   double infantFare = 0;
   double total = 0; // declare variable here
+  double baseFare = 0; // declare variable here
+  double coupounCode = 0; // declare variable here
   List<dynamic> miniFareRules = [];
   bool isShowDateChange = false; // ADD THIS
 
@@ -66,6 +70,9 @@ class _TicketdetailsState extends State<Ticketdetails> {
     fetchbookingdetails =
         await ApiService().fetchallBookingdata(pnr, bookingid);
     print("fetchbookingdetails$fetchbookingdetails");
+    commissionHistory = await ApiService().getcommissionhistory(pnr);
+    print("commissionHistory$commissionHistory");
+    print("history${commissionHistory.data.first.customerCouponDiscount}");
     // Extract MiniFareRules
     // final miniFareRules =
     //     fetchbookingdetails.data.response.flightItinerary.miniFareRules;
@@ -78,22 +85,39 @@ class _TicketdetailsState extends State<Ticketdetails> {
     final conveiencefee = double.tryParse(
             bookingdetailsid.data.first.convenienceFee.toString()) ??
         0.0;
-    final coupounCode =
-        double.tryParse(bookingdetailsid.data.first.coupounCode.toString()) ??
-            0.0;
-    print("coupounCode$coupounCode");
+
     final othercharges =
         double.parse(bookingdetailsid.data.first.price.OtherCharges.toString());
     print("othercharges$othercharges");
     final customerCommission =
         double.parse(bookingdetailsid.data.first.commissionAmt.toString());
     print("customerCommission$customerCommission");
+    final tboTax = commissionHistory.data.first.tboTds;
+    print("tboTax$tboTax");
 
     // total = fare + tax + conveiencefee - coupounCode;
     print("conveiencefee$conveiencefee");
     print('farefare$fare');
     print('taxtax$tax');
-    total = fare + tax + conveiencefee + customerCommission - coupounCode;
+    final coupoun = double.tryParse(
+            commissionHistory.data.first.customerCouponDiscount.toString()) ??
+        0.0;
+    if (tboTax == 0.0) {
+      coupounCode = 0.0;
+    } else {
+      coupounCode = coupoun;
+    }
+    print("coupounCode$coupounCode");
+    if (tboTax == 0.0) {
+      baseFare = fare + customerCommission;
+    } else {
+      baseFare = fare;
+    }
+    if (tboTax == 0.0) {
+      total = fare + tax + customerCommission + conveiencefee;
+    } else {
+      total = fare + tax + conveiencefee - coupounCode;
+    }
     print('finaltotal$total');
 
     adultFare = adultCount * fare;
@@ -105,12 +129,18 @@ class _TicketdetailsState extends State<Ticketdetails> {
           fetchbookingdetails.data.response.flightItinerary.miniFareRules ?? [];
       print("miniFareRules length: ${miniFareRules.length}");
       print("miniFareRules type: ${miniFareRules.runtimeType}");
-      final r = miniFareRules.first as MiniFareRule;
-      print("type: ${r.type}");
-      print("from: ${r.from}");
-      print("to: ${r.to}");
-      print("details: ${r.details}");
-      print("journeyPoints: ${r.journeyPoints}");
+      if (miniFareRules.isNotEmpty) {
+        final r = miniFareRules.first as MiniFareRule;
+        print("type: ${r.type}");
+        print("from: ${r.from}");
+        print("to: ${r.to}");
+        print("details: ${r.details}");
+        print("journeyPoints: ${r.journeyPoints}");
+        print("first item type: ${miniFareRules.first.runtimeType}");
+        print("first item: ${miniFareRules.first}");
+      } else {
+        print("miniFareRules is empty — skipping debug prints");
+      }
       if (miniFareRules.isNotEmpty) {
         print("first item type: ${miniFareRules.first.runtimeType}");
         print("first item: ${miniFareRules.first}");
@@ -315,8 +345,9 @@ class _TicketdetailsState extends State<Ticketdetails> {
                       fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
                       color: valueColor)),
-              Text("per adult",
-                  style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
+              if (!value.toUpperCase().contains("REFER TO DETAILED FARE RULES"))
+                Text("per adult",
+                    style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
             ],
           ),
         ],
@@ -1002,9 +1033,25 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                       final to = r.to ?? '';
                                       final details = r.details ?? '';
                                       final journey = r.journeyPoints ?? '';
-                                      final label = to.isEmpty
-                                          ? "$from hrs+ before departure"
-                                          : "$from – $to hrs before departure";
+                                      // NEW CODE:
+                                      final String label;
+                                      if (from.toString().isEmpty &&
+                                          to.toString().isEmpty) {
+                                        label = journey;
+                                      } else if (to.toString().isEmpty) {
+                                        label = "$from hrs+ before departure";
+                                      } else {
+                                        label =
+                                            "$from – $to hrs before departure";
+                                      }
+                                      final String displayJourney =
+                                          (from.toString().isEmpty &&
+                                                  to.toString().isEmpty)
+                                              ? ''
+                                              : journey;
+
+                                      return _buildPolicyRow(
+                                          label, displayJourney, details);
                                       return Column(
                                         children: [
                                           _buildPolicyRow(
@@ -1086,9 +1133,28 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                         final to = r.to ?? '';
                                         final details = r.details ?? '';
                                         final journey = r.journeyPoints ?? '';
-                                        final label = to.isEmpty
-                                            ? "$from hrs+ before departure"
-                                            : "$from – $to hrs before departure";
+                                        // NEW CODE:
+                                        final String label;
+                                        if (from.toString().isEmpty &&
+                                            to.toString().isEmpty) {
+                                          label =
+                                              journey; // show only journey point as label
+                                        } else if (to.toString().isEmpty) {
+                                          label = "$from hrs+ before departure";
+                                        } else {
+                                          label =
+                                              "$from – $to hrs before departure";
+                                        }
+
+// If from/to are empty, don't pass journey separately (it's already in label)
+                                        final String displayJourney =
+                                            (from.toString().isEmpty &&
+                                                    to.toString().isEmpty)
+                                                ? ''
+                                                : journey;
+
+                                        return _buildPolicyRow(
+                                            label, displayJourney, details);
                                         return Column(
                                           children: [
                                             _buildPolicyRow(
@@ -1408,8 +1474,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                     color: Colors.black,
                                                     fontWeight:
                                                         FontWeight.bold)),
-                                            Text(
-                                                '₹${bookingdetailsid.data.first.price.BaseFare.toInt() + bookingdetailsid.data.first.commissionAmt}',
+                                            Text('₹$baseFare',
                                                 style: TextStyle(
                                                     fontSize: 14.sp,
                                                     fontWeight: FontWeight.bold,
@@ -1564,28 +1629,29 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                             Color(0xFFF37023))),
                                               ],
                                             ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("COUPOUN DISCOUNT",
-                                                    style: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      color: Colors.black,
-                                                      // fontWeight:
-                                                      //     FontWeight.bold
-                                                    )),
-                                                Text(
-                                                    '₹${bookingdetailsid.data.first.coupounCode}',
-                                                    style: TextStyle(
+                                            if (coupounCode > 0)
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("COUPOUN DISCOUNT",
+                                                      style: TextStyle(
                                                         fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
-                                              ],
-                                            ),
+                                                        color: Colors.black,
+                                                        // fontWeight:
+                                                        //     FontWeight.bold
+                                                      )),
+                                                  Text(
+                                                      '₹${commissionHistory.data.first.customerCouponDiscount.round()}',
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                              0xFFF37023))),
+                                                ],
+                                              ),
                                           ],
                                         ),
                                       ),

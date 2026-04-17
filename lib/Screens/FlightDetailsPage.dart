@@ -57,6 +57,8 @@ class FlightDetailsPage extends StatefulWidget {
   final String? cancellation;
   final String? journeypoint;
   final List<dynamic>? miniFareRules; // ✅ correct  final String? journeypoint;
+  final List<dynamic>?
+      inMiniFareRules; // ✅ correct  final String? journeypoint;
   final String? reissue;
   final double? basefare;
   final List<List<Segment>>? segments;
@@ -126,6 +128,7 @@ class FlightDetailsPage extends StatefulWidget {
       this.baggage,
       this.cancellation,
       this.miniFareRules,
+      this.inMiniFareRules,
       this.journeypoint,
       this.reissue,
       this.basefare,
@@ -201,10 +204,12 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     });
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
-    print("sgrrege${widget.miniFareRules}");
-    print("sgrrege${widget.cancellation}");
-    print("sgrrege${widget.reissue}");
+    print("miniFareRules${widget.miniFareRules}");
+    print("inMiniFareRules${widget.inMiniFareRules}");
     // print("FLIGHTDETAILPAGE SCREEN");
+    final prefs = await SharedPreferences.getInstance();
+    double finalAmount = prefs.getDouble("payment") ?? 0.0;
+    print("Final Amount: $finalAmount");
 
     // ROUNDTRIP
     if (widget.outresultindex != null && widget.inresultindex != null) {
@@ -246,6 +251,8 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
 
       var searchpublishFare = widget.commonPublishedFare;
       print("searchpublishFare $searchpublishFare");
+      var tboOfferedFare = widget.tboOfferedFare;
+      print("tboOfferedFare $tboOfferedFare");
 
       var isPriceChanged = fareQuote.response.isPriceChanged;
       print("isPriceChanged $isPriceChanged");
@@ -258,9 +265,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       double searchFareDouble =
           double.tryParse(searchpublishFare.toString()) ?? 0;
       print("searchFareDouble$searchFareDouble");
-      newBaseFare = farebaseFare; // ✅ Updates the class variable
+      newBaseFare = farebaseFare;
       print("newBaseFare$newBaseFare");
-      newTax = fareTax; // ✅ Updates the class variable
+      newTax = fareTax;
       print("newTax$newTax");
       print("PRICE ALERT CALCULATION");
       double varPublishFare =
@@ -326,22 +333,21 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       print("varFinalflatoffer$varFinalflatoffer");
       double varroundFinalflatoffer = varFinalflatoffer.round().toDouble();
       print("varroundFinalflatoffer$varroundFinalflatoffer");
-      // int priceFinaloffFare = (double.parse(varOfferedFare) +
-      //         double.parse(varTboTDS.toString()) +
-      //         double.parse(varFinalcommissionpercentage.toString()) +
-      //         double.parse(varCustomerComm.toString()))
-      //     .round();
       int priceFinaloffFare = (varPublishFare - varFinalflatoffer).round();
       print("PRICEALERTFinaloffFare$priceFinaloffFare");
-
+      print("tboOfferedFare$tboOfferedFare");
+      print("varOfferedFare$varOfferedFare");
+      int searchNeatFare = widget.trvlusNetFare ?? 0;
 // Show PriceAlert ONLY if new fare is higher
-      if (fareQuoteDouble > searchFareDouble) {
+      if (searchNeatFare != priceFinaloffFare) {
         print("INTERNATIONAL ROUNDYRIP");
         Get.find<PriceAlertController>().checkFare(
           priceFinaloffFare.toDouble(),
           true,
         );
       }
+      Get.find<PriceAlertController>().newFare.value;
+      print("NEW FARE${Get.find<PriceAlertController>().newFare.value}");
     }
 
     // FARE CALCULATION
@@ -437,11 +443,31 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           : coupouncode.toDouble();
       print("finalCouponValue$finalCouponValue");
       if (widget.coupouncode! > 0) {
-        overallFare = finalBaseFare + finalTax - finalCouponValue;
+        overallFare =
+            finalBaseFare + finalTax + othercharges - finalCouponValue;
         print("With Coupoun Code");
         print("overallFare1$overallFare");
+        print("finalBaseFare$finalBaseFare");
+        print("finalTax$finalTax");
+        print("finalCouponValue$finalCouponValue");
+        print("othercharges$othercharges");
+        final c = Get.put(PriceAlertController());
+        c.overallFare = overallFare;
+        c.finalBaseFare = finalBaseFare;
+        c.finalTax = finalTax;
+        c.finalCouponValue = finalCouponValue;
+        print("PRICE ALERT VALUE USING GETX");
+        print(c.overallFare);
+        print(c.finalBaseFare);
+        print(c.finalTax);
+        print(c.finalCouponValue);
       } else {
         overallFare = finalBaseFare + finalTax + (widget.trvlusCommission ?? 0);
+        final c = Get.put(PriceAlertController());
+        c.overallFare = overallFare;
+        c.finalBaseFare = finalBaseFare;
+        c.finalTax = finalTax;
+        c.trvlusCommission = widget.trvlusCommission ?? 0;
         print("overallFare$overallFare");
         print("Without Coupoun Code");
         print("overallFare$finalBaseFare");
@@ -1896,9 +1922,15 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                           ],
                         )),
                   // SizedBox(height: 10.h),
-                  _buildCancellationPolicy(),
+                  CancellationPolicyCard(
+                    miniFareRules: widget.miniFareRules,
+                    inMiniFareRules: widget.inMiniFareRules,
+                  ),
                   SizedBox(height: 10.h),
-                  _buildDateChange(),
+                  DateChangePolicyCard(
+                    miniFareRules: widget.miniFareRules,
+                    inMiniFareRules: widget.inMiniFareRules,
+                  ),
                   //_buildPromoCodeSection(),
                   // _buildRefundableBooking(),
                   GestureDetector(
@@ -2198,6 +2230,12 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   // }
 
   Widget _buildBaggagePolicy() {
+    // ✅ FIRST: Try to use segmentsJson if available (for international connecting flights)
+    if (widget.segmentsJson != null && widget.segmentsJson!.isNotEmpty) {
+      return _buildBaggageFromSegmentsJson();
+    }
+
+    // ✅ SECOND: Use fareQuote API data (existing logic)
     List<Map<String, dynamic>> allSegments = [];
 
     // Outbound segments (always present)
@@ -2387,8 +2425,197 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     );
   }
 
+  Widget _buildBaggageFromSegmentsJson() {
+    if (widget.segmentsJson == null || widget.segmentsJson!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Build the same structure as allSegments but from segmentsJson
+    List<Map<String, dynamic>> allSegments = [];
+
+    for (var segment in widget.segmentsJson!) {
+      Map<String, dynamic> json = {
+        "CabinBaggage": segment['cabinBaggage'] ?? "Not Included",
+        "Baggage": segment['baggage'] ?? "0 Kgs",
+        "Origin": {
+          "Airport": {"CityCode": segment['fromCode'] ?? ""}
+        },
+        "Destination": {
+          "Airport": {"CityCode": segment['toCode'] ?? ""}
+        }
+      };
+      allSegments.add(json);
+    }
+
+    if (allSegments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.all(12.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Image.asset("assets/images/Bagging.png"),
+                SizedBox(width: 8.w),
+                Text(
+                  "Baggage",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              "Add additional checking package at low price",
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 10.sp,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DotDivider(
+                dotSize: 1.h,
+                spacing: 2.r,
+                dotCount: 97,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 12.h),
+
+            // Headers
+            Padding(
+              padding: EdgeInsets.only(right: 8.w),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 120.w,
+                    child: Text(
+                      "Cabin Bag",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.normal,
+                        color: const Color(0xFF909090),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 110.w,
+                    child: Text(
+                      "Check-in Bag",
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.normal,
+                        color: const Color(0xFF909090),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8.h),
+
+            // Dynamic rows – one per segment
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: allSegments.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                final segment = allSegments[index];
+
+                final cabin = segment["CabinBaggage"] ?? "";
+                final baggage = segment["Baggage"] ?? "";
+                final from = segment["Origin"]["Airport"]["CityCode"] ?? "";
+                final to = segment["Destination"]["Airport"]["CityCode"] ?? "";
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.h),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Cabin Bag
+                      SizedBox(
+                        width: 125.w,
+                        child: Text(
+                          cabin,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                            height: 1.5,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.visible,
+                        ),
+                      ),
+                      // Check-in Bag
+                      SizedBox(
+                        width: 80.w,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            baggage.toString().trim().isNotEmpty == true
+                                ? baggage.toString().trim()
+                                : "0 Kgs",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.visible,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          "$from → $to",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontFamily: 'Inter',
+                            color: const Color(0xFF909090),
+                          ),
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 12.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // INTERNATIONAL BAGGAGE
+
   Widget _buildCancellationPolicy() {
-    final raw = widget.miniFareRules;
+    final raw = [
+      ...(widget.miniFareRules ?? []),
+      ...(widget.inMiniFareRules ?? []),
+    ];
     final rules = (raw is List ? raw : [])
         .whereType<Map<String, dynamic>>()
         .where((r) => r['Type'] == 'Cancellation')
@@ -2411,17 +2638,30 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
             final to = rule['To'] ?? '';
             final journey = rule['JourneyPoints'] ?? '';
             final details = rule['Details'] ?? '';
-            final label = to.toString().isEmpty
-                ? "$from hrs+ before departure"
-                : "$from – $to hrs before departure";
-            return _buildPolicyRow(label, journey, details);
+            // NEW CODE:
+            final String label;
+            if (from.toString().isEmpty && to.toString().isEmpty) {
+              label = journey; // show only journey point as label
+            } else if (to.toString().isEmpty) {
+              label = "$from hrs+ before departure";
+            } else {
+              label = "$from – $to hrs before departure";
+            }
+            final String displayJourney =
+                (from.toString().isEmpty && to.toString().isEmpty)
+                    ? ''
+                    : journey;
+            return _buildPolicyRow(label, displayJourney, details);
           }).toList(),
       ],
     );
   }
 
   Widget _buildDateChange() {
-    final raw = widget.miniFareRules;
+    final raw = [
+      ...(widget.miniFareRules ?? []),
+      ...(widget.inMiniFareRules ?? []),
+    ];
     final rules = (raw is List ? raw : [])
         .whereType<Map<String, dynamic>>()
         .where((r) => r['Type'] == 'Reissue')
@@ -2440,10 +2680,23 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
             final to = rule['To'] ?? '';
             final journey = rule['JourneyPoints'] ?? '';
             final details = rule['Details'] ?? '';
-            final label = to.toString().isEmpty
-                ? "$from hrs+ before departure"
-                : "$from – $to hrs before departure";
-            return _buildPolicyRow(label, journey, details);
+            // NEW CODE:
+            final String label;
+            if (from.toString().isEmpty && to.toString().isEmpty) {
+              label = journey; // show only journey point as label
+            } else if (to.toString().isEmpty) {
+              label = "$from hrs+ before departure";
+            } else {
+              label = "$from – $to hrs before departure";
+            }
+
+// If from/to are empty, don't pass journey separately (it's already in label)
+            final String displayJourney =
+                (from.toString().isEmpty && to.toString().isEmpty)
+                    ? ''
+                    : journey;
+
+            return _buildPolicyRow(label, displayJourney, details);
           }).toList(),
       ],
     );
@@ -2528,28 +2781,40 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: TextStyle(fontSize: 11.sp, color: Color(0xFFF32323))),
-              if (journey.isNotEmpty)
-                Text(journey,
-                    style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                        TextStyle(fontSize: 11.sp, color: Color(0xFFF32323))),
+                if (journey.isNotEmpty)
+                  Text(journey,
+                      style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
+              ],
+            ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value,
+              SizedBox(
+                width: 160.w,
+                child: Text(
+                  value,
                   style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
-                      color: valueColor)),
-              Text("per adult",
-                  style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
+                      color: valueColor),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                ),
+              ),
+              if (!value.toUpperCase().contains("REFER TO DETAILED FARE RULES"))
+                Text("per adult",
+                    style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
             ],
           ),
         ],
@@ -2656,6 +2921,403 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         ),
         SizedBox(height: 20),
       ],
+    );
+  }
+}
+
+class CancellationPolicyCard extends StatefulWidget {
+  final List<dynamic>? miniFareRules;
+  final List<dynamic>? inMiniFareRules;
+
+  const CancellationPolicyCard({
+    Key? key,
+    this.miniFareRules,
+    this.inMiniFareRules,
+  }) : super(key: key);
+
+  @override
+  State<CancellationPolicyCard> createState() => _CancellationPolicyCardState();
+}
+
+class _CancellationPolicyCardState extends State<CancellationPolicyCard> {
+  int _selectedTab = 0; // 0 = outbound, 1 = inbound
+
+  @override
+  Widget build(BuildContext context) {
+    final outRules = (widget.miniFareRules ?? [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Cancellation')
+        .toList();
+
+    final inRules = (widget.inMiniFareRules ?? [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Cancellation')
+        .toList();
+
+    final isRoundtrip =
+        widget.inMiniFareRules != null && widget.inMiniFareRules!.isNotEmpty;
+
+    if (outRules.isEmpty && inRules.isEmpty) return SizedBox.shrink();
+
+    final outLabel = outRules.isNotEmpty
+        ? outRules.first['JourneyPoints'] ?? 'Outbound'
+        : 'Outbound';
+    final inLabel = inRules.isNotEmpty
+        ? inRules.first['JourneyPoints'] ?? 'Return'
+        : 'Return';
+
+    final activeRules = _selectedTab == 0 ? outRules : inRules;
+
+    return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Image.asset("assets/images/cancellation.png"),
+                SizedBox(width: 8.w),
+                Text(
+                  "Cancellation Charges",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+
+            // TABS - only show for roundtrip
+            if (isRoundtrip)
+              Row(
+                children: [
+                  _buildTab(outLabel, 0),
+                  SizedBox(width: 10.w),
+                  _buildTab(inLabel, 1),
+                ],
+              ),
+
+            if (isRoundtrip) SizedBox(height: 12.h),
+
+            if (!isRoundtrip)
+              Text("Cancellation between (IST)",
+                  style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
+
+            SizedBox(height: 8.h),
+            Divider(),
+            SizedBox(height: 8.h),
+
+            // RULES
+            ...activeRules.map((rule) {
+              final from = rule['From'] ?? '';
+              final to = rule['To'] ?? '';
+              final journey = rule['JourneyPoints'] ?? '';
+              final details = rule['Details'] ?? '';
+
+              final String label;
+              if (from.toString().isEmpty && to.toString().isEmpty) {
+                label = journey;
+              } else if (to.toString().isEmpty) {
+                label = "$from hrs+ before departure";
+              } else {
+                label = "$from – $to hrs before departure";
+              }
+
+              final String displayJourney =
+                  (from.toString().isEmpty && to.toString().isEmpty)
+                      ? ''
+                      : journey;
+
+              return _buildPolicyRow(label, displayJourney, details);
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTab(String label, int index) {
+    final isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected ? Color(0xFFF37023) : Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: isSelected ? Color(0xFFF37023) : Colors.grey.shade300,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : Colors.grey,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolicyRow(String label, String journey, String value) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+      margin: EdgeInsets.only(bottom: 8.h),
+      decoration: BoxDecoration(
+        color: Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                        TextStyle(fontSize: 11.sp, color: Color(0xFFF32323))),
+                if (journey.isNotEmpty)
+                  Text(journey,
+                      style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: 160.w,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                ),
+              ),
+              if (!value.toUpperCase().contains("REFER TO DETAILED FARE RULES"))
+                Text("per adult",
+                    style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DateChangePolicyCard extends StatefulWidget {
+  final List<dynamic>? miniFareRules;
+  final List<dynamic>? inMiniFareRules;
+
+  const DateChangePolicyCard({
+    Key? key,
+    this.miniFareRules,
+    this.inMiniFareRules,
+  }) : super(key: key);
+
+  @override
+  State<DateChangePolicyCard> createState() => _DateChangePolicyCardState();
+}
+
+class _DateChangePolicyCardState extends State<DateChangePolicyCard> {
+  int _selectedTab = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final outRules = (widget.miniFareRules ?? [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Reissue')
+        .toList();
+
+    final inRules = (widget.inMiniFareRules ?? [])
+        .whereType<Map<String, dynamic>>()
+        .where((r) => r['Type'] == 'Reissue')
+        .toList();
+
+    final isRoundtrip =
+        widget.inMiniFareRules != null && widget.inMiniFareRules!.isNotEmpty;
+
+    if (outRules.isEmpty && inRules.isEmpty) return SizedBox.shrink();
+
+    final outLabel = outRules.isNotEmpty
+        ? outRules.first['JourneyPoints'] ?? 'Outbound'
+        : 'Outbound';
+    final inLabel = inRules.isNotEmpty
+        ? inRules.first['JourneyPoints'] ?? 'Return'
+        : 'Return';
+
+    final activeRules = _selectedTab == 0 ? outRules : inRules;
+
+    return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SvgPicture.asset("assets/icon/datechange.svg"),
+                SizedBox(width: 8.w),
+                Text(
+                  "Date Change Charges",
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+
+            // TABS - only for roundtrip
+            if (isRoundtrip)
+              Row(
+                children: [
+                  _buildTab(outLabel, 0),
+                  SizedBox(width: 10.w),
+                  _buildTab(inLabel, 1),
+                ],
+              ),
+
+            if (isRoundtrip) SizedBox(height: 12.h),
+
+            SizedBox(height: 8.h),
+            Divider(),
+            SizedBox(height: 8.h),
+
+            // RULES
+            if (activeRules.isEmpty)
+              Text(
+                "No data available",
+                style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+              )
+            else
+              ...activeRules.map((rule) {
+                final from = rule['From'] ?? '';
+                final to = rule['To'] ?? '';
+                final journey = rule['JourneyPoints'] ?? '';
+                final details = rule['Details'] ?? '';
+
+                final String label;
+                if (from.toString().isEmpty && to.toString().isEmpty) {
+                  label = journey;
+                } else if (to.toString().isEmpty) {
+                  label = "$from hrs+ before departure";
+                } else {
+                  label = "$from – $to hrs before departure";
+                }
+
+                final String displayJourney =
+                    (from.toString().isEmpty && to.toString().isEmpty)
+                        ? ''
+                        : journey;
+
+                return _buildPolicyRow(label, displayJourney, details);
+              }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTab(String label, int index) {
+    final isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: isSelected ? Color(0xFFF37023) : Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: isSelected ? Color(0xFFF37023) : Colors.grey.shade300,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : Colors.grey,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolicyRow(String label, String journey, String value) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+      margin: EdgeInsets.only(bottom: 8.h),
+      decoration: BoxDecoration(
+        color: Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 11.sp, color: Color(0xFFF32323)),
+                ),
+                if (journey.isNotEmpty)
+                  Text(
+                    journey,
+                    style: TextStyle(fontSize: 11.sp, color: Colors.grey),
+                  ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: 160.w,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                ),
+              ),
+              if (!value.toUpperCase().contains("REFER TO DETAILED FARE RULES"))
+                Text(
+                  "per adult",
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

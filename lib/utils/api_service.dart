@@ -7,6 +7,8 @@ import 'dart:math' hide log;
 import 'package:dio/dio.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
+
+// import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:intl/intl.dart';
@@ -17,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/addstatus.dart' as addstatus;
 import '../models/bank_details.dart';
 import '../models/bookinghistory.dart' as booking_history;
+import '../models/commission_history.dart';
 import '../models/commissionpercentage.dart' as commissionpercentage;
 import '../models/countrycode.dart' as country_code;
 import '../models/customer_support.dart';
@@ -35,6 +38,11 @@ import '../models/user.dart' as userStatus;
 
 late GlobalKey<NavigatorState> _navigatorKey;
 
+// clearUserData() async {
+//   // final prefs = await SharedPreferences.getInstance();
+//   // await prefs.clear();
+//   Get.offAllNamed('/SearchFlightPage');
+// }
 clearUserData() async {}
 
 class ApiBaseHelper {
@@ -45,10 +53,10 @@ class ApiBaseHelper {
   List<Map<String, dynamic>> passengersList = [];
 
   // LOCAL IP
-  // static const _baseUrl = 'http://192.168.1.13:8000/api/';
+  static const _baseUrl = 'http://192.168.1.13:8000/api/';
 
   // LIVE
-  static const _baseUrl = 'https://dev-api.trvlus.com/api/';
+  // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
 
   //
   // (NEED TO HIDE ENDUSERIP FOR DATESCROLLER) [NEED TO CHANGE TICKET AND INVOICE URL]
@@ -161,6 +169,13 @@ class ApiBaseHelper {
 
         if (token != null && token.isNotEmpty && token != "null") {
           clearUserData();
+          // Get.snackbar(
+          //   'Session Expired',
+          //   'You have logged in from another device.',
+          //   backgroundColor: Colors.red,
+          //   colorText: Colors.white,
+          //   duration: Duration(seconds: 3),
+          // );
           throw Exception('token_expired');
         }
 
@@ -216,6 +231,7 @@ class ApiBaseHelper {
                 url == "noLccBook" ||
                 url == "cancel-req" ||
                 url == "getBookingDetails" ||
+                url == "getcommissionhistory" ||
                 url == "deposit")
             ? Options(headers: headers)
             : null,
@@ -224,6 +240,14 @@ class ApiBaseHelper {
       responseJson = _returnResponse(response);
     } catch (e) {
       print("POST ERROR: $e");
+
+      // // ✅ ADD THIS CHECK FOR SESSION EXPIRED
+      // if (e.toString().contains("Session expired") ||
+      //     e.toString().contains("logged in on another device")) {
+      //   await clearUserData();
+      //   throw Exception('session_expired');
+      // }
+
       if (e.toString().contains("401")) {
         clearUserData();
         throw Exception('token_expired');
@@ -371,6 +395,7 @@ class ApiService {
     try {
       final response = await _helper.dio.post("mobileFlightAuth");
       // final decode = _helper.decodeBase64Response(response.data);
+      print("response$response");
       final decode = response.data;
       print("Authenticate response mobile: $decode");
       print("response$response");
@@ -577,7 +602,7 @@ class ApiService {
     }
 
     final body = {
-      // "EndUserIp": "192.168.1.10",
+      "EndUserIp": "192.168.1.10",
       "TokenId": tokenId,
       "JourneyType": "1",
       "PreferredAirlines": null,
@@ -596,9 +621,9 @@ class ApiService {
 
     try {
       // LIVE
-      final response = await _helper.post("mobile/calendar-fare/", body);
+      // final response = await _helper.post("mobile/calendar-fare/", body);
       // LOCAL
-      // final response = await _helper.postCalender("GetCalendarFare", body);
+      final response = await _helper.postCalender("GetCalendarFare", body);
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       print("FULL CALENDAR API RESPONSE:");
       // print(encoder.convert(response));
@@ -1349,6 +1374,9 @@ class ApiService {
     print("totalMealPrice$totalMealPrice");
     double? excessAmount = totalMealPrice + totalSeatPrice + totalBaggagePrice;
     print("excessAmount$excessAmount");
+    DateTime parsed = DateFormat('dd MMM yy').parse(depDate);
+    String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
+    print("formattedDEp$formattedDEP");
     final holdparams = {
       "PreferredCurrency": null,
       "ResultIndex": resultIndex,
@@ -1388,11 +1416,11 @@ class ApiService {
       "agent_tdsCommission": 0.0,
       "origin": cityName,
       "destination": descityName,
-      "travel_date": depDate,
+      "travel_date": formattedDEP,
       "return_date": "",
       "commision_percentage_amount": commisionPercentage,
       "convenience_fee": conveniencefee,
-      "coupoun_code": coupouncode.toString(),
+      "coupoun_code": coupouncode,
       "commonPublishedFare": commonPublishedFare,
       "tboOfferedFare": tboOfferedFare,
       "tboCommission": tboCommission,
@@ -1969,9 +1997,21 @@ class ApiService {
         }
       });
 
+      // BAGGAGE
       List<Map<String, dynamic>> passengerBaggage = [];
+      Set<String> addedKeys = {};
+
       baggage.forEach((routeKey, routeData) {
-        if (routeData is Map && routeData.containsKey(paxKey)) {
+        if (routeData is List) {
+          for (var bag in routeData) {
+            String uniqueKey =
+                "${bag['Origin']}-${bag['Destination']}-${bag['Code']}-${bag['FlightNumber']}";
+            if (!addedKeys.contains(uniqueKey)) {
+              addedKeys.add(uniqueKey);
+              passengerBaggage.add(Map<String, dynamic>.from(bag));
+            }
+          }
+        } else if (routeData is Map && routeData.containsKey(paxKey)) {
           passengerBaggage.addAll(
             List<Map<String, dynamic>>.from(routeData[paxKey]),
           );
@@ -2244,8 +2284,14 @@ class ApiService {
     final int? customerId = prefs.getInt('customer_id');
     print("customer_id$customerId");
     print("finaltotalMealPrice$totalMealPrice");
+    print("totalSeatPrice$totalSeatPrice");
+    print("totalBaggagePrice$totalBaggagePrice");
     double? excessAmount = totalMealPrice + totalSeatPrice + totalBaggagePrice;
     print("excessAmountexcessAmount$excessAmount");
+    print("Departure DTAE$depDate");
+    DateTime parsed = DateFormat('dd MMM yy').parse(depDate);
+    String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
+    print("formattedDEp$formattedDEP");
 
     /// 3️⃣ Confirm Booking Params
     final confirmBookingParams = {
@@ -2288,7 +2334,7 @@ class ApiService {
       "agent_tdsCommission": 0.0,
       "origin": cityName,
       "destination": descityName,
-      "travel_date": depDate,
+      "travel_date": formattedDEP,
       "return_date": "",
       "commision_percentage_amount": commision,
       "convenience_fee": conveniencefee,
@@ -2439,9 +2485,9 @@ class ApiService {
       formattedReturnDate = selectedReturnDate.toString().substring(0, 10);
       print("formattedReturnformattedReturn$formattedReturnDate");
     }
-    final prefToken = await SharedPreferences.getInstance();
-    final tokenId = prefToken.getString("tokenId");
-    final userID = prefs.getString('user_id');
+    //await flightAuthenticate();
+    final tokenId = prefs.getString("tokenId");
+    print("tokenId$tokenId");
 
     final params = {
       // "EndUserIp": "192.168.0.2",
@@ -2485,7 +2531,8 @@ class ApiService {
     final response = await _helper.post("mobileFlightSearch", params);
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-    print("hello${jsonEncode(decode)}");
+    print("FLIGHT SEARCH${jsonEncode(decode)}");
+    // printLargeJson(decode);
     return search.searchDataFromJson(decode);
   }
 
@@ -2548,8 +2595,22 @@ class ApiService {
     return customerCommissionFromJson(response);
   }
 
+  // COMMISSION HISTORY
+  Future<Commissionhistory> getcommissionhistory(String pnr) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('user_id');
+    final response =
+        await _helper.get("mobilecommissionHistory?userid=$userID&pnr=$pnr");
+    print("userID$userID");
+    print("pnr$pnr");
+    print("Customercommission");
+    print("Customercommission$response");
+    return commissionhistoryFromJson(response);
+  }
+
   // ROLE
   Future<void> role() async {
+    print("ROLE API IS CALLING");
     final response = await _helper.get("role");
 
     print("Customercommission");
@@ -2746,7 +2807,7 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final userID = prefs.getString('user_id');
     print("USER API CALLING$userID");
-    final response = await _helper.get("user?id=$userID"); // ✅ FIXED
+    final response = await _helper.get("user?id=$userID");
     print("response$response");
     final decode = response;
     print("decodedecode$decode");
@@ -2774,6 +2835,26 @@ class ApiService {
 
     final response = await _helper.post("cancel-req", cancelRequest);
     print("cancel response${jsonEncode(response)}");
+    return (response);
+  }
+
+  // GST FLOW
+  Future<Map<String, dynamic>> gstRequest({
+    required String gstnumber,
+    required String gstholdername,
+    required String gstpincode,
+    required String gstaddress,
+  }) async {
+    final gst = {
+      "gst_number": gstnumber,
+      "gst_holder_name": gstholdername,
+      "gst_pincode": gstpincode,
+      "gst_address": gstaddress,
+    };
+    print("GSTRequest$gst");
+
+    final response = await _helper.post("GSTRequest", gst);
+    print("GSTRequest response${jsonEncode(response)}");
     return (response);
   }
 
@@ -2988,6 +3069,8 @@ class ApiService {
       final url =
           "https://dev-api.trvlus.com/api/invoice-download/$bookingId/$pnr/$tokenId";
       print("Pending$url");
+
+      print("TokenId: $tokenId"); // Add this line
 
       final response = await http.get(Uri.parse(url));
 

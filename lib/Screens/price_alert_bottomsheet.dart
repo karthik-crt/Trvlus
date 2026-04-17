@@ -3,6 +3,10 @@ import 'package:get/get.dart';
 import 'package:trvlus/Screens/price_alert_controller.dart';
 
 class PriceAlertBottomSheet extends StatefulWidget {
+  final VoidCallback? onReturn; // 👈 Add this
+
+  const PriceAlertBottomSheet({this.onReturn});
+
   @override
   _PriceAlertBottomSheetState createState() => _PriceAlertBottomSheetState();
 }
@@ -80,9 +84,10 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      selectedindex = 0;
-                    });
+                    Navigator.pop(context);
+                    if (widget.onReturn != null) {
+                      widget.onReturn!(); // 👈 Trigger navigation
+                    }
                   },
                   child: Container(
                     margin: EdgeInsets.all(10),
@@ -94,18 +99,12 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
                           selectedindex == 0 ? Colors.deepOrange : Colors.white,
                     ),
                     alignment: Alignment.center,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        "Return",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              selectedindex == 0 ? Colors.white : Colors.orange,
-                        ),
+                    child: Text(
+                      "Return",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color:
+                            selectedindex == 0 ? Colors.white : Colors.orange,
                       ),
                     ),
                   ),
@@ -114,9 +113,7 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      selectedindex = 1;
-                    });
+                    Navigator.pop(context);
                   },
                   child: Container(
                     margin: EdgeInsets.all(10),
@@ -128,17 +125,12 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
                           selectedindex == 1 ? Colors.deepOrange : Colors.white,
                     ),
                     alignment: Alignment.center,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        "Continue",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color:
-                              selectedindex == 1 ? Colors.white : Colors.orange,
-                        ),
+                    child: Text(
+                      "Continue",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color:
+                            selectedindex == 1 ? Colors.white : Colors.orange,
                       ),
                     ),
                   ),

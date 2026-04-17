@@ -14,82 +14,79 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String _statusMessage = "";
-
-  @override
   @override
   void initState() {
     super.initState();
-    Timer(Duration(seconds: 5), () async {
-      final prefs = await SharedPreferences.getInstance();
-      final bool isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
-
-      if (isFirstLaunch) {
-        // First time → Show FrontScreen
-        Get.to(
-          FrontScreen(),
-          transition: Transition.rightToLeft,
-          duration: Duration(milliseconds: 600),
-        );
-      } else {
-        // Already launched before → Go directly to SearchFlightPage
-        Get.to(
-          SearchFlightPage(),
-          transition: Transition.rightToLeft,
-          duration: Duration(milliseconds: 600),
-        );
-      }
-    });
-
-    _checkAndCallApiOnStart();
+    _initializeApp();
   }
 
-  Future<bool> shouldCallApi() async {
+  Future<void> _initializeApp() async {
+    await _authenticate();
+    await Future.delayed(const Duration(seconds: 2));
     final prefs = await SharedPreferences.getInstance();
+    final bool isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
 
-    String? lastDate = prefs.getString("token_date");
-    String today = DateTime.now().toString().substring(0, 10);
-
-    return lastDate != today;
-  }
-
-  Future<void> callApiOnceDailyManually() async {
-    final prefs = await SharedPreferences.getInstance();
-    const String key = 'lastApiCallTime';
-
-    if (await shouldCallApi()) {
-      String? authenticateData =
-          await ApiService().flightAuthenticate(); // Call the API
-
-      print("authenticateData: $authenticateData");
-
-      // ✅ Only save date if token was actually received
-      if (authenticateData != null && authenticateData.isNotEmpty) {
-        await prefs.setString('tokenId', authenticateData);
-        await prefs.setString(
-            "token_date", DateTime.now().toString().substring(0, 10));
-        print("TokenId saved: $authenticateData");
-        print("Token date saved");
-      } else {
-        print("❌ Token was null - date NOT saved, will retry tomorrow");
-      }
+    if (isFirstLaunch) {
+      Get.to(
+        () => FrontScreen(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(seconds: 1),
+      );
+    } else {
+      Get.to(
+        () => SearchFlightPage(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(seconds: 1),
+      );
     }
   }
 
-  Future<void> _checkAndCallApiOnStart() async {
-    final prefs = await SharedPreferences.getInstance();
-    print("TokenId saved: ${prefs.getString('tokenId')}");
-    await callApiOnceDailyManually();
-    setState(() {
-      _statusMessage = "Checked on start. See console for details.";
-    });
+  Future<void> dialog(String errorMessage, Color color) async {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              "Token Check",
+              style: TextStyle(color: Colors.red),
+            ),
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: color),
+            ),
+            actions: [
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Ok"))
+            ],
+          );
+        });
   }
 
-  Future<void> _manualApiCall() async {
-    await callApiOnceDailyManually();
-    setState(() {
-      _statusMessage = "API call attempted. Check console for result.";
-    });
+  Future<void> _authenticate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? storedDate = prefs.getString('token_date');
+    final String todayDate = DateTime.now().toIso8601String().substring(0, 10);
+
+    // if (storedDate == todayDate) {
+    //   print("✅ Token already valid for today");
+    //   return;
+    // }
+
+    try {
+      String? token = await ApiService().flightAuthenticate();
+      // ✅ Always show dialog with token (success)
+      await dialog("✅ Token Generated:\n\n${token ?? 'No token received'}",
+          Colors.green);
+
+      print("✅ Token saved: $token");
+    } catch (e) {
+      // ❌ Show dialog with error
+      await dialog("❌ Auth Failed:\n\n${e.toString()}", Colors.red);
+      print("❌ Auth error: $e");
+    }
   }
 
   @override
@@ -98,13 +95,9 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         height: MediaQuery.sizeOf(context).height,
         width: MediaQuery.sizeOf(context).width,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Colors.white,
-              Color(0xFFFFE4D4),
-              Color(0xFFF8BD91),
-            ],
+            colors: [Colors.white, Color(0xFFFFE4D4), Color(0xFFF8BD91)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

@@ -67,6 +67,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
 
   @override
   Widget build(BuildContext context) {
+    print("HELOOOO");
     // final flight =
     //     widget.outboundFlight!.segments.first.first.origin.airport.cityName;
     // final flight1 = widget
@@ -79,7 +80,19 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
     print(sights);
     final segments = jsonEncode(widget.segments);
     print("fullsegments$segments");
-    print("airlinecode${widget.airlineCode}");
+    void printLargeJson(dynamic data) {
+      final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+      const int chunkSize = 800;
+
+      for (int i = 0; i < jsonString.length; i += chunkSize) {
+        print(jsonString.substring(
+          i,
+          i + chunkSize > jsonString.length ? jsonString.length : i + chunkSize,
+        ));
+      }
+    }
+
+    printLargeJson("airlinecodeFULL${widget.segments}");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -130,8 +143,13 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
 
                       final segmentDurationText =
                           "${segmentDurationMinutes ~/ 60}H ${segmentDurationMinutes % 60}m";
-                      print("segmentDurationMinutes$segmentDurationMinutes");
-                      print("segmentDurationText$segmentDurationText");
+                      // print("segmentDurationMinutes$segmentDurationMinutes");
+                      // print("segmentDurationText$segmentDurationText");
+                      print("AIRLINECODE${widget.airlineCode}");
+                      print(
+                          "SEGMENT AIRLINE: ${widget.segments![index][innerIndex].airline.airlineCode}");
+                      final airlineCode = widget
+                          .segments![index][innerIndex].airline.airlineCode;
 
                       return Column(
                         children: [
@@ -149,7 +167,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                   Row(
                                     children: [
                                       Image.asset(
-                                        "assets/${widget.airlineCode ?? ""}.gif",
+                                        "assets/${airlineCode ?? ""}.gif",
                                         fit: BoxFit.fill,
                                         height: 35,
                                         width: 35,

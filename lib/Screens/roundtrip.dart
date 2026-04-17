@@ -510,11 +510,15 @@ class _RoundtripState extends State<Roundtrip> {
 
   // ✅ HELPER: Reusable fare calculation for any flight variant
   Map<String, dynamic> _calculateFare(dynamic flight) {
+    print("calculate Fare");
     double publishFare = flight.fare.publishedFare.toDouble();
+    print("publishFare$publishFare");
     double offeredFare = flight.fare.offeredFare.toDouble();
+    print("offeredFare$offeredFare");
     double tboTDS = flight.fare.tdsOnCommission.toDouble();
+    print("tboTDS$tboTDS");
     final commissionEarned = flight.fare.commissionEarned.toDouble();
-
+    print("commissionEarned$commissionEarned");
     double customerComm = 0.0;
     if (customer.data.isNotEmpty && commissionEarned >= 0) {
       var commData = customer.data[0];
@@ -543,19 +547,28 @@ class _RoundtripState extends State<Roundtrip> {
         customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
       }
     }
-
+    print("customerComm$customerComm");
     double customertdsplb = flight.fare.tdsOnPlb.toDouble();
+    print("customertdsplb$customertdsplb");
     double customerplbearned = flight.fare.plbEarned.toDouble();
+    print("customerplbearned$customerplbearned");
     double finalcommissionplb = commissionEarned + customerplbearned;
-    double customercommissiondetection =
-        finalcommissionplb - customerComm - tboTDS - customertdsplb;
-    double finalcommissionpercentage =
-        customercommissiondetection.round() * 0.02;
+    print("finalcommissionplb$finalcommissionplb");
+    double customercommissiondetection = finalcommissionplb <= 0
+        ? 0.0
+        : finalcommissionplb - customerComm - tboTDS - customertdsplb;
+    print("customercommissiondetection$customercommissiondetection");
+    double finalcommissionpercentage = customercommissiondetection * 0.02;
+    print("finalcommissionpercentage$finalcommissionpercentage");
     double finalflatoffer =
         customercommissiondetection - finalcommissionpercentage;
+    print("finalflatoffer$finalflatoffer");
     int finalcoupouncode = finalflatoffer.round();
+    print("finalcoupouncode$finalcoupouncode");
     double othercharges = flight.fare.otherCharges;
+    print("othercharges$othercharges");
     int finaloffFare = (publishFare - finalflatoffer).round();
+    print("finaloffFare$finaloffFare");
 
     return {
       'publishFare': publishFare,
@@ -565,6 +578,8 @@ class _RoundtripState extends State<Roundtrip> {
       'finaloffFare': finaloffFare,
       'finalcoupouncode': finalcoupouncode,
       'finalflatoffer': finalflatoffer,
+      'customerComm': customerComm,
+      'trvlusCommission': finalcommissionpercentage
     };
   }
 
@@ -1179,13 +1194,17 @@ class _RoundtripState extends State<Roundtrip> {
                         // Per-variant fare calculation
                         final varFareData = _calculateFare(variantFlight);
                         int varFinaloffFare = varFareData['finaloffFare'];
-                        int varFinalcoupouncode =
-                            varFareData['finalcoupouncode'];
+                        double varFinalcoupouncode =
+                            varFareData['finalflatoffer'];
                         double varPublishFare = varFareData['publishFare'];
                         double varOfferedare = varFareData['offeredFare'];
                         double varTds = varFareData['tboTDS'];
                         double varCommissionEarned =
                             varFareData['commissionEarned'];
+                        double varCustomerCommission =
+                            varFareData['customerComm'];
+                        double varFinalcommissionpercentage =
+                            varFareData['trvlusCommission'];
 
                         final varDepTimeFormatted = DateFormat("HH:mm").format(
                             DateTime.parse(variantFlight
@@ -1541,8 +1560,6 @@ class _RoundtripState extends State<Roundtrip> {
                                                           widget.childCount,
                                                       infantCount:
                                                           widget.infantCount,
-                                                      coupouncode:
-                                                          varFinalcoupouncode,
                                                       stop: varNumStops == 0
                                                           ? "Non-Stop"
                                                           : "$varNumStops Stops",
@@ -1553,20 +1570,49 @@ class _RoundtripState extends State<Roundtrip> {
                                                           .fare.tax,
                                                       segmentsJson:
                                                           segmentListJson,
+                                                      isLLC:
+                                                          variantFlight.isLcc,
                                                       commonPublishedFare:
                                                           varPublishFare
                                                               .toString(),
+                                                      tboTds: varTds,
                                                       tboOfferedFare:
                                                           varOfferedare
                                                               .toString(),
-                                                      tboTds: varTds,
                                                       tboCommission:
                                                           varCommissionEarned,
-                                                      trvlusCommission: 10,
-                                                      isLLC:
-                                                          variantFlight.isLcc,
+                                                      trvlusCommission:
+                                                          varCustomerCommission,
+                                                      trvlusTds:
+                                                          varFinalcommissionpercentage,
                                                       trvlusNetFare:
                                                           varFinaloffFare,
+                                                      coupouncode:
+                                                          varFinalcoupouncode,
+                                                      miniFareRules:
+                                                          variantFlight
+                                                                  .miniFareRules
+                                                                  .isNotEmpty
+                                                              ? variantFlight
+                                                                  .miniFareRules[
+                                                                      0]
+                                                                  .map((rule) =>
+                                                                      {
+                                                                        'Type':
+                                                                            rule.type,
+                                                                        'From':
+                                                                            rule.from,
+                                                                        'To': rule
+                                                                            .to,
+                                                                        'Details':
+                                                                            rule.details,
+                                                                        'JourneyPoints':
+                                                                            rule.journeyPoints,
+                                                                        'Unit':
+                                                                            rule.unit,
+                                                                      })
+                                                                  .toList()
+                                                              : [],
                                                     )));
                                       },
                                       child: Container(

@@ -1225,6 +1225,34 @@ class _LocalroundtripState extends State<Localroundtrip> {
       print("FLIGHTDETAILPAGE SCREEN${outBoundData['segments']}");
       print("FLIGHTDETAILPAGE SCREEN${inBoundData['tboCommission']}");
       print("FLIGHTDETAILPAGE SCREEN$inBoundData['segments']}");
+      // Declare BEFORE Navigator.push
+      List<Map<String, dynamic>> outMiniFareRules =
+          selectedOutbound != null && selectedOutbound!.miniFareRules.isNotEmpty
+              ? selectedOutbound!.miniFareRules[0]
+                  .map<Map<String, dynamic>>((rule) => {
+                        'Type': rule.type,
+                        'Details': rule.details,
+                        'From': rule.from,
+                        'To': rule.to,
+                        'Unit': rule.unit,
+                        'JourneyPoints': rule.journeyPoints,
+                      })
+                  .toList()
+              : [];
+
+      List<Map<String, dynamic>> inMiniFareRules =
+          selectedInbound != null && selectedInbound!.miniFareRules.isNotEmpty
+              ? selectedInbound!.miniFareRules[0]
+                  .map<Map<String, dynamic>>((rule) => {
+                        'Type': rule.type,
+                        'Details': rule.details,
+                        'From': rule.from,
+                        'To': rule.to,
+                        'Unit': rule.unit,
+                        'JourneyPoints': rule.journeyPoints,
+                      })
+                  .toList()
+              : [];
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1263,8 +1291,12 @@ class _LocalroundtripState extends State<Localroundtrip> {
             inresultindex: selectedInbound?.resultIndex,
             traceid: searchData.response.traceId,
             total: totalNetFare.toString(),
+            trvlusCommission: _calculateCustomerComm(selectedOutbound!) +
+                _calculateCustomerComm(selectedInbound!),
             trvlusNetFare: totalNetFare.round(),
-            basefare: null,
+            miniFareRules: outMiniFareRules,
+            // outbound rules
+            inMiniFareRules: inMiniFareRules,
             coupouncode: (outboundFlatOffer.round() + inboundFlatOffer.round())
                 .toDouble(),
             coup: outboundFlatOffer,
@@ -2113,7 +2145,8 @@ class _FlightCardState extends State<FlightCard> {
                 SizedBox(height: 5),
 
                 // ✅ EXPANDED SECTION - Show ALL fare variants with OLD DESIGN
-                if (isExpanded && widget.flightVariants.length > 1)
+                // if (isExpanded && widget.flightVariants.length > 1)
+                if (isExpanded)
                   Column(
                     children:
                         widget.flightVariants.asMap().entries.map((entry) {
