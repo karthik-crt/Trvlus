@@ -2030,7 +2030,7 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
           SizedBox(height: 16.h),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFF37023),
+              backgroundColor: const Color(0xFFF37023),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30.r),
               ),
