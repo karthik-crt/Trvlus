@@ -177,11 +177,13 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
 
   @override
   void initState() {
+    print("TravelerDetailsPage");
     // TODO: implement initState
     super.initState();
     getfarequotedata();
     print("fgcgfcf${widget.selectedpassenger}");
     print("BASEFARE${widget.basefare}");
+    print("trvlusCommission${widget.trvlusCommission}");
     print(widget.coupouncode);
     setPassenger();
     getmobile();
@@ -237,6 +239,10 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
               false);
 
       final helo = fareQuote.response;
+      final basefare = fareQuote.response.results.fare.baseFare;
+      print("basefarebasefare$basefare");
+      final tax = fareQuote.response.results.fare.tax;
+      print("taxtax$tax");
       final ticket =
           fareQuote.response.results.isPassportRequiredAtTicket ?? false;
       print("TICKETREQUIRES$ticket");
@@ -283,6 +289,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     for (var item in fareBreakdown) {
       if (item.passengerType == 1) {
         adultBase = item.baseFare.toDouble();
+        print("adultBaseadultBase$adultBase");
         adultTax = item.tax.toDouble();
         adultCount = item.passengerCount.toInt();
         print("adultCountadultCount$adultCount");
@@ -325,7 +332,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       print("basefare${widget.basefare}");
       print("basefare${widget.tax}");
       isLoading = false;
-      coupouncode = widget.coupouncode!;
+      coupouncode = widget.coupouncode ?? 0;
       othercharges = widget.othercharges ?? 0.0;
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
@@ -346,6 +353,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
       adultFare = adultBase + inadultBase;
+      print("adultFareadultFare$adultFare");
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
@@ -2035,6 +2043,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     final c = Get.find<PriceAlertController>();
     print("c.finalBaseFare${c.finalBaseFare}");
     print("c.finalTax${c.finalTax}");
+    print("c.finalCouponValue${c.finalCouponValue}");
 
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -2233,9 +2242,17 @@ class AddTravelerPage extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final int? coupouncode;
+  final num? coupouncode;
   final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
   final bool? isLLC;
+  final String? commonPublishedFare;
+  final int? coupon;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final int? trvlusNetFare;
 
   AddTravelerPage({
     required this.flight,
@@ -2271,6 +2288,14 @@ class AddTravelerPage extends StatefulWidget {
     this.segmentsJson,
     this.childCount,
     this.infantCount,
+    this.commonPublishedFare,
+    this.coupon,
+    this.tboOfferedFare,
+    this.tboCommission,
+    this.tboTds,
+    this.trvlusCommission,
+    this.trvlusTds,
+    this.trvlusNetFare,
     required this.isPassportRequiredAtTicket,
     required this.isPassportFullDetailRequiredAtBook,
   });
@@ -2547,6 +2572,10 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                   label: 'Passport No',
                   hintText: '',
                   controller: passportNoController,
+                  inputFormatters: [
+                    UpperCaseTextFormatter(),
+                  ],
+                  forceUpperCase: true,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Passport No is required';
@@ -2592,6 +2621,10 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                   label: 'Passport No',
                   hintText: '',
                   controller: passportNoController,
+                  inputFormatters: [
+                    UpperCaseTextFormatter(),
+                  ],
+                  forceUpperCase: true,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Passport No is required';
@@ -2911,9 +2944,13 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                   child: GestureDetector(
                                     onTap: () {
                                       String genderValue =
-                                          selectedGender == "Mr"
-                                              ? "Male"
-                                              : "Female";
+                                          selectedGender == 'adult'
+                                              ? (selectedGender == "Mr"
+                                                  ? "Male"
+                                                  : "Female")
+                                              : (selectedGender == "Mstr"
+                                                  ? "Male"
+                                                  : "Female");
 
                                       if (_formKey.currentState!.validate()) {
                                         Map<String, dynamic> data = {
@@ -2989,6 +3026,18 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                                 resultindex: widget.resultindex,
                                                 coupouncode: widget.coupouncode,
                                                 isLLC: widget.isLLC,
+                                                commonPublishedFare:
+                                                    widget.commonPublishedFare,
+                                                tboOfferedFare:
+                                                    widget.tboOfferedFare,
+                                                tboCommission:
+                                                    widget.tboCommission,
+                                                tboTds: widget.tboTds,
+                                                trvlusCommission:
+                                                    widget.trvlusCommission,
+                                                trvlusTds: widget.trvlusTds,
+                                                trvlusNetFare:
+                                                    widget.trvlusNetFare,
                                               ),
                                             ),
                                           );

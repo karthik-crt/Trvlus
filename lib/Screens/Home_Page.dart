@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/ProfilePage.dart';
 import 'package:trvlus/Screens/roundtrip.dart';
 
+import '../models/customercommision.dart';
 import '../models/payment.dart';
 import '../models/search_data.dart';
 import '../models/user.dart';
@@ -63,8 +65,10 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   bool isLoading = false;
   bool isPaymentLoading = false; // 👈 Add this
   late SearchData searchData;
+  Customercommission? _customerCommission;
   Payment? payment;
   late User user;
+  DateTime? _lastBackPressTime;
 
   // State variables for From and To fields
 
@@ -131,6 +135,115 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     }
   }
 
+  Future<void> _prefetchFaresForDates() async {
+    if (_customerCommission == null) return;
+
+    final now = DateTime.now();
+
+    // ✅ Run ALL 30 dates in PARALLEL — not one by one
+    final futures = <Future>[];
+
+    for (int i = 0; i < 10; i++) {
+      final date = now.add(Duration(days: i));
+      final dateStr = DateFormat("yyyy-MM-dd").format(date);
+      final key = DateTime(date.year, date.month, date.day);
+
+      futures.add(
+        ApiService()
+            .getSearchResult(
+          airportCode,
+          fromAirport,
+          toairportCode,
+          toAirport,
+          dateStr,
+          "",
+          "One way",
+          adults,
+          children,
+          infants,
+        )
+            .then((result) {
+          int? lowestFare;
+
+          for (var group in result.response.results) {
+            for (var flight in group) {
+              if (flight.segments.first.first.supplierFareClass
+                  .toString()
+                  .contains('.')) continue;
+
+              double publishFare = flight.fare.publishedFare.toDouble();
+              double tboTDS = flight.fare.tdsOnCommission.toDouble();
+              double commissionEarned = flight.fare.commissionEarned.toDouble();
+              double plbEarned = flight.fare.plbEarned.toDouble();
+              double tdsOnPlb = flight.fare.tdsOnPlb.toDouble();
+
+              double customerComm = 0.0;
+              var commData = _customerCommission!.data[0];
+              double earned = commissionEarned;
+
+              if (earned == 0) {
+                customerComm = commData.commission_0?.toDouble() ?? 0.0;
+              } else if (earned <= 10) {
+                customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+              } else if (earned <= 20) {
+                customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+              } else if (earned <= 30) {
+                customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+              } else if (earned <= 50) {
+                customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
+              } else if (earned <= 100) {
+                customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+              } else if (earned <= 150) {
+                customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+              } else if (earned <= 200) {
+                customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+              } else if (earned <= 250) {
+                customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+              } else if (earned <= 300) {
+                customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+              } else {
+                customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+              }
+
+              double finalcommissionplb = commissionEarned + plbEarned;
+              double customercommissiondetection = finalcommissionplb <= 0
+                  ? 0.0
+                  : finalcommissionplb - customerComm - tboTDS - tdsOnPlb;
+              double finalcommissionpercentage =
+                  customercommissiondetection * 0.02;
+              double finalflatoffer =
+                  customercommissiondetection - finalcommissionpercentage;
+
+              int finaloffFare = tboTDS <= 0
+                  ? (publishFare + customerComm).round()
+                  : (publishFare - finalflatoffer).round();
+
+              if (lowestFare == null || finaloffFare < lowestFare!) {
+                lowestFare = finaloffFare;
+              }
+            }
+          }
+
+          if (lowestFare != null && mounted) {
+            setState(() {
+              fareMap[key] = lowestFare!.toDouble(); // ✅ exact fare
+            });
+          }
+        }).catchError((e) {
+          print("prefetch error for $dateStr: $e");
+        }),
+      );
+    }
+
+    // ✅ all 30 fire at same time — much faster than sequential
+    await Future.wait(futures);
+  }
+
+  _fetchCommissionThenPrefetch() async {
+    _customerCommission = await ApiService().getcustomercommission();
+    await _prefetchFaresForDates(); // ✅ fares load one by one as API responds
+  }
+
   getSearchData() async {
     setState(() {
       isLoading = true;
@@ -189,7 +302,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     final response = await api.getCalendarFare(
       airportCode,
       toairportCode,
-      selectedDepatureDate.toString(),
+      selectedDepatureDate,
     );
 
     print("token$response");
@@ -216,18 +329,17 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     paymentStatus();
 
     // _requestNotifi\cationPermission();
-    // date();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     // Format only the date part
-
-    print(selectedDepDate);
-
     selectedDepatureDate = DateTime(now.year, now.month, now.day);
-    print("dad$selectedDepatureDate");
+    print("selectedDepatureDate$selectedDepatureDate");
+    // date();
+    _fetchCommissionThenPrefetch(); // ✅ replace _fetchCommission and date()
 
     returnDate = DateTime.now().add(const Duration(days: 1));
+    print('ReturnDate$returnDate');
     // Only set selectedReturnDate if it's a Round trip
     if (selectedTripType == "Round trip") {
       selectedReturnDate = returnDate;
@@ -274,34 +386,84 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     final screenHeight = MediaQuery.of(context).size.height;
     String leftDescription = "${adults + children + infants} travelers";
 
-    return Scaffold(
-      bottomNavigationBar: SingleChildScrollView(
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
-          child: ElevatedButton(
-            onPressed: () async {
-              final data = await getSearchData();
-              // final dataset = searchData
-              //     .response.results.first.first.segments.length
-              //     .toString();
-              // print("finaldataset$dataset");
-              // format departure date once
-              String formattedDate = DateFormat("yyyy-MM-dd")
-                  .format(selectedDepatureDate!.toLocal());
-              print("formattedDate$selectedReturnDate");
+    return WillPopScope(
+      onWillPop: () async {
+        final now = DateTime.now();
+        if (_lastBackPressTime == null ||
+            now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Tap back again to leave',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.black87,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(
+                bottom: 20.h,
+                left: 40.w,
+                right: 40.w,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+            ),
+          );
+          return false;
+        }
+        exit(0);
+      },
+      child: Scaffold(
+        bottomNavigationBar: SingleChildScrollView(
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
+            child: ElevatedButton(
+              onPressed: () async {
+                final data = await getSearchData();
+                // final dataset = searchData
+                //     .response.results.first.first.segments.length
+                //     .toString();
+                // print("finaldataset$dataset");
+                // format departure date once
+                String formattedDate = DateFormat("yyyy-MM-dd")
+                    .format(selectedDepatureDate!.toLocal());
+                print("formattedDate$selectedReturnDate");
 
-              String? formattedReturnDate;
-              print("formattedReturnDate$formattedReturnDate");
-              if (selectedReturnDate != null) {
-                formattedReturnDate = DateFormat("yyyy-MM-dd")
-                    .format(selectedReturnDate!.toLocal());
-              }
+                String? formattedReturnDate;
+                print("formattedReturnDate$formattedReturnDate");
+                if (selectedReturnDate != null) {
+                  formattedReturnDate = DateFormat("yyyy-MM-dd")
+                      .format(selectedReturnDate!.toLocal());
+                }
 
-              if (selectedTripType == "One way") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FlightResultsPage(
+                if (selectedTripType == "One way") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FlightResultsPage(
+                          airportCode: airportCode,
+                          fromAirport: fromAirport,
+                          toairportCode: toairportCode,
+                          toAirport: toAirport,
+                          selectedDepDate: formattedDate,
+                          selectedReturnDate: formattedReturnDate ?? "",
+                          selectedTripType: selectedTripType,
+                          adultCount: adults,
+                          childCount: children,
+                          infantCount: infants,
+                          searchData: searchData),
+                    ),
+                  );
+                } else if (searchData
+                        .response.results.first.first.segments.length ==
+                    1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Localroundtrip(
                         airportCode: airportCode,
                         fromAirport: fromAirport,
                         toairportCode: toairportCode,
@@ -309,501 +471,484 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                         selectedDepDate: formattedDate,
                         selectedReturnDate: formattedReturnDate ?? "",
                         selectedTripType: selectedTripType,
+                        adultCount: adults.toString(),
+                        childCount: children.toString(),
+                        infantCount: infants.toString(),
+                      ),
+                    ),
+                  );
+                } else {
+                  print("INTERNATIONAL ROUNDTRIP");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Roundtrip(
+                        airportCode: airportCode,
+                        selectedReturnDate: formattedReturnDate ?? "",
+                        selectedDepDate: formattedDate,
+                        search: searchData,
+                        toAirport: toAirport,
+                        fromAirport: fromAirport,
+                        toairportCode: toairportCode,
+                        selectedTripType: selectedTripType,
                         adultCount: adults,
                         childCount: children,
                         infantCount: infants,
-                        searchData: searchData),
-                  ),
-                );
-              } else if (searchData
-                      .response.results.first.first.segments.length ==
-                  1) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Localroundtrip(
-                      airportCode: airportCode,
-                      fromAirport: fromAirport,
-                      toairportCode: toairportCode,
-                      toAirport: toAirport,
-                      selectedDepDate: formattedDate,
-                      selectedReturnDate: formattedReturnDate ?? "",
-                      selectedTripType: selectedTripType,
-                      adultCount: adults.toString(),
-                      childCount: children.toString(),
-                      infantCount: infants.toString(),
-                    ),
-                  ),
-                );
-              } else {
-                print("INTERNATIONAL ROUNDTRIP");
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Roundtrip(
-                      airportCode: airportCode,
-                      selectedReturnDate: formattedReturnDate ?? "",
-                      selectedDepDate: formattedDate,
-                      search: searchData,
-                      toAirport: toAirport,
-                      fromAirport: fromAirport,
-                      toairportCode: toairportCode,
-                      selectedTripType: selectedTripType,
-                      adultCount: adults,
-                      childCount: children,
-                      infantCount: infants,
-                    ),
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF37023),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.r),
-              ),
-              padding: EdgeInsets.symmetric(vertical: 0.02.sh),
-            ),
-            child: Center(
-              child: isLoading
-                  ? CircularProgressIndicator(
-                      color: Colors.white,
-                    )
-                  : Text(
-                      "Search Flights",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.sp,
-                        color: Colors.white,
                       ),
                     ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF37023),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 0.02.sh),
+              ),
+              child: Center(
+                child: isLoading
+                    ? CircularProgressIndicator(
+                        color: Colors.white,
+                      )
+                    : Text(
+                        "Search Flights",
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
             ),
           ),
         ),
-      ),
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        elevation: 0,
         backgroundColor: const Color(0xFFF5F5F5),
-        titleSpacing: 0,
-        leadingWidth: 80.w,
-        leading: GestureDetector(
-          onTap: () {
-            Get.to(ProfilePage());
-          },
-          child: Stack(
-            alignment: Alignment.centerLeft,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 20.w),
-                child: CircleAvatar(
-                  radius: 20.r,
-                  child: Icon(Icons.person, color: Colors.grey),
-                  backgroundColor: Colors.grey.shade200,
-                ),
-              ),
-              // Menu Icon on Avatar
-              Positioned(
-                left: 44.w,
-                top: 20.h,
-                child: Container(
-                  height: 15.h,
-                  width: 15.w,
-                  child: Image.asset(
-                    "assets/images/Menu_1.png",
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        title: Container(
-          margin: EdgeInsets.only(top: 8.h),
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.w),
-              child: GestureDetector(
-                onTap: () {},
-                child: Image.asset(
-                  'assets/images/Trvlus_Logo.png',
-                  height: 28.h,
-                ),
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          // Price Tag
-          GestureDetector(
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: const Color(0xFFF5F5F5),
+          titleSpacing: 0,
+          leadingWidth: 80.w,
+          leading: GestureDetector(
             onTap: () {
-              Get.to(
-                const Wallet(),
-                duration: const Duration(milliseconds: 600),
-              );
+              Get.to(ProfilePage());
             },
             child: Stack(
-              alignment: Alignment.center,
+              alignment: Alignment.centerLeft,
               children: [
-                Image.asset("assets/images/Group_1.png"),
                 Padding(
-                  padding: EdgeInsets.only(right: 35.w, bottom: 15.h),
+                  padding: EdgeInsets.only(left: 20.w),
+                  child: CircleAvatar(
+                    radius: 20.r,
+                    child: Icon(Icons.person, color: Colors.grey),
+                    backgroundColor: Colors.grey.shade200,
+                  ),
+                ),
+                // Menu Icon on Avatar
+                Positioned(
+                  left: 44.w,
+                  top: 20.h,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 6.w,
-                      vertical: 2.h,
+                    height: 15.h,
+                    width: 15.w,
+                    child: Image.asset(
+                      "assets/images/Menu_1.png",
+                      fit: BoxFit.cover,
                     ),
-                    // decoration: BoxDecoration(
-                    //   color: const Color(0xFFF37003),
-                    //   borderRadius: BorderRadius.circular(12.r),
-                    // ),
-                    // child: Text(
-                    //   '₹${0}',
-                    //   style: TextStyle(color: Colors.white, fontSize: 9.sp),
-                    // ),
                   ),
                 ),
               ],
             ),
           ),
-          // Notification Icon
-          Padding(
-            padding: EdgeInsets.only(right: 16.w),
-            child: GestureDetector(
-              onTap: () {},
-              child: Image.asset("assets/images/Bell_1.png"),
+          title: Container(
+            margin: EdgeInsets.only(top: 8.h),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Image.asset(
+                    'assets/images/Trvlus_Logo.png',
+                    height: 28.h,
+                  ),
+                ),
+              ),
             ),
           ),
-        ],
-      ),
-      body: AbsorbPointer(
-        absorbing: isLoading,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: Padding(
-            padding: EdgeInsets.all(16.r),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TripTypeButton(
-                        label: "One way",
-                        isSelected: selectedTripType == "One way",
-                        onTap: () {
-                          setState(() {
-                            selectedTripType = "One way";
-                            selectedReturnDate = null;
-                            _selectedDepDates = selectedDepatureDate != null
-                                ? [selectedDepatureDate!]
-                                : [];
-                          });
-                        },
+          actions: [
+            // Price Tag
+            GestureDetector(
+              onTap: () {
+                Get.to(
+                  const Wallet(),
+                  duration: const Duration(milliseconds: 600),
+                );
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset("assets/images/Group_1.png"),
+                  Padding(
+                    padding: EdgeInsets.only(right: 35.w, bottom: 15.h),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 6.w,
+                        vertical: 2.h,
                       ),
+                      // decoration: BoxDecoration(
+                      //   color: const Color(0xFFF37003),
+                      //   borderRadius: BorderRadius.circular(12.r),
+                      // ),
+                      // child: Text(
+                      //   '₹${0}',
+                      //   style: TextStyle(color: Colors.white, fontSize: 9.sp),
+                      // ),
                     ),
-                    SizedBox(width: 0.02.sw),
-                    Expanded(
-                      child: TripTypeButton(
-                        label: "Round trip",
-                        isSelected: selectedTripType == "Round trip",
-                        onTap: () {
-                          setState(() {
-                            selectedTripType = "Round trip";
-                            selectedDepatureDate ??= DateTime.now();
-                            returnDate = selectedDepatureDate!.add(
-                              const Duration(days: 1),
-                            );
-                            selectedReturnDate = returnDate;
-                            _selectedDepDates = [
-                              selectedDepatureDate!,
-                              returnDate!,
-                            ];
-                          });
-                        },
-                      ),
-                    ),
-                    SizedBox(width: 0.02.sw),
-                  ],
-                ),
-                SizedBox(height: 0.02.sh),
-                Stack(
-                  children: [
-                    Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            var value = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => Flightname(from: "From"),
-                              ),
-                            );
-                            var finalValue = jsonDecode(value);
+                  ),
+                ],
+              ),
+            ),
+            // Notification Icon
+            Padding(
+              padding: EdgeInsets.only(right: 16.w),
+              child: GestureDetector(
+                onTap: () {},
+                child: Image.asset("assets/images/Bell_1.png"),
+              ),
+            ),
+          ],
+        ),
+        body: AbsorbPointer(
+          absorbing: isLoading,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.all(16.r),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: TripTypeButton(
+                          label: "One way",
+                          isSelected: selectedTripType == "One way",
+                          onTap: () {
                             setState(() {
-                              print("airportCode$airportCode");
-                              print("fromAirport$fromAirport");
-                              airportCode = finalValue['airport_code'];
-                              fromAirport = finalValue['airport_city'];
+                              selectedTripType = "One way";
+                              selectedReturnDate = null;
+                              _selectedDepDates = selectedDepatureDate != null
+                                  ? [selectedDepatureDate!]
+                                  : [];
                             });
                           },
-                          child: FlightField(
-                            label: "FROM",
-                            airport: fromAirport,
-                            code: airportCode,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () async {
-                            var value = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => Flightname(from: "To"),
-                              ),
-                            );
-                            var finalValue = jsonDecode(value);
-
-                            setState(() {
-                              toairportCode = finalValue['airport_code'];
-
-                              toAirport = finalValue['airport_city'];
-                            });
-                          },
-                          child: FlightField(
-                            label: "TO",
-                            airport: toAirport,
-                            code: toairportCode,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      right: 15.w,
-                      top: 65.h,
-                      child: GestureDetector(
-                        onTap: _swapFields, // Call swap function on tap
-                        child: Container(
-                          height: 50.h, // Size of the circular button
-                          width: 50.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            // Background color for the circle
-                            shape: BoxShape.circle,
-                            // Circular shape
-                            border: Border.all(
-                              color: const Color(0xFFF7F7F7),
-                              width: 5.w,
-                            ),
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              "assets/images/swap.png",
-                              height: 30.h, // Adjust image size
-                              width: 30.h,
-                            ),
-                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DatePickerField(
-                        label: "Departure on",
-                        selectedDate: selectedDepatureDate,
-                        onDateChanged: (date) {
-                          setState(() {
-                            _selectedDates = date;
-                            selectedDepatureDate = date;
-                            print("departureDate$_selectedDates");
-                            print("returnDate$returnDate");
-                          });
-                        },
-                        onReturnDateChanged: (date) {
-                          setState(() {
-                            returnDate = date;
-                            print("returnDateFromDeparturePicker$returnDate");
-                          });
-                        },
-                        firstDate: DateTime.now(),
-                        selectedTripType: selectedTripType,
-                        // Start from today
-                        fareMap: fareMap,
-                        // ✅ pass the preprocessed map
-                        onTripTypeChanged: (String newTripType) {
-                          setState(() {
-                            selectedTripType = newTripType;
-                            if (newTripType == "Round trip") {
+                      SizedBox(width: 0.02.sw),
+                      Expanded(
+                        child: TripTypeButton(
+                          label: "Round trip",
+                          isSelected: selectedTripType == "Round trip",
+                          onTap: () {
+                            setState(() {
+                              selectedTripType = "Round trip";
                               selectedDepatureDate ??= DateTime.now();
-                              if (selectedReturnDate == null ||
-                                  selectedReturnDate!.isBefore(
-                                      selectedDepatureDate!
-                                          .add(const Duration(minutes: 1)))) {
-                                returnDate = selectedDepatureDate!.add(
-                                  const Duration(days: 1),
-                                );
-                                selectedReturnDate = returnDate;
-                              }
-                            }
-                          });
-                        },
+                              returnDate = selectedDepatureDate!.add(
+                                const Duration(days: 1),
+                              );
+                              selectedReturnDate = returnDate;
+                              _selectedDepDates = [
+                                selectedDepatureDate!,
+                                returnDate!,
+                              ];
+                            });
+                          },
+                        ),
                       ),
-                    ),
-                    // Text("Return on$returnDate"),
-                    SizedBox(width: 0.02.sw),
-                    Expanded(
-                      child: selectedTripType == "Round trip"
-                          ? DatePickerField(
-                              label: "Return on",
-                              selectedDate: returnDate,
-                              // selectedDepatureDate
-                              //     ?.add(const Duration(days: 1)),
-                              onDateChanged: (date) {
-                                setState(() {
-                                  returnDate = date;
-                                  // returnDate = date;
-                                  print("returnDateDate$returnDate");
-                                });
-                              },
-                              firstDate: selectedDepatureDate != null
-                                  ? selectedDepatureDate!.add(
-                                      const Duration(days: 1),
-                                    )
-                                  : DateTime.now().add(const Duration(days: 1)),
-                              selectedTripType: selectedTripType,
-                              onTripTypeChanged: (String newTripType) {
-                                setState(() {
-                                  selectedTripType = newTripType;
-                                });
-                              },
-                            )
-                          : GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedTripType = "Round trip";
-                                  print("selectedTripTypeR$selectedTripType");
-                                  print(
-                                      "selete departure date $selectedDepatureDate");
+                      SizedBox(width: 0.02.sw),
+                    ],
+                  ),
+                  SizedBox(height: 0.02.sh),
+                  Stack(
+                    children: [
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              var value = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      Flightname(from: "From"),
+                                ),
+                              );
+                              var finalValue = jsonDecode(value);
+                              setState(() {
+                                print("airportCode$airportCode");
+                                print("fromAirport$fromAirport");
+                                airportCode = finalValue['airport_code'];
+                                fromAirport = finalValue['airport_city'];
+                              });
+                            },
+                            child: FlightField(
+                              label: "FROM",
+                              airport: fromAirport,
+                              code: airportCode,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              var value = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Flightname(from: "To"),
+                                ),
+                              );
+                              var finalValue = jsonDecode(value);
 
-                                  selectedDepatureDate ??= DateTime.now();
+                              setState(() {
+                                toairportCode = finalValue['airport_code'];
+
+                                toAirport = finalValue['airport_city'];
+                              });
+                            },
+                            child: FlightField(
+                              label: "TO",
+                              airport: toAirport,
+                              code: toairportCode,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        right: 15.w,
+                        top: 65.h,
+                        child: GestureDetector(
+                          onTap: _swapFields, // Call swap function on tap
+                          child: Container(
+                            height: 50.h, // Size of the circular button
+                            width: 50.h,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              // Background color for the circle
+                              shape: BoxShape.circle,
+                              // Circular shape
+                              border: Border.all(
+                                color: const Color(0xFFF7F7F7),
+                                width: 5.w,
+                              ),
+                            ),
+                            child: Center(
+                              child: Image.asset(
+                                "assets/images/swap.png",
+                                height: 30.h, // Adjust image size
+                                width: 30.h,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DatePickerField(
+                          label: "Departure on",
+                          selectedDate: selectedDepatureDate,
+                          onDateChanged: (date) {
+                            setState(() {
+                              _selectedDates = date;
+                              selectedDepatureDate = date;
+                              print("departureDate$_selectedDates");
+                              print("returnDate$returnDate");
+                            });
+                          },
+                          onReturnDateChanged: (date) {
+                            setState(() {
+                              returnDate = date;
+                              print("returnDateFromDeparturePicker$returnDate");
+                            });
+                          },
+                          firstDate: DateTime.now(),
+                          selectedTripType: selectedTripType,
+                          // Start from today
+                          fareMap: fareMap,
+                          // ✅ pass the preprocessed map
+                          onTripTypeChanged: (String newTripType) {
+                            setState(() {
+                              selectedTripType = newTripType;
+                              if (newTripType == "Round trip") {
+                                selectedDepatureDate ??= DateTime.now();
+                                if (selectedReturnDate == null ||
+                                    selectedReturnDate!.isBefore(
+                                        selectedDepatureDate!
+                                            .add(const Duration(minutes: 1)))) {
                                   returnDate = selectedDepatureDate!.add(
                                     const Duration(days: 1),
                                   );
                                   selectedReturnDate = returnDate;
-                                  _selectedDepDates = [
-                                    selectedDepatureDate!,
-                                    returnDate!,
-                                  ];
-                                  print("returnDatehelo$returnDate");
-                                });
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.only(top: 8),
-                                height: 63,
-                                width: 156,
-                                child: DottedBorder(
-                                  color: Colors.orange,
-                                  strokeWidth: 1.5,
-                                  dashPattern: [4, 4],
-                                  borderType: BorderType.RRect,
-                                  radius: const Radius.circular(8),
-                                  child: const Align(
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      "+ Add Round Trip",
-                                      style: TextStyle(
-                                        color: Colors.orange,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                }
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                      // Text("Return on$returnDate"),
+                      SizedBox(width: 0.02.sw),
+                      Expanded(
+                        child: selectedTripType == "Round trip"
+                            ? DatePickerField(
+                                label: "Return on",
+                                selectedDate: returnDate,
+                                // selectedDepatureDate
+                                //     ?.add(const Duration(days: 1)),
+                                onDateChanged: (date) {
+                                  setState(() {
+                                    returnDate = date;
+                                    // returnDate = date;
+                                    print("returnDateDate$returnDate");
+                                  });
+                                },
+                                firstDate: selectedDepatureDate != null
+                                    ? selectedDepatureDate!.add(
+                                        const Duration(days: 1),
+                                      )
+                                    : DateTime.now()
+                                        .add(const Duration(days: 1)),
+                                selectedTripType: selectedTripType,
+                                onTripTypeChanged: (String newTripType) {
+                                  setState(() {
+                                    selectedTripType = newTripType;
+                                  });
+                                },
+                              )
+                            : GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedTripType = "Round trip";
+                                    print("selectedTripTypeR$selectedTripType");
+                                    print(
+                                        "selete departure date $selectedDepatureDate");
+
+                                    selectedDepatureDate ??= DateTime.now();
+                                    returnDate = selectedDepatureDate!.add(
+                                      const Duration(days: 1),
+                                    );
+                                    selectedReturnDate = returnDate;
+                                    _selectedDepDates = [
+                                      selectedDepatureDate!,
+                                      returnDate!,
+                                    ];
+                                    print("returnDatehelo$returnDate");
+                                  });
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  height: 63,
+                                  width: 156,
+                                  child: DottedBorder(
+                                    color: Colors.orange,
+                                    strokeWidth: 1.5,
+                                    dashPattern: [4, 4],
+                                    borderType: BorderType.RRect,
+                                    radius: const Radius.circular(8),
+                                    child: const Align(
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        "+ Add Round Trip",
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16.h),
-                CombinedSelectionField(),
-                SizedBox(height: 0.02.sh),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: Colors.grey[300]!, width: 1.w),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Special fare (optional)",
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12.sp,
-                          color: const Color(0xFF7F8387),
-                        ),
-                      ),
-                      SizedBox(height: 10.h),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Wrap(
-                          spacing: 10.w,
-                          children: [
-                            SpecialFareButton(
-                              label: "Student",
-                              isSelected: specialFare == "Student",
-                              onTap: () {
-                                setState(() {
-                                  if (specialFare == "Student") {
-                                    specialFare = "";
-                                  } else {
-                                    specialFare = "Student";
-                                  }
-                                });
-                              },
-                            ),
-                            SpecialFareButton(
-                              label: "Senior citizen",
-                              isSelected: specialFare == "Senior citizen",
-                              onTap: () {
-                                setState(() {
-                                  if (specialFare == "Senior citizen") {
-                                    specialFare = "";
-                                  } else {
-                                    specialFare = "Senior citizen";
-                                  }
-                                });
-                              },
-                            ),
-                            SpecialFareButton(
-                              label: "Defence",
-                              isSelected: specialFare == "Defence",
-                              onTap: () {
-                                setState(() {
-                                  if (specialFare == "Defence") {
-                                    specialFare = "";
-                                  } else {
-                                    specialFare = "Defence";
-                                  }
-                                });
-                              },
-                            ),
-                          ],
-                        ),
                       ),
                     ],
                   ),
-                ),
-                SizedBox(height: 30.h),
-              ],
+                  SizedBox(height: 16.h),
+                  CombinedSelectionField(),
+                  SizedBox(height: 0.02.sh),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: Colors.grey[300]!, width: 1.w),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Special fare (optional)",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12.sp,
+                            color: const Color(0xFF7F8387),
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Wrap(
+                            spacing: 10.w,
+                            children: [
+                              SpecialFareButton(
+                                label: "Student",
+                                isSelected: specialFare == "Student",
+                                onTap: () {
+                                  setState(() {
+                                    if (specialFare == "Student") {
+                                      specialFare = "";
+                                    } else {
+                                      specialFare = "Student";
+                                    }
+                                  });
+                                },
+                              ),
+                              SpecialFareButton(
+                                label: "Senior citizen",
+                                isSelected: specialFare == "Senior citizen",
+                                onTap: () {
+                                  setState(() {
+                                    if (specialFare == "Senior citizen") {
+                                      specialFare = "";
+                                    } else {
+                                      specialFare = "Senior citizen";
+                                    }
+                                  });
+                                },
+                              ),
+                              SpecialFareButton(
+                                label: "Defence",
+                                isSelected: specialFare == "Defence",
+                                onTap: () {
+                                  setState(() {
+                                    if (specialFare == "Defence") {
+                                      specialFare = "";
+                                    } else {
+                                      specialFare = "Defence";
+                                    }
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 30.h),
+                ],
+              ),
             ),
           ),
         ),
@@ -1376,8 +1521,13 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                                       selectedReturnDate!.month,
                                                       selectedReturnDate!.day,
                                                     );
+                                        // double circleSize = (fare != null &&
+                                        //         !(isDisabled ?? false))
+                                        //     ? 53
+                                        //     : 38;
+                                        // print("circleSize$circleSize");
                                         double circleSize =
-                                            38; // adjust as needed
+                                            38; // adjust as needed  // 👈 THIS LINE
 
                                         // ✅ Check if date is in the range between departure and return
                                         bool isInRange = false;
@@ -1475,7 +1625,7 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                                     Text(
                                                       '₹${fare.toStringAsFixed(0)}',
                                                       style: TextStyle(
-                                                        fontSize: 10,
+                                                        fontSize: 8,
                                                         color: Colors.black,
                                                         fontWeight:
                                                             FontWeight.w600,

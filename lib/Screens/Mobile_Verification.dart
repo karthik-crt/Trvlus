@@ -227,7 +227,8 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                   return Row(
                     children: [
                       GestureDetector(
-                        onTap: _openCountryPicker,
+                        // onTap: _openCountryPicker,
+                        onTap: null,
                         child: Container(
                           width: 120.w,
                           height: 50.h,
@@ -256,11 +257,11 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                   SizedBox(width: 5.w),
                                 ],
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 15),
-                                child: Icon(Icons.expand_more,
-                                    color: Colors.grey[600]),
-                              ),
+                              // Padding(
+                              //   padding: const EdgeInsets.only(top: 15),
+                              //   child: Icon(Icons.expand_more,
+                              //       color: Colors.grey[600]),
+                              // ),
                             ],
                           ),
                         ),

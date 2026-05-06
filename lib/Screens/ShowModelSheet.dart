@@ -59,6 +59,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     double seatTotal = 0.0;
     double baggageTotal = 0.0;
     int total = 0;
+    double adultFare = 0;
 
     final tax = widget.tax;
     print("totaltotal$tax");
@@ -74,7 +75,15 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("dgtgsgre${widget.tax}");
     print("dgtgsgre${widget.othercharges}");
 
-    final adultFare = widget.adultfare;
+    if (widget.coupouncode! > 0.0) {
+      adultFare = widget.adultfare ?? 0;
+      print("adultFareCOmmission$adultFare");
+    } else {
+      adultFare = (widget.adultfare ?? 0) + (widget.trvlusCommission ?? 0);
+      print("adultFareNoCmmission$adultFare");
+      print("trvlusCommission${widget.trvlusCommission}");
+    }
+    // final adultFare = widget.adultfare ?? 0;
     final childFare = widget.childfare?.round();
     final infantFare = widget.infantfare?.round();
     final conveniencefee = widget.convenienceFee.toInt();
@@ -99,6 +108,8 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final totalChildFare = childFare! / childCount!;
     final totalInfantFare = infantFare! / infantCount!;
     print("totalAdultFare$totalAdultFare");
+    print("adultFareadultFare$adultFare");
+    print("adultCountadultCount$adultCount");
     print("grgrg${widget.convenienceFee}");
 
     print("taxtotal$taxtotal");
@@ -106,6 +117,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     print("totalDiscount$totalDiscount");
 
     final basefare = widget.basefare?.round();
+    print("basefare$basefare");
     final totalBaseFare =
         (double.parse(basefare.toString()) - double.parse(coupoun.toString()))
             .round();
@@ -157,8 +169,8 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final ssrTotal = mealTotal + seatTotal + baggageTotal;
     print("ssrTotal$ssrTotal");
 
-    if (widget.coupouncode! > 0) {
-      print("helloooo");
+    if (widget.coupouncode! > 0.0) {
+      print("COMMISSION FLIGHT");
       print(adultFare);
       print(conveniencefee);
       print(taxtotal);
@@ -173,28 +185,22 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
           .round();
       print("overallFare1$total");
     } else {
-      print("helloooohelo");
+      print("NO COMMISSION FLIGHT");
       total = (adultFare! +
               childFare! +
               infantFare! +
               conveniencefee +
               taxtotal! +
-              ssrTotal +
-              (widget.trvlusCommission ?? 0).toInt())
+              ssrTotal)
           .round();
       print("no commission");
       print("overallFare$total");
-      print("overallFare$adultFare");
-      print("overallFare$othertaxtotal");
+      print("adultFare$adultFare");
+      print("taxtotal$taxtotal");
+      print("mealTotal$mealTotal");
+      print("seatTotal$seatTotal");
+      print("baggageTotal$baggageTotal");
     }
-
-    // final total = adultFare! +
-    //     childFare! +
-    //     infantFare! +
-    //     conveniencefee +
-    //     taxtotal! -
-    //     totalDiscount!;
-    // print("totaltotaltotal$total");
 
     return Stack(
       clipBehavior: Clip.none,
@@ -246,7 +252,7 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold)),
                         Text(
-                            "₹${(widget.basefare! + (widget.coupouncode == null || widget.coupouncode! <= 0 ? (widget.trvlusCommission ?? 0) : 0)).toInt()}",
+                            "₹${(basefare! + (widget.coupouncode == null || widget.coupouncode! <= 0 ? (widget.trvlusCommission ?? 0) : 0)).toInt()}",
                             // "₹${(widget.basefare! + (widget.trvlusCommission ?? 0)).toInt()}",
                             style: TextStyle(
                                 fontSize: 15.sp,
@@ -263,12 +269,12 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                                "Adults (${widget.adultCount} X ₹$totalAdultFare)",
+                                "Adults (${widget.adultCount} X ₹${totalAdultFare.round()})",
                                 style: TextStyle(
                                   fontSize: 12.sp,
                                   color: Colors.grey,
                                 )),
-                            Text("₹$adultFare",
+                            Text("₹${adultFare.round()}",
                                 style: TextStyle(
                                     fontSize: 12.sp, color: Colors.grey)),
                           ],

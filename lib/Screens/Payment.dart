@@ -416,7 +416,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         overallFare = totalBaseFare +
             totalTax +
             convenienceFee +
-            (widget.trvlusCommission ?? 0);
+            (widget.trvlusCommission ?? 0) +
+            mealTotal +
+            seatTotal +
+            baggageTotal;
         print("overallFare$overallFare");
         print("convenienceFee${countrycode.data.first.convenienceFee}");
       }

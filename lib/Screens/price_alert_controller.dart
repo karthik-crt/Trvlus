@@ -24,9 +24,11 @@ class PriceAlertController extends GetxController {
 
   void checkFare(double fare, bool isPriceChangedFlag) {
     print("After getx $isPriceChangedFlag");
+    print("After getx $oldFare.value");
     if (isPriceChangedFlag) {
       oldFare.value =
           oldFare.value == 0 ? fare : oldFare.value; // set oldFare if not set
+      print("After getx$oldFare.value");
       newFare.value = fare;
       isChanged.value = true;
       return;

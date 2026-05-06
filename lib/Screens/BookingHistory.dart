@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:trvlus/Screens/ticketdetails.dart';
@@ -11,7 +12,6 @@ import 'package:trvlus/utils/api_service.dart';
 
 import '../models/addstatus.dart';
 import 'DotDivider.dart';
-import 'ProfilePage.dart';
 import 'notification_service.dart';
 
 class BookingHistoryPage extends StatefulWidget {
@@ -77,11 +77,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
-        );
-        return false;
+        return true;
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade200,
@@ -97,8 +93,9 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => ProfilePage())),
+              onPressed: () {
+                Get.back();
+              },
             )
             // elevation: 1,
             ),

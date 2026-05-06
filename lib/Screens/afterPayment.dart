@@ -128,6 +128,11 @@ class _AfterpaymentState extends State<Afterpayment> {
   String statusMessage = '';
   double totalAmount = 0;
 
+// ✅ CORRECT
+  double seatTotal = 0.0;
+  double mealTotal = 0.0;
+  double baggageTotal = 0.0;
+
   // TICKET API CALLING
   getSearchData() async {
     print("TICKET API CALLING");
@@ -310,8 +315,16 @@ class _AfterpaymentState extends State<Afterpayment> {
 
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING");
-        await ApiService().ticketInvoice(pnr, bookingId.toString(), traceid,
-            widget.outBoundData['netFare'], conveniencefee);
+        await ApiService().ticketInvoice(
+          pnr,
+          bookingId.toString(),
+          traceid,
+          widget.outBoundData['netFare'],
+          conveniencefee,
+          mealTotal,
+          baggageTotal,
+          seatTotal, // ✅
+        );
       }
 
       print("searchDataROUNDTRIP$searchData");
@@ -430,8 +443,16 @@ class _AfterpaymentState extends State<Afterpayment> {
 
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING");
-        await ApiService().ticketInvoice(pnr, bookingId.toString(), traceid,
-            widget.inBoundData['netFare'], conveniencefee);
+        await ApiService().ticketInvoice(
+          pnr,
+          bookingId.toString(),
+          traceid,
+          widget.inBoundData['netFare'],
+          conveniencefee,
+          mealTotal,
+          baggageTotal,
+          seatTotal, // ✅
+        );
       }
     } else {
       // ONEWAY
@@ -564,7 +585,15 @@ class _AfterpaymentState extends State<Afterpayment> {
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING");
         await ApiService().ticketInvoice(
-            pnr, bookingId.toString(), traceid, trvlusNetFare, conveniencefee);
+          pnr,
+          bookingId.toString(),
+          traceid,
+          trvlusNetFare,
+          conveniencefee,
+          mealTotal,
+          baggageTotal,
+          seatTotal,
+        );
       }
     }
     setState(() {
@@ -617,19 +646,86 @@ class _AfterpaymentState extends State<Afterpayment> {
         .selectTraveler(passenger, childpassenger, infantpassenger);
     // print("travelertravelertraveler${jsonEncode(traveler)}");
     print("traveler");
+    await getSearchData();
     setState(() {
       isLoading = false;
       print("selectTravelerAfterOutput");
     });
   }
 
+  Future<void> _runBookingFlow() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // STEP 1: Save traveller first
+      await selecttravelerData();
+
+      // STEP 2: Then book the ticket
+      await getSearchData();
+    } catch (e) {
+      print("Booking flow error: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   void initState() {
-    getSearchData();
+    // _runBookingFlow();
     // selecttravelerData();
+    getSearchData();
     print('passengerdetailsall${widget.passenger}');
+    // 1. Calculate seat total
+    seatTotal = 0.0;
+    if (widget.seat != null) {
+      print("SEATSS${widget.seat}");
+      for (var s in widget.seat!) {
+        seatTotal +=
+            (s['Price'] ?? s['price'] ?? s['Amount'] ?? s['amount'] ?? 0)
+                .toDouble();
+      }
+    }
+
+    // 2. Calculate meal total
+    mealTotal = 0.0;
+
+    if (widget.meal != null && widget.meal!.isNotEmpty) {
+      widget.meal!.forEach((routeKey, passengerData) {
+        passengerData.forEach((passenger, meals) {
+          for (var m in meals) {
+            mealTotal += (m['Price'] ?? 0).toDouble();
+          }
+        });
+      });
+    }
+
+    // 3. Calculate baggage total
+    baggageTotal = 0.0;
+    if (widget.baggage != null && widget.baggage!.isNotEmpty) {
+      widget.baggage!.forEach((routeKey, baggageList) {
+        for (var b in baggageList) {
+          baggageTotal += (b['Price'] ?? 0).toDouble();
+        }
+      });
+    }
+    print("basefare DATA: ${widget.basefare}");
+    print("tax DATA: ${widget.tax}");
+    print("SEAT DATA: $seatTotal");
+    print("MEAL DATA: $mealTotal");
+    print("BAGGAGE DATA: $baggageTotal");
+    print("convenienceFee DATA: ${widget.convenienceFee}");
+    print("trvlusCommission DATA: ${widget.trvlusCommission}");
+    print("NETFARE DATA: ${widget.trvlusNetFare}");
     totalAmount = (widget.trvlusNetFare?.toDouble() ?? 0.0) +
-        (widget.convenienceFee ?? 0.0);
+        (widget.convenienceFee ?? 0.0) +
+        seatTotal +
+        mealTotal +
+        baggageTotal;
+    print("totalAmount$totalAmount");
 
     super.initState();
   }

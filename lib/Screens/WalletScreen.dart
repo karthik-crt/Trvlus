@@ -257,12 +257,14 @@ class _WalletState extends State<Wallet> {
 }
 
 String formatDate(String dateTime) {
-  final dt = DateTime.parse(dateTime).toLocal();
+  final dt =
+      DateTime.parse(dateTime + 'Z').add(const Duration(hours: 5, minutes: 30));
   return "${dt.day} ${_month(dt.month)}, ${dt.year}";
 }
 
 String formatTime(String dateTime) {
-  final dt = DateTime.parse(dateTime).toLocal();
+  final dt = DateTime.parse(dateTime + 'Z') // Force UTC by adding Z
+      .add(const Duration(hours: 5, minutes: 30));
 
   int hour = dt.hour;
   int minute = dt.minute;

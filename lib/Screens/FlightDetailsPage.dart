@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/ViewFullDetails.dart';
 import 'package:trvlus/Screens/price_alert_controller.dart';
+import 'package:trvlus/Screens/selecttraveller.dart';
 import 'package:trvlus/utils/constant.dart';
 
 import '../models/customercommision.dart';
@@ -171,6 +172,7 @@ class FlightDetailsPage extends StatefulWidget {
 class _FlightDetailsPageState extends State<FlightDetailsPage> {
   int appliedPromoIndex = 0; // default applied promo
   bool isLoading = false; // Add loading state
+  bool isContinueLoading = false; // Add loading state
   bool _isLoggedIn = false;
   late FareRuleData fare;
   late farequote.FareQuotesData fareQuote;
@@ -205,6 +207,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
     print("miniFareRules${widget.miniFareRules}");
+    print("coupouncode${widget.coupouncode}");
     print("inMiniFareRules${widget.inMiniFareRules}");
     // print("FLIGHTDETAILPAGE SCREEN");
     final prefs = await SharedPreferences.getInstance();
@@ -333,14 +336,20 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       print("varFinalflatoffer$varFinalflatoffer");
       double varroundFinalflatoffer = varFinalflatoffer.round().toDouble();
       print("varroundFinalflatoffer$varroundFinalflatoffer");
-      int priceFinaloffFare = (varPublishFare - varFinalflatoffer).round();
+      // int priceFinaloffFare = (varPublishFare - varFinalflatoffer).round();
+      int priceFinaloffFare = varTboTDS <= 0
+          ? (varPublishFare + varCustomerComm).round()
+          : (varPublishFare - varFinalflatoffer).round();
       print("PRICEALERTFinaloffFare$priceFinaloffFare");
       print("tboOfferedFare$tboOfferedFare");
       print("varOfferedFare$varOfferedFare");
       int searchNeatFare = widget.trvlusNetFare ?? 0;
+      print("searchNeatFare$searchNeatFare");
 // Show PriceAlert ONLY if new fare is higher
       if (searchNeatFare != priceFinaloffFare) {
         print("INTERNATIONAL ROUNDYRIP");
+        print("INTERNATIONAL ROUNDYRIP$searchNeatFare");
+        print("INTERNATIONAL ROUNDYRIP$priceFinaloffFare");
         Get.find<PriceAlertController>().checkFare(
           priceFinaloffFare.toDouble(),
           true,
@@ -419,6 +428,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       print("coupouncode$coupouncode");
       print("coupouncodeeee${widget.coup}");
       print("coupouncode${widget.coupo}");
+      print("coupouncode${widget.trvlusCommission}");
       totalBaseFare = baseFare + inbaseFare;
       print("totalBaseFaretotalBaseFare$totalBaseFare");
       othercharges = othercharges;
@@ -468,10 +478,12 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         c.finalBaseFare = finalBaseFare;
         c.finalTax = finalTax;
         c.trvlusCommission = widget.trvlusCommission ?? 0;
+        c.finalCouponValue = finalCouponValue;
         print("overallFare$overallFare");
         print("Without Coupoun Code");
         print("overallFare$finalBaseFare");
         print("overallFare$finalTax");
+        print("trvlusCommission${widget.trvlusCommission ?? 0}");
         print("othercharges$othercharges");
       }
 
@@ -503,71 +515,261 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     final loggedIn = prefs.getBool('isLoggedIn') ?? false;
 
     if (loggedIn) {
-      // User already logged in → skip login screen, go straight to traveler details
+      setState(() => isContinueLoading = true);
+
+      try {
+        final travelerData = await ApiService().gettraveler();
+        print("travelerData.data.length: ${travelerData.data.length}");
+
+        if (travelerData.data.isEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TravelerDetailsPage(
+                flight: {},
+                city: widget.city,
+                destination: widget.destination,
+                airlineName: widget.airlineName,
+                airlineCode: widget.airlineCode,
+                flightNumber: widget.flightNumber,
+                cityName: widget.cityName,
+                cityCode: widget.cityCode,
+                descityName: widget.descityName,
+                descityCode: widget.descityCode,
+                depDate: widget.depDate,
+                depTime: widget.depTime,
+                arrDate: widget.arrDate,
+                arrTime: widget.arrTime,
+                duration: widget.duration,
+                refundable: widget.refundable,
+                stop: widget.stop,
+                airportName: widget.airportName,
+                desairportName: widget.desairportName,
+                basefare: widget.basefare,
+                segments: widget.segments,
+                resultindex: widget.resultindex,
+                traceid: widget.traceid,
+                outboundFlight: widget.outboundFlight,
+                inboundFlight: widget.inboundFlight,
+                total: widget.total,
+                tax: widget.tax,
+                adultCount: widget.adultCount,
+                childCount: widget.childCount,
+                infantCount: widget.infantCount,
+                isLLC: widget.isLLC,
+                outdepDate: widget.outdepDate,
+                outdepTime: widget.outdepTime,
+                outarrDate: widget.outarrDate,
+                outarrTime: widget.outarrTime,
+                indepDate: widget.indepDate,
+                indepTime: widget.indepTime,
+                inarrDate: widget.inarrDate,
+                inarrTime: widget.inarrTime,
+                outBoundData: widget.outBoundData,
+                inBoundData: widget.inBoundData,
+                segmentsJson: widget.segmentsJson,
+                coupouncode: widget.coupouncode,
+                commonPublishedFare: widget.commonPublishedFare,
+                tboOfferedFare: widget.tboOfferedFare,
+                tboCommission: widget.tboCommission,
+                tboTds: widget.tboTds,
+                trvlusCommission: widget.trvlusCommission,
+                trvlusTds: widget.trvlusTds,
+                trvlusNetFare: widget.trvlusNetFare,
+                othercharges: othercharges,
+              ),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SelectTraveller(
+                flight: {},
+                city: widget.city,
+                destination: widget.destination,
+                airlineName: widget.airlineName,
+                airlineCode: widget.airlineCode,
+                flightNumber: widget.flightNumber,
+                cityName: widget.cityName,
+                cityCode: widget.cityCode,
+                descityName: widget.descityName,
+                descityCode: widget.descityCode,
+                depDate: widget.depDate,
+                depTime: widget.depTime,
+                arrDate: widget.arrDate,
+                arrTime: widget.arrTime,
+                duration: widget.duration,
+                refundable: widget.refundable,
+                stop: widget.stop,
+                airportName: widget.airportName,
+                desairportName: widget.desairportName,
+                basefare: widget.basefare,
+                segments: widget.segments,
+                resultindex: widget.resultindex,
+                traceid: widget.traceid,
+                outboundFlight: widget.outboundFlight,
+                inboundFlight: widget.inboundFlight,
+                total: widget.total,
+                tax: widget.tax,
+                adultCount: widget.adultCount,
+                childCount: widget.childCount,
+                infantCount: widget.infantCount,
+                isLLC: widget.isLLC,
+                outdepDate: widget.outdepDate,
+                outdepTime: widget.outdepTime,
+                outarrDate: widget.outarrDate,
+                outarrTime: widget.outarrTime,
+                indepDate: widget.indepDate,
+                indepTime: widget.indepTime,
+                inarrDate: widget.inarrDate,
+                inarrTime: widget.inarrTime,
+                outBoundData: widget.outBoundData,
+                inBoundData: widget.inBoundData,
+                outresultindex: widget.outresultindex,
+                inresultindex: widget.inresultindex,
+                segmentsJson: widget.segmentsJson,
+                coupouncode: widget.coupouncode,
+                commonPublishedFare: widget.commonPublishedFare,
+                tboOfferedFare: widget.tboOfferedFare,
+                tboCommission: widget.tboCommission,
+                tboTds: widget.tboTds,
+                trvlusCommission: widget.trvlusCommission,
+                trvlusTds: widget.trvlusTds,
+                trvlusNetFare: widget.trvlusNetFare,
+                othercharges: othercharges,
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        print("Error checking traveller: $e");
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TravelerDetailsPage(
+              flight: {},
+              city: widget.city,
+              destination: widget.destination,
+              airlineName: widget.airlineName,
+              airlineCode: widget.airlineCode,
+              flightNumber: widget.flightNumber,
+              cityName: widget.cityName,
+              cityCode: widget.cityCode,
+              descityName: widget.descityName,
+              descityCode: widget.descityCode,
+              depDate: widget.depDate,
+              depTime: widget.depTime,
+              arrDate: widget.arrDate,
+              arrTime: widget.arrTime,
+              duration: widget.duration,
+              refundable: widget.refundable,
+              stop: widget.stop,
+              airportName: widget.airportName,
+              desairportName: widget.desairportName,
+              basefare: widget.basefare,
+              segments: widget.segments,
+              resultindex: widget.resultindex,
+              traceid: widget.traceid,
+              outboundFlight: widget.outboundFlight,
+              inboundFlight: widget.inboundFlight,
+              total: widget.total,
+              tax: widget.tax,
+              adultCount: widget.adultCount,
+              childCount: widget.childCount,
+              infantCount: widget.infantCount,
+              isLLC: widget.isLLC,
+              outdepDate: widget.outdepDate,
+              outdepTime: widget.outdepTime,
+              outarrDate: widget.outarrDate,
+              outarrTime: widget.outarrTime,
+              indepDate: widget.indepDate,
+              indepTime: widget.indepTime,
+              inarrDate: widget.inarrDate,
+              inarrTime: widget.inarrTime,
+              outBoundData: widget.outBoundData,
+              inBoundData: widget.inBoundData,
+              segmentsJson: widget.segmentsJson,
+              coupouncode: widget.coupouncode,
+              commonPublishedFare: widget.commonPublishedFare,
+              tboOfferedFare: widget.tboOfferedFare,
+              tboCommission: widget.tboCommission,
+              tboTds: widget.tboTds,
+              trvlusCommission: widget.trvlusCommission,
+              trvlusTds: widget.trvlusTds,
+              trvlusNetFare: widget.trvlusNetFare,
+              othercharges: othercharges,
+            ),
+          ),
+        );
+      } finally {
+        setState(() => isContinueLoading = false);
+      }
+      return true;
+    } else {
+      // ✅ NOT LOGGED IN — navigate to MobileVerificationScreen
+      setState(() => _isLoggedIn = false);
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => TravelerDetailsPage(
-                  flight: {},
-                  city: widget.city,
-                  destination: widget.destination,
-                  airlineName: widget.airlineName,
-                  airlineCode: widget.airlineCode,
-                  flightNumber: widget.flightNumber,
-                  cityName: widget.cityName,
-                  cityCode: widget.cityCode,
-                  descityName: widget.descityName,
-                  descityCode: widget.descityCode,
-                  depDate: widget.depDate,
-                  depTime: widget.depTime,
-                  arrDate: widget.arrDate,
-                  arrTime: widget.arrTime,
-                  duration: widget.duration,
-                  refundable: widget.refundable,
-                  stop: widget.stop,
-                  airportName: widget.airportName,
-                  desairportName: widget.desairportName,
-                  basefare: widget.basefare,
-                  segments: widget.segments,
-                  resultindex: widget.resultindex,
-                  traceid: widget.traceid,
-                  outboundFlight: widget.outboundFlight,
-                  inboundFlight: widget.inboundFlight,
-                  total: widget.total,
-                  tax: widget.tax,
-                  adultCount: widget.adultCount,
-                  childCount: widget.childCount,
-                  infantCount: widget.infantCount,
-                  isLLC: widget.isLLC,
-                  outdepDate: widget.outdepDate,
-                  outdepTime: widget.outdepTime,
-                  outarrDate: widget.outarrDate,
-                  outarrTime: widget.outarrTime,
-                  indepDate: widget.indepDate,
-                  indepTime: widget.indepTime,
-                  inarrDate: widget.inarrDate,
-                  inarrTime: widget.inarrTime,
-                  outBoundData: widget.outBoundData,
-                  inBoundData: widget.inBoundData,
-                  segmentsJson: widget.segmentsJson,
-                  miniFareRules: widget.miniFareRules,
-                  coupouncode: widget.coupouncode,
-                  commonPublishedFare: widget.commonPublishedFare,
-                  tboOfferedFare: widget.tboOfferedFare,
-                  tboCommission: widget.tboCommission,
-                  tboTds: widget.tboTds,
-                  trvlusCommission: widget.trvlusCommission,
-                  trvlusTds: widget.trvlusTds,
-                  trvlusNetFare: widget.trvlusNetFare,
-                  othercharges: othercharges,
-                )),
+          builder: (context) => MobileVerificationScreen(
+            flight: widget.flight,
+            city: widget.city,
+            destination: widget.destination,
+            airlineName: widget.airlineName,
+            airlineCode: widget.airlineCode,
+            flightNumber: widget.flightNumber,
+            cityName: widget.cityName,
+            cityCode: widget.cityCode,
+            descityName: widget.descityName,
+            descityCode: widget.descityCode,
+            depDate: widget.depDate,
+            depTime: widget.depTime,
+            arrDate: widget.arrDate,
+            arrTime: widget.arrTime,
+            duration: widget.duration,
+            refundable: widget.refundable,
+            stop: widget.stop,
+            airportName: widget.airportName,
+            desairportName: widget.desairportName,
+            basefare: widget.basefare,
+            segments: widget.segments,
+            resultindex: widget.resultindex,
+            traceid: widget.traceid,
+            outboundFlight: widget.outboundFlight,
+            inboundFlight: widget.inboundFlight,
+            total: widget.total,
+            tax: widget.tax,
+            adultCount: widget.adultCount,
+            childCount: widget.childCount,
+            // ✅ fixed (was widget.infantCount)
+            infantCount: widget.infantCount,
+            isLLC: widget.isLLC,
+            outdepDate: widget.outdepDate,
+            outdepTime: widget.outdepTime,
+            outarrDate: widget.outarrDate,
+            outarrTime: widget.outarrTime,
+            indepDate: widget.indepDate,
+            indepTime: widget.indepTime,
+            inarrDate: widget.inarrDate,
+            inarrTime: widget.inarrTime,
+            outBoundData: widget.outBoundData,
+            inBoundData: widget.inBoundData,
+            outresultindex: widget.outresultindex,
+            inresultindex: widget.inresultindex,
+            segmentsJson: widget.segmentsJson,
+            coupouncode: widget.coupouncode,
+            commonPublishedFare: widget.commonPublishedFare,
+            tboOfferedFare: widget.tboOfferedFare,
+            tboCommission: widget.tboCommission,
+            tboTds: widget.tboTds,
+            trvlusCommission: widget.trvlusCommission,
+            trvlusTds: widget.trvlusTds,
+            trvlusNetFare: widget.trvlusNetFare,
+            othercharges: othercharges,
+          ),
+        ),
       );
-      return true;
-    } else {
-      // User not logged in
-      setState(() {
-        _isLoggedIn = false;
-      });
       return false;
     }
   }
@@ -583,6 +785,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   @override
   Widget build(BuildContext context) {
     print("FLIGHTDETAILPAGE");
+    print("trvlusCommission${widget.trvlusCommission}");
     print("helllo${widget.commonPublishedFare}");
     final total = widget.total;
     final llc = widget.isLLC;
@@ -2068,66 +2271,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () async {
-                          print("RESULTINDEXRESULTINDEX");
-                          print(widget.traceid);
-                          print(widget.resultindex);
-                          bool alreadyLoggedIn = await checkLoginStatus();
-                          if (alreadyLoggedIn) return;
-
-                          Get.to(MobileVerificationScreen(
-                            flight: flight,
-                            city: widget.city,
-                            destination: widget.destination,
-                            airlineName: widget.airlineName,
-                            airlineCode: widget.airlineCode,
-                            flightNumber: widget.flightNumber,
-                            cityName: widget.cityName,
-                            cityCode: widget.cityCode,
-                            descityName: widget.descityName,
-                            descityCode: widget.descityCode,
-                            depDate: widget.depDate,
-                            depTime: widget.depTime,
-                            arrDate: widget.arrDate,
-                            arrTime: widget.arrTime,
-                            duration: widget.duration,
-                            refundable: widget.refundable,
-                            stop: widget.stop,
-                            airportName: widget.airportName,
-                            desairportName: widget.desairportName,
-                            basefare: widget.basefare,
-                            segments: widget.segments,
-                            resultindex: widget.resultindex,
-                            traceid: widget.traceid,
-                            outboundFlight: widget.outboundFlight,
-                            inboundFlight: widget.inboundFlight,
-                            total: widget.total,
-                            tax: widget.tax,
-                            adultCount: widget.adultCount,
-                            childCount: widget.infantCount,
-                            infantCount: widget.infantCount,
-                            isLLC: widget.isLLC,
-                            outdepDate: widget.outdepDate,
-                            outdepTime: widget.outdepTime,
-                            outarrDate: widget.outarrDate,
-                            outarrTime: widget.outarrTime,
-                            indepDate: widget.indepDate,
-                            indepTime: widget.indepTime,
-                            inarrDate: widget.inarrDate,
-                            inarrTime: widget.inarrTime,
-                            outBoundData: widget.outBoundData,
-                            inBoundData: widget.inBoundData,
-                            outresultindex: widget.outresultindex,
-                            inresultindex: widget.inresultindex,
-                            segmentsJson: widget.segmentsJson,
-                            coupouncode: widget.coupouncode,
-                            commonPublishedFare: widget.commonPublishedFare,
-                            tboOfferedFare: widget.tboOfferedFare,
-                            tboCommission: widget.tboCommission,
-                            tboTds: widget.tboTds,
-                            trvlusCommission: widget.trvlusCommission,
-                            trvlusTds: widget.trvlusTds,
-                            trvlusNetFare: widget.trvlusNetFare,
-                          ));
+                          await checkLoginStatus();
                         },
                         style: ElevatedButton.styleFrom(
                           minimumSize: Size(double.infinity, 40.h),
@@ -2136,14 +2280,100 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                             borderRadius: BorderRadius.circular(30.r),
                           ),
                         ),
-                        child: Text(
-                          "Continue",
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                        child: isContinueLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "Continue",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ), // ElevatedButton(
+                      //   onPressed: () async {
+                      //     print("RESULTINDEXRESULTINDEX");
+                      //     print(widget.traceid);
+                      //     print(widget.resultindex);
+                      //     bool alreadyLoggedIn = await checkLoginStatus();
+                      //     if (alreadyLoggedIn) return;
+                      //
+                      //     Get.to(MobileVerificationScreen(
+                      //       flight: flight,
+                      //       city: widget.city,
+                      //       destination: widget.destination,
+                      //       airlineName: widget.airlineName,
+                      //       airlineCode: widget.airlineCode,
+                      //       flightNumber: widget.flightNumber,
+                      //       cityName: widget.cityName,
+                      //       cityCode: widget.cityCode,
+                      //       descityName: widget.descityName,
+                      //       descityCode: widget.descityCode,
+                      //       depDate: widget.depDate,
+                      //       depTime: widget.depTime,
+                      //       arrDate: widget.arrDate,
+                      //       arrTime: widget.arrTime,
+                      //       duration: widget.duration,
+                      //       refundable: widget.refundable,
+                      //       stop: widget.stop,
+                      //       airportName: widget.airportName,
+                      //       desairportName: widget.desairportName,
+                      //       basefare: widget.basefare,
+                      //       segments: widget.segments,
+                      //       resultindex: widget.resultindex,
+                      //       traceid: widget.traceid,
+                      //       outboundFlight: widget.outboundFlight,
+                      //       inboundFlight: widget.inboundFlight,
+                      //       total: widget.total,
+                      //       tax: widget.tax,
+                      //       adultCount: widget.adultCount,
+                      //       childCount: widget.infantCount,
+                      //       infantCount: widget.infantCount,
+                      //       isLLC: widget.isLLC,
+                      //       outdepDate: widget.outdepDate,
+                      //       outdepTime: widget.outdepTime,
+                      //       outarrDate: widget.outarrDate,
+                      //       outarrTime: widget.outarrTime,
+                      //       indepDate: widget.indepDate,
+                      //       indepTime: widget.indepTime,
+                      //       inarrDate: widget.inarrDate,
+                      //       inarrTime: widget.inarrTime,
+                      //       outBoundData: widget.outBoundData,
+                      //       inBoundData: widget.inBoundData,
+                      //       outresultindex: widget.outresultindex,
+                      //       inresultindex: widget.inresultindex,
+                      //       segmentsJson: widget.segmentsJson,
+                      //       coupouncode: widget.coupouncode,
+                      //       commonPublishedFare: widget.commonPublishedFare,
+                      //       tboOfferedFare: widget.tboOfferedFare,
+                      //       tboCommission: widget.tboCommission,
+                      //       tboTds: widget.tboTds,
+                      //       trvlusCommission: widget.trvlusCommission,
+                      //       trvlusTds: widget.trvlusTds,
+                      //       trvlusNetFare: widget.trvlusNetFare,
+                      //     ));
+                      //   },
+                      //   style: ElevatedButton.styleFrom(
+                      //     minimumSize: Size(double.infinity, 40.h),
+                      //     backgroundColor: Color(0xFFF37023),
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(30.r),
+                      //     ),
+                      //   ),
+                      //   child: Text(
+                      //     "Continue",
+                      //     style: TextStyle(
+                      //       fontSize: 16.sp,
+                      //       color: Colors.white,
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),

@@ -48,11 +48,19 @@ class SelectTraveller extends StatefulWidget {
   final int? adultCount;
   final int? childCount;
   final int? infantCount;
-  final int? coupouncode;
+  final num? coupouncode;
   final bool? isLLC;
   final bool? islogin;
   final Map<String, dynamic> outBoundData;
   final Map<String, dynamic> inBoundData;
+  final String? commonPublishedFare;
+  final String? tboOfferedFare;
+  final double? tboCommission;
+  final double? tboTds;
+  final double? trvlusCommission;
+  final double? trvlusTds;
+  final double? othercharges;
+  final int? trvlusNetFare;
 
   // final bool isPassportRequiredAtTicket;
   // final bool isPassportFullDetailRequiredAtBook;
@@ -105,6 +113,15 @@ class SelectTraveller extends StatefulWidget {
     this.inarrDate,
     this.inarrTime,
     this.islogin,
+    this.commonPublishedFare,
+    this.tboOfferedFare,
+    this.tboCommission,
+    this.tboTds,
+    this.trvlusCommission,
+    this.trvlusTds,
+    this.trvlusNetFare,
+    this.othercharges,
+
     // required this.isPassportRequiredAtTicket,
     // required this.isPassportFullDetailRequiredAtBook,
   });
@@ -124,6 +141,8 @@ class _SelectTravellerState extends State<SelectTraveller> {
   @override
   void initState() {
     super.initState();
+    print("SelectTraveller");
+    print("trvlusCommission${widget.trvlusCommission}");
     getBookingData();
     print("sdfvsvr${widget.traceid}");
     print("sdfvsvr${widget.resultindex}");
@@ -164,20 +183,36 @@ class _SelectTravellerState extends State<SelectTraveller> {
             airportName: widget.airportName,
             desairportName: widget.desairportName,
             basefare: widget.basefare,
-            tax: widget.tax,
-            total: widget.total,
             segments: widget.segments,
+            resultindex: widget.resultindex,
+            traceid: widget.traceid,
+            outboundFlight: widget.outboundFlight,
+            inboundFlight: widget.inboundFlight,
+            total: widget.total,
+            tax: widget.tax,
             adultCount: widget.adultCount,
             childCount: widget.childCount,
             infantCount: widget.infantCount,
-            // selectedpassenger: selectedPassenger,
-            outBoundData: {},
-            inBoundData: {},
-            traceid: widget.traceid,
-            resultindex: widget.resultindex,
-            coupouncode: widget.coupouncode,
-            segmentsJson: widget.segmentsJson,
             isLLC: widget.isLLC,
+            outdepDate: widget.outdepDate,
+            outdepTime: widget.outdepTime,
+            outarrDate: widget.outarrDate,
+            outarrTime: widget.outarrTime,
+            indepDate: widget.indepDate,
+            indepTime: widget.indepTime,
+            inarrDate: widget.inarrDate,
+            inarrTime: widget.inarrTime,
+            outBoundData: widget.outBoundData,
+            inBoundData: widget.inBoundData,
+            segmentsJson: widget.segmentsJson,
+            coupouncode: widget.coupouncode,
+            commonPublishedFare: widget.commonPublishedFare,
+            tboOfferedFare: widget.tboOfferedFare,
+            tboCommission: widget.tboCommission,
+            tboTds: widget.tboTds,
+            trvlusCommission: widget.trvlusCommission,
+            trvlusTds: widget.trvlusTds,
+            trvlusNetFare: widget.trvlusNetFare,
           ),
         ),
       );
@@ -292,9 +327,16 @@ class _SelectTravellerState extends State<SelectTraveller> {
                         selectedpassenger: selectedPassenger,
                         traceid: widget.traceid,
                         resultindex: widget.resultindex,
-                        coupouncode: widget.coupouncode,
+                        coupouncode: widget.coupouncode ?? 0,
                         segmentsJson: widget.segmentsJson,
                         isLLC: widget.isLLC,
+                        commonPublishedFare: widget.commonPublishedFare,
+                        tboOfferedFare: widget.tboOfferedFare,
+                        tboCommission: widget.tboCommission,
+                        tboTds: widget.tboTds,
+                        trvlusCommission: widget.trvlusCommission,
+                        trvlusTds: widget.trvlusTds,
+                        trvlusNetFare: widget.trvlusNetFare,
                       ),
                     ),
                   );

@@ -69,6 +69,92 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   String currentDepDate =
       ''; // NEW: Track current departure date for display and fetching
 
+  Set<int> get availableStops {
+    Set<int> stops = {};
+    for (var group in getFilteredResults()) {
+      for (var flight in group) {
+        int numStops = flight.segments.first.length - 1;
+        if (numStops >= 2) {
+          stops.add(2); // represent "2+" as 2
+        } else {
+          stops.add(numStops);
+        }
+      }
+    }
+    return stops;
+  }
+
+  Set<int> get availableStopsFromRaw {
+    Set<int> stops = {};
+    var results = searchData.response.results;
+    for (var group in results) {
+      for (var flight in group) {
+        // Skip dot-class flights (same filter you apply everywhere)
+        if (flight.segments.first.first.supplierFareClass
+            .toString()
+            .contains('.')) continue;
+
+        int numStops = flight.segments.first.length - 1;
+        if (numStops >= 2) {
+          stops.add(2);
+        } else {
+          stops.add(numStops);
+        }
+      }
+    }
+    return stops;
+  }
+
+  // DEPARTURE ARRIVAL TIME FILTER
+  Set<String> get availableDepartureTimeRanges {
+    Set<String> ranges = {};
+    var results = searchData.response.results;
+    for (var group in results) {
+      for (var flight in group) {
+        if (flight.segments.first.first.supplierFareClass
+            .toString()
+            .contains('.')) continue;
+
+        int hour = flight.segments.first.first.origin.depTime.toLocal().hour;
+
+        if (hour < 6)
+          ranges.add("Before 6 AM");
+        else if (hour >= 6 && hour < 12)
+          ranges.add("6 AM-12 Noon");
+        else if (hour >= 12 && hour < 18)
+          ranges.add("12 Noon-6 PM");
+        else
+          ranges.add("6 PM-12 Midnight");
+      }
+    }
+    return ranges;
+  }
+
+  Set<String> get availableArrivalTimeRanges {
+    Set<String> ranges = {};
+    var results = searchData.response.results;
+    for (var group in results) {
+      for (var flight in group) {
+        if (flight.segments.first.first.supplierFareClass
+            .toString()
+            .contains('.')) continue;
+
+        int hour =
+            flight.segments.first.last.destination.arrTime.toLocal().hour;
+
+        if (hour < 6)
+          ranges.add("Before 6 AM");
+        else if (hour >= 6 && hour < 12)
+          ranges.add("6 AM-12 Noon");
+        else if (hour >= 12 && hour < 18)
+          ranges.add("12 Noon-6 PM");
+        else
+          ranges.add("6 PM-12 Midnight");
+      }
+    }
+    return ranges;
+  }
+
   // FILTER
   late List<Map<String, dynamic>> uniqueAirlines;
   Set<String> _selectedAirlineCodes = <String>{};
@@ -85,6 +171,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   late ComissionPercentage commission;
   late Customercommission customer;
   bool isLoading = true;
+  bool _allDataReady = false;
   List inbound = [];
   List outbound = [];
 
@@ -110,10 +197,15 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   getCommissionData() async {
     commission = await ApiService().commissionPercentage();
     print("getCommissionData${jsonEncode(commission)}");
-    print("selectedReturnDateHOME$selectedRetDate");
     setState(() {
       isLoading = false;
     });
+
+    // ✅ Only call if dates is already populated (loadCalendarPrices finished first)
+    // Otherwise loadCalendarPrices will call it after it finishes
+    if (dates.isNotEmpty) {
+      _updateSelectedDatePrice(currentDepDate);
+    }
   }
 
   getCustomerCommission() async {
@@ -127,9 +219,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   }
 
   Future<void> _fetchFlightsForDate(String depDate) async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
+
     searchData = await ApiService().getSearchResult(
       widget.airportCode,
       widget.fromAirport,
@@ -142,10 +233,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
       widget.childCount,
       widget.infantCount,
     );
-    print("searchDatasearchData$depDate");
-    print("selectedReturnDateHOME${widget.selectedReturnDate}");
 
-    // Recompute unique airlines after fetching new data
+    // Recompute unique airlines
     Set<String> codes = <String>{};
     uniqueAirlines = [
       {"name": "All Airlines", "code": null, "logo": "", "price": ""},
@@ -168,9 +257,61 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
       }
     }
 
-    setState(() {
-      isLoading = false;
-    });
+    // ✅ Rebuild dates list centered on the newly selected date
+    // so the scroller always shows dates around the active selection
+    final selectedDate = DateTime.parse(depDate);
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+
+    // Start 3 days before the selected date (but never before today)
+    DateTime startDate = selectedDate.subtract(const Duration(days: 3));
+    if (startDate.isBefore(todayOnly)) startDate = todayOnly;
+
+    // Rebuild the 16-day window around the selected date
+    // but preserve existing prices from the old dates list
+    Map<String, String> existingPrices = {};
+    for (var d in dates) {
+      if (d['date'] != null && d['price'] != null) {
+        existingPrices[d['date'] as String] = d['price'] as String;
+      }
+    }
+
+    final updatedDates = <Map<String, dynamic>>[];
+    for (int i = 0; i < 16; i++) {
+      final date = startDate.add(Duration(days: i));
+      final dateKey = DateFormat('yyyy-MM-dd').format(date);
+      final dayName =
+          ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday - 1];
+      final monthName = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ][date.month - 1];
+
+      updatedDates.add({
+        "month": "$dayName, ${date.day} $monthName",
+        // Reuse existing price if we already fetched it, otherwise show "--"
+        "price": existingPrices[dateKey] ?? "--",
+        "isSelected": dateKey == depDate, // ✅ Correct date gets selected
+        "date": dateKey,
+      });
+    }
+
+    dates = updatedDates;
+
+    // Compute and update this date's price in the scroller
+    _computeAndSetLowestFare(depDate);
+
+    setState(() => isLoading = false);
   }
 
   getSearchData(
@@ -192,6 +333,11 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     // Update currentDepDate for display
     setState(() {
       currentDepDate = newDate;
+      _selectedAirlineCodes.clear();
+      _selectedStops = null;
+      _hideNonRefundable = false;
+      _selectedDepartureTimeRange = null;
+      _selectedArrivalTimeRange = null;
     });
 
     // Update selection in dates list
@@ -227,24 +373,270 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         });
   }
 
+  void _updateSelectedDatePrice(String depDate) {
+    if (!mounted || customer.data.isEmpty || dates.isEmpty) return;
+
+    int? lowestFare;
+
+    for (var group in searchData.response.results) {
+      for (var flight in group) {
+        if (flight.segments.first.first.supplierFareClass
+            .toString()
+            .contains('.')) continue;
+
+        double publishFare = flight.fare.publishedFare.toDouble();
+        double tboTDS = flight.fare.tdsOnCommission.toDouble();
+        double commissionEarned = flight.fare.commissionEarned.toDouble();
+        double plbEarned = flight.fare.plbEarned.toDouble();
+        double tdsOnPlb = flight.fare.tdsOnPlb.toDouble();
+
+        double customerComm = 0.0;
+        var commData = customer.data[0];
+        double earned = commissionEarned;
+        if (earned == 0) {
+          customerComm = commData.commission_0?.toDouble() ?? 0.0;
+        } else if (earned <= 10) {
+          customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+        } else if (earned <= 20) {
+          customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+        } else if (earned <= 30) {
+          customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+        } else if (earned <= 50) {
+          customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
+        } else if (earned <= 100) {
+          customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+        } else if (earned <= 150) {
+          customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+        } else if (earned <= 200) {
+          customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+        } else if (earned <= 250) {
+          customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+        } else if (earned <= 300) {
+          customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+        } else {
+          customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+        }
+
+        double finalcommissionplb = commissionEarned + plbEarned;
+        double customercommissiondetection = finalcommissionplb <= 0
+            ? 0.0
+            : finalcommissionplb - customerComm - tboTDS - tdsOnPlb;
+        double finalcommissionpercentage = customercommissiondetection * 0.02;
+        double finalflatoffer =
+            customercommissiondetection - finalcommissionpercentage;
+
+        int finaloffFare = tboTDS <= 0
+            ? (publishFare + customerComm).round()
+            : (publishFare - finalflatoffer).round();
+
+        if (lowestFare == null || finaloffFare < lowestFare!) {
+          lowestFare = finaloffFare;
+        }
+      }
+    }
+
+    if (lowestFare == null) return;
+
+    // ✅ Create a NEW list copy so DateScroller's didUpdateWidget fires
+    setState(() {
+      final updatedDates = List<Map<String, dynamic>>.from(dates);
+      for (var d in updatedDates) {
+        if (d['date'] == depDate) {
+          d['price'] = "₹$lowestFare";
+          break;
+        }
+      }
+      dates =
+          updatedDates; // reassign = new reference = didUpdateWidget triggers
+    });
+  }
+
+  Future<void> _loadAllData() async {
+    // Run both API calls in parallel
+    await Future.wait([
+      _loadCommission(),
+      _loadCalendar(),
+    ]);
+
+    // Both done — now update the selected date price
+    _computeAndSetLowestFare(currentDepDate);
+
+    if (mounted) {
+      setState(() {
+        _allDataReady = true;
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadCommission() async {
+    try {
+      customer = await ApiService().getcustomercommission();
+      commission = await ApiService().commissionPercentage();
+    } catch (e) {
+      print("Commission error: $e");
+    }
+  }
+
+  Future<void> _loadCalendar() async {
+    try {
+      final response = await ApiService().getCalendarFare(
+        widget.airportCode,
+        widget.toairportCode,
+        selectedDepatureDate,
+      );
+
+      if (response['Response']['ResponseStatus'] != 1) return;
+
+      final List<dynamic> searchResults = response['Response']['SearchResults'];
+      Map<String, double> lowestFareByDate = {};
+
+      for (var item in searchResults) {
+        String dateOnly = item['DepartureDate'].toString().substring(0, 10);
+        double fare = item['Fare'].toDouble();
+        if (!lowestFareByDate.containsKey(dateOnly) ||
+            fare < lowestFareByDate[dateOnly]!) {
+          lowestFareByDate[dateOnly] = fare;
+        }
+      }
+
+      // ✅ FIX: Start from the selected departure date, not today
+      final selectedDate = DateTime.parse(widget.selectedDepDate);
+      // Go back 3 days so user can see nearby earlier dates too
+      final startDate = selectedDate.subtract(const Duration(days: 3));
+      final today = DateTime.now();
+      // Don't go before today
+      final effectiveStart = startDate.isBefore(today) ? today : startDate;
+
+      final updatedDates = <Map<String, dynamic>>[];
+
+      for (int i = 0; i < 16; i++) {
+        DateTime date = effectiveStart.add(Duration(days: i));
+        String dateKey = DateFormat('yyyy-MM-dd').format(date);
+        String dayName =
+            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday - 1];
+        String monthName = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ][date.month - 1];
+
+        double? price = lowestFareByDate[dateKey];
+        updatedDates.add({
+          "month": "$dayName, ${date.day} $monthName",
+          "price": price != null ? "₹${price.round()}" : "--",
+          "isSelected":
+              dateKey == widget.selectedDepDate, // ✅ marks correct date
+          "date": dateKey,
+        });
+      }
+
+      dates = updatedDates;
+    } catch (e) {
+      print("Calendar API Error: $e");
+    }
+  }
+
+// ✅ Pure calculation — no setState, called before the final setState in _loadAllData
+  void _computeAndSetLowestFare(String depDate) {
+    if (customer.data.isEmpty || dates.isEmpty) return;
+
+    int? lowestFare;
+
+    for (var group in searchData.response.results) {
+      for (var flight in group) {
+        if (flight.segments.first.first.supplierFareClass
+            .toString()
+            .contains('.')) continue;
+
+        double publishFare = flight.fare.publishedFare.toDouble();
+        double tboTDS = flight.fare.tdsOnCommission.toDouble();
+        double commissionEarned = flight.fare.commissionEarned.toDouble();
+        double plbEarned = flight.fare.plbEarned.toDouble();
+        double tdsOnPlb = flight.fare.tdsOnPlb.toDouble();
+
+        double customerComm = 0.0;
+        var commData = customer.data[0];
+        double earned = commissionEarned;
+        if (earned == 0) {
+          customerComm = commData.commission_0?.toDouble() ?? 0.0;
+        } else if (earned <= 10) {
+          customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+        } else if (earned <= 20) {
+          customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+        } else if (earned <= 30) {
+          customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+        } else if (earned <= 50) {
+          customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
+        } else if (earned <= 100) {
+          customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+        } else if (earned <= 150) {
+          customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+        } else if (earned <= 200) {
+          customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+        } else if (earned <= 250) {
+          customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+        } else if (earned <= 300) {
+          customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+        } else {
+          customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+        }
+
+        double finalcommissionplb = commissionEarned + plbEarned;
+        double customercommissiondetection = finalcommissionplb <= 0
+            ? 0.0
+            : finalcommissionplb - customerComm - tboTDS - tdsOnPlb;
+        double finalcommissionpercentage = customercommissiondetection * 0.02;
+        double finalflatoffer =
+            customercommissiondetection - finalcommissionpercentage;
+
+        int finaloffFare = tboTDS <= 0
+            ? (publishFare + customerComm).round()
+            : (publishFare - finalflatoffer).round();
+
+        if (lowestFare == null || finaloffFare < lowestFare!) {
+          lowestFare = finaloffFare;
+        }
+      }
+    }
+
+    if (lowestFare == null) return;
+
+    // Directly mutate — setState happens in _loadAllData right after
+    for (var d in dates) {
+      if (d['date'] == depDate) {
+        d['price'] = "₹$lowestFare";
+        break;
+      }
+    }
+  }
+
+  @override
   @override
   void initState() {
-    getCustomerCommission();
-    print("SELECTED TYPE${widget.selectedTripType}");
+    super.initState();
 
-    currentDepDate = widget.selectedDepDate; // Initialize current date
-    loadCalendarPrices();
+    currentDepDate = widget.selectedDepDate;
+
     final adult = widget.adultCount;
     final child = widget.childCount;
     final infant = widget.infantCount;
     passengerCount = adult + child! + infant!;
-    print("passengerCount$passengerCount");
-    print("DEP DATE${widget.selectedDepDate}");
+
     if (widget.searchData != null) {
       searchData = widget.searchData!;
     }
 
-    // Compute unique airlines(FILTER AIRLINES)
+    // Compute unique airlines
     Set<String> codes = <String>{};
     uniqueAirlines = [
       {"name": "All Airlines", "code": null, "logo": "", "price": ""},
@@ -266,26 +658,21 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         }
       }
     }
-    final count = widget.adultCount.toString();
-    print("adultCount$count");
-    final countt = widget.childCount.toString();
-    print("childCount$countt");
-    super.initState();
+
     _scrollController.addListener(() {
       if (_scrollController.position.userScrollDirection ==
               ScrollDirection.forward &&
           _isButtonVisible) {
-        setState(() {
-          _isButtonVisible = false;
-        });
+        setState(() => _isButtonVisible = false);
       } else if (_scrollController.position.userScrollDirection ==
               ScrollDirection.reverse &&
           !_isButtonVisible) {
-        setState(() {
-          _isButtonVisible = true;
-        });
+        setState(() => _isButtonVisible = true);
       }
     });
+
+    // ✅ Load everything together, show UI only when ALL done
+    _loadAllData();
   }
 
   int get currentSelectedIndex {
@@ -526,32 +913,28 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
   Future<void> loadCalendarPrices() async {
     try {
       final response = await ApiService().getCalendarFare(
-        widget.airportCode, // origin  → e.g., "DEL"
-        widget.toairportCode, // destination → e.g., "BOM"
+        widget.airportCode,
+        widget.toairportCode,
         selectedDepatureDate,
       );
 
       if (response['Response']['ResponseStatus'] != 1) {
-        return; // silent fail
+        return;
       }
 
       final List<dynamic> searchResults = response['Response']['SearchResults'];
 
-      // Group by date and find lowest fare per day
       Map<String, double> lowestFareByDate = {};
-
       for (var item in searchResults) {
-        String dateStr = item['DepartureDate']; // "2025-12-12T22:30:00"
-        String dateOnly = dateStr.substring(0, 10); // "2025-12-12"
+        String dateStr = item['DepartureDate'];
+        String dateOnly = dateStr.substring(0, 10);
         double fare = item['Fare'].toDouble();
-
         if (!lowestFareByDate.containsKey(dateOnly) ||
             fare < lowestFareByDate[dateOnly]!) {
           lowestFareByDate[dateOnly] = fare;
         }
       }
 
-      // Now update your existing DateScroller dates list
       final now = DateTime.now();
       final updatedDates = <Map<String, dynamic>>[];
 
@@ -559,15 +942,8 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         DateTime date = now.add(Duration(days: i));
         String dateKey = DateFormat('yyyy-MM-dd').format(date);
 
-        String dayName = [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri",
-          "Sat",
-          "Sun",
-        ][date.weekday - 1];
+        String dayName =
+            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][date.weekday - 1];
         String monthName = [
           "Jan",
           "Feb",
@@ -580,29 +956,33 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
           "Sep",
           "Oct",
           "Nov",
-          "Dec",
+          "Dec"
         ][date.month - 1];
 
         double? price = lowestFareByDate[dateKey];
-        String priceText = price != null ? "₹${price.round()}" : "";
+        String priceText = price != null ? "₹${price.round()}" : "--";
 
         updatedDates.add({
           "month": "$dayName, ${date.day} $monthName",
           "price": priceText,
-          "isSelected": i == 0,
-          "date": dateKey, // NEW: Store the actual date key for callback
+          "isSelected": dateKey == widget.selectedDepDate,
+          "date": dateKey,
         });
       }
 
-      // Update the DateScroller from outside (using a callback)
       if (mounted) {
         setState(() {
-          dates = updatedDates; // This will update your DateScroller
+          dates = updatedDates;
         });
+
+        // ✅ NOW update the selected date price AFTER dates list is populated
+        // Wait for customer commission data to be ready too
+        if (!isLoading) {
+          _updateSelectedDatePrice(currentDepDate);
+        }
       }
     } catch (e) {
       print("Calendar API Error: $e");
-      // Keep dummy data if API fails
     }
   }
 
@@ -613,7 +993,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return isLoading
+    return (!_allDataReady || isLoading)
         ? const Scaffold(
             body: Center(
               child: Column(
@@ -791,9 +1171,12 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: searchData
-                                            .response.results[0].length
+                                        text: groupFlightsByAirlineAndNumber(
+                                                getFilteredResults())
+                                            .length
                                             .toString(),
+                                        // ✅ Correct - shows filtered count
+
                                         style: TextStyle(
                                           fontFamily: 'Inter',
                                           fontSize: 14.sp,
@@ -860,6 +1243,13 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                     "",
                                             initialArrivalTime:
                                                 _selectedArrivalTimeRange ?? "",
+                                            availableStops:
+                                                availableStopsFromRaw,
+                                            availableDepartureTimeRanges:
+                                                availableDepartureTimeRanges,
+                                            // ADD
+                                            availableArrivalTimeRanges:
+                                                availableArrivalTimeRanges,
                                           ),
                                         );
                                       },
@@ -906,7 +1296,7 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(
                                         30.r,
-                                      ), // Rounded corners
+                                      ),
                                     ),
                                     padding: EdgeInsets.symmetric(
                                       vertical: 3.h,
@@ -1991,12 +2381,20 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                               10),
                                                                     ),
                                                                   ),
+                                                                  // Text(
+                                                                  //   variantFlight
+                                                                  //           .miniFareRules
+                                                                  //           .isEmpty
+                                                                  //       ? "Contact Cust.support"
+                                                                  //       : "Not Chargable",
+                                                                  //   style: TextStyle(
+                                                                  //       color: Colors
+                                                                  //           .black,
+                                                                  //       fontSize:
+                                                                  //           10),
+                                                                  // ),
                                                                   Text(
-                                                                    variantFlight
-                                                                            .miniFareRules
-                                                                            .isEmpty
-                                                                        ? "Contact Cust.support"
-                                                                        : "Not Chargable",
+                                                                    "Chargable",
                                                                     style: TextStyle(
                                                                         color: Colors
                                                                             .black,
@@ -2031,39 +2429,47 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                                                                     ),
                                                                   ),
                                                                   Text(
-                                                                    variantFlight.miniFareRules.isEmpty ||
-                                                                            variantFlight.miniFareRules[0].isEmpty
-                                                                        ? "Contact Cust.support"
-                                                                        : (() {
-                                                                            final rule =
-                                                                                variantFlight.miniFareRules[0].firstWhere(
-                                                                              (rule) => rule.type == 'Reissue',
-                                                                              orElse: () => MiniFareRule(
-                                                                                type: '',
-                                                                                details: '',
-                                                                                journeyPoints: '',
-                                                                                to: null,
-                                                                                unit: null,
-                                                                                onlineReissueAllowed: false,
-                                                                                onlineRefundAllowed: false,
-                                                                                from: null,
-                                                                              ),
-                                                                            );
-
-                                                                            if (rule.type.isEmpty) {
-                                                                              return "Contact Cust.support";
-                                                                            }
-
-                                                                            return rule.details != null && rule.details.isNotEmpty
-                                                                                ? "Chargable"
-                                                                                : "";
-                                                                          })(),
-                                                                    style: const TextStyle(
+                                                                    "Chargable",
+                                                                    style: TextStyle(
                                                                         color: Colors
                                                                             .black,
                                                                         fontSize:
                                                                             10),
                                                                   ),
+                                                                  // Text(
+                                                                  //   variantFlight.miniFareRules.isEmpty ||
+                                                                  //           variantFlight.miniFareRules[0].isEmpty
+                                                                  //       ? "Contact Cust.support"
+                                                                  //       : (() {
+                                                                  //           final rule =
+                                                                  //               variantFlight.miniFareRules[0].firstWhere(
+                                                                  //             (rule) => rule.type == 'Reissue',
+                                                                  //             orElse: () => MiniFareRule(
+                                                                  //               type: '',
+                                                                  //               details: '',
+                                                                  //               journeyPoints: '',
+                                                                  //               to: null,
+                                                                  //               unit: null,
+                                                                  //               onlineReissueAllowed: false,
+                                                                  //               onlineRefundAllowed: false,
+                                                                  //               from: null,
+                                                                  //             ),
+                                                                  //           );
+                                                                  //
+                                                                  //           if (rule.type.isEmpty) {
+                                                                  //             return "Contact Cust.support";
+                                                                  //           }
+                                                                  //
+                                                                  //           return rule.details != null && rule.details.isNotEmpty
+                                                                  //               ? "Chargable"
+                                                                  //               : "";
+                                                                  //         })(),
+                                                                  //   style: const TextStyle(
+                                                                  //       color: Colors
+                                                                  //           .black,
+                                                                  //       fontSize:
+                                                                  //           10),
+                                                                  // ),
                                                                 ],
                                                               ),
                                                               const SizedBox(
@@ -2904,6 +3310,9 @@ class FilterBottomSheet extends StatefulWidget {
   final String initialArrivalTime;
   final String? filterorigin;
   final String? filterdestination;
+  final Set<int> availableStops;
+  final Set<String> availableDepartureTimeRanges; // ADD
+  final Set<String> availableArrivalTimeRanges;
 
   const FilterBottomSheet({
     Key? key,
@@ -2912,6 +3321,9 @@ class FilterBottomSheet extends StatefulWidget {
     this.filterorigin,
     this.filterdestination,
     this.initialStops, // optional
+    required this.availableStops, // optional
+    required this.availableDepartureTimeRanges, // optional
+    required this.availableArrivalTimeRanges, // optional
     this.initialHideNonRefundable = false,
     this.initialDepartureTime = "",
     this.initialArrivalTime = "",
@@ -3050,9 +3462,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     SizedBox(height: 10.h),
                     Row(
                       children: [
-                        _buildChip("Non Stop", 0),
-                        _buildChip("1 Stop", 1),
-                        _buildChip("2+ Stops", 2),
+                        if (widget.availableStops.contains(0))
+                          _buildChip("Non Stop", 0),
+                        if (widget.availableStops.contains(1))
+                          _buildChip("1 Stop", 1),
+                        if (widget.availableStops.contains(2))
+                          _buildChip("2+ Stops", 2),
                       ],
                     ),
                     SizedBox(height: 15.h),
@@ -3076,17 +3491,22 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ),
                     SizedBox(height: 10.h),
-                    Row(
+                    Wrap(
+                      spacing: 10.w,
+                      runSpacing: 10.h,
                       children: [
-                        _timeButton("Before 6 AM", "Before 6 AM"),
-                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
-                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("Before 6 AM"))
+                          _timeButton("Before 6 AM", "Before 6 AM"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("6 AM-12 Noon"))
+                          _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("12 Noon-6 PM"))
+                          _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("6 PM-12 Midnight"))
+                          _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
                       ],
                     ),
                     SizedBox(height: 20.h),
@@ -3100,33 +3520,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ),
                     SizedBox(height: 10.h),
-                    Row(
+                    Wrap(
+                      spacing: 10.w,
+                      runSpacing: 10.h,
                       children: [
-                        _timeButton(
-                          "Before 6 AM",
-                          "Before 6 AM",
-                          isArrival: true,
-                        ),
-                        _timeButton(
-                          "6 AM-12 Noon",
-                          "6 AM-12 Noon",
-                          isArrival: true,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton(
-                          "12 Noon-6 PM",
-                          "12 Noon-6 PM",
-                          isArrival: true,
-                        ),
-                        _timeButton(
-                          "6 PM-12 Midnight",
-                          "6 PM-12 Midnight",
-                          isArrival: true,
-                        ),
+                        if (widget.availableArrivalTimeRanges
+                            .contains("Before 6 AM"))
+                          _timeButton("Before 6 AM", "Before 6 AM",
+                              isArrival: true),
+                        if (widget.availableArrivalTimeRanges
+                            .contains("6 AM-12 Noon"))
+                          _timeButton("6 AM-12 Noon", "6 AM-12 Noon",
+                              isArrival: true),
+                        if (widget.availableArrivalTimeRanges
+                            .contains("12 Noon-6 PM"))
+                          _timeButton("12 Noon-6 PM", "12 Noon-6 PM",
+                              isArrival: true),
+                        if (widget.availableArrivalTimeRanges
+                            .contains("6 PM-12 Midnight"))
+                          _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight",
+                              isArrival: true),
                       ],
                     ),
                     SizedBox(height: 15.h),
@@ -3406,11 +3819,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 class DateScroller extends StatefulWidget {
   final List<Map<String, dynamic>> dates;
   final Function(String)? onDateSelected; // NEW: Callback for date selection
+  final int initialSelectedIndex; // ADD THIS
 
   const DateScroller({
     Key? key,
     required this.dates,
     this.onDateSelected, // NEW
+    this.initialSelectedIndex = 0, // ADD THIS
   }) : super(key: key);
 
   @override
@@ -3419,6 +3834,45 @@ class DateScroller extends StatefulWidget {
 
 class _DateScrollerState extends State<DateScroller> {
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _scrollToSelected();
+    });
+  }
+
+  void _scrollToSelected() {
+    final selectedIndex =
+        widget.dates.indexWhere((d) => d['isSelected'] == true);
+    if (selectedIndex == -1) return;
+    if (!_scrollController.hasClients) return;
+
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double itemWidth = 100.w;
+    final double offset =
+        (selectedIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+
+    _scrollController.animateTo(
+      offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void didUpdateWidget(DateScroller oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Runs whenever parent rebuilds DateScroller with new dates
+    if (oldWidget.dates != widget.dates) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _scrollToSelected();
+      });
+    }
+  }
 
   String _getMonth(DateTime date) {
     const months = [
@@ -3464,14 +3918,18 @@ class _DateScrollerState extends State<DateScroller> {
                   date['isSelected'] = true;
                 });
 
-                // ✅ AUTO SCROLL
+                // ✅ CENTER the selected item in the viewport
+                final double screenWidth = MediaQuery.of(context).size.width;
+                final double itemWidth = 100.w;
+                final double offset =
+                    (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+
                 _scrollController.animateTo(
-                  index * 100.w, // item width
+                  offset.clamp(0.0, _scrollController.position.maxScrollExtent),
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
                 );
 
-                // Trigger callback to parent
                 if (widget.onDateSelected != null && date['date'] != null) {
                   widget.onDateSelected!(date['date'] as String);
                 }

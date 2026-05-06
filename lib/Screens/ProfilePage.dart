@@ -182,7 +182,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 GestureDetector(
                                     onTap: () {
                                       Get.back();
-                                      Get.to(SearchFlightPage());
+                                      //    Get.back();
+                                      //  Get.to(SearchFlightPage());
                                     },
                                     child: Icon(Icons.arrow_back_rounded)),
                                 const Spacer(),
@@ -622,11 +623,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           "assets/icon/booking_history.svg",
                           "Booking history",
                           onTap: () async {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => BookingHistoryPage()),
-                            );
+                            Get.to(BookingHistoryPage());
                           },
                         ),
                         Column(

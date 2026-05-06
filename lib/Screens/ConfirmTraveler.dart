@@ -162,6 +162,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
   double totalBaseFare = 0;
   double totalTax = 0;
   double othercharges = 0;
+  double baseFareOnly = 0; // ← ADD THIS
   double overallFare = 0;
   double inbaseFare = 0;
   double intax = 0;
@@ -292,23 +293,33 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     }
     setState(() {
       isLoading = false;
-      coupouncode = widget.coupouncode!;
+      coupouncode = c.finalCouponValue;
       othercharges = widget.othercharges ?? 0;
-
-      totalBaseFare = baseFare + inbaseFare;
+      print("CONFIRM TRAVELLER${c.finalBaseFare}");
+      totalBaseFare = c.finalBaseFare + inbaseFare;
       print("totalFare$totalFare");
       // totalTax = tax + intax + othercharges;
-      totalTax = tax + intax;
+      totalTax = c.finalTax + intax;
       print("totalTax$totalTax");
+      print("totalTax${c.finalTax}");
+      print("totalTax${intax}");
       if (widget.coupouncode! > 0) {
-        overallFare = totalBaseFare + totalTax - coupouncode;
+        baseFareOnly = totalBaseFare + totalTax - coupouncode;
+        overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
         print("overallFare1$overallFare");
       } else {
-        overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
+        print("NO COMMISSION");
+        baseFareOnly =
+            totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
+        overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
+
         print("overallFare$overallFare");
-        print("overallFare$totalBaseFare");
-        print("overallFare$totalTax");
-        print("overallFare$othercharges");
+        print("totalBaseFare$totalBaseFare");
+        print("totalTax$totalTax");
+        print("mealTotal$mealTotal");
+        print("seatTotal$seatTotal");
+        print("totalBaggagePrice$totalBaggagePrice");
+        print("overallFare${widget.trvlusCommission}");
       }
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
@@ -1337,7 +1348,9 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                           baseFare: widget.basefare,
                                           coupouncode: widget.coupouncode,
                                           othercharges: widget.othercharges,
-                                          finaloffFare: widget.trvlusNetFare,
+                                          finaloffFare: baseFareOnly.round(),
+                                          trvlusCommission:
+                                              widget.trvlusCommission,
                                           initialTabIndex: 1)));
                               if (value != null) {
                                 _handleAdditionsResult(value);
@@ -1408,7 +1421,9 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                             baseFare: widget.basefare,
                                             coupouncode: widget.coupouncode,
                                             othercharges: widget.othercharges,
-                                            finaloffFare: widget.trvlusNetFare,
+                                            finaloffFare: baseFareOnly.round(),
+                                            trvlusCommission:
+                                                widget.trvlusCommission,
                                             initialTabIndex: 0,
                                           )));
                               if (value != null) {
@@ -1480,7 +1495,9 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                             baseFare: widget.basefare,
                                             coupouncode: widget.coupouncode,
                                             othercharges: widget.othercharges,
-                                            finaloffFare: widget.trvlusNetFare,
+                                            finaloffFare: baseFareOnly.round(),
+                                            trvlusCommission:
+                                                widget.trvlusCommission,
                                             initialTabIndex: 2,
                                           )));
                               if (value != null) {
@@ -1567,10 +1584,18 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                               isScrollControlled: true,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(1.r),
+                                  top: Radius.circular(16
+                                      .r), // ✅ Fixed from 1.r to 16.r for proper rounded corners
                                 ),
                               ),
-                              builder: (context) => GSTBottomSheet(),
+                              builder: (context) => Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: MediaQuery.of(context)
+                                      .viewInsets
+                                      .bottom, // ✅ Keyboard pushes sheet up
+                                ),
+                                child: GSTBottomSheet(),
+                              ),
                             );
                           },
                           child: Text(
@@ -1645,7 +1670,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "₹${c.overallFare.toStringAsFixed(0)}",
+                                "₹${overallFare.round()}",
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
@@ -1847,9 +1872,14 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       if (coupouncode > 0) {
         baseFareTotal -= coupouncode.toDouble();
       } else {
-        baseFareTotal += othercharges;
+        baseFareTotal += (widget.trvlusCommission ?? 0);
       }
-      overallFare = baseFareTotal + mealTotal + seatTotal + totalBaggagePrice;
+      overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
+      print("overallFare$overallFare");
+      print("baseFareTotal$baseFareTotal");
+      print("mealTotal$mealTotal");
+      print("seatTotal$seatTotal");
+      print("totalBaggagePrice$totalBaggagePrice");
 
       print(
           "Recalculated overallFare: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: $totalBaggagePrice)");
@@ -1865,6 +1895,9 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (context) {
+        print("DEBUG trvlusCommission: ${widget.trvlusCommission}");
+        print("c.finalCouponValue${c.finalCouponValue}");
+
         return FareBreakupSheet(
           basefare: c.finalBaseFare,
           tax: c.finalTax,
@@ -1970,7 +2003,6 @@ class GSTBottomSheet extends StatefulWidget {
 }
 
 class _GSTBottomSheetState extends State<GSTBottomSheet> {
-  // Controllers for the TextFields
   final TextEditingController gstNumberController = TextEditingController();
   final TextEditingController gstHolderNameController = TextEditingController();
   final TextEditingController gstPincodeController = TextEditingController();
@@ -1978,7 +2010,6 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
 
   @override
   void dispose() {
-    // Dispose of controllers to free resources
     gstNumberController.dispose();
     gstHolderNameController.dispose();
     gstPincodeController.dispose();
@@ -1988,76 +2019,73 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16.w,
-        right: 16.w,
-        top: 16.h,
-        //bottom: MediaQuery.of(context).viewInsets.bottom,
-        bottom: 16.h,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Title Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Add GST Details",
-                style: TextStyle(
+    return SingleChildScrollView(
+      physics: BouncingScrollPhysics(),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16.w,
+          right: 16.w,
+          top: 16.h,
+          bottom: 16.h,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Add GST Details",
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 20.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Icon(Icons.close),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-
-          // TextFields with White Box
-          _buildTextField("GST number", gstNumberController),
-          SizedBox(height: 16.h),
-          _buildTextField("GST holder name", gstHolderNameController),
-          SizedBox(height: 16.h),
-          _buildTextField("GST Pincode", gstPincodeController),
-          SizedBox(height: 16.h),
-          _buildTextField("GST Address", gstAddressController),
-          SizedBox(height: 16.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF37023),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.r),
-              ),
-              minimumSize: Size(double.infinity, 38.h),
+                    color: Colors.black,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(Icons.close),
+                ),
+              ],
             ),
-            onPressed: () async {
-              // Handle Apply filter logic
-              await ApiService().gstRequest(
+            SizedBox(height: 16.h),
+
+            _buildTextField("GST number", gstNumberController),
+            SizedBox(height: 12.h),
+            _buildTextField("GST holder name", gstHolderNameController),
+            SizedBox(height: 12.h),
+            _buildTextField("GST Pincode", gstPincodeController),
+            SizedBox(height: 12.h),
+            _buildTextField("GST Address", gstAddressController),
+            SizedBox(height: 16.h),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF37023),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
+                minimumSize: Size(double.infinity, 38.h),
+              ),
+              onPressed: () async {
+                FocusScope.of(context).unfocus();
+                await ApiService().gstRequest(
                   gstnumber: gstNumberController.text,
                   gstholdername: gstHolderNameController.text,
                   gstpincode: gstPincodeController.text,
-                  gstaddress: gstAddressController.text);
-
-              print("GST Number: ${gstNumberController.text}");
-              print("GST Holder Name: ${gstHolderNameController.text}");
-              print("GST Pincode: ${gstPincodeController.text}");
-              print("GST Address: ${gstAddressController.text}");
-            },
-            child: Text(
-              "Apply filter",
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Colors.white,
+                  gstaddress: gstAddressController.text,
+                );
+                Navigator.pop(context);
+              },
+              child: Text(
+                "Apply filter",
+                style: TextStyle(fontSize: 16.sp, color: Colors.white),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2065,7 +2093,7 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
   Widget _buildTextField(String label, TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // White background
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: Colors.grey.shade300),
       ),
@@ -2073,14 +2101,25 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey.shade600,
+            ),
+          ),
           TextField(
             controller: controller,
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Colors.black, fontSize: 14.sp),
             decoration: InputDecoration(
               hintText: "Text here",
-              labelStyle: TextStyle(color: Colors.black),
-              border: InputBorder.none, // Removes the default border
+              hintStyle: TextStyle(
+                color: Colors.grey.shade400,
+                fontSize: 13.sp,
+              ),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(vertical: 6.h),
             ),
           ),
         ],

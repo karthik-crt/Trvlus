@@ -1,9 +1,11 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:trvlus/Screens/price_alert_controller.dart';
 
 import '../models/farequote.dart' as farequote;
 import '../models/farerule.dart';
@@ -35,29 +37,32 @@ class Additions extends StatefulWidget {
   final double? tax;
   final num? coupouncode;
   final double? othercharges;
+  final double? trvlusCommission;
 
-  const Additions(
-      {super.key,
-      this.traceid,
-      this.resultindex,
-      this.adultCount,
-      this.childCount,
-      this.infantCount,
-      required this.outBoundData,
-      required this.inBoundData,
-      this.outresultindex,
-      this.finaloffFare,
-      required this.seatPayload,
-      this.inresultindex,
-      this.baseFare,
-      this.tax,
-      this.coupouncode,
-      this.othercharges,
-      this.outboundFlight,
-      this.inboundFlight,
-      this.initialMealData,
-      this.initialBaggageCount,
-      this.initialTabIndex});
+  const Additions({
+    super.key,
+    this.traceid,
+    this.resultindex,
+    this.adultCount,
+    this.childCount,
+    this.infantCount,
+    required this.outBoundData,
+    required this.inBoundData,
+    this.outresultindex,
+    this.finaloffFare,
+    required this.seatPayload,
+    this.inresultindex,
+    this.baseFare,
+    this.tax,
+    this.coupouncode,
+    this.othercharges,
+    this.outboundFlight,
+    this.inboundFlight,
+    this.initialMealData,
+    this.initialBaggageCount,
+    this.initialTabIndex,
+    this.trvlusCommission,
+  });
 
   @override
   State<Additions> createState() => _AdditionsState();
@@ -78,6 +83,7 @@ class _AdditionsState extends State<Additions> {
   double totalTax = 0;
   double othercharges = 0;
   double overallFare = 0;
+  double finalFare = 0;
   double inbaseFare = 0;
   double intax = 0;
   int totaladultCount = 0;
@@ -104,6 +110,8 @@ class _AdditionsState extends State<Additions> {
   bool isOutbound = true;
   String fareQuoteResultIndex = '';
   String craftType = ''; // ← add this
+
+  final c = Get.find<PriceAlertController>();
 
   // Add this at the top of your _AdditionsState class
   Map<String, Map<int, int>> selectedBaggageCount =
@@ -164,7 +172,31 @@ class _AdditionsState extends State<Additions> {
   }
 
   void recalculateTotalPrice() {
-    int base = widget.finaloffFare ?? 0;
+    print("FARE CALCULATION");
+    int finalFare = 0;
+    if (widget.coupouncode! > 0) {
+      finalFare =
+          ((c.finalBaseFare) + (c.finalTax) - (c.finalCouponValue)).round();
+      print("COMMISSION$finalFare");
+    } else {
+      finalFare =
+          ((c.finalBaseFare) + (c.finalTax) + (widget.trvlusCommission ?? 0))
+              .round();
+      print("NOCOMMISSION$finalFare");
+      print("NOCOMMISSION${c.finalBaseFare}");
+      print("NOCOMMISSION${c.finalTax}");
+      print("NOCOMMISSION${widget.trvlusCommission ?? 0}");
+    }
+
+    print("coupouncode${c.finalCouponValue}");
+    print("baseFare${widget.baseFare ?? 0}");
+    print("finalBaseFare${c.finalBaseFare}");
+    print("tax${widget.tax ?? 0}");
+    print("finalTax${c.finalTax}");
+    // int base = widget.finaloffFare ?? 0;
+    int base = finalFare.toInt();
+    print("recalculateTotalPrice");
+    print("base$base");
 
     // ✅ Baggage - now searches both outbound and inbound
     double baggageSum = 0.0;
@@ -187,6 +219,7 @@ class _AdditionsState extends State<Additions> {
     });
 
     base += baggageSum.round();
+    print("baggageSum$base");
 
     // seats and meals stay same...
     double seatSum = 0.0;
@@ -194,6 +227,7 @@ class _AdditionsState extends State<Additions> {
       seatSum += (seat['Price'] as num?)?.toDouble() ?? 0.0;
     }
     base += seatSum.round();
+    print("seatSum$base");
 
     double mealSum = 0.0;
     selectedMealData.forEach((route, passengerMap) {
@@ -205,10 +239,13 @@ class _AdditionsState extends State<Additions> {
         }
       });
     });
-    base += mealSum.round();
+    base += mealSum.toInt();
+    print("mealSum$base");
+    print("mealSum$mealSum");
 
     setState(() {
       totalPrice = base;
+      print("totalPrice$totalPrice");
     });
   }
 
@@ -344,16 +381,19 @@ class _AdditionsState extends State<Additions> {
         print("Error initializing baggage count: $e");
       }
     }
-    getssrdata();
+    getssrdata().then((_) {
+      recalculateTotalPrice(); // ← ADD THIS
+    });
     print("seatdf${widget.seatPayload}");
 
     totalPrice = widget.finaloffFare ?? 0;
   }
 
-  getssrdata() async {
+  Future<void> getssrdata() async {
     setState(() {
       isLoading = true;
       print("beforeOutput");
+      print("totalPrice${widget.finaloffFare}");
     });
 
     print(widget.traceid);
@@ -453,15 +493,15 @@ class _AdditionsState extends State<Additions> {
       coupouncode = widget.coupouncode!;
       othercharges = widget.othercharges ?? 0;
 
-      totalBaseFare = baseFare + inbaseFare;
+      totalBaseFare = c.finalBaseFare + inbaseFare;
       print("totalFare$totalBaseFare");
-      totalTax = tax + intax + othercharges;
+      totalTax = c.finalTax + intax + othercharges;
       print("totalTax$totalTax");
       if (widget.coupouncode! > 0) {
         overallFare = totalBaseFare + totalTax - coupouncode;
         print("overallFare1$overallFare");
       } else {
-        overallFare = totalBaseFare + totalTax + othercharges;
+        overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
         print("overallFare$overallFare");
         print("overallFare$totalBaseFare");
         print("overallFare$totalTax");
@@ -564,7 +604,7 @@ class _AdditionsState extends State<Additions> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "₹${totalPrice.toStringAsFixed(0)}",
+                                "₹${totalPrice.round()}",
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.bold,
@@ -1544,11 +1584,16 @@ class _AdditionsState extends State<Additions> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (context) {
+        print("DEBUG trvlusCommission: ${widget.trvlusCommission}");
+        print("DEBUG coupouncode: $coupouncode");
+        print("DEBUG adultFare: $adultFare");
+        print("DEBUG overallFare: $overallFare");
+        print("c.finalCouponValue${c.finalCouponValue}");
         final double realBaggageTotal = calculateBaggageTotal(); // ← here
         final double realMealsTotal = calculateMealsTotal(); // ← add this
         return FareBreakupSheet(
-          basefare: totalBaseFare,
-          tax: totalTax,
+          basefare: c.finalBaseFare,
+          tax: c.finalTax,
           adultCount: totaladultCount,
           childCount: totalchildCount,
           infantCount: totalinfantCount,
@@ -1560,12 +1605,13 @@ class _AdditionsState extends State<Additions> {
           childTax: 0,
           infantTax: 0,
           convenienceFee: 0,
-          coupouncode: coupouncode,
+          coupouncode: c.finalCouponValue,
           ssrData: true,
           meal: selectedMealData,
           seat: selectedSeatPayload,
           baggage: getFormattedBaggageData(),
           othercharges: othercharges,
+          trvlusCommission: widget.trvlusCommission,
         );
       },
     );

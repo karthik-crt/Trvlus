@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:intl/intl.dart';
+import 'package:trvlus/Screens/price_alert_controller.dart';
 
 import '../models/commissionpercentage.dart';
 import '../models/customercommision.dart';
@@ -567,8 +570,11 @@ class _RoundtripState extends State<Roundtrip> {
     print("finalcoupouncode$finalcoupouncode");
     double othercharges = flight.fare.otherCharges;
     print("othercharges$othercharges");
-    int finaloffFare = (publishFare - finalflatoffer).round();
+    int finaloffFare = tboTDS <= 0
+        ? (publishFare + customerComm).round()
+        : (publishFare - finalflatoffer).round();
     print("finaloffFare$finaloffFare");
+    print("finaloffFareInterbnational$finaloffFare");
 
     return {
       'publishFare': publishFare,
@@ -1194,6 +1200,10 @@ class _RoundtripState extends State<Roundtrip> {
                         // Per-variant fare calculation
                         final varFareData = _calculateFare(variantFlight);
                         int varFinaloffFare = varFareData['finaloffFare'];
+                        print("varFinaloffFare$varFinaloffFare");
+                        final controller = Get.put(PriceAlertController());
+                        controller.oldFare.value = varFinaloffFare.toDouble();
+                        print("INTERNATIONAL GETX${controller.oldFare.value}");
                         double varFinalcoupouncode =
                             varFareData['finalflatoffer'];
                         double varPublishFare = varFareData['publishFare'];
@@ -2035,6 +2045,44 @@ class _DateScrollerState extends State<DateScroller> {
   final ScrollController _scrollController = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _scrollToSelected();
+    });
+  }
+
+  void _scrollToSelected() {
+    final selectedIndex =
+        widget.dates.indexWhere((d) => d['isSelected'] == true);
+    if (selectedIndex == -1) return;
+    if (!_scrollController.hasClients) return;
+
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double itemWidth = 100.w;
+    final double offset =
+        (selectedIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+
+    _scrollController.animateTo(
+      offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void didUpdateWidget(DateScroller oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dates != widget.dates) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _scrollToSelected();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       controller: _scrollController,
@@ -2051,9 +2099,18 @@ class _DateScrollerState extends State<DateScroller> {
                   for (var d in widget.dates) d['isSelected'] = false;
                   date['isSelected'] = true;
                 });
-                _scrollController.animateTo(index * 100.w,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut);
+
+                final double screenWidth = MediaQuery.of(context).size.width;
+                final double itemWidth = 100.w;
+                final double offset =
+                    (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+
+                _scrollController.animateTo(
+                  offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+
                 if (widget.onDateSelected != null && date['date'] != null) {
                   widget.onDateSelected!(date['date'] as String);
                 }

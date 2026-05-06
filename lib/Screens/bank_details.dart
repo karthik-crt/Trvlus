@@ -39,166 +39,180 @@ class _BankDetailsState extends State<BankDetails> {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: bank.data.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  padding: EdgeInsets.all(15),
-                  margin: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      color: Color(0xFFF37023)),
+          : bank.data.isEmpty
+              ? Center(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.person,
-                            color: Colors.white,
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Bank Name:",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                bank.data[index].bankName,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "IFSC Code:",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                bank.data[index].ifscCode,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.copy,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: bank.data[index].accNo),
-                              );
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("IFSC Code copied"),
-                                ),
-                              );
-                            },
-                          )
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Account Number:",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                bank.data[index].accNo,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.copy,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: bank.data[index].accNo),
-                              );
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Account number copied"),
-                                ),
-                              );
-                            },
-                          )
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Account Name:",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                bank.data[index].accHolderName,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Branch Name:",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                bank.data[index].branchName,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 10,
+                      Icon(Icons.account_balance, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        "No Bank Accounts Found",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  itemCount: bank.data.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      padding: EdgeInsets.all(15),
+                      margin: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Color(0xFFF37023)),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
+                              SizedBox(
+                                width: 5,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Bank Name:",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  Text(
+                                    bank.data[index].bankName,
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "IFSC Code:",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  Text(
+                                    bank.data[index].ifscCode,
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.copy,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: bank.data[index].accNo),
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("IFSC Code copied"),
+                                    ),
+                                  );
+                                },
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Account Number:",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  Text(
+                                    bank.data[index].accNo,
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.copy,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: bank.data[index].accNo),
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Account number copied"),
+                                    ),
+                                  );
+                                },
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Account Name:",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  Text(
+                                    bank.data[index].accHolderName,
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Branch Name:",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  Text(
+                                    bank.data[index].branchName,
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }

@@ -53,10 +53,10 @@ class ApiBaseHelper {
   List<Map<String, dynamic>> passengersList = [];
 
   // LOCAL IP
-  static const _baseUrl = 'http://192.168.1.13:8000/api/';
+  // static const _baseUrl = 'http://192.168.1.13:8000/api/';
 
   // LIVE
-  // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
+  static const _baseUrl = 'https://dev-api.trvlus.com/api/';
 
   //
   // (NEED TO HIDE ENDUSERIP FOR DATESCROLLER) [NEED TO CHANGE TICKET AND INVOICE URL]
@@ -128,7 +128,9 @@ class ApiBaseHelper {
     final prefs = await SharedPreferences.getInstance();
     final access = prefs.getString("access_token");
 
-    Map<String, String> headers = {'Content-Type': 'application/json'};
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
 
     // Add Authorization only when access token exists
     if (access != null && access.isNotEmpty) {
@@ -232,9 +234,11 @@ class ApiBaseHelper {
                 url == "cancel-req" ||
                 url == "getBookingDetails" ||
                 url == "getcommissionhistory" ||
+                url.contains("GSTRequest") ||
                 url == "deposit")
             ? Options(headers: headers)
             : null,
+        // options: Options(headers: headers),
       );
       print("reponse Data Data $response");
       responseJson = _returnResponse(response);
@@ -413,14 +417,18 @@ class ApiService {
   // OTP
   Future<Map<String, dynamic>> otpRequest(String mobileNumber) async {
     final authenticate = {"mobile_number": mobileNumber};
-
     print("Sending OTP request for: $mobileNumber");
 
     try {
-      final response = await _helper.post("otp-request", authenticate);
-      // final decode = _helper.decodeBase64Response(response);
-      final decode = response;
+      final headers = await _helper.getMainHeaders(); // ✅ X-API-KEY
 
+      final response = await _helper.dio.post(
+        "${ApiBaseHelper._baseUrl}otp-request",
+        data: authenticate,
+        options: Options(headers: headers),
+      );
+
+      final decode = response.data; // ✅ .data because dio returns Response
       print("OTP Request Success: $decode");
       return decode;
     } catch (e) {
@@ -435,10 +443,15 @@ class ApiService {
     print("VERIFY OTP request for: $authenticate");
 
     try {
-      final response = await _helper.post("otp-verify", authenticate);
-      print("responseresponse$response");
-      // final decode = _helper.decodeBase64Response(response);
-      final decode = response;
+      final headers = await _helper.getMainHeaders(); // ✅ X-API-KEY
+
+      final response = await _helper.dio.post(
+        "${ApiBaseHelper._baseUrl}otp-verify",
+        data: authenticate,
+        options: Options(headers: headers),
+      );
+
+      final decode = response.data; //
       print("Login Success: $decode");
 
       // ✅ Extract user ID
@@ -454,7 +467,7 @@ class ApiService {
 
       print("User ID saved in SharedPreferences ✅");
 
-      return response;
+      return response.data;
     } catch (e) {
       print("OTP Request Failed: $e");
       rethrow;
@@ -602,7 +615,7 @@ class ApiService {
     }
 
     final body = {
-      "EndUserIp": "192.168.1.10",
+      // "EndUserIp": "192.168.1.10",
       "TokenId": tokenId,
       "JourneyType": "1",
       "PreferredAirlines": null,
@@ -621,9 +634,10 @@ class ApiService {
 
     try {
       // LIVE
-      // final response = await _helper.post("mobile/calendar-fare/", body);
+      final response = await _helper.post("mobile/calendar-fare/", body);
       // LOCAL
-      final response = await _helper.postCalender("GetCalendarFare", body);
+      // final response = await _helper.postCalender("GetCalendarFare", body);
+      print("GetCalendarFare$response");
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       print("FULL CALENDAR API RESPONSE:");
       // print(encoder.convert(response));
@@ -635,7 +649,6 @@ class ApiService {
   }
 
   // HOLD TICKET BOOKING
-
   Future<Map<String, dynamic>> holdTicket(
     String resultIndex,
     String traceid,
@@ -1400,7 +1413,7 @@ class ApiService {
       "user": userID,
       "role": customerId,
       "document_type": "Passport",
-      "commission_amt": commision,
+      "commission_amt": trvlusCommission,
       "service_tax": 0,
       "document_number": "",
       "journey_list": journeyListarray,
@@ -1442,6 +1455,66 @@ class ApiService {
     debugPrint("holdticketResponseHold: $holdparams", wrapWidth: 2500);
 
     debugPrint("holdticketResponse: ${jsonEncode(decode)}", wrapWidth: 4000);
+
+    return decode;
+  }
+
+  // HOLD-->TICKET BOOKING
+  Future<Map<String, dynamic>> ticketInvoice(
+    String pnr,
+    String bookingId,
+    traceid,
+    trvlusNetFare,
+    conveniencefee,
+    meal,
+    baggage,
+    seat,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final tokenId = prefs.getString("tokenId");
+    final userID = prefs.getString('user_id');
+    print("ticketInvoiceticketInvoice$trvlusNetFare");
+    print("ticketInvoiceticketInvoice$conveniencefee");
+    double? walletReduction =
+        trvlusNetFare + conveniencefee + meal + baggage + seat;
+    print("walletReduction$walletReduction");
+    final int? customerId = prefs.getInt('customer_id');
+    print("customer_id$customerId");
+
+    if (tokenId == null) {
+      throw Exception("TokenId not found in SharedPreferences");
+    }
+
+    final body = {
+      "TokenId": tokenId,
+      "TraceId": traceid,
+      "PNR": pnr,
+      "BookingId": bookingId,
+      "wallet_retake_params": {
+        "type": "booking",
+        "wallet": walletReduction,
+        "role_id": customerId,
+        "from_user_id": userID,
+      },
+      "wallet_update_params": {
+        "type": "booking",
+        "booking_amount": walletReduction
+      },
+      "user": userID,
+    };
+
+    print("ticketInvoice body: $body");
+
+    final response = await _helper.post("ticketInvoice", body);
+
+    // 🔥 Fix here
+    final decode =
+        response is Map<String, dynamic> ? response : {"success": response};
+
+    debugPrint(
+      "ticketInvoice response: ${jsonEncode(decode)}",
+      wrapWidth: 3000,
+    );
 
     return decode;
   }
@@ -1504,6 +1577,7 @@ class ApiService {
     // final finaltax = tax + othercharges;
     final finaltax = tax;
     print("finaltax$finaltax");
+    print("finaltaxdffdff$trvlusCommission");
     print("finaltax$tax");
     print("finaltax$othercharges");
     final coupounCode = coupouncode;
@@ -1679,13 +1753,13 @@ class ApiService {
 
       if (infantpassenger != null && infantpassenger.isNotEmpty) {
         passengersArrayData.add({
-          "Title": "Master",
+          "Title": infantpassenger['gender'],
           "FirstName": infantpassenger['Firstname'],
           "LastName": infantpassenger['lastname'],
           "PaxType": 3,
           "DateOfBirth":
               formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
-          "Gender": '1',
+          "Gender": gender,
           "PassportNo": infantpassenger['Passport No'] ?? "",
           "PassportExpiry": formattedExpiry.trim().isNotEmpty
               ? "${formattedExpiry}T00:00:00"
@@ -2371,57 +2445,6 @@ class ApiService {
     return decode;
   }
 
-  // HOLD-->TICKET BOOKING
-  Future<Map<String, dynamic>> ticketInvoice(String pnr, String bookingId,
-      traceid, trvlusNetFare, conveniencefee) async {
-    final prefs = await SharedPreferences.getInstance();
-    final tokenId = prefs.getString("tokenId");
-    final userID = prefs.getString('user_id');
-    print("ticketInvoiceticketInvoice$trvlusNetFare");
-    print("ticketInvoiceticketInvoice$conveniencefee");
-    double? walletReduction = trvlusNetFare + conveniencefee;
-    print("walletReduction$walletReduction");
-    final int? customerId = prefs.getInt('customer_id');
-    print("customer_id$customerId");
-
-    if (tokenId == null) {
-      throw Exception("TokenId not found in SharedPreferences");
-    }
-
-    final body = {
-      "TokenId": tokenId,
-      "TraceId": traceid,
-      "PNR": pnr,
-      "BookingId": bookingId,
-      "wallet_retake_params": {
-        "type": "booking",
-        "wallet": walletReduction,
-        "role_id": customerId,
-        "from_user_id": userID,
-      },
-      "wallet_update_params": {
-        "type": "booking",
-        "booking_amount": walletReduction
-      },
-      "user": userID,
-    };
-
-    print("ticketInvoice body: $body");
-
-    final response = await _helper.post("ticketInvoice", body);
-
-    // 🔥 Fix here
-    final decode =
-        response is Map<String, dynamic> ? response : {"success": response};
-
-    debugPrint(
-      "ticketInvoice response: ${jsonEncode(decode)}",
-      wrapWidth: 3000,
-    );
-
-    return decode;
-  }
-
   // bookingHistory
   Future<booking_history.BookingHistory> bookingHistory() async {
     final prefs = await SharedPreferences.getInstance();
@@ -2530,10 +2553,9 @@ class ApiService {
     print("params$params");
     final response = await _helper.post("mobileFlightSearch", params);
     // final decode = _helper.decodeBase64Response(response);
-    final decode = response;
-    print("FLIGHT SEARCH${jsonEncode(decode)}");
+    print("FLIGHT SEARCH${jsonEncode(response)}");
     // printLargeJson(decode);
-    return search.searchDataFromJson(decode);
+    return search.searchDataFromJson(response);
   }
 
   // COMMISSION PERCENTAGE
@@ -2649,7 +2671,11 @@ class ApiService {
 
   // PROFILEUPDATE
   Future<profileupdatation.Getprofile> getprofileupdate(id) async {
-    final response = await _helper.dio.get("updatemobileUser?id=$id");
+    final headers = await _helper.getMainHeaders();
+    final response = await _helper.dio.get(
+      "updatemobileUser?id=$id",
+      options: Options(headers: headers), // ✅ with headers
+    );
     print("decodedecode$response");
     print("getprofileupdate$response");
     // final decode = _helper.decodeBase64Response(response);
@@ -2758,7 +2784,10 @@ class ApiService {
 
   //  ADDSTATUS
   Future<addstatus.CancelReasonData> addStatus() async {
+    print("ADD STATUS");
     final response = await _helper.get("addstatus");
+    print("ADD STATUS$response");
+
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
 
@@ -2852,8 +2881,10 @@ class ApiService {
       "gst_address": gstaddress,
     };
     print("GSTRequest$gst");
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('user_id');
 
-    final response = await _helper.post("GSTRequest", gst);
+    final response = await _helper.post("GSTRequest?userid=$userID", gst);
     print("GSTRequest response${jsonEncode(response)}");
     return (response);
   }
@@ -2978,6 +3009,11 @@ class ApiService {
           passengerData, // send single passenger at a time
         );
         print("Passenger Added: ${jsonEncode(response)}");
+      } on DioException catch (e) {
+        print('STATUS: ${e.response?.statusCode}');
+        print(
+            'ERROR BODY: ${e.response?.data}'); // This will show exact Django error
+        print("Error adding passenger: $e");
       } catch (e) {
         print("Error adding passenger: $e");
       }
@@ -3022,7 +3058,7 @@ class ApiService {
     final tokenId = prefs.getString("tokenId");
     try {
       // final url =
-      // "http://192.168.1.13:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
+      //     "http://192.168.1.13:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
       final url =
           "https://dev-api.trvlus.com/api/ticket-download/$bookingId/$pnr/$tokenId";
       print("Pending$url");
@@ -3070,7 +3106,7 @@ class ApiService {
           "https://dev-api.trvlus.com/api/invoice-download/$bookingId/$pnr/$tokenId";
       print("Pending$url");
 
-      print("TokenId: $tokenId"); // Add this line
+      print("TokenId: $tokenId");
 
       final response = await http.get(Uri.parse(url));
 

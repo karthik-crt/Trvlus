@@ -43,6 +43,9 @@ class _TicketdetailsState extends State<Ticketdetails> {
   double total = 0; // declare variable here
   double baseFare = 0; // declare variable here
   double coupounCode = 0; // declare variable here
+  double totalbaggage = 0; // declare variable here
+  double totalseat = 0; // declare variable here
+  double totalmeals = 0; // declare variable here
   List<dynamic> miniFareRules = [];
   bool isShowDateChange = false; // ADD THIS
 
@@ -102,6 +105,19 @@ class _TicketdetailsState extends State<Ticketdetails> {
     final coupoun = double.tryParse(
             commissionHistory.data.first.customerCouponDiscount.toString()) ??
         0.0;
+
+    // EXTRA SERVICE
+    totalbaggage = fetchbookingdetails
+            .data.response.flightItinerary.fare.totalBaggageCharges ??
+        0;
+    print("totalbaggage$totalbaggage");
+    totalseat =
+        fetchbookingdetails.data.response.flightItinerary.fare.totalSeatCharges;
+    print("totalseat$totalseat");
+    totalmeals =
+        fetchbookingdetails.data.response.flightItinerary.fare.totalMealCharges;
+    print("totalmeals$totalmeals");
+
     if (tboTax == 0.0) {
       coupounCode = 0.0;
     } else {
@@ -114,9 +130,22 @@ class _TicketdetailsState extends State<Ticketdetails> {
       baseFare = fare;
     }
     if (tboTax == 0.0) {
-      total = fare + tax + customerCommission + conveiencefee;
+      // NO COMMISSION
+      total = fare +
+          tax +
+          customerCommission +
+          conveiencefee +
+          totalbaggage +
+          totalseat +
+          totalmeals;
     } else {
-      total = fare + tax + conveiencefee - coupounCode;
+      total = fare +
+          tax +
+          conveiencefee +
+          totalbaggage +
+          totalseat +
+          totalmeals -
+          coupounCode;
     }
     print('finaltotal$total');
 
@@ -1655,7 +1684,85 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                           ],
                                         ),
                                       ),
+                                      SizedBox(
+                                        height: 7,
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.all(5),
+                                        padding: EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Color(0xFFFFE7DA)),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text("Baggage Charge",
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text('₹$totalbaggage',
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFFF37023))),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text("Meal Charge",
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text('₹$totalmeals',
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFFF37023))),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text("Seat Charge",
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text('₹$totalseat',
+                                                    style: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFFF37023))),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
 
+                                      SizedBox(
+                                        height: 7,
+                                      ),
                                       Container(
                                         margin: EdgeInsets.all(5),
                                         padding: EdgeInsets.all(10),
