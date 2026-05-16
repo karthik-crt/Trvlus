@@ -54,7 +54,7 @@ class FareBreakupSheet extends StatefulWidget {
 class _FareBreakupSheetState extends State<FareBreakupSheet> {
   @override
   Widget build(BuildContext context) {
-    print("VIEW FARE FULL DETAIL");
+    // print("VIEW FARE FULL DETAIL");
     double mealTotal = 0.0;
     double seatTotal = 0.0;
     double baggageTotal = 0.0;
@@ -66,22 +66,10 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     // final othertaxcharges =
     //     ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
     final othertaxcharges = (widget.tax ?? 0).toInt();
-    print("othertaxcharges$othertaxcharges");
-    print("coupoun${widget.coupouncode}");
-    print("meal${widget.meal}");
-    print("meal${widget.meal['Price']}");
-    print("seat${widget.seat}");
-    print("dgtgsgre${widget.adultfare}");
-    print("dgtgsgre${widget.tax}");
-    print("dgtgsgre${widget.othercharges}");
-
     if (widget.coupouncode! > 0.0) {
       adultFare = widget.adultfare ?? 0;
-      print("adultFareCOmmission$adultFare");
     } else {
       adultFare = (widget.adultfare ?? 0) + (widget.trvlusCommission ?? 0);
-      print("adultFareNoCmmission$adultFare");
-      print("trvlusCommission${widget.trvlusCommission}");
     }
     // final adultFare = widget.adultfare ?? 0;
     final childFare = widget.childfare?.round();
@@ -91,14 +79,9 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final childtax = widget.childTax;
     final infanttax = widget.infantTax;
     final taxtotal = tax;
-    print("taxtotal$taxtotal");
     final othercharges = widget.othercharges;
-    print("othercharges$othercharges");
     final othertaxtotal = tax! + othercharges!;
-    print("othertaxtotal$othertaxtotal");
     final overalltotal = widget.total;
-    print("overalltotal$overalltotal");
-    print("taxtotal$taxtotal");
     final coupoun = widget.coupouncode;
     final adultCount = widget.adultCount;
     final childCount = widget.childCount;
@@ -107,33 +90,21 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     final totalAdultFare = adultFare! / adultCount!;
     final totalChildFare = childFare! / childCount!;
     final totalInfantFare = infantFare! / infantCount!;
-    print("totalAdultFare$totalAdultFare");
-    print("adultFareadultFare$adultFare");
-    print("adultCountadultCount$adultCount");
-    print("grgrg${widget.convenienceFee}");
 
-    print("taxtotal$taxtotal");
     final totalDiscount = coupoun?.toDouble();
-    print("totalDiscount$totalDiscount");
 
     final basefare = widget.basefare?.round();
-    print("basefare$basefare");
     final totalBaseFare =
         (double.parse(basefare.toString()) - double.parse(coupoun.toString()))
             .round();
 
     final double convenienceFee =
         widget.showConvenienceFee ? (widget.convenienceFee ?? 0) : 0;
-    print("convenienceFee$convenienceFee");
-    print("trvlusCommissiontrvlusCommission${widget.trvlusCommission}");
 
     // MEAL SEAT BAGGAGE CALCULATION
     final mealData = widget.meal;
-    print("mealData$mealData");
     final seatData = widget.seat;
-    print("seatData$seatData");
     final baggageData = widget.baggage;
-    print("baggageData$baggageData");
 
 // Meal
     if (mealData != null) {
@@ -141,7 +112,6 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
         passengers.forEach((pax, meals) {
           for (var meal in meals) {
             mealTotal += (meal['Price'] ?? 0).toDouble();
-            print("mealTotalmealTotal$mealTotal");
           }
         });
       });
@@ -161,20 +131,15 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
       }
     }
 
-    print("Meal: $mealTotal");
-    print("Seat: $seatTotal");
-    print("baggage: $baggageData");
-    print("Grand Total: ${mealTotal + seatTotal + baggageTotal}");
+    // print("Meal: $mealTotal");
+    // print("Seat: $seatTotal");
+    // print("baggage: $baggageData");
+    // print("Grand Total: ${mealTotal + seatTotal + baggageTotal}");
 
     final ssrTotal = mealTotal + seatTotal + baggageTotal;
-    print("ssrTotal$ssrTotal");
+    // print("ssrTotal$ssrTotal");
 
     if (widget.coupouncode! > 0.0) {
-      print("COMMISSION FLIGHT");
-      print(adultFare);
-      print(conveniencefee);
-      print(taxtotal);
-      print(totalDiscount);
       total = (adultFare! +
               childFare! +
               infantFare! +
@@ -183,23 +148,15 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
               othertaxtotal -
               totalDiscount!)
           .round();
-      print("overallFare1$total");
     } else {
-      print("NO COMMISSION FLIGHT");
       total = (adultFare! +
               childFare! +
               infantFare! +
               conveniencefee +
+              othercharges +
               taxtotal! +
               ssrTotal)
           .round();
-      print("no commission");
-      print("overallFare$total");
-      print("adultFare$adultFare");
-      print("taxtotal$taxtotal");
-      print("mealTotal$mealTotal");
-      print("seatTotal$seatTotal");
-      print("baggageTotal$baggageTotal");
     }
 
     return Stack(

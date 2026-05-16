@@ -16,6 +16,7 @@ import '../models/ssr.dart' as ssrdata;
 import '../utils/api_service.dart';
 import '../utils/constant.dart';
 import 'DotDivider.dart';
+import 'Home_Page.dart';
 import 'ShowModelSheet.dart';
 import 'ViewFullDetails.dart';
 import 'afterPayment.dart';
@@ -341,8 +342,11 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       print(
           "FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
       print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
+      print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['netFare']}");
+      print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['netFare']}");
       coupouncode = widget.coupouncode!;
-      othercharges = widget.othercharges ?? 0;
+      // othercharges = widget.othercharges ?? 0;
+      othercharges = c.otherCharges;
       print("othercharges$othercharges");
       totalBaseFare = baseFare + inbaseFare;
       print("totalFare$totalFare");
@@ -417,6 +421,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
             totalTax +
             convenienceFee +
             (widget.trvlusCommission ?? 0) +
+            othercharges +
             mealTotal +
             seatTotal +
             baggageTotal;
@@ -1156,7 +1161,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                       ),
                                       Text(
                                         widget.outboundFlight!.segments.first
-                                            .first.origin.airport.cityCode,
+                                            .last.destination.airport.cityCode,
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.bold,
@@ -1604,7 +1609,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                 //   print("DEBUG: totalBalance=$totalBalance, overallFare=$overallFare, condition=${totalBalance >= overallFare}");
                 //   return const SizedBox.shrink();
                 // }),
-                if (totalBalance >= overallFare)
+                if (totalBalance >= overallFare) ...[
                   ElevatedButton(
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
@@ -1676,6 +1681,30 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                       ),
                     ),
                   ),
+                ] else ...[
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SearchFlightPage()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 40.h),
+                      backgroundColor: Color(0xFFF37023),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                    ),
+                    child: Text(
+                      "Insuffient Wallet",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ]
               ],
             ),
           ),

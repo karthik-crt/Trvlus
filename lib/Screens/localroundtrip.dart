@@ -345,6 +345,89 @@ class _LocalroundtripState extends State<Localroundtrip> {
     return indices;
   }
 
+  // FILTER
+  Set<int> get availableOutboundStops {
+    Set<int> stops = {};
+    for (var flight in outbound) {
+      int numStops = flight.segments.first.length - 1;
+      stops.add(numStops >= 2 ? 2 : numStops);
+    }
+    return stops;
+  }
+
+  Set<int> get availableInboundStops {
+    Set<int> stops = {};
+    for (var flight in inbound) {
+      int numStops = flight.segments.first.length - 1;
+      stops.add(numStops >= 2 ? 2 : numStops);
+    }
+    return stops;
+  }
+
+  Set<String> get availableOutboundDepartureTimeRanges {
+    Set<String> ranges = {};
+    for (var flight in outbound) {
+      int hour = flight.segments.first.first.origin.depTime.toLocal().hour;
+      if (hour < 6)
+        ranges.add("Before 6 AM");
+      else if (hour < 12)
+        ranges.add("6 AM-12 Noon");
+      else if (hour < 18)
+        ranges.add("12 Noon-6 PM");
+      else
+        ranges.add("6 PM-12 Midnight");
+    }
+    return ranges;
+  }
+
+  Set<String> get availableOutboundArrivalTimeRanges {
+    Set<String> ranges = {};
+    for (var flight in outbound) {
+      int hour = flight.segments.first.last.destination.arrTime.toLocal().hour;
+      if (hour < 6)
+        ranges.add("Before 6 AM");
+      else if (hour < 12)
+        ranges.add("6 AM-12 Noon");
+      else if (hour < 18)
+        ranges.add("12 Noon-6 PM");
+      else
+        ranges.add("6 PM-12 Midnight");
+    }
+    return ranges;
+  }
+
+  Set<String> get availableInboundDepartureTimeRanges {
+    Set<String> ranges = {};
+    for (var flight in inbound) {
+      int hour = flight.segments.first.first.origin.depTime.toLocal().hour;
+      if (hour < 6)
+        ranges.add("Before 6 AM");
+      else if (hour < 12)
+        ranges.add("6 AM-12 Noon");
+      else if (hour < 18)
+        ranges.add("12 Noon-6 PM");
+      else
+        ranges.add("6 PM-12 Midnight");
+    }
+    return ranges;
+  }
+
+  Set<String> get availableInboundArrivalTimeRanges {
+    Set<String> ranges = {};
+    for (var flight in inbound) {
+      int hour = flight.segments.first.last.destination.arrTime.toLocal().hour;
+      if (hour < 6)
+        ranges.add("Before 6 AM");
+      else if (hour < 12)
+        ranges.add("6 AM-12 Noon");
+      else if (hour < 18)
+        ranges.add("12 Noon-6 PM");
+      else
+        ranges.add("6 PM-12 Midnight");
+    }
+    return ranges;
+  }
+
   List<Result> getFilteredOutbound() {
     var filtered = outbound.where((flight) {
       if (_outboundSelectedAirlineCodes.isNotEmpty) {
@@ -651,21 +734,18 @@ class _LocalroundtripState extends State<Localroundtrip> {
     double detection = finalPlb - customerComm - tboTDS - tdsOnPlb;
     double percentage = detection * 0.02;
     double flatOffer = detection - percentage;
-    print("flatOfferflatOffer$flatOffer");
     return flatOffer;
   }
 
   String formatDate() {
     DateTime parsedDate = DateTime.parse(widget.selectedDepDate);
     String formattedDate = DateFormat('dd MMM yy').format(parsedDate);
-    print("HElloooooo");
     return formattedDate;
   }
 
   String returnDate() {
     DateTime parsedDate = DateTime.parse(widget.selectedReturnDate);
     String formattedDate = DateFormat('dd MMM yy').format(parsedDate);
-    print("HElloooooo");
     return formattedDate;
   }
 
@@ -810,7 +890,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
         finalroundarrDateformat = DateFormat("dd MMM yy").format(arrDateTime);
 
         onwardNetFare = netFare;
-        print("onwardNetFareonwardNetFare");
+        // print("onwardNetFareonwardNetFare");
         outboundFlatOffer = flatOffer; // ← NEW
       } else {
         selectedInbound = selectedFlight;
@@ -826,7 +906,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
       }
 
       totalNetFare = onwardNetFare + returnNetFare;
-      print("totalNetFaretotalNetFare$totalNetFare");
+      // print("totalNetFaretotalNetFare$totalNetFare");
     });
   }
 
@@ -962,8 +1042,8 @@ class _LocalroundtripState extends State<Localroundtrip> {
         customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
       }
     }
-    print("commissionEarned$commissionEarned");
-    print("customerComm$customerComm");
+    // print("commissionEarned$commissionEarned");
+    // print("customerComm$customerComm");
     return customerComm;
   }
 
@@ -980,8 +1060,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
     int finalCustomerCommission = detection.round();
     double percentage = finalCustomerCommission * 0.02;
     double flatOffer = detection - percentage;
-
-    print("trvlusCouponCode: $flatOffer");
     return flatOffer;
   }
 
@@ -998,7 +1076,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
     int finalCustomerCommission = detection.round();
     double trvlusTds = finalCustomerCommission * 0.02;
 
-    print("trvlusTds for flight: $trvlusTds");
+    // print("trvlusTds for flight: $trvlusTds");
     return trvlusTds;
   }
 
@@ -1017,8 +1095,8 @@ class _LocalroundtripState extends State<Localroundtrip> {
       final outCustomerComm = _calculateCustomerComm(selectedOutbound!);
       final inCustomerComm = _calculateCustomerComm(selectedInbound!);
 
-      print("OUT trvlusCommission: $outCustomerComm");
-      print("IN  trvlusCommission: $inCustomerComm");
+      // print("OUT trvlusCommission: $outCustomerComm");
+      // print("IN  trvlusCommission: $inCustomerComm");
 
       final outdepDate = selectedOutbound!.segments.first.first.origin.depTime
           .toString()
@@ -1101,7 +1179,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
           }
         }
 
-        print("segmentListJson$segmentListJson");
+        // print("segmentListJson$segmentListJson");
         return segmentListJson;
       }
 
@@ -1123,10 +1201,22 @@ class _LocalroundtripState extends State<Localroundtrip> {
             selectedOutbound!.segments.first.first.destination.airport.cityName,
         "descityCode":
             selectedOutbound!.segments.first.first.destination.airport.cityCode,
-        "outdepDate": outdepdate,
-        "outdepTime": outdepTime,
-        "outarrDate": outarrdate,
-        "outarrTime": outarrTime,
+        "outdepDate": selectedOutbound!.segments.first.first.origin.depTime
+            .toLocal()
+            .toString()
+            .substring(0, 10),
+        "outdepTime": selectedOutbound!.segments.first.first.origin.depTime
+            .toLocal()
+            .toString()
+            .substring(11, 16),
+        "outarrDate": selectedOutbound!.segments.last.last.destination.arrTime
+            .toLocal()
+            .toString()
+            .substring(0, 10),
+        "outarrTime": selectedOutbound!.segments.last.last.destination.arrTime
+            .toLocal()
+            .toString()
+            .substring(11, 16),
         "duration": selectedOutbound!.segments.first.first.duration.toString(),
         "refundable": refundable,
         "stop": '',
@@ -1189,10 +1279,22 @@ class _LocalroundtripState extends State<Localroundtrip> {
             selectedInbound!.segments.first.first.destination.airport.cityName,
         "descityCode":
             selectedInbound!.segments.first.first.destination.airport.cityCode,
-        "indepDate": inDepDate,
-        "indepTime": indepTime,
-        "inarrDate": inarrdate,
-        "inarrTime": inarrTime,
+        "indepDate": selectedInbound!.segments.first.first.origin.depTime
+            .toLocal()
+            .toString()
+            .substring(0, 10),
+        "indepTime": selectedInbound!.segments.first.first.origin.depTime
+            .toLocal()
+            .toString()
+            .substring(11, 16),
+        "inarrDate": selectedInbound!.segments.last.last.destination.arrTime
+            .toLocal()
+            .toString()
+            .substring(0, 10),
+        "inarrTime": selectedInbound!.segments.last.last.destination.arrTime
+            .toLocal()
+            .toString()
+            .substring(11, 16),
         "duration": selectedInbound!.segments.first.first.duration.toString(),
         "refundable": inrefundable,
         "stop": '',
@@ -1220,11 +1322,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
         "trvlusNetFare": returnNetFare,
       };
 
-      print("Navigator view fare");
-      print("FLIGHTDETAILPAGE SCREEN${outBoundData['tboCommission']}");
-      print("FLIGHTDETAILPAGE SCREEN${outBoundData['segments']}");
-      print("FLIGHTDETAILPAGE SCREEN${inBoundData['tboCommission']}");
-      print("FLIGHTDETAILPAGE SCREEN$inBoundData['segments']}");
       // Declare BEFORE Navigator.push
       List<Map<String, dynamic>> outMiniFareRules =
           selectedOutbound != null && selectedOutbound!.miniFareRules.isNotEmpty
@@ -1617,6 +1714,15 @@ class _LocalroundtripState extends State<Localroundtrip> {
                             initialArrivalTime: isOutbound
                                 ? (_outboundSelectedArrivalTimeRange ?? "")
                                 : (_inboundSelectedArrivalTimeRange ?? ""),
+                            availableStops: isOutbound
+                                ? availableOutboundStops
+                                : availableInboundStops,
+                            availableDepartureTimeRanges: isOutbound
+                                ? availableOutboundDepartureTimeRanges
+                                : availableInboundDepartureTimeRanges,
+                            availableArrivalTimeRanges: isOutbound
+                                ? availableOutboundArrivalTimeRanges
+                                : availableInboundArrivalTimeRanges,
                           ),
                         );
                       },
@@ -2102,7 +2208,7 @@ class _FlightCardState extends State<FlightCard> {
                             SizedBox(width: 4.w),
                             Text(
                               displayFlight
-                                  .segments.first.first.origin.airport.cityCode,
+                                  .segments.first.last.origin.airport.cityCode,
                               style: TextStyle(
                                 fontSize: 12.sp,
                               ),
@@ -2439,6 +2545,9 @@ class FilterBottomSheet extends StatefulWidget {
   final int? initialStops;
   final String initialDepartureTime;
   final String initialArrivalTime;
+  final Set<int> availableStops;
+  final Set<String> availableDepartureTimeRanges;
+  final Set<String> availableArrivalTimeRanges;
 
   const FilterBottomSheet({
     Key? key,
@@ -2450,6 +2559,9 @@ class FilterBottomSheet extends StatefulWidget {
     this.initialStops,
     this.initialDepartureTime = "",
     this.initialArrivalTime = "",
+    required this.availableStops,
+    required this.availableDepartureTimeRanges,
+    required this.availableArrivalTimeRanges,
   }) : super(key: key);
 
   @override
@@ -2566,9 +2678,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     SizedBox(height: 10.h),
                     Row(
                       children: [
-                        _buildChip("Non Stop", 0),
-                        _buildChip("1 Stop", 1),
-                        _buildChip("2+ Stops", 2),
+                        if (widget.availableStops.contains(0))
+                          _buildChip("Non Stop", 0),
+                        if (widget.availableStops.contains(1))
+                          _buildChip("1 Stop", 1),
+                        if (widget.availableStops.contains(2))
+                          _buildChip("2+ Stops", 2),
                       ],
                     ),
                     SizedBox(height: 15.h),
@@ -2592,17 +2707,22 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ),
                     SizedBox(height: 10.h),
-                    Row(
+                    Wrap(
+                      spacing: 10.w,
+                      runSpacing: 10.h,
                       children: [
-                        _timeButton("Before 6 AM", "Before 6 AM"),
-                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
-                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("Before 6 AM"))
+                          _timeButton("Before 6 AM", "Before 6 AM"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("6 AM-12 Noon"))
+                          _timeButton("6 AM-12 Noon", "6 AM-12 Noon"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("12 Noon-6 PM"))
+                          _timeButton("12 Noon-6 PM", "12 Noon-6 PM"),
+                        if (widget.availableDepartureTimeRanges
+                            .contains("6 PM-12 Midnight"))
+                          _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight"),
                       ],
                     ),
                     SizedBox(height: 20.h),
@@ -2616,21 +2736,34 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ),
                     SizedBox(height: 10.h),
-                    Row(
+                    // AFTER:
+                    Wrap(
+                      spacing: 10.w,
+                      runSpacing: 10.h,
                       children: [
-                        _timeButton("Before 6 AM", "Before 6 AM",
-                            isArrival: true),
-                        _timeButton("6 AM-12 Noon", "6 AM-12 Noon",
-                            isArrival: true),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      children: [
-                        _timeButton("12 Noon-6 PM", "12 Noon-6 PM",
-                            isArrival: true),
-                        _timeButton("6 PM-12 Midnight", "6 PM-12 Midnight",
-                            isArrival: true),
+                        Wrap(
+                          spacing: 10.w,
+                          runSpacing: 10.h,
+                          children: [
+                            if (widget.availableArrivalTimeRanges
+                                .contains("Before 6 AM"))
+                              _timeButton("Before 6 AM", "Before 6 AM",
+                                  isArrival: true),
+                            if (widget.availableArrivalTimeRanges
+                                .contains("6 AM-12 Noon"))
+                              _timeButton("6 AM-12 Noon", "6 AM-12 Noon",
+                                  isArrival: true),
+                            if (widget.availableArrivalTimeRanges
+                                .contains("12 Noon-6 PM"))
+                              _timeButton("12 Noon-6 PM", "12 Noon-6 PM",
+                                  isArrival: true),
+                            if (widget.availableArrivalTimeRanges
+                                .contains("6 PM-12 Midnight"))
+                              _timeButton(
+                                  "6 PM-12 Midnight", "6 PM-12 Midnight",
+                                  isArrival: true),
+                          ],
+                        ),
                       ],
                     ),
                     SizedBox(height: 15.h),

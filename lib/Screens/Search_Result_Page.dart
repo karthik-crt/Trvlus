@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
@@ -196,7 +195,6 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
   getCommissionData() async {
     commission = await ApiService().commissionPercentage();
-    print("getCommissionData${jsonEncode(commission)}");
     setState(() {
       isLoading = false;
     });
@@ -210,7 +208,6 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
 
   getCustomerCommission() async {
     customer = await ApiService().getcustomercommission();
-    print("COMMISIONcustomer${jsonEncode(customer)}");
     await getCommissionData();
 
     setState(() {
@@ -466,6 +463,114 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         _allDataReady = true;
         isLoading = false;
       });
+      _loadFaresOneByOne(); // no await — background
+    }
+  }
+
+  Future<void> _loadFaresOneByOne() async {
+    int loadedCount = 0;
+
+    for (var d in dates) {
+      if (!mounted) return;
+      if (loadedCount >= 7) return;
+
+      String dateKey = d['date'] as String;
+
+      if (dateKey == currentDepDate) {
+        loadedCount++;
+        continue;
+      }
+
+      try {
+        // ✅ Fetch actual flights for this date
+        final tempSearchData = await ApiService().getSearchResult(
+          widget.airportCode,
+          widget.fromAirport,
+          widget.toairportCode,
+          widget.toAirport,
+          dateKey,
+          widget.selectedReturnDate,
+          widget.selectedTripType,
+          widget.adultCount,
+          widget.childCount,
+          widget.infantCount,
+        );
+
+        // ✅ Compute lowest fare using same commission logic
+        int? lowestFare;
+        for (var group in tempSearchData.response.results) {
+          for (var flight in group) {
+            if (flight.segments.first.first.supplierFareClass
+                .toString()
+                .contains('.')) continue;
+
+            double publishFare = flight.fare.publishedFare.toDouble();
+            double tboTDS = flight.fare.tdsOnCommission.toDouble();
+            double commissionEarned = flight.fare.commissionEarned.toDouble();
+            double plbEarned = flight.fare.plbEarned.toDouble();
+            double tdsOnPlb = flight.fare.tdsOnPlb.toDouble();
+
+            double customerComm = 0.0;
+            if (customer.data.isNotEmpty) {
+              var commData = customer.data[0];
+              double earned = commissionEarned;
+              if (earned == 0) {
+                customerComm = commData.commission_0?.toDouble() ?? 0.0;
+              } else if (earned <= 10) {
+                customerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+              } else if (earned <= 20) {
+                customerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+              } else if (earned <= 30) {
+                customerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+              } else if (earned <= 50) {
+                customerComm = commData.commission_30_50?.toDouble() ?? 0.0;
+              } else if (earned <= 100) {
+                customerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+              } else if (earned <= 150) {
+                customerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+              } else if (earned <= 200) {
+                customerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+              } else if (earned <= 250) {
+                customerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+              } else if (earned <= 300) {
+                customerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+              } else {
+                customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+              }
+            }
+
+            double finalcommissionplb = commissionEarned + plbEarned;
+            double customercommissiondetection = finalcommissionplb <= 0
+                ? 0.0
+                : finalcommissionplb - customerComm - tboTDS - tdsOnPlb;
+            double finalcommissionpercentage =
+                customercommissiondetection * 0.02;
+            double finalflatoffer =
+                customercommissiondetection - finalcommissionpercentage;
+
+            int finaloffFare = tboTDS <= 0
+                ? (publishFare + customerComm).round()
+                : (publishFare - finalflatoffer).round();
+
+            if (lowestFare == null || finaloffFare < lowestFare!) {
+              lowestFare = finaloffFare;
+            }
+          }
+        }
+
+        if (!mounted) return;
+        setState(() {
+          for (var entry in dates) {
+            if (entry['date'] == dateKey) {
+              entry['price'] = lowestFare != null ? '₹$lowestFare' : '--';
+            }
+          }
+        });
+
+        loadedCount++;
+      } catch (e) {
+        print("Fare load error for $dateKey: $e");
+      }
     }
   }
 
@@ -531,11 +636,11 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
         ][date.month - 1];
 
         double? price = lowestFareByDate[dateKey];
+        int dayIndex = i; // i is the loop index (0 to 15)
         updatedDates.add({
           "month": "$dayName, ${date.day} $monthName",
-          "price": price != null ? "₹${price.round()}" : "--",
-          "isSelected":
-              dateKey == widget.selectedDepDate, // ✅ marks correct date
+          "price": "--",
+          "isSelected": dateKey == widget.selectedDepDate,
           "date": dateKey,
         });
       }
@@ -688,36 +793,6 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
     // _scrollController.dispose();
     super.dispose();
   }
-
-  List<Map<String, dynamic>> flights = [
-    {
-      "airline": "Emirates",
-      "price": "4,566",
-      "logo": "assets/images/Emirates1.png",
-      "duration": "Available Seat 30",
-      "departure": "Delhi Airport",
-      "arrival": "Hyderabad Airport",
-      "stops": "1 STOP",
-    },
-    {
-      "airline": "Indigo",
-      "price": "4,566",
-      "logo": "assets/images/Indigo.png",
-      "duration": "Available Seat 0",
-      "departure": "Delhi Airport",
-      "arrival": "Bengaluru Airport",
-      "stops": "1 STOP",
-    },
-    {
-      "airline": "Air India",
-      "price": "4,566",
-      "logo": "assets/images/AirIndia.png",
-      "duration": "Available Seat 15",
-      "departure": "Delhi Airport",
-      "arrival": "Bengaluru Airport",
-      "stops": "1 STOP",
-    },
-  ];
 
   // String? resultIndex;
   // String? traceId;
@@ -1149,2082 +1224,2030 @@ class _FlightResultsPageState extends State<FlightResultsPage> {
                       )),
                 ),
                 backgroundColor: Colors.grey.shade200,
-                body: SingleChildScrollView(
-                  //  controller: _scrollController,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 2.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        DateScroller(
-                          dates: dates,
-                          onDateSelected: _onDateSelected, // NEW: Pass callback
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          color: Colors.white,
-                          child: Row(
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(left: 20.w),
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: groupFlightsByAirlineAndNumber(
-                                                getFilteredResults())
-                                            .length
-                                            .toString(),
-                                        // ✅ Correct - shows filtered count
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DateScroller(
+                      dates: dates,
+                      onDateSelected: _onDateSelected, // NEW: Pass callback
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      color: Colors.white,
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(left: 20.w),
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: groupFlightsByAirlineAndNumber(
+                                            getFilteredResults())
+                                        .length
+                                        .toString(),
+                                    // ✅ Correct - shows filtered count
 
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.orange,
-                                        ),
-                                      ),
-                                      TextSpan(text: " "),
-                                      TextSpan(
-                                        text: "AVAILABLE FLIGHTS",
-                                        style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 80.w),
-                              Container(
-                                height: 25.h,
-                                child: ElevatedButton.icon(
-                                  onPressed: () async {
-                                    List<int> currentIndices = [];
-                                    for (String code in _selectedAirlineCodes) {
-                                      for (int i = 1;
-                                          i < uniqueAirlines.length;
-                                          i++) {
-                                        // Skip index 0
-                                        if (uniqueAirlines[i]['code'] == code) {
-                                          currentIndices.add(i);
-                                          break;
-                                        }
-                                      }
-                                    }
-
-                                    var filterData = await showModalBottomSheet<
-                                        Map<String, dynamic>>(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(16),
-                                        ),
-                                      ),
-                                      builder: (context) {
-                                        return Container(
-                                          height: 620.h,
-                                          child: FilterBottomSheet(
-                                            airlines: uniqueAirlines,
-                                            currentSelectedIndices:
-                                                currentIndices,
-                                            filterorigin: filterorigin,
-                                            filterdestination:
-                                                filterdestination,
-                                            initialStops: _selectedStops,
-                                            initialHideNonRefundable:
-                                                _hideNonRefundable,
-                                            initialDepartureTime:
-                                                _selectedDepartureTimeRange ??
-                                                    "",
-                                            initialArrivalTime:
-                                                _selectedArrivalTimeRange ?? "",
-                                            availableStops:
-                                                availableStopsFromRaw,
-                                            availableDepartureTimeRanges:
-                                                availableDepartureTimeRanges,
-                                            // ADD
-                                            availableArrivalTimeRanges:
-                                                availableArrivalTimeRanges,
-                                          ),
-                                        );
-                                      },
-                                    );
-                                    if (filterData != null) {
-                                      setState(() {
-                                        List<int> indices =
-                                            filterData['airlineIndices'] ?? [];
-                                        _selectedAirlineCodes.clear();
-                                        for (int i in indices) {
-                                          _selectedAirlineCodes.add(
-                                            uniqueAirlines[i]['code'] as String,
-                                          );
-                                        }
-                                        _selectedStops =
-                                            filterData['stops']; // <-- ADD THIS
-                                        _hideNonRefundable =
-                                            filterData['hideNonRefundable'] ??
-                                                false;
-                                        _selectedDepartureTimeRange =
-                                            filterData['departureTime'];
-                                        _selectedArrivalTimeRange =
-                                            filterData['arrivalTime'];
-                                      });
-                                    }
-                                  },
-                                  icon: Image.asset(
-                                    'assets/images/Filter.png',
-                                    alignment: Alignment.center,
-                                    height: 12.h,
-                                    width: 12.w,
-                                  ),
-                                  label: Text(
-                                    "Filter",
                                     style: TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 10.sp, // Reduced text size
-                                      color: Color(0xFF606060),
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange,
                                     ),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.grey.shade100,
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        30.r,
+                                  TextSpan(text: " "),
+                                  TextSpan(
+                                    text: "AVAILABLE FLIGHTS",
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 80.w),
+                          Container(
+                            height: 25.h,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                List<int> currentIndices = [];
+                                for (String code in _selectedAirlineCodes) {
+                                  for (int i = 1;
+                                      i < uniqueAirlines.length;
+                                      i++) {
+                                    // Skip index 0
+                                    if (uniqueAirlines[i]['code'] == code) {
+                                      currentIndices.add(i);
+                                      break;
+                                    }
+                                  }
+                                }
+
+                                var filterData = await showModalBottomSheet<
+                                    Map<String, dynamic>>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(16),
+                                    ),
+                                  ),
+                                  builder: (context) {
+                                    return Container(
+                                      height: 620.h,
+                                      child: FilterBottomSheet(
+                                        airlines: uniqueAirlines,
+                                        currentSelectedIndices: currentIndices,
+                                        filterorigin: filterorigin,
+                                        filterdestination: filterdestination,
+                                        initialStops: _selectedStops,
+                                        initialHideNonRefundable:
+                                            _hideNonRefundable,
+                                        initialDepartureTime:
+                                            _selectedDepartureTimeRange ?? "",
+                                        initialArrivalTime:
+                                            _selectedArrivalTimeRange ?? "",
+                                        availableStops: availableStopsFromRaw,
+                                        availableDepartureTimeRanges:
+                                            availableDepartureTimeRanges,
+                                        // ADD
+                                        availableArrivalTimeRanges:
+                                            availableArrivalTimeRanges,
                                       ),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 3.h,
-                                      horizontal: 20.w,
-                                    ),
-                                  ),
+                                    );
+                                  },
+                                );
+                                if (filterData != null) {
+                                  setState(() {
+                                    List<int> indices =
+                                        filterData['airlineIndices'] ?? [];
+                                    _selectedAirlineCodes.clear();
+                                    for (int i in indices) {
+                                      _selectedAirlineCodes.add(
+                                        uniqueAirlines[i]['code'] as String,
+                                      );
+                                    }
+                                    _selectedStops =
+                                        filterData['stops']; // <-- ADD THIS
+                                    _hideNonRefundable =
+                                        filterData['hideNonRefundable'] ??
+                                            false;
+                                    _selectedDepartureTimeRange =
+                                        filterData['departureTime'];
+                                    _selectedArrivalTimeRange =
+                                        filterData['arrivalTime'];
+                                  });
+                                }
+                              },
+                              icon: Image.asset(
+                                'assets/images/Filter.png',
+                                alignment: Alignment.center,
+                                height: 12.h,
+                                width: 12.w,
+                              ),
+                              label: Text(
+                                "Filter",
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 10.sp, // Reduced text size
+                                  color: Color(0xFF606060),
                                 ),
                               ),
-                            ],
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey.shade100,
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    30.r,
+                                  ),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 3.h,
+                                  horizontal: 20.w,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        Builder(
-                          builder: (context) {
-                            var filteredResults = getFilteredResults();
-                            var groupedFlights =
-                                groupFlightsByAirlineAndNumber(filteredResults);
-                            var flightKeys = groupedFlights.keys.toList();
+                        ],
+                      ),
+                    ),
+                    Builder(
+                      builder: (context) {
+                        var filteredResults = getFilteredResults();
+                        var groupedFlights =
+                            groupFlightsByAirlineAndNumber(filteredResults);
+                        var flightKeys = groupedFlights.keys.toList();
 
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: flightKeys.length,
-                              itemBuilder: (context, index) {
-                                String flightKey = flightKeys[index];
-                                List<dynamic> flightVariants =
-                                    groupedFlights[flightKey]!;
-                                var lowestPriceFlight = flightVariants
-                                    .first; // Already sorted by price
-                                print("indexindex$index");
+                        return Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            // ✅ keep your scroll controller
+                            shrinkWrap: false,
+                            // ✅ change to false
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: flightKeys.length,
+                            itemBuilder: (context, index) {
+                              String flightKey = flightKeys[index];
+                              List<dynamic> flightVariants =
+                                  groupedFlights[flightKey]!;
+                              var lowestPriceFlight = flightVariants
+                                  .first; // Already sorted by price
 
-                                // Calculate lowest price for display
-                                double publishFare = lowestPriceFlight
-                                    .fare.publishedFare
-                                    .toDouble();
-                                print("publishFare$publishFare");
-                                String offeredFare = lowestPriceFlight
-                                    .fare.offeredFare
-                                    .toString();
-                                print("offeredFare$offeredFare");
-                                double tboTDS = lowestPriceFlight
-                                    .fare.tdsOnCommission
-                                    .toDouble();
-                                print("tboTDS$tboTDS");
+                              // Calculate lowest price for display
+                              double publishFare = lowestPriceFlight
+                                  .fare.publishedFare
+                                  .toDouble();
+                              String offeredFare =
+                                  lowestPriceFlight.fare.offeredFare.toString();
+                              double tboTDS = lowestPriceFlight
+                                  .fare.tdsOnCommission
+                                  .toDouble();
 
-                                // Calculate customer commission (same logic as before)
-                                final commissionEarned = lowestPriceFlight
-                                    .fare.commissionEarned
-                                    .toDouble();
-                                print("commissionEarned$commissionEarned");
-                                double customerComm = 0.0;
-                                if (customer.data.isNotEmpty &&
-                                    commissionEarned >= 0) {
-                                  var commData = customer.data[0];
-                                  double earned = commissionEarned;
+                              // Calculate customer commission (same logic as before)
+                              final commissionEarned = lowestPriceFlight
+                                  .fare.commissionEarned
+                                  .toDouble();
+                              double customerComm = 0.0;
+                              if (customer.data.isNotEmpty &&
+                                  commissionEarned >= 0) {
+                                var commData = customer.data[0];
+                                double earned = commissionEarned;
 
-                                  if (earned == 0) {
-                                    customerComm =
-                                        commData.commission_0?.toDouble() ??
-                                            0.0;
-                                  } else if (earned <= 10) {
-                                    customerComm =
-                                        commData.commission_0_10?.toDouble() ??
-                                            0.0;
-                                  } else if (earned <= 20) {
-                                    customerComm =
-                                        commData.commission_10_20?.toDouble() ??
-                                            0.0;
-                                  } else if (earned <= 30) {
-                                    customerComm =
-                                        commData.commission_20_30?.toDouble() ??
-                                            0.0;
-                                  } else if (earned <= 50) {
-                                    customerComm =
-                                        commData.commission_30_50?.toDouble() ??
-                                            0.0;
-                                  } else if (earned <= 100) {
-                                    customerComm = commData.commission_50_100
-                                            ?.toDouble() ??
-                                        0.0;
-                                  } else if (earned <= 150) {
-                                    customerComm = commData.commission_100_150
-                                            ?.toDouble() ??
-                                        0.0;
-                                  } else if (earned <= 200) {
-                                    customerComm = commData.commission_150_200
-                                            ?.toDouble() ??
-                                        0.0;
-                                  } else if (earned <= 250) {
-                                    customerComm = commData.commission_200_250
-                                            ?.toDouble() ??
-                                        0.0;
-                                  } else if (earned <= 300) {
-                                    customerComm = commData.commission_250_300
-                                            ?.toDouble() ??
-                                        0.0;
-                                  } else {
-                                    customerComm = commData.commission_above_300
-                                            ?.toDouble() ??
-                                        0.0;
-                                  }
+                                if (earned == 0) {
+                                  customerComm =
+                                      commData.commission_0?.toDouble() ?? 0.0;
+                                } else if (earned <= 10) {
+                                  customerComm =
+                                      commData.commission_0_10?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 20) {
+                                  customerComm =
+                                      commData.commission_10_20?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 30) {
+                                  customerComm =
+                                      commData.commission_20_30?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 50) {
+                                  customerComm =
+                                      commData.commission_30_50?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 100) {
+                                  customerComm =
+                                      commData.commission_50_100?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 150) {
+                                  customerComm =
+                                      commData.commission_100_150?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 200) {
+                                  customerComm =
+                                      commData.commission_150_200?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 250) {
+                                  customerComm =
+                                      commData.commission_200_250?.toDouble() ??
+                                          0.0;
+                                } else if (earned <= 300) {
+                                  customerComm =
+                                      commData.commission_250_300?.toDouble() ??
+                                          0.0;
+                                } else {
+                                  customerComm = commData.commission_above_300
+                                          ?.toDouble() ??
+                                      0.0;
                                 }
-                                print("customerComm$customerComm");
-                                double customertdsplb =
-                                    lowestPriceFlight.fare.tdsOnPlb.toDouble();
-                                print("customertdsplb$customertdsplb");
-                                double customerplbearned =
-                                    lowestPriceFlight.fare.plbEarned.toDouble();
-                                print("customerplbearned$customerplbearned");
-                                double finalcommissionplb =
-                                    commissionEarned + customerplbearned;
-                                print("finalcommissionplb$finalcommissionplb");
-                                double customercommissiondetection =
-                                    finalcommissionplb <= 0
-                                        ? 0.0
-                                        : finalcommissionplb -
-                                            customerComm -
-                                            tboTDS -
-                                            customertdsplb;
-                                print(
-                                    "customercommissiondetection$customercommissiondetection");
-                                int finalcustomercommission =
-                                    customercommissiondetection.round();
-                                print(
-                                    "finalcustomercommission$finalcustomercommission");
-                                double finalcommissionpercentage =
-                                    customercommissiondetection * 0.02;
-                                print(
-                                    "finalcommissionpercentage$finalcommissionpercentage");
-                                int commissionpercentageround =
-                                    finalcommissionpercentage.round();
-                                print(
-                                    "commissionpercentageround$commissionpercentageround");
-                                double finalflatoffer =
-                                    customercommissiondetection -
-                                        finalcommissionpercentage;
-                                print("finalflatoffer$finalflatoffer");
-                                int finalcoupouncode = finalflatoffer.round();
-                                print("finalcoupouncode$finalcoupouncode");
-                                // int finaloffFare = (double.parse(offeredFare) +
-                                //         double.parse(tboTDS.toString()) +
-                                //         double.parse(finalcommissionpercentage
-                                //             .toString()) +
-                                //         double.parse(customerComm.toString()))
-                                //     .round();
-                                double othercharges =
-                                    lowestPriceFlight.fare.otherCharges;
-                                print("othercharges$othercharges");
+                              }
+                              double customertdsplb =
+                                  lowestPriceFlight.fare.tdsOnPlb.toDouble();
+                              double customerplbearned =
+                                  lowestPriceFlight.fare.plbEarned.toDouble();
+                              double finalcommissionplb =
+                                  commissionEarned + customerplbearned;
+                              double customercommissiondetection =
+                                  finalcommissionplb <= 0
+                                      ? 0.0
+                                      : finalcommissionplb -
+                                          customerComm -
+                                          tboTDS -
+                                          customertdsplb;
 
-                                int finaloffFare = tboTDS <= 0
-                                    ? (publishFare + customerComm).round()
-                                    : (publishFare - finalflatoffer).round();
-                                print("finaloffFare$finaloffFare");
-                                // Duration and stops calculation
-                                int totalMinutes = lowestPriceFlight
-                                    .segments.first.first.duration
-                                    .toInt();
-                                int hours = totalMinutes ~/ 60;
-                                int minutes = totalMinutes % 60;
-                                String formattedDuration =
-                                    "${hours}h ${minutes}m";
+                              int finalcustomercommission =
+                                  customercommissiondetection.round();
 
-                                final segments =
-                                    lowestPriceFlight.segments.first;
-                                int numStops = segments.length - 1;
+                              double finalcommissionpercentage =
+                                  customercommissiondetection * 0.02;
 
-                                String displayTotalDuration = formattedDuration;
-                                if (numStops > 0) {
-                                  int totalTripMinutes =
-                                      segments.last.accumulatedDuration.toInt();
-                                  int totalTripHours = totalTripMinutes ~/ 60;
-                                  int totalTripMins = totalTripMinutes % 60;
-                                  displayTotalDuration =
-                                      "${totalTripHours}h ${totalTripMins}m";
+                              int commissionpercentageround =
+                                  finalcommissionpercentage.round();
+
+                              double finalflatoffer =
+                                  customercommissiondetection -
+                                      finalcommissionpercentage;
+                              int finalcoupouncode = finalflatoffer.round();
+                              // int finaloffFare = (double.parse(offeredFare) +
+                              //         double.parse(tboTDS.toString()) +
+                              //         double.parse(finalcommissionpercentage
+                              //             .toString()) +
+                              //         double.parse(customerComm.toString()))
+                              //     .round();
+                              double othercharges =
+                                  lowestPriceFlight.fare.otherCharges;
+                              int finaloffFare = tboTDS <= 0
+                                  ? (publishFare + customerComm).round()
+                                  : (publishFare - finalflatoffer).round();
+                              // Duration and stops calculation
+                              int totalMinutes = lowestPriceFlight
+                                  .segments.first.first.duration
+                                  .toInt();
+                              int hours = totalMinutes ~/ 60;
+                              int minutes = totalMinutes % 60;
+                              String formattedDuration =
+                                  "${hours}h ${minutes}m";
+
+                              final segments = lowestPriceFlight.segments.first;
+                              int numStops = segments.length - 1;
+
+                              String displayTotalDuration = formattedDuration;
+                              if (numStops > 0) {
+                                int totalTripMinutes =
+                                    segments.last.accumulatedDuration.toInt();
+                                int totalTripHours = totalTripMinutes ~/ 60;
+                                int totalTripMins = totalTripMinutes % 60;
+                                displayTotalDuration =
+                                    "${totalTripHours}h ${totalTripMins}m";
+                              }
+
+                              // Layover calculation
+                              List<String> layoverDetails = [];
+                              for (int i = 0; i < segments.length - 1; i++) {
+                                DateTime arrTime =
+                                    segments[i].destination.arrTime;
+                                DateTime depTime =
+                                    segments[i + 1].origin.depTime;
+                                int layoverMinutes =
+                                    depTime.difference(arrTime).inMinutes;
+                                if (layoverMinutes > 0) {
+                                  int h = layoverMinutes ~/ 60;
+                                  int m = layoverMinutes % 60;
+                                  String city =
+                                      segments[i + 1].origin.airport.cityName;
+                                  layoverDetails
+                                      .add("${h}h ${m}m layover at $city");
                                 }
+                              }
+                              String layoverText = layoverDetails.isNotEmpty
+                                  ? layoverDetails.join(", ")
+                                  : "";
 
-                                // Layover calculation
-                                List<String> layoverDetails = [];
-                                for (int i = 0; i < segments.length - 1; i++) {
-                                  DateTime arrTime =
-                                      segments[i].destination.arrTime;
-                                  DateTime depTime =
-                                      segments[i + 1].origin.depTime;
-                                  int layoverMinutes =
-                                      depTime.difference(arrTime).inMinutes;
-                                  if (layoverMinutes > 0) {
-                                    int h = layoverMinutes ~/ 60;
-                                    int m = layoverMinutes % 60;
-                                    String city =
-                                        segments[i + 1].origin.airport.cityName;
-                                    layoverDetails
-                                        .add("${h}h ${m}m layover at $city");
-                                  }
-                                }
-                                String layoverText = layoverDetails.isNotEmpty
-                                    ? layoverDetails.join(", ")
-                                    : "";
-
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      lowestPriceFlight.isExpanded =
-                                          !lowestPriceFlight.isExpanded;
-                                      selectedindex = index;
-                                    });
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 16.w,
-                                        right: 16.w,
-                                        bottom: 8.h,
-                                        top: 0.h),
-                                    child: Card(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8.r),
-                                      ),
-                                      elevation: 2,
-                                      color: Colors.white,
-                                      child: Padding(
-                                        padding: EdgeInsets.all(12.r),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // MAIN CARD CONTENT (showing lowest price)
-                                            Row(
-                                              children: [
-                                                SizedBox(width: 12.w),
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        ClipRRect(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                          child: Image.asset(
-                                                            "assets/${lowestPriceFlight.segments.first.first.airline.airlineCode}.gif",
-                                                            fit: BoxFit.fill,
-                                                            height: 35,
-                                                            width: 35,
-                                                          ),
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    lowestPriceFlight.isExpanded =
+                                        !lowestPriceFlight.isExpanded;
+                                    selectedindex = index;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                      left: 16.w,
+                                      right: 16.w,
+                                      bottom: 8.h,
+                                      top: 0.h),
+                                  child: Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    elevation: 2,
+                                    color: Colors.white,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12.r),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // MAIN CARD CONTENT (showing lowest price)
+                                          Row(
+                                            children: [
+                                              SizedBox(width: 12.w),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        child: Image.asset(
+                                                          "assets/${lowestPriceFlight.segments.first.first.airline.airlineCode}.gif",
+                                                          fit: BoxFit.fill,
+                                                          height: 35,
+                                                          width: 35,
                                                         ),
-                                                        const SizedBox(
-                                                            width: 10),
-                                                        Container(
-                                                          width: 120,
-                                                          child: Column(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Text(
-                                                                lowestPriceFlight
-                                                                    .segments
-                                                                    .first
-                                                                    .first
-                                                                    .airline
-                                                                    .airlineName,
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontFamily:
-                                                                      'Inter',
-                                                                  color: Colors
-                                                                      .black,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize:
-                                                                      14.sp,
-                                                                ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Container(
+                                                        width: 120,
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              lowestPriceFlight
+                                                                  .segments
+                                                                  .first
+                                                                  .first
+                                                                  .airline
+                                                                  .airlineName,
+                                                              style: TextStyle(
+                                                                fontFamily:
+                                                                    'Inter',
+                                                                color: Colors
+                                                                    .black,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 14.sp,
                                                               ),
-                                                              RichText(
-                                                                text: TextSpan(
-                                                                  text: lowestPriceFlight
-                                                                      .airlineCode,
-                                                                  style: Theme.of(
-                                                                          context)
-                                                                      .textTheme
-                                                                      .bodySmall
-                                                                      ?.copyWith(
-                                                                        color: Colors
-                                                                            .grey
-                                                                            .shade700,
-                                                                      ),
-                                                                  children: [
-                                                                    WidgetSpan(
+                                                            ),
+                                                            RichText(
+                                                              text: TextSpan(
+                                                                text: lowestPriceFlight
+                                                                    .airlineCode,
+                                                                style: Theme.of(
+                                                                        context)
+                                                                    .textTheme
+                                                                    .bodySmall
+                                                                    ?.copyWith(
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade700,
+                                                                    ),
+                                                                children: [
+                                                                  WidgetSpan(
+                                                                    child:
+                                                                        Padding(
+                                                                      padding: EdgeInsets.symmetric(
+                                                                          horizontal: 2
+                                                                              .w,
+                                                                          vertical:
+                                                                              4.h),
                                                                       child:
-                                                                          Padding(
-                                                                        padding: EdgeInsets.symmetric(
-                                                                            horizontal:
-                                                                                2.w,
-                                                                            vertical: 4.h),
-                                                                        child:
-                                                                            Container(
-                                                                          width:
-                                                                              4.w,
-                                                                          height:
-                                                                              3.h,
-                                                                          decoration:
-                                                                              const BoxDecoration(
-                                                                            color:
-                                                                                Colors.grey,
-                                                                            shape:
-                                                                                BoxShape.circle,
-                                                                          ),
+                                                                          Container(
+                                                                        width:
+                                                                            4.w,
+                                                                        height:
+                                                                            3.h,
+                                                                        decoration:
+                                                                            const BoxDecoration(
+                                                                          color:
+                                                                              Colors.grey,
+                                                                          shape:
+                                                                              BoxShape.circle,
                                                                         ),
                                                                       ),
                                                                     ),
-                                                                    TextSpan(
-                                                                      text: lowestPriceFlight
+                                                                  ),
+                                                                  TextSpan(
+                                                                    text: lowestPriceFlight
+                                                                        .segments
+                                                                        .first
+                                                                        .first
+                                                                        .airline
+                                                                        .flightNumber,
+                                                                    style: Theme.of(
+                                                                            context)
+                                                                        .textTheme
+                                                                        .headlineSmall
+                                                                        ?.copyWith(
+                                                                          fontSize:
+                                                                              12.sp,
+                                                                          color:
+                                                                              Colors.grey,
+                                                                        ),
+                                                                    children: [
+                                                                      WidgetSpan(
+                                                                        child:
+                                                                            Padding(
+                                                                          padding: EdgeInsets.symmetric(
+                                                                              horizontal: 2.w,
+                                                                              vertical: 4.h),
+                                                                          child:
+                                                                              Container(
+                                                                            width:
+                                                                                4.w,
+                                                                            height:
+                                                                                3.h,
+                                                                            decoration:
+                                                                                const BoxDecoration(
+                                                                              color: Colors.grey,
+                                                                              shape: BoxShape.circle,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  TextSpan(
+                                                                    text: lowestPriceFlight
+                                                                            .isRefundable
+                                                                        ? "R"
+                                                                        : "NR",
+                                                                    style: Theme.of(
+                                                                            context)
+                                                                        .textTheme
+                                                                        .headlineSmall
+                                                                        ?.copyWith(
+                                                                          fontSize:
+                                                                              12.sp,
+                                                                          color:
+                                                                              primaryColor,
+                                                                        ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(width: 5),
+                                                ],
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    if (finaloffFare <
+                                                        double.parse(publishFare
+                                                            .toString()))
+                                                      Text(
+                                                        "${""} ${lowestPriceFlight.fare.publishedFare.toStringAsFixed(0)}",
+                                                        style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .lineThrough,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    Text(
+                                                      "${""} $finaloffFare",
+                                                      style: TextStyle(
+                                                        fontFamily: 'Inter',
+                                                        color: primaryColor,
+                                                        fontSize: 16.sp,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      layoverText,
+                                                      textAlign: TextAlign.end,
+                                                      style: TextStyle(
+                                                        fontSize: 10.sp,
+                                                        color: Colors.red,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 2.h),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 8.h),
+                                          SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: DotDivider(
+                                              dotSize: 1.h,
+                                              spacing: 2.r,
+                                              dotCount: 97,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          SizedBox(height: 8.h),
+
+                                          // Time and location details (same as before)
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        lowestPriceFlight
+                                                            .segments
+                                                            .first
+                                                            .first
+                                                            .origin
+                                                            .depTime
+                                                            .toLocal()
+                                                            .toString()
+                                                            .substring(11, 16),
+                                                        style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 4.w),
+                                                    ],
+                                                  ),
+                                                  Text(
+                                                    lowestPriceFlight
+                                                        .segments
+                                                        .first
+                                                        .first
+                                                        .origin
+                                                        .depTime
+                                                        .toLocal()
+                                                        .toString()
+                                                        .substring(0, 10),
+                                                    style: TextStyle(
+                                                      fontSize: 12.sp,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              Column(
+                                                children: [
+                                                  Text(
+                                                    numStops == 0
+                                                        ? "Non-Stop"
+                                                        : "$numStops stop",
+                                                    style: TextStyle(
+                                                        fontSize: 12.sp),
+                                                  ),
+                                                  Image.asset(
+                                                      'assets/images/flightStop.png'),
+                                                  Text(
+                                                    displayTotalDuration,
+                                                    style: TextStyle(
+                                                      fontSize: 12.sp,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        lowestPriceFlight
+                                                            .segments
+                                                            .last
+                                                            .last
+                                                            .destination
+                                                            .arrTime
+                                                            .toLocal()
+                                                            .toString()
+                                                            .substring(11, 16),
+                                                        style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 4.w),
+                                                    ],
+                                                  ),
+                                                  Text(
+                                                    lowestPriceFlight
+                                                        .segments
+                                                        .last
+                                                        .last
+                                                        .destination
+                                                        .arrTime
+                                                        .toLocal()
+                                                        .toString()
+                                                        .substring(0, 10),
+                                                    style: TextStyle(
+                                                        fontSize: 12.sp),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        lowestPriceFlight
+                                                            .segments
+                                                            .first
+                                                            .first
+                                                            .origin
+                                                            .airport
+                                                            .cityName,
+                                                        style: TextStyle(
+                                                          fontSize: 16.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 4.w),
+                                                      Text(
+                                                        lowestPriceFlight
+                                                            .segments
+                                                            .first
+                                                            .first
+                                                            .origin
+                                                            .airport
+                                                            .cityCode,
+                                                        style: TextStyle(
+                                                            fontSize: 12.sp),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(width: 100),
+                                                ],
+                                              ),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Text(
+                                                        lowestPriceFlight
+                                                            .segments
+                                                            .first
+                                                            .last
+                                                            .destination
+                                                            .airport
+                                                            .cityName,
+                                                        style: TextStyle(
+                                                          fontSize: 16.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 4.w),
+                                                      Text(
+                                                        lowestPriceFlight
+                                                            .segments
+                                                            .first
+                                                            .last
+                                                            .destination
+                                                            .airport
+                                                            .cityCode,
+                                                        style: TextStyle(
+                                                            fontSize: 12.sp),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          // EXPANDED SECTION - Show ALL fare variants
+                                          if (lowestPriceFlight.isExpanded &&
+                                              selectedindex == index)
+                                            Column(
+                                              children: flightVariants
+                                                  .asMap()
+                                                  .entries
+                                                  .map((entry) {
+                                                final index = entry.key;
+                                                final variantFlight =
+                                                    entry.value;
+                                                // Calculate price for this variant
+                                                print("EXPANDED VALUE");
+                                                double varPublishFare =
+                                                    variantFlight
+                                                        .fare.publishedFare
+                                                        .toDouble();
+
+                                                String varOfferedFaree =
+                                                    variantFlight
+                                                        .fare.offeredFare
+                                                        .toString();
+
+                                                String varOfferedFare =
+                                                    variantFlight
+                                                        .fare.offeredFare
+                                                        .toString();
+
+                                                double varTboTDS = variantFlight
+                                                    .fare.tdsOnCommission
+                                                    .toDouble();
+
+                                                final varCommissionEarned =
+                                                    variantFlight
+                                                        .fare.commissionEarned
+                                                        .toDouble();
+
+                                                double varCustomerComm = 0.0;
+                                                if (customer.data.isNotEmpty &&
+                                                    varCommissionEarned >= 0) {
+                                                  var commData =
+                                                      customer.data[0];
+                                                  double earned =
+                                                      varCommissionEarned;
+
+                                                  if (earned == 0.0) {
+                                                    varCustomerComm = commData
+                                                            .commission_0
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 10) {
+                                                    varCustomerComm = commData
+                                                            .commission_0_10
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 20) {
+                                                    varCustomerComm = commData
+                                                            .commission_10_20
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 30) {
+                                                    varCustomerComm = commData
+                                                            .commission_20_30
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 50) {
+                                                    varCustomerComm = commData
+                                                            .commission_30_50
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 100) {
+                                                    varCustomerComm = commData
+                                                            .commission_50_100
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 150) {
+                                                    varCustomerComm = commData
+                                                            .commission_100_150
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 200) {
+                                                    varCustomerComm = commData
+                                                            .commission_150_200
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 250) {
+                                                    varCustomerComm = commData
+                                                            .commission_200_250
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else if (earned <= 300) {
+                                                    varCustomerComm = commData
+                                                            .commission_250_300
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  } else {
+                                                    varCustomerComm = commData
+                                                            .commission_above_300
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                                  }
+                                                }
+
+                                                double varCustomertdsplb =
+                                                    variantFlight.fare.tdsOnPlb
+                                                        .toDouble();
+
+                                                double varCustomerplbearned =
+                                                    variantFlight.fare.plbEarned
+                                                        .toDouble();
+
+                                                double varfinalcommissionplb =
+                                                    varCommissionEarned +
+                                                        varCustomerplbearned;
+
+                                                double
+                                                    varCustomercommissiondetection =
+                                                    varfinalcommissionplb -
+                                                        varCustomerComm -
+                                                        varTboTDS -
+                                                        varCustomertdsplb;
+
+                                                int varFinalcustomercommission =
+                                                    varCustomercommissiondetection
+                                                        .round();
+
+                                                double
+                                                    varFinalcommissionpercentage =
+                                                    varCustomercommissiondetection *
+                                                        0.02;
+
+                                                int varCommissionpercentageround =
+                                                    varFinalcommissionpercentage
+                                                        .round();
+
+                                                double varFinalflatoffer =
+                                                    varCustomercommissiondetection -
+                                                        varFinalcommissionpercentage;
+
+                                                int variantCouponCode =
+                                                    varFinalflatoffer.round();
+
+                                                // int varFinaloffFare = (double
+                                                //             .parse(
+                                                //                 varOfferedFare) +
+                                                //         double.parse(varTboTDS
+                                                //             .toString()) +
+                                                //         double.parse(
+                                                //             varFinalcommissionpercentage
+                                                //                 .toString()) +
+                                                //         double.parse(
+                                                //             varCustomerComm
+                                                //                 .toString()))
+                                                //     .round();
+
+                                                // double varothercharges = varient;
+                                                double othercharges =
+                                                    variantFlight
+                                                        .fare.otherCharges;
+
+                                                int varFinaloffFare =
+                                                    varTboTDS <= 0
+                                                        ? (varPublishFare +
+                                                                varCustomerComm)
+                                                            .round()
+                                                        : (varPublishFare -
+                                                                varFinalflatoffer)
+                                                            .round();
+
+                                                return Container(
+                                                  margin: EdgeInsets.symmetric(
+                                                      vertical: 5),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    color:
+                                                        const Color(0xFFFFF4EF),
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Container(
+                                                        height: 40,
+                                                        margin: const EdgeInsets
+                                                            .all(10),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(10),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                          color: const Color(
+                                                              0xFFFFE7DA),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              variantFlight
+                                                                      .segments
+                                                                      .first
+                                                                      .first
+                                                                      .supplierFareClass
+                                                                      .toString()
+                                                                      .isEmpty
+                                                                  ? "Publish Fare"
+                                                                  : variantFlight
+                                                                      .segments
+                                                                      .first
+                                                                      .first
+                                                                      .supplierFareClass
+                                                                      .toString(),
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 16,
+                                                                color: Color(
+                                                                    0xFF1C1E1D),
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              "${""} $varFinaloffFare",
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 16,
+                                                                color: Color(
+                                                                    0xFFF37023),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(10),
+                                                        child: Column(
+                                                          children: [
+                                                            // SSR details (same as your existing code)
+                                                            Row(
+                                                              children: [
+                                                                Image.asset(
+                                                                    'assets/ssr/bag.png',
+                                                                    height: 16),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                const SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    "Cabin Bag",
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize:
+                                                                            10),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  variantFlight
+                                                                      .segments
+                                                                      .first
+                                                                      .first
+                                                                      .cabinBaggage
+                                                                      .toString(),
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontSize:
+                                                                          10),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 10),
+                                                            Row(
+                                                              children: [
+                                                                Image.asset(
+                                                                    'assets/ssr/checkin.png',
+                                                                    height: 16),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                const SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    "Check In",
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize:
+                                                                            10),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  variantFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .baggage
+                                                                          .isEmpty
+                                                                      ? '0'
+                                                                      : variantFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .baggage,
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontSize:
+                                                                          10),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 10),
+                                                            Row(
+                                                              children: [
+                                                                Image.asset(
+                                                                    'assets/ssr/seat.png',
+                                                                    height: 16),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                const SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    "Seats",
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize:
+                                                                            10),
+                                                                  ),
+                                                                ),
+                                                                const Text(
+                                                                  "Included",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontSize:
+                                                                          10),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 10),
+                                                            Row(
+                                                              children: [
+                                                                Image.asset(
+                                                                    'assets/ssr/meals.png',
+                                                                    height: 16),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                const SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    "Meals",
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize:
+                                                                            10),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  variantFlight
+                                                                              .isFreeMealAvailable ==
+                                                                          'true'
+                                                                      ? "Included"
+                                                                      : "Not Included",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontSize:
+                                                                          10),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 10),
+                                                            Row(
+                                                              children: [
+                                                                Image.asset(
+                                                                    'assets/ssr/cancel.png',
+                                                                    height: 16),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                const SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    "Cancellation",
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize:
+                                                                            10),
+                                                                  ),
+                                                                ),
+                                                                // Text(
+                                                                //   variantFlight
+                                                                //           .miniFareRules
+                                                                //           .isEmpty
+                                                                //       ? "Contact Cust.support"
+                                                                //       : "Not Chargable",
+                                                                //   style: TextStyle(
+                                                                //       color: Colors
+                                                                //           .black,
+                                                                //       fontSize:
+                                                                //           10),
+                                                                // ),
+                                                                Text(
+                                                                  "Chargable",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontSize:
+                                                                          10),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 10),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Image.asset(
+                                                                    'assets/ssr/date.png',
+                                                                    height: 16),
+                                                                const SizedBox(
+                                                                    width: 10),
+                                                                const SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    "Date Change",
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontSize:
+                                                                            10),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  "Chargable",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontSize:
+                                                                          10),
+                                                                ),
+                                                                // Text(
+                                                                //   variantFlight.miniFareRules.isEmpty ||
+                                                                //           variantFlight.miniFareRules[0].isEmpty
+                                                                //       ? "Contact Cust.support"
+                                                                //       : (() {
+                                                                //           final rule =
+                                                                //               variantFlight.miniFareRules[0].firstWhere(
+                                                                //             (rule) => rule.type == 'Reissue',
+                                                                //             orElse: () => MiniFareRule(
+                                                                //               type: '',
+                                                                //               details: '',
+                                                                //               journeyPoints: '',
+                                                                //               to: null,
+                                                                //               unit: null,
+                                                                //               onlineReissueAllowed: false,
+                                                                //               onlineRefundAllowed: false,
+                                                                //               from: null,
+                                                                //             ),
+                                                                //           );
+                                                                //
+                                                                //           if (rule.type.isEmpty) {
+                                                                //             return "Contact Cust.support";
+                                                                //           }
+                                                                //
+                                                                //           return rule.details != null && rule.details.isNotEmpty
+                                                                //               ? "Chargable"
+                                                                //               : "";
+                                                                //         })(),
+                                                                //   style: const TextStyle(
+                                                                //       color: Colors
+                                                                //           .black,
+                                                                //       fontSize:
+                                                                //           10),
+                                                                // ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 20),
+                                                            GestureDetector(
+                                                              onTap: () async {
+                                                                final controller =
+                                                                    Get.put(
+                                                                        PriceAlertController());
+                                                                controller
+                                                                    .resetAll(); // Reset for new selection
+                                                                controller
+                                                                        .oldFare
+                                                                        .value =
+                                                                    varFinaloffFare
+                                                                        .toDouble();
+                                                                controller
+                                                                        .selectedDepDate =
+                                                                    widget
+                                                                        .selectedDepDate;
+                                                                controller
+                                                                        .selectedReturnDate =
+                                                                    widget
+                                                                        .selectedReturnDate;
+                                                                controller
+                                                                        .fromAirport =
+                                                                    fromAirport;
+                                                                controller
+                                                                        .toAirport =
+                                                                    toAirport;
+                                                                controller
+                                                                        .airportCode =
+                                                                    airportCode;
+                                                                controller
+                                                                        .toairportCode =
+                                                                    toairportCode;
+                                                                controller
+                                                                        .searchData =
+                                                                    searchData;
+                                                                controller
+                                                                        .selectedTripType =
+                                                                    widget
+                                                                        .selectedTripType;
+                                                                // print(
+                                                                //     "Passing old fare to details page: ${controller.oldFare.value}");
+                                                                // print(
+                                                                //     "SELECTED DEP DATE${controller.selectedDepDate}");
+                                                                // print(
+                                                                //     "SELECTED RET DATE${controller.selectedReturnDate}");
+                                                                // print(
+                                                                //     "SELECTED selectedTripType${controller.selectedTripType}");
+
+                                                                // ✅ Use variantFlight directly (it's already the current flight)
+                                                                var currentFlight =
+                                                                    variantFlight;
+
+                                                                resultIndex =
+                                                                    currentFlight
+                                                                        .resultIndex;
+                                                                // print(
+                                                                //     "resultIndexresultIndex$resultIndex");
+
+                                                                final prefs =
+                                                                    await SharedPreferences
+                                                                        .getInstance();
+                                                                await prefs.setString(
+                                                                    'ResultIndex',
+                                                                    resultIndex!);
+
+                                                                traceId =
+                                                                    searchData
+                                                                        .response
+                                                                        .traceId;
+                                                                final prefstraceid =
+                                                                    await SharedPreferences
+                                                                        .getInstance();
+                                                                await prefstraceid
+                                                                    .setString(
+                                                                        'TraceId',
+                                                                        traceId!);
+
+                                                                flightnumber =
+                                                                    currentFlight
+                                                                        .segments
+                                                                        .first
+                                                                        .first
+                                                                        .airline
+                                                                        .flightNumber;
+                                                                final prefsflight =
+                                                                    await SharedPreferences
+                                                                        .getInstance();
+                                                                await prefsflight
+                                                                    .setString(
+                                                                        'FlightNumber',
+                                                                        flightnumber!);
+
+                                                                basefare =
+                                                                    currentFlight
+                                                                        .fare
+                                                                        .baseFare
+                                                                        .toString();
+
+                                                                final fare =
+                                                                    await SharedPreferences
+                                                                        .getInstance();
+                                                                await fare.setString(
+                                                                    'BaseFare',
+                                                                    basefare!);
+
+                                                                fareTax =
+                                                                    currentFlight
+                                                                        .fare
+                                                                        .tax
+                                                                        .toString();
+
+                                                                await fare
+                                                                    .setString(
+                                                                        'Tax',
+                                                                        fareTax!);
+
+                                                                origin =
+                                                                    searchData
+                                                                        .response
+                                                                        .origin;
+                                                                await fare
+                                                                    .setString(
+                                                                        'Origin',
+                                                                        origin!);
+
+                                                                destination =
+                                                                    searchData
+                                                                        .response
+                                                                        .destination;
+                                                                await fare.setString(
+                                                                    'Destination',
+                                                                    destination!);
+
+                                                                departureDate =
+                                                                    currentFlight
+                                                                        .segments
+                                                                        .first
+                                                                        .first
+                                                                        .origin
+                                                                        .depTime
+                                                                        .toLocal()
+                                                                        .toString()
+                                                                        .substring(
+                                                                            0,
+                                                                            10);
+                                                                await fare.setString(
+                                                                    'depTime',
+                                                                    departureDate!);
+
+                                                                // JOURNEYLIST
+                                                                List<
+                                                                        Map<String,
+                                                                            dynamic>>
+                                                                    segmentListJson =
+                                                                    [];
+
+                                                                for (var segmentGroup
+                                                                    in currentFlight
+                                                                        .segments) {
+                                                                  final firstSegment =
+                                                                      segmentGroup
+                                                                          .first;
+                                                                  final lastSegment =
+                                                                      segmentGroup
+                                                                          .last;
+                                                                  final totalDurationMinutes = lastSegment
+                                                                      .destination
+                                                                      .arrTime
+                                                                      .difference(firstSegment
+                                                                          .origin
+                                                                          .depTime)
+                                                                      .inMinutes;
+                                                                  final totalHours =
+                                                                      totalDurationMinutes ~/
+                                                                          60;
+                                                                  final totalMinutes =
+                                                                      totalDurationMinutes %
+                                                                          60;
+                                                                  final totalDurationText =
+                                                                      "${totalHours}h ${totalMinutes}m";
+
+                                                                  for (var segment
+                                                                      in segmentGroup) {
+                                                                    String
+                                                                        layoverText =
+                                                                        "";
+                                                                    int segmentIndex =
+                                                                        segmentGroup
+                                                                            .indexOf(segment);
+
+                                                                    if (segmentIndex >
+                                                                        0) {
+                                                                      final prevSegment =
+                                                                          segmentGroup[segmentIndex -
+                                                                              1];
+                                                                      DateTime
+                                                                          prevArrival =
+                                                                          prevSegment
+                                                                              .destination
+                                                                              .arrTime;
+                                                                      DateTime
+                                                                          nextDeparture =
+                                                                          segment
+                                                                              .origin
+                                                                              .depTime;
+                                                                      final layoverMinutes = nextDeparture
+                                                                          .difference(
+                                                                              prevArrival)
+                                                                          .inMinutes;
+                                                                      final hours =
+                                                                          layoverMinutes ~/
+                                                                              60;
+                                                                      final mins =
+                                                                          layoverMinutes %
+                                                                              60;
+                                                                      layoverText =
+                                                                          "${hours}h ${mins}m layover at ${prevSegment.destination.airport.cityName}";
+                                                                    }
+
+                                                                    final DateTime
+                                                                        depTime =
+                                                                        segment
+                                                                            .origin
+                                                                            .depTime;
+                                                                    final String
+                                                                        formatteddepDate =
+                                                                        DateFormat("dd MMM yy")
+                                                                            .format(depTime);
+                                                                    final DateTime
+                                                                        arrTime =
+                                                                        segment
+                                                                            .destination
+                                                                            .arrTime;
+                                                                    final String
+                                                                        formattedarrDate =
+                                                                        DateFormat("dd MMM yy")
+                                                                            .format(arrTime);
+
+                                                                    final stop = (currentFlight.segments.first.length -
+                                                                                1) ==
+                                                                            0
+                                                                        ? "Non-Stop"
+                                                                        : "${currentFlight.segments.first.length - 1} stop";
+
+                                                                    segmentListJson
+                                                                        .add({
+                                                                      "airlineName": segment
+                                                                          .airline
+                                                                          .airlineName,
+                                                                      "airlineCode": segment
+                                                                          .airline
+                                                                          .airlineCode,
+                                                                      "flightNumber": segment
+                                                                          .airline
+                                                                          .flightNumber,
+                                                                      "fromCity": segment
+                                                                          .origin
+                                                                          .airport
+                                                                          .cityName,
+                                                                      "fromCode": segment
+                                                                          .origin
+                                                                          .airport
+                                                                          .cityCode,
+                                                                      "toCity": segment
+                                                                          .destination
+                                                                          .airport
+                                                                          .cityName,
+                                                                      "toCode": segment
+                                                                          .destination
+                                                                          .airport
+                                                                          .cityCode,
+                                                                      "departure":
+                                                                          formatteddepDate,
+                                                                      "depTime": segment
+                                                                          .origin
+                                                                          .depTime
+                                                                          .toString()
+                                                                          .substring(
+                                                                              11,
+                                                                              16),
+                                                                      "arrival":
+                                                                          formattedarrDate,
+                                                                      "arrTime": segment
+                                                                          .destination
+                                                                          .arrTime
+                                                                          .toString()
+                                                                          .substring(
+                                                                              11,
+                                                                              16),
+                                                                      "duration": segment
+                                                                          .duration
+                                                                          .toString(),
+                                                                      "durationTime":
+                                                                          totalDurationText,
+                                                                      "fromAirport": segment
+                                                                          .origin
+                                                                          .airport
+                                                                          .airportName,
+                                                                      "fromAirportCode": segment
+                                                                          .origin
+                                                                          .airport
+                                                                          .airportCode,
+                                                                      "toAirport": segment
+                                                                          .destination
+                                                                          .airport
+                                                                          .airportName,
+                                                                      "toAirportCode": segment
+                                                                          .destination
+                                                                          .airport
+                                                                          .airportCode,
+                                                                      "layover":
+                                                                          layoverText,
+                                                                      "noofstop":
+                                                                          stop,
+                                                                      "baggage":
+                                                                          segment
+                                                                              .baggage,
+                                                                      "cabinBaggage":
+                                                                          segment
+                                                                              .cabinBaggage,
+                                                                    });
+                                                                  }
+                                                                }
+
+                                                                // print(
+                                                                //     "segmentListJson: ${jsonEncode(segmentListJson)}");
+
+                                                                // FARE BREAKDOWN
+                                                                final fareBreakdown =
+                                                                    currentFlight
+                                                                        .fareBreakdown;
+                                                                // print(
+                                                                //     "fareBreakdown: ${jsonEncode(fareBreakdown)}");
+
+                                                                double
+                                                                    adultBase =
+                                                                        0,
+                                                                    adultTax =
+                                                                        0;
+                                                                double
+                                                                    childBase =
+                                                                        0,
+                                                                    childTax =
+                                                                        0;
+                                                                double
+                                                                    infantBase =
+                                                                        0,
+                                                                    infantTax =
+                                                                        0;
+
+                                                                for (var item
+                                                                    in fareBreakdown) {
+                                                                  if (item.passengerType ==
+                                                                      1) {
+                                                                    adultBase = item
+                                                                        .baseFare
+                                                                        .toDouble();
+                                                                    adultTax = item
+                                                                        .tax
+                                                                        .toDouble();
+                                                                  } else if (item
+                                                                          .passengerType ==
+                                                                      2) {
+                                                                    childBase = item
+                                                                        .baseFare
+                                                                        .toDouble();
+                                                                    childTax = item
+                                                                        .tax
+                                                                        .toDouble();
+                                                                  } else if (item
+                                                                          .passengerType ==
+                                                                      3) {
+                                                                    infantBase = item
+                                                                        .baseFare
+                                                                        .toDouble();
+                                                                    infantTax = item
+                                                                        .tax
+                                                                        .toDouble();
+                                                                  }
+                                                                }
+
+                                                                // Calculate displayTotalDuration for this variant
+                                                                final segments =
+                                                                    currentFlight
+                                                                        .segments
+                                                                        .first;
+                                                                int numStops =
+                                                                    segments.length -
+                                                                        1;
+                                                                String
+                                                                    displayTotalDuration;
+
+                                                                if (numStops >
+                                                                    0) {
+                                                                  int totalTripMinutes =
+                                                                      segments
+                                                                          .last
+                                                                          .accumulatedDuration
+                                                                          .toInt();
+                                                                  int totalTripHours =
+                                                                      totalTripMinutes ~/
+                                                                          60;
+                                                                  int totalTripMins =
+                                                                      totalTripMinutes %
+                                                                          60;
+                                                                  displayTotalDuration =
+                                                                      "${totalTripHours}h ${totalTripMins}m";
+                                                                } else {
+                                                                  int totalMinutes =
+                                                                      currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .duration
+                                                                          .toInt();
+                                                                  int hours =
+                                                                      totalMinutes ~/
+                                                                          60;
+                                                                  int minutes =
+                                                                      totalMinutes %
+                                                                          60;
+                                                                  displayTotalDuration =
+                                                                      "${hours}h ${minutes}m";
+                                                                }
+
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    settings:
+                                                                        RouteSettings(
+                                                                            name:
+                                                                                '/flightDetails'),
+                                                                    builder:
+                                                                        (context) =>
+                                                                            FlightDetailsPage(
+                                                                      flight: const {},
+                                                                      city:
+                                                                          'mdu',
+                                                                      destination:
+                                                                          'chennai',
+                                                                      airlineName: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .airline
+                                                                          .airlineName,
+                                                                      airlineCode: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .airline
+                                                                          .airlineCode,
+                                                                      airportName: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .origin
+                                                                          .airport
+                                                                          .airportName,
+                                                                      desairportName: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .last
+                                                                          .destination
+                                                                          .airport
+                                                                          .airportName,
+                                                                      cityName: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .origin
+                                                                          .airport
+                                                                          .cityName,
+                                                                      cityCode: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .origin
+                                                                          .airport
+                                                                          .cityCode,
+                                                                      descityName: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .last
+                                                                          .destination
+                                                                          .airport
+                                                                          .cityName,
+                                                                      descityCode: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .last
+                                                                          .destination
+                                                                          .airport
+                                                                          .cityCode,
+                                                                      flightNumber: currentFlight
                                                                           .segments
                                                                           .first
                                                                           .first
                                                                           .airline
                                                                           .flightNumber,
-                                                                      style: Theme.of(
-                                                                              context)
-                                                                          .textTheme
-                                                                          .headlineSmall
-                                                                          ?.copyWith(
-                                                                            fontSize:
-                                                                                12.sp,
-                                                                            color:
-                                                                                Colors.grey,
-                                                                          ),
-                                                                      children: [
-                                                                        WidgetSpan(
-                                                                          child:
-                                                                              Padding(
-                                                                            padding:
-                                                                                EdgeInsets.symmetric(horizontal: 2.w, vertical: 4.h),
-                                                                            child:
-                                                                                Container(
-                                                                              width: 4.w,
-                                                                              height: 3.h,
-                                                                              decoration: const BoxDecoration(
-                                                                                color: Colors.grey,
-                                                                                shape: BoxShape.circle,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    TextSpan(
-                                                                      text: lowestPriceFlight
+                                                                      depDate: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .origin
+                                                                          .depTime
+                                                                          .toLocal()
+                                                                          .toString()
+                                                                          .substring(
+                                                                              0,
+                                                                              10),
+                                                                      depTime: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .origin
+                                                                          .depTime
+                                                                          .toLocal()
+                                                                          .toString()
+                                                                          .substring(
+                                                                              11,
+                                                                              16),
+                                                                      refundable: currentFlight
                                                                               .isRefundable
                                                                           ? "R"
                                                                           : "NR",
-                                                                      style: Theme.of(
-                                                                              context)
-                                                                          .textTheme
-                                                                          .headlineSmall
-                                                                          ?.copyWith(
-                                                                            fontSize:
-                                                                                12.sp,
-                                                                            color:
-                                                                                primaryColor,
-                                                                          ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(width: 5),
-                                                  ],
-                                                ),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment.end,
-                                                    children: [
-                                                      if (finaloffFare <
-                                                          double.parse(
-                                                              publishFare
-                                                                  .toString()))
-                                                        Text(
-                                                          "${""} ${lowestPriceFlight.fare.publishedFare.toStringAsFixed(0)}",
-                                                          style:
-                                                              const TextStyle(
-                                                            decoration:
-                                                                TextDecoration
-                                                                    .lineThrough,
-                                                            fontSize: 12,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                      Text(
-                                                        "${""} $finaloffFare",
-                                                        style: TextStyle(
-                                                          fontFamily: 'Inter',
-                                                          color: primaryColor,
-                                                          fontSize: 16.sp,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        layoverText,
-                                                        textAlign:
-                                                            TextAlign.end,
-                                                        style: TextStyle(
-                                                          fontSize: 10.sp,
-                                                          color: Colors.red,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                      SizedBox(height: 2.h),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 8.h),
-                                            SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: DotDivider(
-                                                dotSize: 1.h,
-                                                spacing: 2.r,
-                                                dotCount: 97,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                            SizedBox(height: 8.h),
-
-                                            // Time and location details (same as before)
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                          lowestPriceFlight
-                                                              .segments
-                                                              .first
-                                                              .first
-                                                              .origin
-                                                              .depTime
-                                                              .toLocal()
-                                                              .toString()
-                                                              .substring(
-                                                                  11, 16),
-                                                          style: TextStyle(
-                                                            fontSize: 14.sp,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                        SizedBox(width: 4.w),
-                                                      ],
-                                                    ),
-                                                    Text(
-                                                      lowestPriceFlight
-                                                          .segments
-                                                          .first
-                                                          .first
-                                                          .origin
-                                                          .depTime
-                                                          .toLocal()
-                                                          .toString()
-                                                          .substring(0, 10),
-                                                      style: TextStyle(
-                                                        fontSize: 12.sp,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Column(
-                                                  children: [
-                                                    Text(
-                                                      numStops == 0
-                                                          ? "Non-Stop"
-                                                          : "$numStops stop",
-                                                      style: TextStyle(
-                                                          fontSize: 12.sp),
-                                                    ),
-                                                    Image.asset(
-                                                        'assets/images/flightStop.png'),
-                                                    Text(
-                                                      displayTotalDuration,
-                                                      style: TextStyle(
-                                                        fontSize: 12.sp,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.end,
-                                                      children: [
-                                                        Text(
-                                                          lowestPriceFlight
-                                                              .segments
-                                                              .last
-                                                              .last
-                                                              .destination
-                                                              .arrTime
-                                                              .toLocal()
-                                                              .toString()
-                                                              .substring(
-                                                                  11, 16),
-                                                          style: TextStyle(
-                                                            fontSize: 14.sp,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                        SizedBox(width: 4.w),
-                                                      ],
-                                                    ),
-                                                    Text(
-                                                      lowestPriceFlight
-                                                          .segments
-                                                          .last
-                                                          .last
-                                                          .destination
-                                                          .arrTime
-                                                          .toLocal()
-                                                          .toString()
-                                                          .substring(0, 10),
-                                                      style: TextStyle(
-                                                          fontSize: 12.sp),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                          lowestPriceFlight
-                                                              .segments
-                                                              .first
-                                                              .first
-                                                              .origin
-                                                              .airport
-                                                              .cityName,
-                                                          style: TextStyle(
-                                                            fontSize: 16.sp,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                        SizedBox(width: 4.w),
-                                                        Text(
-                                                          lowestPriceFlight
-                                                              .segments
-                                                              .first
-                                                              .first
-                                                              .origin
-                                                              .airport
-                                                              .cityCode,
-                                                          style: TextStyle(
-                                                              fontSize: 12.sp),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(width: 100),
-                                                  ],
-                                                ),
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.end,
-                                                      children: [
-                                                        Text(
-                                                          lowestPriceFlight
-                                                              .segments
-                                                              .first
-                                                              .last
-                                                              .destination
-                                                              .airport
-                                                              .cityName,
-                                                          style: TextStyle(
-                                                            fontSize: 16.sp,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                        SizedBox(width: 4.w),
-                                                        Text(
-                                                          lowestPriceFlight
-                                                              .segments
-                                                              .first
-                                                              .last
-                                                              .destination
-                                                              .airport
-                                                              .cityCode,
-                                                          style: TextStyle(
-                                                              fontSize: 12.sp),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 10),
-                                            // EXPANDED SECTION - Show ALL fare variants
-                                            if (lowestPriceFlight.isExpanded &&
-                                                selectedindex == index)
-                                              Column(
-                                                children: flightVariants
-                                                    .asMap()
-                                                    .entries
-                                                    .map((entry) {
-                                                  final index = entry.key;
-                                                  final variantFlight =
-                                                      entry.value;
-                                                  print(
-                                                      "Variant index: $index");
-                                                  // Calculate price for this variant
-                                                  print("EXPANDED VALUE");
-                                                  double varPublishFare =
-                                                      variantFlight
-                                                          .fare.publishedFare
-                                                          .toDouble();
-
-                                                  print(
-                                                      "varPublishFare$varPublishFare");
-                                                  print(
-                                                      "othercharged${variantFlight.fare.otherCharges}");
-                                                  String varOfferedFaree =
-                                                      variantFlight
-                                                          .fare.offeredFare
-                                                          .toString();
-                                                  print(
-                                                      "varOfferedFare$varOfferedFaree");
-                                                  String varOfferedFare =
-                                                      variantFlight
-                                                          .fare.offeredFare
-                                                          .toString();
-                                                  print(
-                                                      "varOfferedFare$varOfferedFare");
-                                                  double varTboTDS =
-                                                      variantFlight
-                                                          .fare.tdsOnCommission
-                                                          .toDouble();
-                                                  print("varTboTDS$varTboTDS");
-                                                  final varCommissionEarned =
-                                                      variantFlight
-                                                          .fare.commissionEarned
-                                                          .toDouble();
-                                                  print(
-                                                      "varCommissionEarned$varCommissionEarned");
-                                                  double varCustomerComm = 0.0;
-                                                  if (customer
-                                                          .data.isNotEmpty &&
-                                                      varCommissionEarned >=
-                                                          0) {
-                                                    var commData =
-                                                        customer.data[0];
-                                                    double earned =
-                                                        varCommissionEarned;
-
-                                                    if (earned == 0.0) {
-                                                      varCustomerComm = commData
-                                                              .commission_0
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 10) {
-                                                      varCustomerComm = commData
-                                                              .commission_0_10
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 20) {
-                                                      varCustomerComm = commData
-                                                              .commission_10_20
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 30) {
-                                                      varCustomerComm = commData
-                                                              .commission_20_30
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 50) {
-                                                      varCustomerComm = commData
-                                                              .commission_30_50
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 100) {
-                                                      varCustomerComm = commData
-                                                              .commission_50_100
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 150) {
-                                                      varCustomerComm = commData
-                                                              .commission_100_150
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 200) {
-                                                      varCustomerComm = commData
-                                                              .commission_150_200
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 250) {
-                                                      varCustomerComm = commData
-                                                              .commission_200_250
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else if (earned <= 300) {
-                                                      varCustomerComm = commData
-                                                              .commission_250_300
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    } else {
-                                                      varCustomerComm = commData
-                                                              .commission_above_300
-                                                              ?.toDouble() ??
-                                                          0.0;
-                                                    }
-                                                  }
-                                                  print(
-                                                      "varCustomerComm$varCustomerComm");
-                                                  double varCustomertdsplb =
-                                                      variantFlight
-                                                          .fare.tdsOnPlb
-                                                          .toDouble();
-                                                  print(
-                                                      "varCustomertdsplb$varCustomertdsplb");
-                                                  double varCustomerplbearned =
-                                                      variantFlight
-                                                          .fare.plbEarned
-                                                          .toDouble();
-                                                  print(
-                                                      "varCustomerplbearned$varCustomerplbearned");
-                                                  double varfinalcommissionplb =
-                                                      varCommissionEarned +
-                                                          varCustomerplbearned;
-                                                  print(
-                                                      "AddingcommissionplbEarned$varfinalcommissionplb");
-                                                  double
-                                                      varCustomercommissiondetection =
-                                                      varfinalcommissionplb -
-                                                          varCustomerComm -
-                                                          varTboTDS -
-                                                          varCustomertdsplb;
-                                                  print(
-                                                      "varCustomercommissiondetection$varCustomercommissiondetection");
-                                                  int varFinalcustomercommission =
-                                                      varCustomercommissiondetection
-                                                          .round();
-                                                  print(
-                                                      "varFinalcustomercommission$varFinalcustomercommission");
-                                                  double
-                                                      varFinalcommissionpercentage =
-                                                      varCustomercommissiondetection *
-                                                          0.02;
-                                                  print(
-                                                      "varFinalcommissionpercentage$varFinalcommissionpercentage");
-                                                  int varCommissionpercentageround =
-                                                      varFinalcommissionpercentage
-                                                          .round();
-                                                  print(
-                                                      "varCommissionpercentageround$varCommissionpercentageround");
-                                                  double varFinalflatoffer =
-                                                      varCustomercommissiondetection -
-                                                          varFinalcommissionpercentage;
-                                                  print(
-                                                      "varFinalflatoffer$varFinalflatoffer");
-                                                  int variantCouponCode =
-                                                      varFinalflatoffer.round();
-                                                  print(
-                                                      "variantCouponCode$variantCouponCode");
-                                                  // int varFinaloffFare = (double
-                                                  //             .parse(
-                                                  //                 varOfferedFare) +
-                                                  //         double.parse(varTboTDS
-                                                  //             .toString()) +
-                                                  //         double.parse(
-                                                  //             varFinalcommissionpercentage
-                                                  //                 .toString()) +
-                                                  //         double.parse(
-                                                  //             varCustomerComm
-                                                  //                 .toString()))
-                                                  //     .round();
-
-                                                  // double varothercharges = varient;
-                                                  double othercharges =
-                                                      variantFlight
-                                                          .fare.otherCharges;
-                                                  print(
-                                                      "othercharges$othercharges");
-                                                  int varFinaloffFare = varTboTDS <=
-                                                          0
-                                                      ? (varPublishFare +
-                                                              varCustomerComm)
-                                                          .round()
-                                                      : (varPublishFare -
-                                                              varFinalflatoffer)
-                                                          .round();
-
-                                                  print(
-                                                      "varFinaloffFare$varFinaloffFare");
-
-                                                  return Container(
-                                                    margin:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 5),
-                                                    decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                      color: const Color(
-                                                          0xFFFFF4EF),
-                                                    ),
-                                                    child: Column(
-                                                      children: [
-                                                        Container(
-                                                          height: 40,
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .all(10),
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(10),
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10),
-                                                            color: const Color(
-                                                                0xFFFFE7DA),
-                                                          ),
-                                                          child: Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              Text(
-                                                                variantFlight
-                                                                        .segments
-                                                                        .first
-                                                                        .first
-                                                                        .supplierFareClass
-                                                                        .toString()
-                                                                        .isEmpty
-                                                                    ? "Publish Fare"
-                                                                    : variantFlight
-                                                                        .segments
-                                                                        .first
-                                                                        .first
-                                                                        .supplierFareClass
-                                                                        .toString(),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 16,
-                                                                  color: Color(
-                                                                      0xFF1C1E1D),
-                                                                ),
-                                                              ),
-                                                              Text(
-                                                                "${""} $varFinaloffFare",
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 16,
-                                                                  color: Color(
-                                                                      0xFFF37023),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        Container(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(10),
-                                                          child: Column(
-                                                            children: [
-                                                              // SSR details (same as your existing code)
-                                                              Row(
-                                                                children: [
-                                                                  Image.asset(
-                                                                      'assets/ssr/bag.png',
-                                                                      height:
-                                                                          16),
-                                                                  const SizedBox(
-                                                                      width:
-                                                                          10),
-                                                                  const SizedBox(
-                                                                    width: 100,
-                                                                    child: Text(
-                                                                      "Cabin Bag",
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontSize:
-                                                                              10),
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    variantFlight
-                                                                        .segments
-                                                                        .first
-                                                                        .first
-                                                                        .cabinBaggage
-                                                                        .toString(),
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontSize:
-                                                                            10),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 10),
-                                                              Row(
-                                                                children: [
-                                                                  Image.asset(
-                                                                      'assets/ssr/checkin.png',
-                                                                      height:
-                                                                          16),
-                                                                  const SizedBox(
-                                                                      width:
-                                                                          10),
-                                                                  const SizedBox(
-                                                                    width: 100,
-                                                                    child: Text(
-                                                                      "Check In",
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontSize:
-                                                                              10),
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    variantFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .baggage
-                                                                            .isEmpty
-                                                                        ? '0'
-                                                                        : variantFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .baggage,
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontSize:
-                                                                            10),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 10),
-                                                              Row(
-                                                                children: [
-                                                                  Image.asset(
-                                                                      'assets/ssr/seat.png',
-                                                                      height:
-                                                                          16),
-                                                                  const SizedBox(
-                                                                      width:
-                                                                          10),
-                                                                  const SizedBox(
-                                                                    width: 100,
-                                                                    child: Text(
-                                                                      "Seats",
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontSize:
-                                                                              10),
-                                                                    ),
-                                                                  ),
-                                                                  const Text(
-                                                                    "Included",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontSize:
-                                                                            10),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 10),
-                                                              Row(
-                                                                children: [
-                                                                  Image.asset(
-                                                                      'assets/ssr/meals.png',
-                                                                      height:
-                                                                          16),
-                                                                  const SizedBox(
-                                                                      width:
-                                                                          10),
-                                                                  const SizedBox(
-                                                                    width: 100,
-                                                                    child: Text(
-                                                                      "Meals",
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontSize:
-                                                                              10),
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    variantFlight.isFreeMealAvailable ==
-                                                                            'true'
-                                                                        ? "Included"
-                                                                        : "Not Included",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontSize:
-                                                                            10),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 10),
-                                                              Row(
-                                                                children: [
-                                                                  Image.asset(
-                                                                      'assets/ssr/cancel.png',
-                                                                      height:
-                                                                          16),
-                                                                  const SizedBox(
-                                                                      width:
-                                                                          10),
-                                                                  const SizedBox(
-                                                                    width: 100,
-                                                                    child: Text(
-                                                                      "Cancellation",
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontSize:
-                                                                              10),
-                                                                    ),
-                                                                  ),
-                                                                  // Text(
-                                                                  //   variantFlight
-                                                                  //           .miniFareRules
-                                                                  //           .isEmpty
-                                                                  //       ? "Contact Cust.support"
-                                                                  //       : "Not Chargable",
-                                                                  //   style: TextStyle(
-                                                                  //       color: Colors
-                                                                  //           .black,
-                                                                  //       fontSize:
-                                                                  //           10),
-                                                                  // ),
-                                                                  Text(
-                                                                    "Chargable",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontSize:
-                                                                            10),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 10),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Image.asset(
-                                                                      'assets/ssr/date.png',
-                                                                      height:
-                                                                          16),
-                                                                  const SizedBox(
-                                                                      width:
-                                                                          10),
-                                                                  const SizedBox(
-                                                                    width: 100,
-                                                                    child: Text(
-                                                                      "Date Change",
-                                                                      style: TextStyle(
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontSize:
-                                                                              10),
-                                                                    ),
-                                                                  ),
-                                                                  Text(
-                                                                    "Chargable",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontSize:
-                                                                            10),
-                                                                  ),
-                                                                  // Text(
-                                                                  //   variantFlight.miniFareRules.isEmpty ||
-                                                                  //           variantFlight.miniFareRules[0].isEmpty
-                                                                  //       ? "Contact Cust.support"
-                                                                  //       : (() {
-                                                                  //           final rule =
-                                                                  //               variantFlight.miniFareRules[0].firstWhere(
-                                                                  //             (rule) => rule.type == 'Reissue',
-                                                                  //             orElse: () => MiniFareRule(
-                                                                  //               type: '',
-                                                                  //               details: '',
-                                                                  //               journeyPoints: '',
-                                                                  //               to: null,
-                                                                  //               unit: null,
-                                                                  //               onlineReissueAllowed: false,
-                                                                  //               onlineRefundAllowed: false,
-                                                                  //               from: null,
-                                                                  //             ),
-                                                                  //           );
-                                                                  //
-                                                                  //           if (rule.type.isEmpty) {
-                                                                  //             return "Contact Cust.support";
-                                                                  //           }
-                                                                  //
-                                                                  //           return rule.details != null && rule.details.isNotEmpty
-                                                                  //               ? "Chargable"
-                                                                  //               : "";
-                                                                  //         })(),
-                                                                  //   style: const TextStyle(
-                                                                  //       color: Colors
-                                                                  //           .black,
-                                                                  //       fontSize:
-                                                                  //           10),
-                                                                  // ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 20),
-                                                              GestureDetector(
-                                                                onTap:
-                                                                    () async {
-                                                                  final controller =
-                                                                      Get.put(
-                                                                          PriceAlertController());
-                                                                  controller
-                                                                          .oldFare
-                                                                          .value =
-                                                                      varFinaloffFare
-                                                                          .toDouble();
-                                                                  controller
-                                                                          .selectedDepDate =
-                                                                      widget
-                                                                          .selectedDepDate;
-                                                                  controller
-                                                                          .selectedReturnDate =
-                                                                      widget
-                                                                          .selectedReturnDate;
-                                                                  controller
-                                                                          .fromAirport =
-                                                                      fromAirport;
-                                                                  controller
-                                                                          .toAirport =
-                                                                      toAirport;
-                                                                  controller
-                                                                          .airportCode =
-                                                                      airportCode;
-                                                                  controller
-                                                                          .toairportCode =
-                                                                      toairportCode;
-                                                                  controller
-                                                                          .searchData =
-                                                                      searchData;
-                                                                  controller
-                                                                          .selectedTripType =
-                                                                      widget
-                                                                          .selectedTripType;
-                                                                  print(
-                                                                      "Passing old fare to details page: ${controller.oldFare.value}");
-                                                                  print(
-                                                                      "SELECTED DEP DATE${controller.selectedDepDate}");
-                                                                  print(
-                                                                      "SELECTED RET DATE${controller.selectedReturnDate}");
-                                                                  print(
-                                                                      "SELECTED selectedTripType${controller.selectedTripType}");
-
-                                                                  // ✅ Use variantFlight directly (it's already the current flight)
-                                                                  var currentFlight =
-                                                                      variantFlight;
-
-                                                                  resultIndex =
-                                                                      currentFlight
-                                                                          .resultIndex;
-                                                                  print(
-                                                                      "resultIndexresultIndex$resultIndex");
-
-                                                                  final prefs =
-                                                                      await SharedPreferences
-                                                                          .getInstance();
-                                                                  await prefs.setString(
-                                                                      'ResultIndex',
-                                                                      resultIndex!);
-
-                                                                  traceId = searchData
-                                                                      .response
-                                                                      .traceId;
-                                                                  final prefstraceid =
-                                                                      await SharedPreferences
-                                                                          .getInstance();
-                                                                  await prefstraceid
-                                                                      .setString(
-                                                                          'TraceId',
-                                                                          traceId!);
-
-                                                                  flightnumber =
-                                                                      currentFlight
+                                                                      arrDate: currentFlight
                                                                           .segments
-                                                                          .first
-                                                                          .first
-                                                                          .airline
-                                                                          .flightNumber;
-                                                                  final prefsflight =
-                                                                      await SharedPreferences
-                                                                          .getInstance();
-                                                                  await prefsflight
-                                                                      .setString(
-                                                                          'FlightNumber',
-                                                                          flightnumber!);
-
-                                                                  basefare = currentFlight
-                                                                      .fare
-                                                                      .baseFare
-                                                                      .toString();
-                                                                  print(
-                                                                      "basefarebasefare$basefare");
-                                                                  final fare =
-                                                                      await SharedPreferences
-                                                                          .getInstance();
-                                                                  await fare.setString(
-                                                                      'BaseFare',
-                                                                      basefare!);
-
-                                                                  fareTax =
-                                                                      currentFlight
-                                                                          .fare
-                                                                          .tax
-                                                                          .toString();
-                                                                  print(
-                                                                      "fareTax$fareTax");
-                                                                  await fare
-                                                                      .setString(
-                                                                          'Tax',
-                                                                          fareTax!);
-
-                                                                  origin = searchData
-                                                                      .response
-                                                                      .origin;
-                                                                  await fare.setString(
-                                                                      'Origin',
-                                                                      origin!);
-                                                                  print(
-                                                                      "origin$origin");
-
-                                                                  destination =
-                                                                      searchData
-                                                                          .response
-                                                                          .destination;
-                                                                  await fare.setString(
-                                                                      'Destination',
-                                                                      destination!);
-                                                                  print(
-                                                                      "destination$destination");
-
-                                                                  departureDate = currentFlight
-                                                                      .segments
-                                                                      .first
-                                                                      .first
-                                                                      .origin
-                                                                      .depTime
-                                                                      .toLocal()
-                                                                      .toString()
-                                                                      .substring(
-                                                                          0,
-                                                                          10);
-                                                                  await fare.setString(
-                                                                      'depTime',
-                                                                      departureDate!);
-
-                                                                  // JOURNEYLIST
-                                                                  List<Map<String, dynamic>>
-                                                                      segmentListJson =
-                                                                      [];
-
-                                                                  for (var segmentGroup
-                                                                      in currentFlight
-                                                                          .segments) {
-                                                                    final firstSegment =
-                                                                        segmentGroup
-                                                                            .first;
-                                                                    final lastSegment =
-                                                                        segmentGroup
-                                                                            .last;
-                                                                    final totalDurationMinutes = lastSegment
-                                                                        .destination
-                                                                        .arrTime
-                                                                        .difference(firstSegment
-                                                                            .origin
-                                                                            .depTime)
-                                                                        .inMinutes;
-                                                                    final totalHours =
-                                                                        totalDurationMinutes ~/
-                                                                            60;
-                                                                    final totalMinutes =
-                                                                        totalDurationMinutes %
-                                                                            60;
-                                                                    final totalDurationText =
-                                                                        "${totalHours}h ${totalMinutes}m";
-
-                                                                    for (var segment
-                                                                        in segmentGroup) {
-                                                                      String
-                                                                          layoverText =
-                                                                          "";
-                                                                      int segmentIndex =
-                                                                          segmentGroup
-                                                                              .indexOf(segment);
-
-                                                                      if (segmentIndex >
-                                                                          0) {
-                                                                        final prevSegment =
-                                                                            segmentGroup[segmentIndex -
-                                                                                1];
-                                                                        DateTime
-                                                                            prevArrival =
-                                                                            prevSegment.destination.arrTime;
-                                                                        DateTime
-                                                                            nextDeparture =
-                                                                            segment.origin.depTime;
-                                                                        final layoverMinutes = nextDeparture
-                                                                            .difference(prevArrival)
-                                                                            .inMinutes;
-                                                                        final hours =
-                                                                            layoverMinutes ~/
-                                                                                60;
-                                                                        final mins =
-                                                                            layoverMinutes %
-                                                                                60;
-                                                                        layoverText =
-                                                                            "${hours}h ${mins}m layover at ${prevSegment.destination.airport.cityName}";
-                                                                      }
-
-                                                                      final DateTime
-                                                                          depTime =
-                                                                          segment
-                                                                              .origin
-                                                                              .depTime;
-                                                                      final String
-                                                                          formatteddepDate =
-                                                                          DateFormat("dd MMM yy")
-                                                                              .format(depTime);
-                                                                      final DateTime
-                                                                          arrTime =
-                                                                          segment
-                                                                              .destination
-                                                                              .arrTime;
-                                                                      final String
-                                                                          formattedarrDate =
-                                                                          DateFormat("dd MMM yy")
-                                                                              .format(arrTime);
-
-                                                                      final stop = (currentFlight.segments.first.length - 1) ==
+                                                                          .last
+                                                                          .last
+                                                                          .destination
+                                                                          .arrTime
+                                                                          .toLocal()
+                                                                          .toString()
+                                                                          .substring(
+                                                                              0,
+                                                                              10),
+                                                                      arrTime: currentFlight
+                                                                          .segments
+                                                                          .last
+                                                                          .last
+                                                                          .destination
+                                                                          .arrTime
+                                                                          .toLocal()
+                                                                          .toString()
+                                                                          .substring(
+                                                                              11,
+                                                                              16),
+                                                                      stop: numStops ==
                                                                               0
                                                                           ? "Non-Stop"
-                                                                          : "${currentFlight.segments.first.length - 1} stop";
-
-                                                                      segmentListJson
-                                                                          .add({
-                                                                        "airlineName": segment
-                                                                            .airline
-                                                                            .airlineName,
-                                                                        "airlineCode": segment
-                                                                            .airline
-                                                                            .airlineCode,
-                                                                        "flightNumber": segment
-                                                                            .airline
-                                                                            .flightNumber,
-                                                                        "fromCity": segment
-                                                                            .origin
-                                                                            .airport
-                                                                            .cityName,
-                                                                        "fromCode": segment
-                                                                            .origin
-                                                                            .airport
-                                                                            .cityCode,
-                                                                        "toCity": segment
-                                                                            .destination
-                                                                            .airport
-                                                                            .cityName,
-                                                                        "toCode": segment
-                                                                            .destination
-                                                                            .airport
-                                                                            .cityCode,
-                                                                        "departure":
-                                                                            formatteddepDate,
-                                                                        "depTime": segment
-                                                                            .origin
-                                                                            .depTime
-                                                                            .toString()
-                                                                            .substring(11,
-                                                                                16),
-                                                                        "arrival":
-                                                                            formattedarrDate,
-                                                                        "arrTime": segment
-                                                                            .destination
-                                                                            .arrTime
-                                                                            .toString()
-                                                                            .substring(11,
-                                                                                16),
-                                                                        "duration": segment
-                                                                            .duration
-                                                                            .toString(),
-                                                                        "durationTime":
-                                                                            totalDurationText,
-                                                                        "fromAirport": segment
-                                                                            .origin
-                                                                            .airport
-                                                                            .airportName,
-                                                                        "fromAirportCode": segment
-                                                                            .origin
-                                                                            .airport
-                                                                            .airportCode,
-                                                                        "toAirport": segment
-                                                                            .destination
-                                                                            .airport
-                                                                            .airportName,
-                                                                        "toAirportCode": segment
-                                                                            .destination
-                                                                            .airport
-                                                                            .airportCode,
-                                                                        "layover":
-                                                                            layoverText,
-                                                                        "noofstop":
-                                                                            stop,
-                                                                        "baggage":
-                                                                            segment.baggage,
-                                                                        "cabinBaggage":
-                                                                            segment.cabinBaggage,
-                                                                      });
-                                                                    }
-                                                                  }
-
-                                                                  print(
-                                                                      "segmentListJson: ${jsonEncode(segmentListJson)}");
-
-                                                                  // FARE BREAKDOWN
-                                                                  final fareBreakdown =
-                                                                      currentFlight
-                                                                          .fareBreakdown;
-                                                                  print(
-                                                                      "fareBreakdown: ${jsonEncode(fareBreakdown)}");
-
-                                                                  double
-                                                                      adultBase =
-                                                                          0,
-                                                                      adultTax =
-                                                                          0;
-                                                                  double
-                                                                      childBase =
-                                                                          0,
-                                                                      childTax =
-                                                                          0;
-                                                                  double
-                                                                      infantBase =
-                                                                          0,
-                                                                      infantTax =
-                                                                          0;
-
-                                                                  for (var item
-                                                                      in fareBreakdown) {
-                                                                    if (item.passengerType ==
-                                                                        1) {
-                                                                      adultBase = item
-                                                                          .baseFare
-                                                                          .toDouble();
-                                                                      adultTax = item
-                                                                          .tax
-                                                                          .toDouble();
-                                                                    } else if (item
-                                                                            .passengerType ==
-                                                                        2) {
-                                                                      childBase = item
-                                                                          .baseFare
-                                                                          .toDouble();
-                                                                      childTax = item
-                                                                          .tax
-                                                                          .toDouble();
-                                                                    } else if (item
-                                                                            .passengerType ==
-                                                                        3) {
-                                                                      infantBase = item
-                                                                          .baseFare
-                                                                          .toDouble();
-                                                                      infantTax = item
-                                                                          .tax
-                                                                          .toDouble();
-                                                                    }
-                                                                  }
-
-                                                                  print(
-                                                                      "adultBase: $adultBase");
-                                                                  print(
-                                                                      "childBase: $childBase");
-                                                                  print(
-                                                                      "infantBase: $infantBase");
-
-                                                                  // Calculate displayTotalDuration for this variant
-                                                                  final segments =
-                                                                      currentFlight
+                                                                          : "$numStops stop",
+                                                                      duration:
+                                                                          displayTotalDuration,
+                                                                      isLLC: currentFlight
+                                                                          .isLcc,
+                                                                      cabinBaggage: currentFlight
                                                                           .segments
-                                                                          .first;
-                                                                  int numStops =
-                                                                      segments.length -
-                                                                          1;
-                                                                  String
-                                                                      displayTotalDuration;
-
-                                                                  if (numStops >
-                                                                      0) {
-                                                                    int totalTripMinutes = segments
-                                                                        .last
-                                                                        .accumulatedDuration
-                                                                        .toInt();
-                                                                    int totalTripHours =
-                                                                        totalTripMinutes ~/
-                                                                            60;
-                                                                    int totalTripMins =
-                                                                        totalTripMinutes %
-                                                                            60;
-                                                                    displayTotalDuration =
-                                                                        "${totalTripHours}h ${totalTripMins}m";
-                                                                  } else {
-                                                                    int totalMinutes = currentFlight
-                                                                        .segments
-                                                                        .first
-                                                                        .first
-                                                                        .duration
-                                                                        .toInt();
-                                                                    int hours =
-                                                                        totalMinutes ~/
-                                                                            60;
-                                                                    int minutes =
-                                                                        totalMinutes %
-                                                                            60;
-                                                                    displayTotalDuration =
-                                                                        "${hours}h ${minutes}m";
-                                                                  }
-                                                                  print(
-                                                                      "BASEFAREEE${currentFlight.fare.baseFare}");
-                                                                  print(
-                                                                      "BASEFAREEE${currentFlight.fare.tax}");
-                                                                  print(
-                                                                      "indexindex$index");
-
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      settings:
-                                                                          RouteSettings(
-                                                                              name: '/flightDetails'),
-                                                                      builder:
-                                                                          (context) =>
-                                                                              FlightDetailsPage(
-                                                                        flight: const {},
-                                                                        city:
-                                                                            'mdu',
-                                                                        destination:
-                                                                            'chennai',
-                                                                        airlineName: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .airline
-                                                                            .airlineName,
-                                                                        airlineCode: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .airline
-                                                                            .airlineCode,
-                                                                        airportName: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .origin
-                                                                            .airport
-                                                                            .airportName,
-                                                                        desairportName: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .last
-                                                                            .destination
-                                                                            .airport
-                                                                            .airportName,
-                                                                        cityName: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .origin
-                                                                            .airport
-                                                                            .cityName,
-                                                                        cityCode: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .origin
-                                                                            .airport
-                                                                            .cityCode,
-                                                                        descityName: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .last
-                                                                            .destination
-                                                                            .airport
-                                                                            .cityName,
-                                                                        descityCode: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .last
-                                                                            .destination
-                                                                            .airport
-                                                                            .cityCode,
-                                                                        flightNumber: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .airline
-                                                                            .flightNumber,
-                                                                        depDate: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .origin
-                                                                            .depTime
-                                                                            .toLocal()
-                                                                            .toString()
-                                                                            .substring(0,
-                                                                                10),
-                                                                        depTime: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .origin
-                                                                            .depTime
-                                                                            .toLocal()
-                                                                            .toString()
-                                                                            .substring(11,
-                                                                                16),
-                                                                        refundable: currentFlight.isRefundable
-                                                                            ? "R"
-                                                                            : "NR",
-                                                                        arrDate: currentFlight
-                                                                            .segments
-                                                                            .last
-                                                                            .last
-                                                                            .destination
-                                                                            .arrTime
-                                                                            .toLocal()
-                                                                            .toString()
-                                                                            .substring(0,
-                                                                                10),
-                                                                        arrTime: currentFlight
-                                                                            .segments
-                                                                            .last
-                                                                            .last
-                                                                            .destination
-                                                                            .arrTime
-                                                                            .toLocal()
-                                                                            .toString()
-                                                                            .substring(11,
-                                                                                16),
-                                                                        stop: numStops ==
-                                                                                0
-                                                                            ? "Non-Stop"
-                                                                            : "$numStops stop",
-                                                                        duration:
-                                                                            displayTotalDuration,
-                                                                        isLLC: currentFlight
-                                                                            .isLcc,
-                                                                        cabinBaggage: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .cabinBaggage,
-                                                                        baggage: currentFlight
-                                                                            .segments
-                                                                            .first
-                                                                            .first
-                                                                            .baggage,
-                                                                        basefare: currentFlight
-                                                                            .fare
-                                                                            .baseFare,
-                                                                        tax: currentFlight
-                                                                            .fare
-                                                                            .tax,
-                                                                        adultCount:
-                                                                            widget.adultCount,
-                                                                        childCount:
-                                                                            widget.childCount,
-                                                                        infantCount:
-                                                                            widget.infantCount,
-                                                                        adultBaseFare:
-                                                                            adultBase,
-                                                                        adultTax:
-                                                                            adultTax,
-                                                                        childBaseFare:
-                                                                            childBase,
-                                                                        childTax:
-                                                                            childTax,
-                                                                        infantBaseFare:
-                                                                            infantBase,
-                                                                        infantTax:
-                                                                            infantTax,
-                                                                        segments:
-                                                                            currentFlight.segments,
-                                                                        segmentsJson:
-                                                                            segmentListJson,
-                                                                        resultindex:
-                                                                            currentFlight.resultIndex,
-                                                                        traceid: searchData
-                                                                            .response
-                                                                            .traceId,
-                                                                        // ✅ Use the variant's coupon
-                                                                        journeypoint:
-                                                                            (() {
-                                                                          try {
-                                                                            if (currentFlight.miniFareRules.isNotEmpty) {
-                                                                              return currentFlight.miniFareRules[0].first.journeyPoints ?? "No data";
-                                                                            } else {
-                                                                              return "No data";
-                                                                            }
-                                                                          } catch (e) {
+                                                                          .first
+                                                                          .first
+                                                                          .cabinBaggage,
+                                                                      baggage: currentFlight
+                                                                          .segments
+                                                                          .first
+                                                                          .first
+                                                                          .baggage,
+                                                                      basefare: currentFlight
+                                                                          .fare
+                                                                          .baseFare,
+                                                                      tax: currentFlight
+                                                                          .fare
+                                                                          .tax,
+                                                                      adultCount:
+                                                                          widget
+                                                                              .adultCount,
+                                                                      childCount:
+                                                                          widget
+                                                                              .childCount,
+                                                                      infantCount:
+                                                                          widget
+                                                                              .infantCount,
+                                                                      adultBaseFare:
+                                                                          adultBase,
+                                                                      adultTax:
+                                                                          adultTax,
+                                                                      childBaseFare:
+                                                                          childBase,
+                                                                      childTax:
+                                                                          childTax,
+                                                                      infantBaseFare:
+                                                                          infantBase,
+                                                                      infantTax:
+                                                                          infantTax,
+                                                                      segments:
+                                                                          currentFlight
+                                                                              .segments,
+                                                                      segmentsJson:
+                                                                          segmentListJson,
+                                                                      resultindex:
+                                                                          currentFlight
+                                                                              .resultIndex,
+                                                                      traceid: searchData
+                                                                          .response
+                                                                          .traceId,
+                                                                      // ✅ Use the variant's coupon
+                                                                      journeypoint:
+                                                                          (() {
+                                                                        try {
+                                                                          if (currentFlight
+                                                                              .miniFareRules
+                                                                              .isNotEmpty) {
+                                                                            return currentFlight.miniFareRules[0].first.journeyPoints ??
+                                                                                "No data";
+                                                                          } else {
                                                                             return "No data";
                                                                           }
-                                                                        })(),
-                                                                        reissue:
-                                                                            (() {
-                                                                          try {
-                                                                            if (currentFlight.miniFareRules.isNotEmpty) {
-                                                                              return currentFlight.miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details ?? "No data";
-                                                                            } else {
-                                                                              return "No data";
-                                                                            }
-                                                                          } catch (e) {
+                                                                        } catch (e) {
+                                                                          return "No data";
+                                                                        }
+                                                                      })(),
+                                                                      reissue:
+                                                                          (() {
+                                                                        try {
+                                                                          if (currentFlight
+                                                                              .miniFareRules
+                                                                              .isNotEmpty) {
+                                                                            return currentFlight.miniFareRules[0].firstWhere((rule) => rule.type == 'Reissue').details ??
+                                                                                "No data";
+                                                                          } else {
                                                                             return "No data";
                                                                           }
-                                                                        })(),
+                                                                        } catch (e) {
+                                                                          return "No data";
+                                                                        }
+                                                                      })(),
 
-                                                                        cancellation:
-                                                                            (() {
-                                                                          try {
-                                                                            if (currentFlight.miniFareRules.isNotEmpty) {
-                                                                              return currentFlight.miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details ?? "No data";
-                                                                            } else {
-                                                                              return "No data";
-                                                                            }
-                                                                          } catch (e) {
+                                                                      cancellation:
+                                                                          (() {
+                                                                        try {
+                                                                          if (currentFlight
+                                                                              .miniFareRules
+                                                                              .isNotEmpty) {
+                                                                            return currentFlight.miniFareRules[0].firstWhere((rule) => rule.type == 'Cancellation').details ??
+                                                                                "No data";
+                                                                          } else {
                                                                             return "No data";
                                                                           }
-                                                                        })(),
-                                                                        miniFareRules: currentFlight.miniFareRules.isNotEmpty
-                                                                            ? currentFlight.miniFareRules[0]
-                                                                                .map((rule) => {
-                                                                                      'Type': rule.type,
-                                                                                      'From': rule.from,
-                                                                                      'To': rule.to,
-                                                                                      'Details': rule.details,
-                                                                                      'JourneyPoints': rule.journeyPoints,
-                                                                                      'Unit': rule.unit,
-                                                                                    })
-                                                                                .toList()
-                                                                            : [],
-                                                                        outBoundData: {},
-                                                                        inBoundData: {},
-                                                                        commonPublishedFare:
-                                                                            varPublishFare.toString(),
-                                                                        // ✅ Use variant's prices
-                                                                        tboOfferedFare:
-                                                                            varOfferedFare,
-                                                                        tboTds:
-                                                                            varTboTDS,
-                                                                        tboCommission:
-                                                                            varCommissionEarned,
-                                                                        trvlusCommission:
-                                                                            varCustomerComm,
-                                                                        trvlusTds:
-                                                                            varFinalcommissionpercentage,
-                                                                        trvlusNetFare:
-                                                                            varFinaloffFare,
-                                                                        coupouncode: index ==
-                                                                                0
-                                                                            ? finalflatoffer
-                                                                            : varFinalflatoffer,
-                                                                      ),
+                                                                        } catch (e) {
+                                                                          return "No data";
+                                                                        }
+                                                                      })(),
+                                                                      miniFareRules: currentFlight
+                                                                              .miniFareRules
+                                                                              .isNotEmpty
+                                                                          ? currentFlight
+                                                                              .miniFareRules[0]
+                                                                              .map((rule) => {
+                                                                                    'Type': rule.type,
+                                                                                    'From': rule.from,
+                                                                                    'To': rule.to,
+                                                                                    'Details': rule.details,
+                                                                                    'JourneyPoints': rule.journeyPoints,
+                                                                                    'Unit': rule.unit,
+                                                                                  })
+                                                                              .toList()
+                                                                          : [],
+                                                                      outBoundData: {},
+                                                                      inBoundData: {},
+                                                                      commonPublishedFare:
+                                                                          varPublishFare
+                                                                              .toString(),
+                                                                      // ✅ Use variant's prices
+                                                                      tboOfferedFare:
+                                                                          varOfferedFare,
+                                                                      tboTds:
+                                                                          varTboTDS,
+                                                                      tboCommission:
+                                                                          varCommissionEarned,
+                                                                      trvlusCommission:
+                                                                          varCustomerComm,
+                                                                      trvlusTds:
+                                                                          varFinalcommissionpercentage,
+                                                                      trvlusNetFare:
+                                                                          varFinaloffFare,
+                                                                      coupouncode: index ==
+                                                                              0
+                                                                          ? finalflatoffer
+                                                                          : varFinalflatoffer,
                                                                     ),
-                                                                  );
-                                                                },
+                                                                  ),
+                                                                );
+                                                              },
+                                                              child: Container(
+                                                                height: 40,
+                                                                width: MediaQuery
+                                                                        .sizeOf(
+                                                                            context)
+                                                                    .width,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              15),
+                                                                  color: const Color(
+                                                                      0xFFF37023),
+                                                                ),
+                                                                alignment:
+                                                                    Alignment
+                                                                        .center,
                                                                 child:
-                                                                    Container(
-                                                                  height: 40,
-                                                                  width: MediaQuery
-                                                                          .sizeOf(
-                                                                              context)
-                                                                      .width,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            15),
-                                                                    color: const Color(
-                                                                        0xFFF37023),
-                                                                  ),
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  child:
-                                                                      const Text(
-                                                                    "Book Now",
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .white),
-                                                                  ),
+                                                                    const Text(
+                                                                  "Book Now",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .white),
                                                                 ),
                                                               ),
-                                                            ],
-                                                          ),
+                                                            ),
+                                                          ],
                                                         ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                              ),
-
-                                            if (finaloffFare <=
-                                                    double.parse(publishFare
-                                                        .toString()) &&
-                                                finalflatoffer != 0)
-                                              Container(
-                                                height: 25,
-                                                padding: EdgeInsets.all(5),
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  color: Color(0xFFDAE5FF),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    SizedBox(width: 5),
-                                                    SvgPicture.asset(
-                                                      "assets/icon/promocode.svg",
-                                                      color: Color(0xFF5D89F0),
-                                                      height: 15,
-                                                      width: 20,
-                                                    ),
-                                                    SizedBox(width: 10),
-                                                    Text(
-                                                      "Flat ₹$finalcoupouncode OFF—only on Trvuls.",
-                                                      style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold,
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+
+                                          if (finaloffFare <=
+                                                  double.parse(
+                                                      publishFare.toString()) &&
+                                              finalflatoffer != 0)
+                                            Container(
+                                              height: 25,
+                                              padding: EdgeInsets.all(5),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                color: Color(0xFFDAE5FF),
                                               ),
-                                          ],
-                                        ),
+                                              child: Row(
+                                                children: [
+                                                  SizedBox(width: 5),
+                                                  SvgPicture.asset(
+                                                    "assets/icon/promocode.svg",
+                                                    color: Color(0xFF5D89F0),
+                                                    height: 15,
+                                                    width: 20,
+                                                  ),
+                                                  SizedBox(width: 10),
+                                                  Text(
+                                                    "Flat ₹$finalcoupouncode OFF—only on Trvuls.",
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                            );
-                          },
-                        )
-                      ],
-                    ),
-                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    )
+                  ],
                 ),
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.endFloat,

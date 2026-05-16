@@ -15,12 +15,14 @@ class PriceAlertController extends GetxController {
   int childCount = 0;
   int infantCount = 0;
   double overallFare = 0.0;
+  double otherCharges = 0.0;
   double finalBaseFare = 0.0;
   double finalTax = 0.0;
   double trvlusCommission = 0.0;
   num finalCouponValue = 0.0;
   dynamic searchData;
   RxBool isChanged = false.obs;
+  RxBool isAlertShown = false.obs; // Tracks if the alert was shown in this flow
 
   void checkFare(double fare, bool isPriceChangedFlag) {
     print("After getx $isPriceChangedFlag");
@@ -40,7 +42,16 @@ class PriceAlertController extends GetxController {
     }
   }
 
+  // Reset everything when starting a new search or selecting a new flight
+  void resetAll() {
+    isChanged.value = false;
+    isAlertShown.value = false;
+    oldFare.value = 0.0;
+    newFare.value = 0.0;
+  }
+
   void reset() {
+    // This was previously used but kept for compatibility if needed
     // isChanged.value = false;
   }
 }

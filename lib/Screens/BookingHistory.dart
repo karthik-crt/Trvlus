@@ -12,9 +12,14 @@ import 'package:trvlus/utils/api_service.dart';
 
 import '../models/addstatus.dart';
 import 'DotDivider.dart';
+import 'ProfilePage.dart';
 import 'notification_service.dart';
 
 class BookingHistoryPage extends StatefulWidget {
+  final String source; // ✅ 'profile' or 'payment'
+
+  BookingHistoryPage({this.source = 'profile'}); // default is profile
+
   @override
   _BookingHistoryPageState createState() => _BookingHistoryPageState();
 }
@@ -36,14 +41,18 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
   List<String> nationality = [];
   List<Map<String, dynamic>> statusList =
       []; // keeps id + name for sending back
-  String? selectCancelReason = "Cancel";
-  bool showError = false; // new variable for validation
+  String? selectCancelReason = null; // ✅ change from "Cancel" to null
+  bool hasSelectedReason =
+      false; // ✅ ADD THIS  bool showError = false; // new variable for validation
+  bool showError = false;
+
   String? createdDate = '';
   final remarkController = TextEditingController();
   bool isLoading = false;
   bool isBottomSheetLoading = false; // ✅ ADD THIS
   late BookingHistory bookingHistory;
   late CancelReasonData cancelReasonData;
+  bool showRemarkError = false; // ✅ ADD THIS
 
   @override
   void initState() {
@@ -59,8 +68,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
     bookingHistory = await ApiService().bookingHistory();
     cancelReasonData = await ApiService().addStatus();
     print("dsfsg${jsonEncode(cancelReasonData)}");
-    selectCancelReason = cancelReasonData.data.toString();
-    print("selectCancelReason${jsonEncode(selectCancelReason)}");
+    // selectCancelReason = cancelReasonData.data.toString();
+    // print("selectCancelReason${jsonEncode(selectCancelReason)}");
     setState(() {
       isLoading = false;
     });
@@ -73,11 +82,22 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
     return "change request";
   }
 
+  void _handleBack() {
+    if (widget.source == 'payment') {
+      // ✅ Payment flow: clear stack → go to ProfilePage
+      Get.offAll(() => ProfilePage());
+    } else {
+      // ✅ Profile flow: just go back to ProfilePage
+      Get.back();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        return true;
+        _handleBack();
+        return false;
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade200,
@@ -93,9 +113,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
             ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () {
-                Get.back();
-              },
+              onPressed: _handleBack, // ✅ same handler
             )
             // elevation: 1,
             ),
@@ -773,6 +791,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                             backgroundColor:
                                                 const Color(0xFFF5F5F5),
                                             context: context,
+                                            isScrollControlled: true,
+                                            // ✅ KEY FIX — allows sheet to resize with keyboard
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(7),
@@ -790,111 +810,141 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                       padding:
                                                           const EdgeInsets.all(
                                                               20),
-                                                      child: SizedBox(
-                                                        height: 400,
-                                                        child:
-                                                            SingleChildScrollView(
-                                                          child: Column(
-                                                            children: [
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  Column(
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      const Text(
-                                                                        "Change Request",
-                                                                        style:
-                                                                            TextStyle(
-                                                                          fontSize:
-                                                                              20,
-                                                                          fontWeight:
-                                                                              FontWeight.bold,
-                                                                          color:
-                                                                              Colors.black,
-                                                                        ),
+                                                      child:
+                                                          SingleChildScrollView(
+                                                        child: Column(
+                                                          children: [
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    const Text(
+                                                                      "Change Request",
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontSize:
+                                                                            20,
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        color: Colors
+                                                                            .black,
                                                                       ),
-                                                                      Text(
-                                                                          "PNR: ${booking.pnr}"),
-                                                                    ],
-                                                                  ),
-                                                                  GestureDetector(
-                                                                    onTap: () {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    },
-                                                                    child: Image
-                                                                        .asset(
-                                                                      "assets/icon/Close.png",
-                                                                      height:
-                                                                          25,
                                                                     ),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 15),
-                                                              _buildDropdownField(
-                                                                'Select',
-                                                                selectCancelReason,
-                                                                cancelReasonData,
-                                                                (value) {
-                                                                  setModalState(
-                                                                      () {
-                                                                    selectCancelReason =
-                                                                        value!;
-                                                                    print(
-                                                                        "selectCancelReason$selectCancelReason");
-                                                                  });
-                                                                },
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 5),
-                                                              _buildTextField1(
-                                                                label:
-                                                                    'Remarks *',
-                                                                hintText:
-                                                                    'Text here',
-                                                                controller:
-                                                                    remarkController,
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 50),
-                                                              Container(
-                                                                height: 50,
-                                                                width: MediaQuery
-                                                                        .sizeOf(
-                                                                            context)
-                                                                    .width,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                  color: const Color(
-                                                                      0xFFF37023),
+                                                                    Text(
+                                                                        "PNR: ${booking.pnr}"),
+                                                                  ],
                                                                 ),
-                                                                alignment:
-                                                                    Alignment
-                                                                        .center,
-                                                                child:
-                                                                    GestureDetector(
-                                                                  onTap: isBottomSheetLoading
+                                                                GestureDetector(
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                  child: Image
+                                                                      .asset(
+                                                                    "assets/icon/Close.png",
+                                                                    height: 25,
+                                                                  ),
+                                                                )
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 15),
+                                                            _buildDropdownField(
+                                                              'Select',
+                                                              selectCancelReason,
+                                                              cancelReasonData,
+                                                              (value) {
+                                                                setModalState(
+                                                                    () {
+                                                                  selectCancelReason =
+                                                                      value!;
+                                                                  hasSelectedReason =
+                                                                      true; // ✅ ADD THIS
+                                                                  showError =
+                                                                      false;
+                                                                });
+                                                              },
+                                                            ),
+                                                            // ✅ ADD THIS:
+                                                            if (showError)
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top: 4,
+                                                                        left:
+                                                                            4),
+                                                                child: Text(
+                                                                  "Please select a reason",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .red,
+                                                                      fontSize:
+                                                                          12),
+                                                                ),
+                                                              ),
+                                                            const SizedBox(
+                                                                height: 5),
+                                                            _buildTextField1(
+                                                              label:
+                                                                  'Remarks *',
+                                                              hintText:
+                                                                  'Text here',
+                                                              controller:
+                                                                  remarkController,
+                                                            ),
+                                                            // ✅ ADD THIS:
+                                                            if (showRemarkError)
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top: 4,
+                                                                        left:
+                                                                            4),
+                                                                child: Text(
+                                                                  "Please enter a remark",
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .red,
+                                                                      fontSize:
+                                                                          12),
+                                                                ),
+                                                              ),
+                                                            const SizedBox(
+                                                                height: 50),
+                                                            GestureDetector(
+                                                              onTap:
+                                                                  isBottomSheetLoading
                                                                       ? null
                                                                       : () async {
+                                                                          print(
+                                                                              "ONTAPPPPP INSIDE");
+
                                                                           String
                                                                               remark =
                                                                               remarkController.text.trim();
 
-                                                                          if (selectCancelReason == null ||
-                                                                              selectCancelReason!.isEmpty) {
-                                                                            setModalState(() =>
-                                                                                showError = true);
+                                                                          bool
+                                                                              hasReasonError =
+                                                                              !hasSelectedReason; // ✅ only true if user never picked
+
+                                                                          bool
+                                                                              hasRemarkError =
+                                                                              remark.isEmpty;
+
+                                                                          if (hasReasonError ||
+                                                                              hasRemarkError) {
+                                                                            setModalState(() {
+                                                                              showError = hasReasonError;
+                                                                              showRemarkError = hasRemarkError;
+                                                                            });
                                                                             return;
                                                                           }
 
@@ -902,8 +952,10 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                                               () {
                                                                             showError =
                                                                                 false;
+                                                                            showRemarkError =
+                                                                                false;
                                                                             isBottomSheetLoading =
-                                                                                true; // ✅ show loader in bottom sheet only
+                                                                                true;
                                                                           });
 
                                                                           try {
@@ -925,6 +977,11 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
 
                                                                             if (response != null &&
                                                                                 (response['status'] == 'success' || response['statusCode'] == '1')) {
+                                                                              remarkController.clear(); // ✅ ADD THIS — clears the field
+                                                                              hasSelectedReason = false; // ✅ ADD THIS
+                                                                              selectCancelReason = null;
+                                                                              showRemarkError = false;
+                                                                              showError = false;
                                                                               Navigator.pop(context); // ✅ close bottom sheet AFTER loader stops
 
                                                                               // ✅ refresh booking list
@@ -946,30 +1003,48 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                                             );
                                                                           }
                                                                         },
-                                                                  child: isBottomSheetLoading // ✅ was isLoading before
-                                                                      ? const SizedBox(
-                                                                          height:
-                                                                              20,
-                                                                          width:
-                                                                              20,
-                                                                          child:
-                                                                              CircularProgressIndicator(
+                                                              child: Container(
+                                                                height: 50,
+                                                                width: MediaQuery
+                                                                        .sizeOf(
+                                                                            context)
+                                                                    .width,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              20),
+                                                                  color: const Color(
+                                                                      0xFFF37023),
+                                                                ),
+                                                                alignment:
+                                                                    Alignment
+                                                                        .center,
+                                                                child: isBottomSheetLoading // ✅ was isLoading before
+                                                                    ? const SizedBox(
+                                                                        height:
+                                                                            20,
+                                                                        width:
+                                                                            20,
+                                                                        child:
+                                                                            CircularProgressIndicator(
+                                                                          color:
+                                                                              Colors.white,
+                                                                          strokeWidth:
+                                                                              2,
+                                                                        ),
+                                                                      )
+                                                                    : const Text(
+                                                                        "Send",
+                                                                        style: TextStyle(
                                                                             color:
                                                                                 Colors.white,
-                                                                            strokeWidth:
-                                                                                2,
-                                                                          ),
-                                                                        )
-                                                                      : const Text(
-                                                                          "Send",
-                                                                          style: TextStyle(
-                                                                              color: Colors.white,
-                                                                              fontSize: 20),
-                                                                        ),
-                                                                ),
+                                                                            fontSize: 20),
+                                                                      ),
                                                               ),
-                                                            ],
-                                                          ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
                                                     ),

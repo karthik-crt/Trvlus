@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trvlus/Screens/price_alert_controller.dart';
 
+import '../models/customercommision.dart';
 import '../models/farequote.dart' as farequote;
 import '../models/search_data.dart';
 import '../utils/api_service.dart';
@@ -17,9 +18,9 @@ import 'DotDivider.dart';
 import 'ShowModelSheet.dart';
 import 'ViewFullDetails.dart';
 
-List<Map<String, dynamic>> adultTravelers = [];
-List<Map<String, dynamic>> childTravelers = [];
-List<Map<String, dynamic>> infantTravelers = [];
+// List<Map<String, dynamic>> adultTravelers = [];
+// List<Map<String, dynamic>> childTravelers = [];
+// List<Map<String, dynamic>> infantTravelers = [];
 String finaldepDateformat = '';
 String finalarrDateformat = '';
 double totalFare = 0;
@@ -147,6 +148,9 @@ class TravelerDetailsPage extends StatefulWidget {
 }
 
 class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
+  List<Map<String, dynamic>> adultTravelers = [];
+  List<Map<String, dynamic>> childTravelers = [];
+  List<Map<String, dynamic>> infantTravelers = [];
   int totalAmount = 8000;
 
   bool hasGST = false;
@@ -157,6 +161,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   List<Map<String, dynamic>> infanttraveler = [];
   late farequote.FareQuotesData fareQuote;
   late farequote.FareQuotesData infareQuote;
+  late Customercommission customer;
   bool isLoading = true;
   bool isPassportRequiredAtTicket = false;
   bool isPassportFullDetailRequiredAtBook = false;
@@ -173,13 +178,22 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   double childFare = 0;
   double infantFare = 0;
   num coupouncode = 0;
+  double newBaseFare = 0;
+  double newTax = 0;
+  num varFinalflatoffer = 0;
+
   final c = Get.put(PriceAlertController());
+  final gextXvalue = Get.put(PriceAlertController());
 
   @override
   void initState() {
     print("TravelerDetailsPage");
     // TODO: implement initState
+    print("FLIGHTDETAILPAGE SCREEN${widget.depDate}");
     super.initState();
+    adultTravelers = [];
+    childTravelers = [];
+    infantTravelers = [];
     getfarequotedata();
     print("fgcgfcf${widget.selectedpassenger}");
     print("BASEFARE${widget.basefare}");
@@ -229,6 +243,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       fareQuote = await ApiService()
           .farequote(widget.resultindex ?? "", widget.traceid ?? "");
       debugPrint("ssrDATA: ${jsonEncode(fareQuote)}", wrapWidth: 4500);
+      await getCustomerCommission();
+
       final isInternational = isInternationalFromFareQuote(fareQuote);
 
       isPassportRequiredAtTicket = isInternational ||
@@ -256,16 +272,117 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       debugPrint("RESPONSESSRDTAA${jsonEncode(helo)}", wrapWidth: 1500);
       // PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
-      print("farequotefarequote$farequote");
-      var isPriceChanged = fareQuote.response.isPriceChanged;
-      print("isPriceChangedisPriceChanged$isPriceChanged");
+      print("farepublishFare $farequote");
+      var farebaseFare = fareQuote.response.results.fare.baseFare;
+      print("farebaseFare $farebaseFare");
+      var fareTax = fareQuote.response.results.fare.tax;
+      print("fareTax$fareTax");
 
+      var searchpublishFare = widget.commonPublishedFare;
+      print("searchpublishFare $searchpublishFare");
+      var tboOfferedFare = widget.tboOfferedFare;
+      print("tboOfferedFare $tboOfferedFare");
+
+      var isPriceChanged = fareQuote.response.isPriceChanged;
+      print("isPriceChanged $isPriceChanged");
+
+      gextXvalue.isChanged.value = false;
+
+// convert to double
+      double fareQuoteDouble = double.tryParse(farequote.toString()) ?? 0;
+      print("fareQuoteDouble$fareQuoteDouble");
+      double searchFareDouble =
+          double.tryParse(searchpublishFare.toString()) ?? 0;
+      print("searchFareDouble$searchFareDouble");
+      newBaseFare = farebaseFare;
+      print("newBaseFare$newBaseFare");
+      newTax = fareTax;
+      print("newTax$newTax");
+      print("PRICE ALERT CALCULATION");
+      double varPublishFare =
+          fareQuote.response.results.fare.publishedFare.toDouble();
+      print("varPublishFare$varPublishFare");
+      String varOfferedFare =
+          fareQuote.response.results.fare.offeredFare.toString();
+      print("varOfferedFare$varOfferedFare");
+      double varTboTDS = fareQuote.response.results.fare.tdsOnCommission;
+      print("varTboTDS$varTboTDS");
+      final varCommissionEarned =
+          fareQuote.response.results.fare.commissionEarned;
+      print("varCommissionEarned$varCommissionEarned");
+      double varCustomerComm = 0.0;
+      if (customer.data.isNotEmpty && varCommissionEarned >= 0) {
+        var commData = customer.data[0];
+        double earned = varCommissionEarned;
+
+        if (earned == 0.0) {
+          varCustomerComm = commData.commission_0?.toDouble() ?? 0.0;
+        } else if (earned <= 10) {
+          varCustomerComm = commData.commission_0_10?.toDouble() ?? 0.0;
+        } else if (earned <= 20) {
+          varCustomerComm = commData.commission_10_20?.toDouble() ?? 0.0;
+        } else if (earned <= 30) {
+          varCustomerComm = commData.commission_20_30?.toDouble() ?? 0.0;
+        } else if (earned <= 50) {
+          varCustomerComm = commData.commission_30_50?.toDouble() ?? 0.0;
+        } else if (earned <= 100) {
+          varCustomerComm = commData.commission_50_100?.toDouble() ?? 0.0;
+        } else if (earned <= 150) {
+          varCustomerComm = commData.commission_100_150?.toDouble() ?? 0.0;
+        } else if (earned <= 200) {
+          varCustomerComm = commData.commission_150_200?.toDouble() ?? 0.0;
+        } else if (earned <= 250) {
+          varCustomerComm = commData.commission_200_250?.toDouble() ?? 0.0;
+        } else if (earned <= 300) {
+          varCustomerComm = commData.commission_250_300?.toDouble() ?? 0.0;
+        } else {
+          varCustomerComm = commData.commission_above_300?.toDouble() ?? 0.0;
+        }
+      }
+      print("varCustomerComm$varCustomerComm");
+      double varCustomertdsplb = fareQuote.response.results.fare.tdsOnPlb;
+      print("varCustomertdsplb$varCustomertdsplb");
+      double varCustomerplbearned = fareQuote.response.results.fare.plbEarned;
+      print("varCustomerplbearned$varCustomerplbearned");
+      double varfinalcommissionplb = varCommissionEarned + varCustomerplbearned;
+      print("varfinalcommissionplb$varfinalcommissionplb");
+      double varCustomercommissiondetection = varfinalcommissionplb -
+          varCustomerComm -
+          varTboTDS -
+          varCustomertdsplb;
+      print("varCustomercommissiondetection$varCustomercommissiondetection");
+      int varFinalcustomercommission = varCustomercommissiondetection.round();
+      print("varFinalcustomercommission$varFinalcustomercommission");
+      double varFinalcommissionpercentage = varFinalcustomercommission * 0.02;
+      print("varFinalcommissionpercentage$varFinalcommissionpercentage");
+      int varCommissionpercentageround = varFinalcommissionpercentage.round();
+      print("varCommissionpercentageround$varCommissionpercentageround");
+      varFinalflatoffer =
+          varCustomercommissiondetection - varFinalcommissionpercentage;
+      print("varFinalflatoffer$varFinalflatoffer");
+      double varroundFinalflatoffer = varFinalflatoffer.round().toDouble();
+      print("varroundFinalflatoffer$varroundFinalflatoffer");
+      // int priceFinaloffFare = (varPublishFare - varFinalflatoffer).round();
+      int priceFinaloffFare = varTboTDS <= 0
+          ? (varPublishFare + varCustomerComm).round()
+          : (varPublishFare - varFinalflatoffer).round();
+      print("PRICEALERTFinaloffFare$priceFinaloffFare");
+      print("tboOfferedFare$tboOfferedFare");
+      print("varOfferedFare$varOfferedFare");
+      int searchNeatFare = widget.trvlusNetFare ?? 0;
+      print("searchNeatFare$searchNeatFare");
+// Show PriceAlert ONLY if new fare is higher
+      if (searchNeatFare != priceFinaloffFare) {
+        print("INTERNATIONAL ROUNDYRIP");
+        print("INTERNATIONAL ROUNDYRIP$searchNeatFare");
+        print("INTERNATIONAL ROUNDYRIP$priceFinaloffFare");
+        Get.find<PriceAlertController>().checkFare(
+          priceFinaloffFare.toDouble(),
+          true,
+        );
+      }
       Get.find<PriceAlertController>().newFare.value;
       print("NEW FARE${Get.find<PriceAlertController>().newFare.value}");
-      // Get.find<PriceAlertController>().checkFare(
-      //   farequote,
-      //   isPriceChanged,
-      // );
     }
 
     // FARECALCULATION
@@ -273,6 +390,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
     final tax = fareQuote.response.results.fare.tax.toDouble();
+    othercharges = fareQuote.response.results.fare.otherCharges;
 
     double adultBase = 0, adultTax = 0;
     double childBase = 0, childTax = 0;
@@ -327,29 +445,77 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       }
     }
     setState(() {
-      print("TRAVELERDERAILS");
-      print("sgsrghergeh${widget.selectedpassenger}");
-      print("basefare${widget.basefare}");
-      print("basefare${widget.tax}");
       isLoading = false;
-      coupouncode = widget.coupouncode ?? 0;
-      othercharges = widget.othercharges ?? 0.0;
+      print("TRAVELLER DETAILS");
+      print("TRAVELLER DETAILS$baseFare");
+      print("TRAVELLER DETAILS$inbaseFare");
+      print("TRAVELLER DETAILS TAX$tax");
+      print("TRAVELLER DETAILS TAX$intax");
+      coupouncode = widget.coupouncode!;
+      print("coupouncode$coupouncode");
+      print("coupouncode${widget.trvlusCommission}");
       totalBaseFare = baseFare + inbaseFare;
+      print("totalBaseFaretotalBaseFare$totalBaseFare");
+      othercharges = othercharges;
+      print("othercharges$othercharges");
       print("totalFare$totalFare");
-      // totalTax = tax + intax + othercharges;
+      print("coupouncodecoupouncode$coupouncode");
+      // totalTax = tax + intax + othercharges + inothercharges;
       totalTax = tax + intax;
       print("totalTax$totalTax");
+      print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
+      double finalBaseFare =
+          gextXvalue.isChanged.value == true ? newBaseFare : totalBaseFare;
+      print("finalBaseFare$finalBaseFare");
+      print("finalBaseFarenewBaseFare$newBaseFare");
+      print("finalBaseFaretotalBaseFare$totalBaseFare");
+      double finalTax = gextXvalue.isChanged.value == true ? newTax : totalTax;
+      print("finalTax$finalTax");
+      print("finalTaxnewTax$newTax");
+      print("finalTaxtotalTax$totalTax");
+      num finalCouponValue = gextXvalue.isChanged.value == true
+          ? varFinalflatoffer
+          : coupouncode.toDouble();
+      print("finalCouponValue$finalCouponValue");
       if (widget.coupouncode! > 0) {
-        overallFare = totalBaseFare + totalTax + othercharges - coupouncode;
+        overallFare =
+            finalBaseFare + finalTax + othercharges - finalCouponValue;
+        print("With Coupoun Code");
         print("overallFare1$overallFare");
+        print("finalBaseFare$finalBaseFare");
+        print("finalTax$finalTax");
+        print("finalCouponValue$finalCouponValue");
+        print("othercharges$othercharges");
+        final c = Get.put(PriceAlertController());
+        c.overallFare = overallFare;
+        c.finalBaseFare = finalBaseFare;
+        c.finalTax = finalTax;
+        c.finalCouponValue = finalCouponValue;
+        print("PRICE ALERT VALUE USING GETX");
+        print(c.overallFare);
+        print(c.finalBaseFare);
+        print(c.finalTax);
+        print(c.finalCouponValue);
       } else {
-        overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
+        overallFare = finalBaseFare +
+            finalTax +
+            othercharges +
+            (widget.trvlusCommission ?? 0);
+        final c = Get.put(PriceAlertController());
+        c.overallFare = overallFare;
+        c.finalBaseFare = finalBaseFare;
+        c.finalTax = finalTax;
+        c.trvlusCommission = widget.trvlusCommission ?? 0;
+        c.finalCouponValue = finalCouponValue;
         print("overallFare$overallFare");
-        print("overallFare$totalBaseFare");
-        print("overallFare$totalTax");
-        print("overallFare$othercharges");
+        print("Without Coupoun Code");
+        print("overallFare$finalBaseFare");
+        print("overallFare$finalTax");
+        print("trvlusCommission${widget.trvlusCommission ?? 0}");
+        print("othercharges$othercharges");
       }
-      totaladultCount = adultCount + inadultCount;
+
+      totaladultCount = adultCount;
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
       adultFare = adultBase + inadultBase;
@@ -358,7 +524,18 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       infantFare = infantBase + ininfantBase;
       print("overallFare$overallFare");
     });
-    final c = Get.find<PriceAlertController>();
+  }
+
+  getCustomerCommission() async {
+    setState(() {
+      isLoading = true;
+    });
+    customer = await ApiService().getcustomercommission();
+    print("COMMISIONcustomer${jsonEncode(customer)}");
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   getmobile() async {
@@ -1053,8 +1230,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                       width: 5,
                                     ),
                                     Text(
-                                      widget.outboundFlight!.segments.first
-                                          .first.origin.airport.cityCode,
+                                      widget.outboundFlight!.segments.first.last
+                                          .destination.airport.cityCode,
                                       style: TextStyle(
                                         fontSize: 12.sp,
                                         fontWeight: FontWeight.bold,
@@ -2330,6 +2507,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
   void initState() {
     super.initState();
     print("AddTravelerPage");
+
     loadMobile();
 
     print(widget.isPassportFullDetailRequiredAtBook);
@@ -2436,10 +2614,11 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
 
   Future<void> _expiryDate(BuildContext context) async {
     expiryFocusNode.requestFocus();
+    final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: now,
       lastDate: DateTime(2225),
     );
     print("psicked date$picked");
@@ -2943,14 +3122,18 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                   padding: const EdgeInsets.only(top: 15),
                                   child: GestureDetector(
                                     onTap: () {
-                                      String genderValue =
-                                          selectedGender == 'adult'
-                                              ? (selectedGender == "Mr"
-                                                  ? "Male"
-                                                  : "Female")
-                                              : (selectedGender == "Mstr"
-                                                  ? "Male"
-                                                  : "Female");
+                                      print("fvsdfvdsgvs$selectedGender");
+                                      String genderValue;
+
+                                      if (widget.travelerType == 'adult') {
+                                        genderValue = selectedGender == "Mr"
+                                            ? "Male"
+                                            : "Female";
+                                      } else {
+                                        genderValue = selectedGender == "Mstr"
+                                            ? "Male"
+                                            : "Female";
+                                      }
 
                                       if (_formKey.currentState!.validate()) {
                                         Map<String, dynamic> data = {

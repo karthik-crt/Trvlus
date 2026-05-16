@@ -18,6 +18,7 @@ import '../models/payment.dart';
 import '../models/search_data.dart';
 import '../models/user.dart';
 import '../utils/api_service.dart';
+import 'NotificationScreen.dart';
 import 'Search_Result_Page.dart';
 import 'WalletScreen.dart';
 import 'flightname.dart';
@@ -326,6 +327,8 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
   @override
   void initState() {
     super.initState();
+    print("HOME SCREEN");
+    _fetchCommissionThenPrefetch(); // ✅ replace _fetchCommission and date()
     paymentStatus();
 
     // _requestNotifi\cationPermission();
@@ -336,7 +339,6 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     selectedDepatureDate = DateTime(now.year, now.month, now.day);
     print("selectedDepatureDate$selectedDepatureDate");
     // date();
-    _fetchCommissionThenPrefetch(); // ✅ replace _fetchCommission and date()
 
     returnDate = DateTime.now().add(const Duration(days: 1));
     print('ReturnDate$returnDate');
@@ -613,7 +615,12 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
             Padding(
               padding: EdgeInsets.only(right: 16.w),
               child: GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => NotificationScreen()));
+                },
                 child: Image.asset("assets/images/Bell_1.png"),
               ),
             ),

@@ -7,7 +7,6 @@ import 'dart:math' hide log;
 import 'package:dio/dio.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
-
 // import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -53,10 +52,10 @@ class ApiBaseHelper {
   List<Map<String, dynamic>> passengersList = [];
 
   // LOCAL IP
-  // static const _baseUrl = 'http://192.168.1.13:8000/api/';
+  static const _baseUrl = 'http://192.168.1.40:8000/api/';
 
   // LIVE
-  static const _baseUrl = 'https://dev-api.trvlus.com/api/';
+  // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
 
   //
   // (NEED TO HIDE ENDUSERIP FOR DATESCROLLER) [NEED TO CHANGE TICKET AND INVOICE URL]
@@ -219,7 +218,7 @@ class ApiBaseHelper {
     }
 
     dynamic responseJson;
-    print("TICKET REQUEST");
+    // print("TICKET REQUEST");
     debugPrint(
       const JsonEncoder.withIndent('  ').convert(body),
       wrapWidth: 7000,
@@ -397,6 +396,7 @@ class ApiService {
   // FLIGHTSEARCH BEFORE
   Future<String?> flightAuthenticate() async {
     try {
+      print("AUTHENTICATE API CALLING");
       final response = await _helper.dio.post("mobileFlightAuth");
       // final decode = _helper.decodeBase64Response(response.data);
       print("response$response");
@@ -484,8 +484,8 @@ class ApiService {
     print("Deleted request for:$authenticate ");
     try {
       final response = await _helper.delete("delete-user?id=$user");
-      final decode = _helper.decodeBase64Response(response);
-      // final decode = response;
+      // final decode = _helper.decodeBase64Response(response);
+      final decode = response;
       print("Deleted Success: ${response['statusCode']}");
       // await prefs.clear();
       print("Clear all data");
@@ -557,9 +557,6 @@ class ApiService {
     final response = await _helper.post("mobileFareQuote", farequoteBody);
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-
-    // print("FareQuote response${jsonEncode(decode)}");
-    printLargeJson(decode);
     return fareQuote.fareQuotesDataFromJson(decode);
   }
 
@@ -1387,7 +1384,18 @@ class ApiService {
     print("totalMealPrice$totalMealPrice");
     double? excessAmount = totalMealPrice + totalSeatPrice + totalBaggagePrice;
     print("excessAmount$excessAmount");
-    DateTime parsed = DateFormat('dd MMM yy').parse(depDate);
+    print("DATEEEEE$depDate");
+    // DateTime parsed = DateFormat('EEE, dd MMM yy').parse(depDate);
+    // print("formattedDEp$parsed");
+    // String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
+    // print("formattedDEp$formattedDEP");
+    print("Departure DTAE$depDate");
+    DateTime parsed;
+    try {
+      parsed = DateFormat('dd MMM yy').parse(depDate);
+    } catch (e) {
+      parsed = DateTime.parse(depDate);
+    }
     String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
     print("formattedDEp$formattedDEP");
     final holdparams = {
@@ -2363,7 +2371,18 @@ class ApiService {
     double? excessAmount = totalMealPrice + totalSeatPrice + totalBaggagePrice;
     print("excessAmountexcessAmount$excessAmount");
     print("Departure DTAE$depDate");
-    DateTime parsed = DateFormat('dd MMM yy').parse(depDate);
+    print("DATEEEEE$depDate");
+    // DateTime parsed = DateFormat('EEE, dd MMM yy').parse(depDate);
+    // print("formattedDEp$parsed");
+    // String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
+    // print("formattedDEp$formattedDEP");
+    print("Departure DTAE$depDate");
+    DateTime parsed;
+    try {
+      parsed = DateFormat('dd MMM yy').parse(depDate);
+    } catch (e) {
+      parsed = DateTime.parse(depDate);
+    }
     String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
     print("formattedDEp$formattedDEP");
 

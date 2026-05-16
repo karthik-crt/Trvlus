@@ -181,7 +181,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 GestureDetector(
                                     onTap: () {
-                                      Get.back();
+                                      // Get.back();
+                                      Get.offAll(() =>
+                                          SearchFlightPage()); // ✅ go to home, clear stack
                                       //    Get.back();
                                       //  Get.to(SearchFlightPage());
                                     },
@@ -589,7 +591,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                       adultCount: 0,
                                       childCount: 0,
                                       infantCount: 0,
-                                      // BY GOPAL
                                       isLLC: false,
                                       outdepDate: '',
                                       outdepTime: '',

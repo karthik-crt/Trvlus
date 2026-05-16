@@ -211,8 +211,12 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? ""));
       fareQuote = await ApiService().farequote(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
+      print("FAREQUOTE${fareQuote.response.results.fare.baseFare}");
+      print("FAREQUOTE${fareQuote.response.results.fare.tax}");
       infareQuote = await ApiService().farequote(
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
+      print("FAREQUOTE${infareQuote.response.results.fare.baseFare}");
+      print("FAREQUOTE${infareQuote.response.results.fare.tax}");
       ssrData = await ApiService().ssr(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
       ssrData = await ApiService()
@@ -294,23 +298,35 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     setState(() {
       isLoading = false;
       coupouncode = c.finalCouponValue;
-      othercharges = widget.othercharges ?? 0;
-      print("CONFIRM TRAVELLER${c.finalBaseFare}");
-      totalBaseFare = c.finalBaseFare + inbaseFare;
-      print("totalFare$totalFare");
-      // totalTax = tax + intax + othercharges;
-      totalTax = c.finalTax + intax;
+      // othercharges = widget.othercharges ?? 0;
+      othercharges = c.otherCharges;
+      print("otherachanges$othercharges");
+      // totalBaseFare = c.finalBaseFare + inbaseFare;
+      // totalBaseFare = c.finalBaseFare + inbaseFare;
+      // print("totalFare${c.finalBaseFare}");
+      // print("totalFare$inbaseFare");
+      // print("totalFare$totalBaseFare");
+      // // totalTax = tax + intax + othercharges;
+      // totalTax = c.finalTax + intax;
+      totalBaseFare = c.finalBaseFare; // already includes inbound
+      totalTax = c.finalTax;
       print("totalTax$totalTax");
       print("totalTax${c.finalTax}");
-      print("totalTax${intax}");
+      // print("totalTax${intax}");
       if (widget.coupouncode! > 0) {
+        print("COMMISSION");
         baseFareOnly = totalBaseFare + totalTax - coupouncode;
+        print("baseFareOnly$totalBaseFare");
+        print("baseFareOnly$totalTax");
+        print("baseFareOnly$coupouncode");
         overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
-        print("overallFare1$overallFare");
+        print("overallFare$overallFare");
       } else {
         print("NO COMMISSION");
-        baseFareOnly =
-            totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
+        baseFareOnly = totalBaseFare +
+            totalTax +
+            othercharges +
+            (widget.trvlusCommission ?? 0);
         overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
 
         print("overallFare$overallFare");
@@ -321,9 +337,12 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         print("totalBaggagePrice$totalBaggagePrice");
         print("overallFare${widget.trvlusCommission}");
       }
-      totaladultCount = adultCount + inadultCount;
-      totalchildCount = childCount + inchildCount;
-      totalinfantCount = infantCount + ininfantCount;
+      // totaladultCount = adultCount + inadultCount;
+      // totalchildCount = childCount + inchildCount;
+      // totalinfantCount = infantCount + ininfantCount;
+      totaladultCount = adultCount;
+      totalchildCount = childCount;
+      totalinfantCount = infantCount;
       adultFare = adultBase + inadultBase;
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
@@ -442,6 +461,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                     if (widget.segments!.length >= 2)
                       GestureDetector(
                         onTap: () {
+                          print("HELLOOO WORLD");
                           Get.to(
                             () => Viewfulldetails(
                               flight: {},
@@ -586,6 +606,11 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                 SizedBox(height: 8.h),
                                 GestureDetector(
                                   onTap: () {
+                                    print('VIEW FULL DETAIL');
+                                    print(
+                                        "HELLO${widget.segments!.first.last.destination.airport.cityCode}");
+                                    print(
+                                        "HELLO${widget.segments!.first.last.destination.airport.cityName}");
                                     Get.to(
                                       () => Viewfulldetails(
                                         flight: {},
@@ -1085,7 +1110,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                             widget
                                                 .outboundFlight!
                                                 .segments
-                                                .first
+                                                .last
                                                 .last
                                                 .destination
                                                 .airport
@@ -1103,9 +1128,9 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                             widget
                                                 .outboundFlight!
                                                 .segments
-                                                .first
-                                                .first
-                                                .origin
+                                                .last
+                                                .last
+                                                .destination
                                                 .airport
                                                 .cityCode,
                                             style: TextStyle(

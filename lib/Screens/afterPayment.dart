@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:intl/intl.dart';
 
 import '../models/search_data.dart';
 import '../utils/api_service.dart';
 import 'BookingHistory.dart';
+import 'Home_Page.dart';
 
 class Afterpayment extends StatefulWidget {
   final String? flightNumber;
@@ -292,34 +295,35 @@ class _AfterpaymentState extends State<Afterpayment> {
             widget.outBoundData['trvlusNetFare'],
             "");
 
-        final pnr =
-            (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        final bookingId =
-            (searchData?["data"]?["Response"]?["Response"]?["BookingId"]) ?? 0;
-        final statusCode = (searchData?["statusCode"]) ?? 0;
-        final api = searchData;
-        print("API CALLING API$api");
+        // final pnr =
+        //     (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+        // final bookingId =
+        //     (searchData?["data"]?["Response"]?["Response"]?["BookingId"]) ?? 0;
+        // final statusCode = (searchData?["statusCode"]) ?? 0;
+        // final api = searchData;
+        // print("API CALLING API$api");
+        //
+        // print("BookingId from hold pnr: $pnr");
+        // print("bookingIdbookingId: $bookingId");
+        // print("statusCodestatusCode: $statusCode");
 
-        print("BookingId from hold pnr: $pnr");
-        print("bookingIdbookingId: $bookingId");
-        print("statusCodestatusCode: $statusCode");
-
-        // setState(() {
-        //   pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        //   bookingId = (searchData?["data"]?["Response"]?["Response"]
-        //               ?["BookingId"])
-        //           ?.toString() ??
-        //       "0";
-        //   statusMessage = (searchData?["statusMessage"]);
-        // });
+        setState(() {
+          pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+          bookingId = (searchData?["data"]?["Response"]?["Response"]
+                      ?["BookingId"])
+                  ?.toString() ??
+              "0";
+          statusMessage = (searchData?["statusMessage"]);
+        });
 
         print("HOLD-->TICKET API CALLING");
-        print("INSIDE API CALLING");
+        print("INSIDE API CALLING outBoundData");
+        print("API CALLING${widget.outBoundData['trvlusNetFare']}");
         await ApiService().ticketInvoice(
           pnr,
           bookingId.toString(),
           traceid,
-          widget.outBoundData['netFare'],
+          widget.outBoundData['trvlusNetFare'],
           conveniencefee,
           mealTotal,
           baggageTotal,
@@ -425,33 +429,33 @@ class _AfterpaymentState extends State<Afterpayment> {
 
         print(
             "BookingId from hold pnr: ${(searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? ""}");
-        final pnr =
-            (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        final bookingId =
-            (searchData?["data"]?["Response"]?["Response"]?["BookingId"]) ?? 0;
-        final statusCode = (searchData?["statusCode"]) ?? 0;
-        final api = searchData;
-        // setState(() {
-        //   final pnr =
-        //       (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
-        //   final bookingId = (searchData?["data"]?["Response"]?["Response"]
-        //           ?["BookingId"]) ??
-        //       0;
-        //   final statusCode = (searchData?["statusCode"]) ?? 0;
-        //   final api = searchData;
-        // });
+        // final pnr =
+        //     (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+        // final bookingId =
+        //     (searchData?["data"]?["Response"]?["Response"]?["BookingId"]) ?? 0;
+        // final statusCode = (searchData?["statusCode"]) ?? 0;
+        // final api = searchData;
+        setState(() {
+          pnr = (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
+          bookingId = (searchData?["data"]?["Response"]?["Response"]
+                  ?["BookingId"]) ??
+              0;
+          final statusCode = (searchData?["statusCode"]) ?? 0;
+          final api = searchData;
+        });
 
         print("HOLD-->TICKET API CALLING");
-        print("INSIDE API CALLING");
+        print("INSIDE API CALLING inBoundData");
+        print("API CALLING${widget.inBoundData['netFare']}");
         await ApiService().ticketInvoice(
           pnr,
           bookingId.toString(),
           traceid,
-          widget.inBoundData['netFare'],
+          widget.inBoundData['trvlusNetFare'],
           conveniencefee,
           mealTotal,
           baggageTotal,
-          seatTotal, // ✅
+          seatTotal,
         );
       }
     } else {
@@ -601,6 +605,16 @@ class _AfterpaymentState extends State<Afterpayment> {
       print("AfterOutput");
     });
 
+    // ✅ Check for booking failure
+    final statusCode = searchData?["statusCode"]?.toString() ?? "";
+    final msg = statusMessage ?? "";
+
+    if (statusCode == "0" || msg.toLowerCase().contains("booking failed")) {
+      Future.delayed(Duration.zero, () {
+        _showBookingFailedDialog(msg);
+      });
+      return; // ← stop further execution
+    }
     if (statusMessage != null && statusMessage.contains("Invalid Baggage")) {
       // Delay to ensure the widget is fully rendered before showing dialog
       Future.delayed(Duration.zero, () {
@@ -654,30 +668,87 @@ class _AfterpaymentState extends State<Afterpayment> {
   }
 
   Future<void> _runBookingFlow() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
-      // STEP 1: Save traveller first
-      await selecttravelerData();
-
-      // STEP 2: Then book the ticket
+      // selecttravelerData() internally calls getSearchData(), so don't call it again
+      // await selecttravelerData();
       await getSearchData();
     } catch (e) {
       print("Booking flow error: $e");
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
+  }
+
+  void _showBookingFailedDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        // Auto-close after 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop(); // Close dialog
+          }
+          Get.offAll(() => SearchFlightPage());
+        });
+
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.error_outline, color: Colors.red, size: 28),
+              SizedBox(width: 8),
+              Text(
+                "Booking Failed",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                message,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+              // Countdown indicator
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1.0, end: 0.0),
+                duration: const Duration(seconds: 5),
+                builder: (context, value, child) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LinearProgressIndicator(
+                        value: value,
+                        backgroundColor: Colors.grey[300],
+                        color: Color(0xFFF37023),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Redirecting to home in ${(value * 5).ceil()} sec...",
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   void initState() {
-    // _runBookingFlow();
     // selecttravelerData();
-    getSearchData();
     print('passengerdetailsall${widget.passenger}');
     // 1. Calculate seat total
     seatTotal = 0.0;
@@ -726,6 +797,7 @@ class _AfterpaymentState extends State<Afterpayment> {
         mealTotal +
         baggageTotal;
     print("totalAmount$totalAmount");
+    _runBookingFlow();
 
     super.initState();
   }
@@ -761,10 +833,7 @@ class _AfterpaymentState extends State<Afterpayment> {
         : Scaffold(
             floatingActionButton: GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingHistoryPage()),
-                );
+                Get.offAll(() => BookingHistoryPage(source: 'payment'));
               },
               child: Container(
                 height: 50,
@@ -847,10 +916,6 @@ class _AfterpaymentState extends State<Afterpayment> {
                   ),
                   Text("PNR : $pnr"),
                   Text("BOOKINGID : $bookingId"),
-                  // Text(
-                  //   "Transaction ID :985y348y385",
-                  //   style: TextStyle(color: Color(0xFF909090)),
-                  // ),
                 ],
               ),
             ),

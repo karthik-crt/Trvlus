@@ -206,29 +206,31 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     });
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
-    print("miniFareRules${widget.miniFareRules}");
-    print("coupouncode${widget.coupouncode}");
-    print("inMiniFareRules${widget.inMiniFareRules}");
     // print("FLIGHTDETAILPAGE SCREEN");
+    print("FLIGHTDETAILPAGE SCREEN${widget.depDate}");
+    print(
+        "FLIGHTDETAILPAGE SCREEN inBoundData${widget.inBoundData['indepDate']}");
+    print(
+        "FLIGHTDETAILPAGE SCREEN outBoundData${widget.outBoundData['outdepDate']}");
     final prefs = await SharedPreferences.getInstance();
     double finalAmount = prefs.getDouble("payment") ?? 0.0;
-    print("Final Amount: $finalAmount");
+    // print("Final Amount: $finalAmount");
 
     // ROUNDTRIP
     if (widget.outresultindex != null && widget.inresultindex != null) {
-      print("ROUNDTRIPOUTBOUND");
+      // print("ROUNDTRIPOUTBOUND");
       fare = await ApiService()
           .farerule(widget.outresultindex ?? "", widget.traceid ?? "");
       fare = await ApiService()
           .farerule(widget.inresultindex ?? "", widget.traceid ?? "");
       fareQuote = await ApiService()
           .farequote(widget.outresultindex ?? "", widget.traceid ?? "");
-      print("FAREQUOTE${fareQuote.response.results.fare.baseFare}");
-      print("FAREQUOTE${fareQuote.response.results.fare.tax}");
+      // print("FAREQUOTE${fareQuote.response.results.fare.baseFare}");
+      // print("FAREQUOTE${fareQuote.response.results.fare.tax}");
       infareQuote = await ApiService()
           .farequote(widget.inresultindex ?? "", widget.traceid ?? "");
-      print("INFAREQUOTE${infareQuote.response.results.fare.baseFare}");
-      print("INFAREQUOTE${infareQuote.response.results.fare.tax}");
+      // print("INFAREQUOTE${infareQuote.response.results.fare.baseFare}");
+      // print("INFAREQUOTE${infareQuote.response.results.fare.tax}");
       ssrdata = await ApiService()
           .ssr(widget.outresultindex ?? "", widget.traceid ?? "");
       ssrdata = await ApiService()
@@ -246,16 +248,16 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       await getCustomerCommission();
       //PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
-      print("farepublishFare $farequote");
+      // print("farepublishFare $farequote");
       var farebaseFare = fareQuote.response.results.fare.baseFare;
-      print("farebaseFare $farebaseFare");
+      // print("farebaseFare $farebaseFare");
       var fareTax = fareQuote.response.results.fare.tax;
-      print("fareTax$fareTax");
+      // print("fareTax$fareTax");
 
       var searchpublishFare = widget.commonPublishedFare;
-      print("searchpublishFare $searchpublishFare");
+      // print("searchpublishFare $searchpublishFare");
       var tboOfferedFare = widget.tboOfferedFare;
-      print("tboOfferedFare $tboOfferedFare");
+      // print("tboOfferedFare $tboOfferedFare");
 
       var isPriceChanged = fareQuote.response.isPriceChanged;
       print("isPriceChanged $isPriceChanged");
@@ -264,26 +266,26 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
 
 // convert to double
       double fareQuoteDouble = double.tryParse(farequote.toString()) ?? 0;
-      print("fareQuoteDouble$fareQuoteDouble");
+      // print("fareQuoteDouble$fareQuoteDouble");
       double searchFareDouble =
           double.tryParse(searchpublishFare.toString()) ?? 0;
-      print("searchFareDouble$searchFareDouble");
+      // print("searchFareDouble$searchFareDouble");
       newBaseFare = farebaseFare;
-      print("newBaseFare$newBaseFare");
+      // print("newBaseFare$newBaseFare");
       newTax = fareTax;
-      print("newTax$newTax");
+      // print("newTax$newTax");
       print("PRICE ALERT CALCULATION");
       double varPublishFare =
           fareQuote.response.results.fare.publishedFare.toDouble();
-      print("varPublishFare$varPublishFare");
+      // print("varPublishFare$varPublishFare");
       String varOfferedFare =
           fareQuote.response.results.fare.offeredFare.toString();
-      print("varOfferedFare$varOfferedFare");
+      // print("varOfferedFare$varOfferedFare");
       double varTboTDS = fareQuote.response.results.fare.tdsOnCommission;
-      print("varTboTDS$varTboTDS");
+      // print("varTboTDS$varTboTDS");
       final varCommissionEarned =
           fareQuote.response.results.fare.commissionEarned;
-      print("varCommissionEarned$varCommissionEarned");
+      // print("varCommissionEarned$varCommissionEarned");
       double varCustomerComm = 0.0;
       if (customer.data.isNotEmpty && varCommissionEarned >= 0) {
         var commData = customer.data[0];
@@ -313,61 +315,61 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           varCustomerComm = commData.commission_above_300?.toDouble() ?? 0.0;
         }
       }
-      print("varCustomerComm$varCustomerComm");
+      // print("varCustomerComm$varCustomerComm");
       double varCustomertdsplb = fareQuote.response.results.fare.tdsOnPlb;
-      print("varCustomertdsplb$varCustomertdsplb");
+      // print("varCustomertdsplb$varCustomertdsplb");
       double varCustomerplbearned = fareQuote.response.results.fare.plbEarned;
-      print("varCustomerplbearned$varCustomerplbearned");
+      // print("varCustomerplbearned$varCustomerplbearned");
       double varfinalcommissionplb = varCommissionEarned + varCustomerplbearned;
-      print("varfinalcommissionplb$varfinalcommissionplb");
+      // print("varfinalcommissionplb$varfinalcommissionplb");
       double varCustomercommissiondetection = varfinalcommissionplb -
           varCustomerComm -
           varTboTDS -
           varCustomertdsplb;
-      print("varCustomercommissiondetection$varCustomercommissiondetection");
+      // print("varCustomercommissiondetection$varCustomercommissiondetection");
       int varFinalcustomercommission = varCustomercommissiondetection.round();
-      print("varFinalcustomercommission$varFinalcustomercommission");
+      // print("varFinalcustomercommission$varFinalcustomercommission");
       double varFinalcommissionpercentage = varFinalcustomercommission * 0.02;
-      print("varFinalcommissionpercentage$varFinalcommissionpercentage");
+      // print("varFinalcommissionpercentage$varFinalcommissionpercentage");
       int varCommissionpercentageround = varFinalcommissionpercentage.round();
-      print("varCommissionpercentageround$varCommissionpercentageround");
+      // print("varCommissionpercentageround$varCommissionpercentageround");
       varFinalflatoffer =
           varCustomercommissiondetection - varFinalcommissionpercentage;
-      print("varFinalflatoffer$varFinalflatoffer");
+      // print("varFinalflatoffer$varFinalflatoffer");
       double varroundFinalflatoffer = varFinalflatoffer.round().toDouble();
-      print("varroundFinalflatoffer$varroundFinalflatoffer");
+      // print("varroundFinalflatoffer$varroundFinalflatoffer");
       // int priceFinaloffFare = (varPublishFare - varFinalflatoffer).round();
       int priceFinaloffFare = varTboTDS <= 0
           ? (varPublishFare + varCustomerComm).round()
           : (varPublishFare - varFinalflatoffer).round();
-      print("PRICEALERTFinaloffFare$priceFinaloffFare");
-      print("tboOfferedFare$tboOfferedFare");
-      print("varOfferedFare$varOfferedFare");
+      // print("PRICEALERTFinaloffFare$priceFinaloffFare");
+      // print("tboOfferedFare$tboOfferedFare");
+      // print("varOfferedFare$varOfferedFare");
       int searchNeatFare = widget.trvlusNetFare ?? 0;
-      print("searchNeatFare$searchNeatFare");
+      // print("searchNeatFare$searchNeatFare");
 // Show PriceAlert ONLY if new fare is higher
       if (searchNeatFare != priceFinaloffFare) {
-        print("INTERNATIONAL ROUNDYRIP");
-        print("INTERNATIONAL ROUNDYRIP$searchNeatFare");
-        print("INTERNATIONAL ROUNDYRIP$priceFinaloffFare");
+        // print("INTERNATIONAL ROUNDYRIP");
+        // print("INTERNATIONAL ROUNDYRIP$searchNeatFare");
+        // print("INTERNATIONAL ROUNDYRIP$priceFinaloffFare");
         Get.find<PriceAlertController>().checkFare(
           priceFinaloffFare.toDouble(),
           true,
         );
       }
       Get.find<PriceAlertController>().newFare.value;
-      print("NEW FARE${Get.find<PriceAlertController>().newFare.value}");
+      // print("NEW FARE${Get.find<PriceAlertController>().newFare.value}");
     }
 
     // FARE CALCULATION
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
-    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
+    // print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
-    print("baseFaretax$baseFare");
+    // print("baseFaretax$baseFare");
     final tax = fareQuote.response.results.fare.tax;
-    print("taxtax$tax");
+    // print("taxtax$tax");
     othercharges = fareQuote.response.results.fare.otherCharges;
-    print("othercharges$othercharges");
+    // print("othercharges$othercharges");
 
     double adultBase = 0, adultTax = 0;
     double childBase = 0, childTax = 0;
@@ -423,68 +425,51 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     }
 
     setState(() {
+      print("FLIGHT DETAIL SCREEN");
       isLoading = false;
       coupouncode = widget.coupouncode!;
-      print("coupouncode$coupouncode");
-      print("coupouncodeeee${widget.coup}");
-      print("coupouncode${widget.coupo}");
-      print("coupouncode${widget.trvlusCommission}");
       totalBaseFare = baseFare + inbaseFare;
-      print("totalBaseFaretotalBaseFare$totalBaseFare");
       othercharges = othercharges;
-      print("othercharges$othercharges");
-      print("totalFare$totalFare");
-      print("coupouncodecoupouncode$coupouncode");
       // totalTax = tax + intax + othercharges + inothercharges;
       totalTax = tax + intax;
-      print("totalTax$totalTax");
+      // print("totalTax$totalTax");
       print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
       double finalBaseFare =
           gextXvalue.isChanged.value == true ? newBaseFare : totalBaseFare;
-      print("finalBaseFare$finalBaseFare");
-      print("finalBaseFarenewBaseFare$newBaseFare");
-      print("finalBaseFaretotalBaseFare$totalBaseFare");
       double finalTax = gextXvalue.isChanged.value == true ? newTax : totalTax;
-      print("finalTax$finalTax");
-      print("finalTaxnewTax$newTax");
-      print("finalTaxtotalTax$totalTax");
       num finalCouponValue = gextXvalue.isChanged.value == true
           ? varFinalflatoffer
           : coupouncode.toDouble();
-      print("finalCouponValue$finalCouponValue");
+      // print("finalCouponValue$finalCouponValue");
       if (widget.coupouncode! > 0) {
         overallFare =
             finalBaseFare + finalTax + othercharges - finalCouponValue;
         print("With Coupoun Code");
-        print("overallFare1$overallFare");
-        print("finalBaseFare$finalBaseFare");
-        print("finalTax$finalTax");
-        print("finalCouponValue$finalCouponValue");
-        print("othercharges$othercharges");
         final c = Get.put(PriceAlertController());
         c.overallFare = overallFare;
         c.finalBaseFare = finalBaseFare;
         c.finalTax = finalTax;
         c.finalCouponValue = finalCouponValue;
         print("PRICE ALERT VALUE USING GETX");
-        print(c.overallFare);
-        print(c.finalBaseFare);
-        print(c.finalTax);
-        print(c.finalCouponValue);
       } else {
-        overallFare = finalBaseFare + finalTax + (widget.trvlusCommission ?? 0);
+        overallFare = finalBaseFare +
+            finalTax +
+            othercharges +
+            (widget.trvlusCommission ?? 0);
         final c = Get.put(PriceAlertController());
         c.overallFare = overallFare;
         c.finalBaseFare = finalBaseFare;
         c.finalTax = finalTax;
         c.trvlusCommission = widget.trvlusCommission ?? 0;
         c.finalCouponValue = finalCouponValue;
-        print("overallFare$overallFare");
+        c.otherCharges = othercharges;
+        // print("overallFare$overallFare");
         print("Without Coupoun Code");
-        print("overallFare$finalBaseFare");
-        print("overallFare$finalTax");
-        print("trvlusCommission${widget.trvlusCommission ?? 0}");
-        print("othercharges$othercharges");
+        // print("overallFare$finalBaseFare");
+        // print("overallFare$finalTax");
+        // print("otherCharges$othercharges");
+        // print("trvlusCommission${widget.trvlusCommission ?? 0}");
+        // print("othercharges$othercharges");
       }
 
       totaladultCount = adultCount;
@@ -494,7 +479,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       print("adultFareadultFare$adultFare");
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
-      print("overallFare$overallFare");
+      // print("overallFare$overallFare");
     });
   }
 
@@ -503,7 +488,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       isLoading = true;
     });
     customer = await ApiService().getcustomercommission();
-    print("COMMISIONcustomer${jsonEncode(customer)}");
 
     setState(() {
       isLoading = false;
@@ -785,21 +769,19 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   @override
   Widget build(BuildContext context) {
     print("FLIGHTDETAILPAGE");
-    print("trvlusCommission${widget.trvlusCommission}");
-    print("helllo${widget.commonPublishedFare}");
+
     final total = widget.total;
     final llc = widget.isLLC;
-    print("LLLLLLCCCCC$llc");
     print(
         "heloooooo${widget.adultCount} ${widget.childCount} ${widget.infantCount}");
     final flight =
         widget.outboundFlight?.segments.first.first.airline.airlineName;
-    print("flight$flight");
+    // print("flight$flight");
 
     final flight1 = widget.outboundFlight?.segments.length;
-    print("flight$flight1");
+    // print("flight$flight1");
     final segments = jsonEncode(widget.segments);
-    print("allsegments$segments");
+    // print("allsegments$segments");
     // ONEWAY DATE
     if (widget.segments != null) {
       final depDateformat = widget.depDate;
@@ -2585,7 +2567,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
 
                 final cabin = segment["CabinBaggage"] ?? "";
                 final baggage = segment["Baggage"] ?? "";
-                print("baggagebaggage$baggage");
                 final from = segment["Origin"]["Airport"]["CityCode"] ?? "";
                 final to = segment["Destination"]["Airport"]["CityCode"] ?? "";
 
@@ -3061,9 +3042,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (context) {
-        print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
-        print("wdsfsrg${widget.adultCount}");
-        print("wdsfsrg$totaladultCount");
+        // print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
+        // print("wdsfsrg${widget.adultCount}");
+        // print("wdsfsrg$totaladultCount");
         return FareBreakupSheet(
           basefare:
               gextXvalue.isChanged.value == true ? newBaseFare : totalBaseFare,

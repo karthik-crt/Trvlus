@@ -151,14 +151,14 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    firstName = json['first_name'];
-    lastName = json['last_name'];
+    firstName = json['first_name'] ?? '';
+    lastName = json['last_name'] ?? '';
     role = json['role'];
     userImages = json['user_images'] ?? '';
-    userImage = json['user_image'];
+    userImage = json['user_image'] ?? '';
     panCard = json['pan_card'];
-    state = json['state'];
-    district = json['district'];
+    state = json['state'] ?? '';
+    district = json['district'] ?? '';
     agentMenu = json['agent_menu'];
     cancelList = json['cancel_list'];
     refundList = json['refund_list'];
@@ -191,7 +191,7 @@ class Data {
     roleName = json['role_name'];
     dateofbirth = json['dateofbirth'] ?? "";
     gender = json['gender'];
-    rememberToken = json['remember_token'];
+    rememberToken = json['remember_token'] ?? '';
     password = json['password'];
     mobile = json['mobile'];
     email = json['email'];

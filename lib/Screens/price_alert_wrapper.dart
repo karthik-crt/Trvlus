@@ -17,8 +17,10 @@ class PriceAlertWrapper extends StatelessWidget {
 
     return Obx(() {
       // print("Obxxx${controller.isChanged.value}");
-      if (controller.isChanged.value == true) {
+      if (controller.isChanged.value == true &&
+          controller.isAlertShown.value == false) {
         Future.microtask(() {
+          controller.isAlertShown.value = true;
           showModalBottomSheet(
             context: Get.context!,
             isScrollControlled: true,
@@ -29,6 +31,7 @@ class PriceAlertWrapper extends StatelessWidget {
             builder: (_) => PriceAlertBottomSheet(
               onReturn: () async {
                 final c = Get.find<PriceAlertController>();
+                c.resetAll(); // Reset everything when returning to search
 
                 // ✅ Show loading
                 Get.dialog(
@@ -80,7 +83,6 @@ class PriceAlertWrapper extends StatelessWidget {
             ),
           );
 
-          controller.reset(); // reset after showing
         });
       }
 
