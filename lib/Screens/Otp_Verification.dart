@@ -161,26 +161,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
       try {
         String otp = _otpControllers.map((c) => c.text).join();
-        print("segmentsJsonsegmentsJson${widget.segmentsJson}");
-        print("OTPPPPP$otp");
-
         final verifyOTP =
             await ApiService().otpVerify(widget.mobileNumber ?? "", otp);
         final pref = await SharedPreferences.getInstance();
         final accessToken = pref.getString("access_token");
-        print("accessTokenaccessToken$accessToken");
-        print("VERIFY$verifyOTP");
         await ApiService().role();
         user = await ApiService().user();
         double walletAmount = user.data.first.walletTicketBooking;
-        print("walletAmount$walletAmount");
         final prefs = await SharedPreferences.getInstance();
         await prefs.setDouble("payment", walletAmount);
-        print("traceidtraceid${widget.traceid}");
         await prefs.setBool('isLoggedIn', true);
-        print(widget.outresultindex);
-        print(widget.inresultindex);
-        print("hellloo${widget.islogin}");
 
         if (widget.islogin != false) {
           // Get.to(() => SelectTraveller(

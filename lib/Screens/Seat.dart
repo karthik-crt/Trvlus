@@ -57,7 +57,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
   void initState() {
     super.initState();
     maxSeatCount = widget.adultCount! + widget.childCount!;
-    print("maxSeatCount$maxSeatCount");
     getseatdata();
   }
 

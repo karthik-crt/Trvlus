@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:core';
 
 import 'package:flutter/material.dart';
@@ -52,9 +51,9 @@ class _TicketdetailsState extends State<Ticketdetails> {
   @override
   void initState() {
     super.initState();
-    print("API CALLING GET BOOKING DETAILS");
-    print("Ticket Details screen loaded");
-    print("GETBOOKINGID${widget.id}");
+    //("API CALLING GET BOOKING DETAILS");
+    //("Ticket Details screen loaded");
+    //("GETBOOKINGID${widget.id}");
     getBookingDataID();
   }
 
@@ -63,19 +62,19 @@ class _TicketdetailsState extends State<Ticketdetails> {
       isLoading = true;
     });
     bookingdetailsid = await ApiService().getbookingdetailHistory(widget.id);
-    print("bookingdetailsid");
-    print({bookingdetailsid.data.first.coupounCode});
-    print("helllo${bookingdetailsid.data.first.cancellationCharge}");
-    print("helllo${bookingdetailsid.data.first.pnr}");
-    print("helllo${bookingdetailsid.data.first.bookingId}");
+    //("bookingdetailsid");
+    //({bookingdetailsid.data.first.coupounCode});
+    //("helllo${bookingdetailsid.data.first.cancellationCharge}");
+    //("helllo${bookingdetailsid.data.first.pnr}");
+    //("helllo${bookingdetailsid.data.first.bookingId}");
     final pnr = bookingdetailsid.data.first.pnr;
     final bookingid = bookingdetailsid.data.first.bookingId;
     fetchbookingdetails =
         await ApiService().fetchallBookingdata(pnr, bookingid);
     print("fetchbookingdetails$fetchbookingdetails");
     commissionHistory = await ApiService().getcommissionhistory(pnr);
-    print("commissionHistory$commissionHistory");
-    print("history${commissionHistory.data.first.customerCouponDiscount}");
+    //("commissionHistory$commissionHistory");
+    //("history${commissionHistory.data.first.customerCouponDiscount}");
     // Extract MiniFareRules
     // final miniFareRules =
     //     fetchbookingdetails.data.response.flightItinerary.miniFareRules;
@@ -91,17 +90,17 @@ class _TicketdetailsState extends State<Ticketdetails> {
 
     final othercharges =
         double.parse(bookingdetailsid.data.first.price.OtherCharges.toString());
-    print("othercharges$othercharges");
+    //("othercharges$othercharges");
     final customerCommission =
         double.parse(bookingdetailsid.data.first.commissionAmt.toString());
-    print("customerCommission$customerCommission");
+    //("customerCommission$customerCommission");
     final tboTax = commissionHistory.data.first.tboTds;
-    print("tboTax$tboTax");
+    //("tboTax$tboTax");
 
     // total = fare + tax + conveiencefee - coupounCode;
-    print("conveiencefee$conveiencefee");
-    print('farefare$fare');
-    print('taxtax$tax');
+    //("conveiencefee$conveiencefee");
+    //('farefare$fare');
+    //('taxtax$tax');
     final coupoun = double.tryParse(
             commissionHistory.data.first.customerCouponDiscount.toString()) ??
         0.0;
@@ -110,20 +109,20 @@ class _TicketdetailsState extends State<Ticketdetails> {
     totalbaggage = fetchbookingdetails
             .data.response.flightItinerary.fare.totalBaggageCharges ??
         0;
-    print("totalbaggage$totalbaggage");
+    //("totalbaggage$totalbaggage");
     totalseat =
         fetchbookingdetails.data.response.flightItinerary.fare.totalSeatCharges;
-    print("totalseat$totalseat");
+    //("totalseat$totalseat");
     totalmeals =
         fetchbookingdetails.data.response.flightItinerary.fare.totalMealCharges;
-    print("totalmeals$totalmeals");
+    //("totalmeals$totalmeals");
 
     if (tboTax == 0.0) {
       coupounCode = 0.0;
     } else {
       coupounCode = coupoun;
     }
-    print("coupounCode$coupounCode");
+    //("coupounCode$coupounCode");
     if (tboTax == 0.0) {
       baseFare = fare + customerCommission;
     } else {
@@ -147,32 +146,32 @@ class _TicketdetailsState extends State<Ticketdetails> {
           totalmeals -
           coupounCode;
     }
-    print('finaltotal$total');
+    //('finaltotal$total');
 
     adultFare = adultCount * fare;
-    print("TOTAL COUNT $adultFare");
+    //("TOTAL COUNT $adultFare");
 
     setState(() {
       isLoading = false;
       miniFareRules =
           fetchbookingdetails.data.response.flightItinerary.miniFareRules ?? [];
-      print("miniFareRules length: ${miniFareRules.length}");
-      print("miniFareRules type: ${miniFareRules.runtimeType}");
+      //("miniFareRules length: ${miniFareRules.length}");
+      //("miniFareRules type: ${miniFareRules.runtimeType}");
       if (miniFareRules.isNotEmpty) {
         final r = miniFareRules.first as MiniFareRule;
-        print("type: ${r.type}");
-        print("from: ${r.from}");
-        print("to: ${r.to}");
-        print("details: ${r.details}");
-        print("journeyPoints: ${r.journeyPoints}");
-        print("first item type: ${miniFareRules.first.runtimeType}");
-        print("first item: ${miniFareRules.first}");
+        //("type: ${r.type}");
+        //("from: ${r.from}");
+        //("to: ${r.to}");
+        //("details: ${r.details}");
+        //("journeyPoints: ${r.journeyPoints}");
+        //("first item type: ${miniFareRules.first.runtimeType}");
+        //("first item: ${miniFareRules.first}");
       } else {
-        print("miniFareRules is empty — skipping debug prints");
+        //("miniFareRules is empty — skipping debug //s");
       }
       if (miniFareRules.isNotEmpty) {
-        print("first item type: ${miniFareRules.first.runtimeType}");
-        print("first item: ${miniFareRules.first}");
+        //("first item type: ${miniFareRules.first.runtimeType}");
+        //("first item: ${miniFareRules.first}");
       }
     });
     passengerCount();
@@ -195,7 +194,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
           infantCount++;
           infantFare = baseFare;
           totalinfantFare += baseFare;
-          print("infantFare$infantFare");
+          //("infantFare$infantFare");
         }
       }
     }
@@ -1007,7 +1006,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                           color: Colors.white),
                       child: GestureDetector(
                         onTap: () {
-                          print("isshowcal");
+                          //("isshowcal");
                           setState(() {
                             isShowCal = !isShowCal;
                           });
@@ -1333,9 +1332,6 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                         final passenger = childPassengers[
                                             index]; // 👈 Access each child passenger
 
-                                        print(
-                                            'childPassengers: ${jsonEncode(childPassengers)}');
-
                                         return Column(
                                           children: [
                                             Container(
@@ -1394,9 +1390,6 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                         final passenger = infantPassengers[
                                             index]; // 👈 Access each child passenger
 
-                                        print(
-                                            'infantPassengers: ${jsonEncode(infantPassengers)}');
-
                                         return Column(
                                           children: [
                                             Container(
@@ -1448,7 +1441,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            print("fr");
+                            //("fr");
                             setState(() {
                               isfare = !isfare;
                             });
@@ -1838,7 +1831,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            print("fr");
+                            //("fr");
                             setState(() {
                               iscontact = !iscontact;
                             });

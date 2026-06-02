@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -55,6 +53,8 @@ class TravelerDetailsPage extends StatefulWidget {
   final List<Map<String, dynamic>>? segmentsJson; // 4th page uses this
   final List<dynamic>? miniFareRules; // ✅ correct  final String? journeypoint;
   final Map<String, dynamic>? selectedpassenger; // 4th page uses this
+  final List<Map<String, dynamic>>?
+      selectedpassengers; // Support multiple passengers
   final String? resultindex;
   final String? traceid;
   final Result? outboundFlight;
@@ -141,7 +141,8 @@ class TravelerDetailsPage extends StatefulWidget {
       this.indepTime,
       this.inarrDate,
       this.inarrTime,
-      this.selectedpassenger});
+      this.selectedpassenger,
+      this.selectedpassengers});
 
   @override
   _TravelerDetailsPageState createState() => _TravelerDetailsPageState();
@@ -189,41 +190,42 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   void initState() {
     print("TravelerDetailsPage");
     // TODO: implement initState
-    print("FLIGHTDETAILPAGE SCREEN${widget.depDate}");
     super.initState();
     adultTravelers = [];
     childTravelers = [];
     infantTravelers = [];
     getfarequotedata();
-    print("fgcgfcf${widget.selectedpassenger}");
-    print("BASEFARE${widget.basefare}");
-    print("trvlusCommission${widget.trvlusCommission}");
-    print(widget.coupouncode);
     setPassenger();
     getmobile();
   }
 
-  setPassenger() {
-    if (widget.selectedpassenger == null) return;
-
-    final selectedEmail = widget.selectedpassenger?['email'];
-    final typeLabel = widget.selectedpassenger?['typeLable'] ?? '';
-
-    // Remove from all lists if exists
-    adultTravelers.removeWhere((adult) => adult['email'] == selectedEmail);
-    childtraveler.removeWhere((child) => child['email'] == selectedEmail);
-    infanttraveler.removeWhere((infant) => infant['email'] == selectedEmail);
-
-    // Add to the correct list based on typeLable
-    if (typeLabel == 'Adult') {
-      adultTravelers.add(widget.selectedpassenger!);
-    } else if (typeLabel == 'Child') {
-      childtraveler.add(widget.selectedpassenger!);
-    } else if (typeLabel == 'Infant') {
-      infanttraveler.add(widget.selectedpassenger!);
+  void setPassenger() {
+    if (widget.selectedpassenger != null) {
+      _addSinglePassenger(widget.selectedpassenger!);
     }
-
+    if (widget.selectedpassengers != null) {
+      for (var p in widget.selectedpassengers!) {
+        _addSinglePassenger(p);
+      }
+    }
     setState(() {});
+  }
+
+  void _addSinglePassenger(Map<String, dynamic> p) {
+    final selectedEmail = p['email'];
+    final typeLabel = p['typeLable'] ?? '';
+
+    adultTravelers.removeWhere((pass) => pass['email'] == selectedEmail);
+    childTravelers.removeWhere((pass) => pass['email'] == selectedEmail);
+    infantTravelers.removeWhere((pass) => pass['email'] == selectedEmail);
+
+    if (typeLabel == 'Adult') {
+      adultTravelers.add(p);
+    } else if (typeLabel == 'Child') {
+      childTravelers.add(p);
+    } else if (typeLabel == 'Infant') {
+      infantTravelers.add(p);
+    }
   }
 
   getfarequotedata() async {
@@ -233,7 +235,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     });
     if (widget.outBoundData['outresultindex'] != null &&
         widget.inBoundData['inresultindex'] != null) {
-      print(widget.outresultindex);
       fareQuote = await ApiService().farequote(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
       infareQuote = await ApiService().farequote(
@@ -242,7 +243,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       print("ONEWAYfareQuote");
       fareQuote = await ApiService()
           .farequote(widget.resultindex ?? "", widget.traceid ?? "");
-      debugPrint("ssrDATA: ${jsonEncode(fareQuote)}", wrapWidth: 4500);
+      // debugPrint("ssrDATA: ${jsonEncode(fareQuote)}", wrapWidth: 4500);
       await getCustomerCommission();
 
       final isInternational = isInternationalFromFareQuote(fareQuote);
@@ -256,12 +257,9 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
 
       final helo = fareQuote.response;
       final basefare = fareQuote.response.results.fare.baseFare;
-      print("basefarebasefare$basefare");
       final tax = fareQuote.response.results.fare.tax;
-      print("taxtax$tax");
       final ticket =
           fareQuote.response.results.isPassportRequiredAtTicket ?? false;
-      print("TICKETREQUIRES$ticket");
       // final passportticket =
       //     fareQuote.response.results.isPassportFullDetailRequiredAtBook ??
       //         false;
@@ -269,47 +267,46 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       //
       // isPassportRequiredAtTicket = ticket;
 
-      debugPrint("RESPONSESSRDTAA${jsonEncode(helo)}", wrapWidth: 1500);
       // PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
-      print("farepublishFare $farequote");
+      // print("farepublishFare $farequote");
       var farebaseFare = fareQuote.response.results.fare.baseFare;
-      print("farebaseFare $farebaseFare");
+      // print("farebaseFare $farebaseFare");
       var fareTax = fareQuote.response.results.fare.tax;
-      print("fareTax$fareTax");
+      // print("fareTax$fareTax");
 
       var searchpublishFare = widget.commonPublishedFare;
-      print("searchpublishFare $searchpublishFare");
+      // print("searchpublishFare $searchpublishFare");
       var tboOfferedFare = widget.tboOfferedFare;
-      print("tboOfferedFare $tboOfferedFare");
+      // print("tboOfferedFare $tboOfferedFare");
 
       var isPriceChanged = fareQuote.response.isPriceChanged;
-      print("isPriceChanged $isPriceChanged");
+      // print("isPriceChanged $isPriceChanged");
 
       gextXvalue.isChanged.value = false;
 
 // convert to double
       double fareQuoteDouble = double.tryParse(farequote.toString()) ?? 0;
-      print("fareQuoteDouble$fareQuoteDouble");
+      // print("fareQuoteDouble$fareQuoteDouble");
       double searchFareDouble =
           double.tryParse(searchpublishFare.toString()) ?? 0;
-      print("searchFareDouble$searchFareDouble");
+      // print("searchFareDouble$searchFareDouble");
       newBaseFare = farebaseFare;
-      print("newBaseFare$newBaseFare");
+      // print("newBaseFare$newBaseFare");
       newTax = fareTax;
-      print("newTax$newTax");
+      // print("newTax$newTax");
       print("PRICE ALERT CALCULATION");
       double varPublishFare =
           fareQuote.response.results.fare.publishedFare.toDouble();
-      print("varPublishFare$varPublishFare");
+      // print("varPublishFare$varPublishFare");
       String varOfferedFare =
           fareQuote.response.results.fare.offeredFare.toString();
-      print("varOfferedFare$varOfferedFare");
+      // print("varOfferedFare$varOfferedFare");
       double varTboTDS = fareQuote.response.results.fare.tdsOnCommission;
-      print("varTboTDS$varTboTDS");
+      // print("varTboTDS$varTboTDS");
       final varCommissionEarned =
           fareQuote.response.results.fare.commissionEarned;
-      print("varCommissionEarned$varCommissionEarned");
+      // print("varCommissionEarned$varCommissionEarned");
       double varCustomerComm = 0.0;
       if (customer.data.isNotEmpty && varCommissionEarned >= 0) {
         var commData = customer.data[0];
@@ -339,55 +336,50 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
           varCustomerComm = commData.commission_above_300?.toDouble() ?? 0.0;
         }
       }
-      print("varCustomerComm$varCustomerComm");
+      // print("varCustomerComm$varCustomerComm");
       double varCustomertdsplb = fareQuote.response.results.fare.tdsOnPlb;
-      print("varCustomertdsplb$varCustomertdsplb");
+      // print("varCustomertdsplb$varCustomertdsplb");
       double varCustomerplbearned = fareQuote.response.results.fare.plbEarned;
-      print("varCustomerplbearned$varCustomerplbearned");
+      // print("varCustomerplbearned$varCustomerplbearned");
       double varfinalcommissionplb = varCommissionEarned + varCustomerplbearned;
-      print("varfinalcommissionplb$varfinalcommissionplb");
+      // print("varfinalcommissionplb$varfinalcommissionplb");
       double varCustomercommissiondetection = varfinalcommissionplb -
           varCustomerComm -
           varTboTDS -
           varCustomertdsplb;
-      print("varCustomercommissiondetection$varCustomercommissiondetection");
+      // print("varCustomercommissiondetection$varCustomercommissiondetection");
       int varFinalcustomercommission = varCustomercommissiondetection.round();
-      print("varFinalcustomercommission$varFinalcustomercommission");
+      // print("varFinalcustomercommission$varFinalcustomercommission");
       double varFinalcommissionpercentage = varFinalcustomercommission * 0.02;
-      print("varFinalcommissionpercentage$varFinalcommissionpercentage");
+      // print("varFinalcommissionpercentage$varFinalcommissionpercentage");
       int varCommissionpercentageround = varFinalcommissionpercentage.round();
-      print("varCommissionpercentageround$varCommissionpercentageround");
+      // print("varCommissionpercentageround$varCommissionpercentageround");
       varFinalflatoffer =
           varCustomercommissiondetection - varFinalcommissionpercentage;
-      print("varFinalflatoffer$varFinalflatoffer");
+      // print("varFinalflatoffer$varFinalflatoffer");
       double varroundFinalflatoffer = varFinalflatoffer.round().toDouble();
-      print("varroundFinalflatoffer$varroundFinalflatoffer");
+      // print("varroundFinalflatoffer$varroundFinalflatoffer");
       // int priceFinaloffFare = (varPublishFare - varFinalflatoffer).round();
       int priceFinaloffFare = varTboTDS <= 0
           ? (varPublishFare + varCustomerComm).round()
           : (varPublishFare - varFinalflatoffer).round();
-      print("PRICEALERTFinaloffFare$priceFinaloffFare");
-      print("tboOfferedFare$tboOfferedFare");
-      print("varOfferedFare$varOfferedFare");
+      // print("PRICEALERTFinaloffFare$priceFinaloffFare");
+      // print("tboOfferedFare$tboOfferedFare");
+      // print("varOfferedFare$varOfferedFare");
       int searchNeatFare = widget.trvlusNetFare ?? 0;
-      print("searchNeatFare$searchNeatFare");
+      // print("searchNeatFare$searchNeatFare");
 // Show PriceAlert ONLY if new fare is higher
       if (searchNeatFare != priceFinaloffFare) {
-        print("INTERNATIONAL ROUNDYRIP");
-        print("INTERNATIONAL ROUNDYRIP$searchNeatFare");
-        print("INTERNATIONAL ROUNDYRIP$priceFinaloffFare");
         Get.find<PriceAlertController>().checkFare(
           priceFinaloffFare.toDouble(),
           true,
         );
       }
       Get.find<PriceAlertController>().newFare.value;
-      print("NEW FARE${Get.find<PriceAlertController>().newFare.value}");
     }
 
     // FARECALCULATION
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
-    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
     final tax = fareQuote.response.results.fare.tax.toDouble();
     othercharges = fareQuote.response.results.fare.otherCharges;
@@ -407,10 +399,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     for (var item in fareBreakdown) {
       if (item.passengerType == 1) {
         adultBase = item.baseFare.toDouble();
-        print("adultBaseadultBase$adultBase");
         adultTax = item.tax.toDouble();
         adultCount = item.passengerCount.toInt();
-        print("adultCountadultCount$adultCount");
       } else if (item.passengerType == 2) {
         childBase = item.baseFare.toDouble();
         childTax = item.tax.toDouble();
@@ -424,9 +414,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     // INBOUNDFARE
     if (widget.inBoundData['inresultindex'] != null) {
       final infareBreakdown = infareQuote.response.results.fareBreakdown;
-      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
       inbaseFare = infareQuote.response.results.fare.baseFare;
-      print("inbaseFare$inbaseFare");
       intax = infareQuote.response.results.fare.tax.toDouble();
       for (var item in infareBreakdown) {
         if (item.passengerType == 1) {
@@ -447,55 +435,26 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
     setState(() {
       isLoading = false;
       print("TRAVELLER DETAILS");
-      print("TRAVELLER DETAILS$baseFare");
-      print("TRAVELLER DETAILS$inbaseFare");
-      print("TRAVELLER DETAILS TAX$tax");
-      print("TRAVELLER DETAILS TAX$intax");
-      coupouncode = widget.coupouncode!;
-      print("coupouncode$coupouncode");
-      print("coupouncode${widget.trvlusCommission}");
+      coupouncode = widget.coupouncode ?? 0;
       totalBaseFare = baseFare + inbaseFare;
-      print("totalBaseFaretotalBaseFare$totalBaseFare");
       othercharges = othercharges;
-      print("othercharges$othercharges");
-      print("totalFare$totalFare");
-      print("coupouncodecoupouncode$coupouncode");
       // totalTax = tax + intax + othercharges + inothercharges;
       totalTax = tax + intax;
-      print("totalTax$totalTax");
-      print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
       double finalBaseFare =
           gextXvalue.isChanged.value == true ? newBaseFare : totalBaseFare;
-      print("finalBaseFare$finalBaseFare");
-      print("finalBaseFarenewBaseFare$newBaseFare");
-      print("finalBaseFaretotalBaseFare$totalBaseFare");
       double finalTax = gextXvalue.isChanged.value == true ? newTax : totalTax;
-      print("finalTax$finalTax");
-      print("finalTaxnewTax$newTax");
-      print("finalTaxtotalTax$totalTax");
       num finalCouponValue = gextXvalue.isChanged.value == true
           ? varFinalflatoffer
           : coupouncode.toDouble();
-      print("finalCouponValue$finalCouponValue");
       if (widget.coupouncode! > 0) {
         overallFare =
             finalBaseFare + finalTax + othercharges - finalCouponValue;
-        print("With Coupoun Code");
-        print("overallFare1$overallFare");
-        print("finalBaseFare$finalBaseFare");
-        print("finalTax$finalTax");
-        print("finalCouponValue$finalCouponValue");
-        print("othercharges$othercharges");
         final c = Get.put(PriceAlertController());
         c.overallFare = overallFare;
         c.finalBaseFare = finalBaseFare;
         c.finalTax = finalTax;
         c.finalCouponValue = finalCouponValue;
         print("PRICE ALERT VALUE USING GETX");
-        print(c.overallFare);
-        print(c.finalBaseFare);
-        print(c.finalTax);
-        print(c.finalCouponValue);
       } else {
         overallFare = finalBaseFare +
             finalTax +
@@ -507,22 +466,15 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
         c.finalTax = finalTax;
         c.trvlusCommission = widget.trvlusCommission ?? 0;
         c.finalCouponValue = finalCouponValue;
-        print("overallFare$overallFare");
-        print("Without Coupoun Code");
-        print("overallFare$finalBaseFare");
-        print("overallFare$finalTax");
-        print("trvlusCommission${widget.trvlusCommission ?? 0}");
-        print("othercharges$othercharges");
+        // print("overallFare$overallFare");
       }
 
       totaladultCount = adultCount;
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
       adultFare = adultBase + inadultBase;
-      print("adultFareadultFare$adultFare");
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
-      print("overallFare$overallFare");
     });
   }
 
@@ -531,7 +483,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       isLoading = true;
     });
     customer = await ApiService().getcustomercommission();
-    print("COMMISIONcustomer${jsonEncode(customer)}");
 
     setState(() {
       isLoading = false;
@@ -541,7 +492,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
   getmobile() async {
     final prefs = await SharedPreferences.getInstance();
     String? mobile = prefs.getString("mobile");
-    print("mobile$mobile");
   }
 
   @override
@@ -557,9 +507,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
       );
     }
     print("TRAVELERSDETAIL");
-    print("segmentsJson${widget.segmentsJson}");
-    print("segmentsJson${widget.isLLC}");
-    print("othercharges${widget.othercharges}");
     final flight = widget.flight;
     final childCount = widget.childCount;
     final infantCount = widget.infantCount;
@@ -1411,7 +1358,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                           Spacer(),
                           GestureDetector(
                             onTap: () async {
-                              print("fewfwe${widget.adultCount}");
                               var result = await Get.to(
                                 () => AddTravelerPage(
                                   flight: flight,
@@ -1445,6 +1391,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                   selectedpassenger: widget.selectedpassenger,
                                   traceid: widget.traceid,
                                   resultindex: widget.resultindex,
+                                  outBoundData: widget.outBoundData,
+                                  inBoundData: widget.inBoundData,
                                 ),
                               );
                               if (result != null) {
@@ -1466,10 +1414,7 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
             if (adultTravelers.length < (widget.adultCount?.toInt() ?? 0))
               GestureDetector(
                 onTap: () async {
-                  print("adultTravelers: $adultTravelers");
                   final maxAdults = widget.adultCount?.toInt() ?? 0;
-                  print("Max Adults: $maxAdults");
-                  print("helllllo${adultTravelers.length + 1}");
 
                   // ✅ Check if we can still add new adults
                   if (adultTravelers.length < maxAdults) {
@@ -1503,13 +1448,15 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             isPassportFullDetailRequiredAtBook,
                         adultCount: adultTravelers.length + 1,
                         //     selectedpassenger: widget.selectedpassenger,
+                        outBoundData: widget.outBoundData,
+                        inBoundData: widget.inBoundData,
                       ),
                     );
-                    print("resultresultresult$result");
+                    // print("resultresultresult$result");
 
                     if (result != null) {
                       setState(() {
-                        print("resultresultresult$result");
+                        // print("resultresultresult$result");
                         adultTravelers.add(result);
                       });
                     }
@@ -1639,8 +1586,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
               ...childTravelers.asMap().entries.map((entry) {
                 int index = entry.key;
                 Map<String, dynamic> traveler = entry.value;
-                print("childTravelerschildTravelers$childTravelers");
-                print("helllllochild${childTravelers.length + 1}");
 
                 return Column(
                   children: [
@@ -1674,8 +1619,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               onTap: () async {
                                 final maxChild =
                                     widget.childCount?.toInt() ?? 0;
-                                print("Max Adults: $maxChild");
-
                                 // ✅ Check if we can still add new adults
                                 var result = await Get.to(
                                   () => AddTravelerPage(
@@ -1708,6 +1651,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                         isPassportFullDetailRequiredAtBook,
                                     childCount: index + 1,
                                     selectedpassenger: null,
+                                    outBoundData: widget.outBoundData,
+                                    inBoundData: widget.inBoundData,
                                   ),
                                 );
                                 if (result != null) {
@@ -1730,7 +1675,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 GestureDetector(
                   onTap: () async {
                     final maxChild = widget.childCount?.toInt() ?? 0;
-                    print("Max child: $maxChild");
 
                     // ✅ Check if we can still add new adults
                     if (childTravelers.length < maxChild) {
@@ -1764,6 +1708,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               isPassportFullDetailRequiredAtBook,
                           childCount: childTravelers.length + 1,
                           selectedpassenger: null,
+                          outBoundData: widget.outBoundData,
+                          inBoundData: widget.inBoundData,
                         ),
                       );
                       if (result != null) {
@@ -1838,7 +1784,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
               ...infantTravelers.asMap().entries.map((entry) {
                 int index = entry.key;
                 Map<String, dynamic> traveler = entry.value;
-                print("infantTravelersinfantTravelers$traveler");
                 return Column(
                   children: [
                     Card(
@@ -1872,7 +1817,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                               onTap: () async {
                                 final maxInfant =
                                     widget.infantCount?.toInt() ?? 0;
-                                print("Max Adults: $maxInfant");
                                 var result = await Get.to(
                                   () => AddTravelerPage(
                                     flight: flight,
@@ -1904,6 +1848,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                         isPassportFullDetailRequiredAtBook,
                                     infantCount: index + 1,
                                     selectedpassenger: null,
+                                    outBoundData: widget.outBoundData,
+                                    inBoundData: widget.inBoundData,
                                   ),
                                 );
                                 if (result != null) {
@@ -1926,7 +1872,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                 GestureDetector(
                   onTap: () async {
                     final maxInfant = widget.infantCount?.toInt() ?? 0;
-                    print("Max Adults: $maxInfant");
                     var result = await Get.to(
                       () => AddTravelerPage(
                         flight: flight,
@@ -1956,6 +1901,8 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                             isPassportFullDetailRequiredAtBook,
                         infantCount: infantTravelers.length + 1,
                         selectedpassenger: null,
+                        outBoundData: widget.outBoundData,
+                        inBoundData: widget.inBoundData,
                       ),
                     );
                     if (result != null) {
@@ -2105,9 +2052,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
                                 "Please add all ${widget.infantCount} infant traveler(s)")),
                       );
                     } else {
-                      print("adultTravelersContinue$adultTravelers");
-                      print("childTravelers$childTravelers");
-                      print("infantTravelers$infantTravelers");
                       Get.to(
                         () => ConfirmTravelerDetails(
                           flight: {},
@@ -2218,9 +2162,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
 
   void showFareBreakupSheet(BuildContext context) {
     final c = Get.find<PriceAlertController>();
-    print("c.finalBaseFare${c.finalBaseFare}");
-    print("c.finalTax${c.finalTax}");
-    print("c.finalCouponValue${c.finalCouponValue}");
 
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -2230,8 +2171,6 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (context) {
-        print(widget.othercharges);
-        print("sdfdfsf");
         return FareBreakupSheet(
           basefare: c.finalBaseFare,
           tax: c.finalTax,
@@ -2430,6 +2369,12 @@ class AddTravelerPage extends StatefulWidget {
   final double? trvlusCommission;
   final double? trvlusTds;
   final int? trvlusNetFare;
+  final String? outresultindex;
+  final String? inresultindex;
+  final Map<String, dynamic> outBoundData;
+  final Map<String, dynamic> inBoundData;
+  final Result? outboundFlight;
+  final Result? inboundFlight;
 
   AddTravelerPage({
     required this.flight,
@@ -2473,6 +2418,12 @@ class AddTravelerPage extends StatefulWidget {
     this.trvlusCommission,
     this.trvlusTds,
     this.trvlusNetFare,
+    this.outresultindex,
+    this.inresultindex,
+    required this.outBoundData,
+    required this.inBoundData,
+    this.outboundFlight,
+    this.inboundFlight,
     required this.isPassportRequiredAtTicket,
     required this.isPassportFullDetailRequiredAtBook,
   });
@@ -2510,9 +2461,6 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
 
     loadMobile();
 
-    print(widget.isPassportFullDetailRequiredAtBook);
-    print(widget.isPassportRequiredAtTicket);
-
     if (widget.selectedpassenger != null) {
       selectedGender = widget.selectedpassenger!['gender'];
       firstNameController.text = widget.selectedpassenger!['Firstname'];
@@ -2531,16 +2479,6 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     }
 
     if (widget.initialData != null) {
-      print(widget.initialData!['gender']);
-      print(widget.initialData!['Firstname']);
-      print(widget.initialData!['lastname']);
-      print("pass${widget.initialData!['Passport No']}");
-      print("mobile${widget.initialData!['mobile']}");
-      print("email${widget.initialData!['email']}");
-      print("birth${widget.initialData!['Date of Birth']}");
-      print("expiry${widget.initialData!['Expiry']}");
-      print("adultCountadultCountfff${widget.adultCount}");
-
       selectedGender = widget.initialData!['gender'] ?? genderOptions.first;
       firstNameController.text = widget.initialData!['Firstname'];
       lastNameController.text = widget.initialData!['lastname'];
@@ -2550,17 +2488,15 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
       dateController.text = widget.initialData!['Date of Birth'] ?? '';
       expiryController.text = widget.initialData!['Expiry'] ?? '';
       requireWheelchair = widget.initialData!['wheelchair'];
-    } else {
-      // Set default gender based on options
+    } else if (widget.selectedpassenger == null) {
       selectedGender = genderOptions.first;
+      print("selectedGender$selectedGender");
     }
   }
 
   void loadMobile() async {
     final prefs = await SharedPreferences.getInstance();
     String? mobile = prefs.getString("mobile");
-
-    print("Fetched Mobile in Traveler: $mobile");
 
     if (mobile != null && mobile.isNotEmpty) {
       mobileController.text = mobile;
@@ -2577,17 +2513,14 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
     DateTime initialDate;
 
     if (travelerType == "adult") {
-      print("ADULT");
       firstDate = DateTime(1900);
       lastDate = DateTime(now.year - 12, 12, 31);
       initialDate = lastDate;
     } else if (travelerType == "child") {
-      print("CHILD");
       firstDate = DateTime(now.year - 12, 1, 1);
       lastDate = DateTime(now.year - 2, 12, 31);
       initialDate = DateTime(now.year - 6, now.month, now.day);
     } else if (travelerType == "infant") {
-      print("INFANT");
       firstDate = DateTime(now.year - 2, 1, 1);
       lastDate = DateTime(now.year, 12, 31);
       initialDate = DateTime(now.year - 1, now.month, now.day);
@@ -2621,7 +2554,6 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
       firstDate: now,
       lastDate: DateTime(2225),
     );
-    print("psicked date$picked");
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
@@ -2925,8 +2857,6 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                           typeLabel = 'Traveler'; // Fallback
                           count = 1;
                         }
-                        print("typeLabel$typeLabel");
-                        print("count$count");
 
                         return SingleChildScrollView(
                           child: Padding(
@@ -2985,7 +2915,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                               'assets/icon/infant.png',
                                               height: 50)
                                           : Image.asset(
-                                              'assets/icon/adultFemale.png',
+                                              'assets/icon/infant.png',
                                               height: 50),
                                     SizedBox(height: 10),
                                     Text(
@@ -3121,8 +3051,7 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 15),
                                   child: GestureDetector(
-                                    onTap: () {
-                                      print("fvsdfvdsgvs$selectedGender");
+                                    onTap: () async {
                                       String genderValue;
 
                                       if (widget.travelerType == 'adult') {
@@ -3157,16 +3086,62 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                           'typeLable': typeLabel,
                                           'title': genderValue
                                         };
+                                        final passengerId =
+                                            widget.selectedpassenger?['id'];
+                                        if (passengerId != null) {
+                                          // Convert date from dd-MM-yyyy to yyyy-MM-dd
+                                          String convertDate(String input) {
+                                            try {
+                                              final parsed =
+                                                  DateFormat("dd-MM-yyyy")
+                                                      .parse(input);
+                                              return DateFormat("yyyy-MM-dd")
+                                                  .format(parsed);
+                                            } catch (_) {
+                                              return input;
+                                            }
+                                          }
 
+                                          final updatePayload = {
+                                            'first_name':
+                                                firstNameController.text.trim(),
+                                            'last_name':
+                                                lastNameController.text.trim(),
+                                            'mobile':
+                                                mobileController.text.trim(),
+                                            'email':
+                                                emailController.text.trim(),
+                                            'passport_no': passportNoController
+                                                .text
+                                                .trim(),
+                                            'dob': convertDate(
+                                                dateController.text.trim()),
+                                            // ✅ yyyy-MM-dd
+                                            'passport_expiry': expiryController
+                                                    .text
+                                                    .trim()
+                                                    .isNotEmpty
+                                                ? convertDate(expiryController
+                                                    .text
+                                                    .trim())
+                                                : null, // ✅
+                                            // ✅ yyyy-MM-dd
+                                            'gender': selectedGender,
+                                            'wheel_chair':
+                                                requireWheelchair.toString(),
+                                            'nationality': selectedNationality,
+                                            'issusing_country': selectedCountry,
+                                            'title': selectedGender == "Mr"
+                                                ? "Male"
+                                                : "Female",
+                                          };
+
+                                          await ApiService().updatePassenger(
+                                              passengerId, updatePayload);
+                                        }
                                         Get.back();
                                         Get.back(result: data);
-                                        print("addnewadult$data");
-                                        print("jgvgfcf${widget.resultindex}");
-                                        print("jgvgfcf${widget.traceid}");
-                                        print(widget.selectedpassenger);
                                         if (widget.selectedpassenger != null) {
-                                          print("yesss");
-                                          print(widget.segmentsJson);
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -3201,10 +3176,14 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                                 adultCount: widget.adultCount,
                                                 childCount: widget.childCount,
                                                 infantCount: widget.infantCount,
-                                                selectedpassenger:
-                                                    widget.selectedpassenger,
-                                                outBoundData: {},
-                                                inBoundData: {},
+                                                selectedpassenger: data,
+                                                outBoundData:
+                                                    widget.outBoundData,
+                                                inBoundData: widget.inBoundData,
+                                                inboundFlight:
+                                                    widget.inboundFlight,
+                                                outboundFlight:
+                                                    widget.outboundFlight,
                                                 traceid: widget.traceid,
                                                 resultindex: widget.resultindex,
                                                 coupouncode: widget.coupouncode,
@@ -3416,9 +3395,7 @@ bool isInternationalFromFareQuote(farequote.FareQuotesData fareQuote) {
   for (var trip in segments) {
     for (var segment in trip) {
       final originCountry = segment.origin.airport.countryCode;
-      print("originCountryoriginCountry$originCountry");
       final destinationCountry = segment.destination.airport.countryCode;
-      print("destinationCountrydestinationCountry$destinationCountry");
 
       if (originCountry != 'IN' || destinationCountry != 'IN') {
         return true;

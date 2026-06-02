@@ -177,26 +177,14 @@ class _AdditionsState extends State<Additions> {
     if (widget.coupouncode! > 0) {
       finalFare =
           ((c.finalBaseFare) + (c.finalTax) - (c.finalCouponValue)).round();
-      print("COMMISSION$finalFare");
     } else {
       finalFare =
           ((c.finalBaseFare) + (c.finalTax) + (widget.trvlusCommission ?? 0))
               .round();
-      print("NOCOMMISSION$finalFare");
-      print("NOCOMMISSION${c.finalBaseFare}");
-      print("NOCOMMISSION${c.finalTax}");
-      print("NOCOMMISSION${widget.trvlusCommission ?? 0}");
     }
 
-    print("coupouncode${c.finalCouponValue}");
-    print("baseFare${widget.baseFare ?? 0}");
-    print("finalBaseFare${c.finalBaseFare}");
-    print("tax${widget.tax ?? 0}");
-    print("finalTax${c.finalTax}");
     // int base = widget.finaloffFare ?? 0;
     int base = finalFare.toInt();
-    print("recalculateTotalPrice");
-    print("base$base");
 
     // ✅ Baggage - now searches both outbound and inbound
     double baggageSum = 0.0;
@@ -219,7 +207,6 @@ class _AdditionsState extends State<Additions> {
     });
 
     base += baggageSum.round();
-    print("baggageSum$base");
 
     // seats and meals stay same...
     double seatSum = 0.0;
@@ -227,7 +214,6 @@ class _AdditionsState extends State<Additions> {
       seatSum += (seat['Price'] as num?)?.toDouble() ?? 0.0;
     }
     base += seatSum.round();
-    print("seatSum$base");
 
     double mealSum = 0.0;
     selectedMealData.forEach((route, passengerMap) {
@@ -240,12 +226,9 @@ class _AdditionsState extends State<Additions> {
       });
     });
     base += mealSum.toInt();
-    print("mealSum$base");
-    print("mealSum$mealSum");
 
     setState(() {
       totalPrice = base;
-      print("totalPrice$totalPrice");
     });
   }
 
@@ -345,7 +328,6 @@ class _AdditionsState extends State<Additions> {
     });
 
     recalculateTotalPrice();
-    print("Selected Meals: ${jsonEncode(selectedMealData)}");
   }
 
   @override
@@ -384,7 +366,6 @@ class _AdditionsState extends State<Additions> {
     getssrdata().then((_) {
       recalculateTotalPrice(); // ← ADD THIS
     });
-    print("seatdf${widget.seatPayload}");
 
     totalPrice = widget.finaloffFare ?? 0;
   }
@@ -392,15 +373,8 @@ class _AdditionsState extends State<Additions> {
   Future<void> getssrdata() async {
     setState(() {
       isLoading = true;
-      print("beforeOutput");
-      print("totalPrice${widget.finaloffFare}");
     });
 
-    print(widget.traceid);
-    print(widget.resultindex);
-    print("ADULTCOUNTADULTCOUNT${widget.adultCount}");
-    print(widget.outBoundData);
-    print(widget.inresultindex);
     if (widget.outBoundData['outresultindex'] != null &&
         widget.inBoundData['inresultindex'] != null) {
       fare = (await ApiService().farerule(
@@ -413,7 +387,6 @@ class _AdditionsState extends State<Additions> {
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
       ssrData = await ApiService().ssr(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
-      print(ssrData.response.mealDynamic);
       inssrData = await ApiService()
           .ssr(widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
     } else {
@@ -421,19 +394,17 @@ class _AdditionsState extends State<Additions> {
           .farequote(widget.resultindex ?? "", widget.traceid ?? "");
       ssrData = await ApiService()
           .ssr(widget.resultindex ?? "", widget.traceid ?? "");
-      debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
     }
     fareQuoteResultIndex = fareQuote.response.results.resultIndex;
 
     String craftType = '';
     try {
       craftType = fareQuote.response.results.segments.first.first.craft ?? '';
-      print("CraftType from FareQuote: $craftType");
+      // print("CraftType from FareQuote: $craftType");
     } catch (e) {
-      print("CraftType extraction failed: $e");
+      // print("CraftType extraction failed: $e");
     }
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
-    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
     final tax = fareQuote.response.results.fare.tax.toDouble();
 
@@ -467,9 +438,7 @@ class _AdditionsState extends State<Additions> {
     // INBOUNDFARE
     if (widget.inBoundData['inresultindex'] != null) {
       final infareBreakdown = infareQuote.response.results.fareBreakdown;
-      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
       inbaseFare = infareQuote.response.results.fare.baseFare;
-      print("inbaseFare$inbaseFare");
       intax = infareQuote.response.results.fare.tax.toDouble();
       for (var item in infareBreakdown) {
         if (item.passengerType == 1) {
@@ -494,18 +463,11 @@ class _AdditionsState extends State<Additions> {
       othercharges = widget.othercharges ?? 0;
 
       totalBaseFare = c.finalBaseFare + inbaseFare;
-      print("totalFare$totalBaseFare");
       totalTax = c.finalTax + intax + othercharges;
-      print("totalTax$totalTax");
       if (widget.coupouncode! > 0) {
         overallFare = totalBaseFare + totalTax - coupouncode;
-        print("overallFare1$overallFare");
       } else {
         overallFare = totalBaseFare + totalTax + (widget.trvlusCommission ?? 0);
-        print("overallFare$overallFare");
-        print("overallFare$totalBaseFare");
-        print("overallFare$totalTax");
-        print("overallFare$othercharges");
       }
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
@@ -520,8 +482,6 @@ class _AdditionsState extends State<Additions> {
           ssrData.response!.baggage.isEmpty) {
         selectedindex = 1;
       }
-
-      print("AferOutput");
     });
   }
 
@@ -625,7 +585,6 @@ class _AdditionsState extends State<Additions> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () {
-                          print("wigent${widget.resultindex}");
                           // ApiService().bookTicket(selectedSeatPayload,
                           //     widget.resultindex, widget.traceid);
                           // Same data bundle as back arrow
@@ -635,7 +594,6 @@ class _AdditionsState extends State<Additions> {
                             "baggage": getFormattedBaggageData(),
                             "baggageCount": selectedBaggageCount,
                           };
-                          print("Next pressed → passing data: $threeValue");
                           void printLargeJson(dynamic data) {
                             final jsonString =
                                 const JsonEncoder.withIndent('  ')
@@ -654,7 +612,6 @@ class _AdditionsState extends State<Additions> {
                             }
                           }
 
-                          printLargeJson("threeValue$threeValue");
                           Navigator.pop(context, threeValue);
                         },
                         style: ElevatedButton.styleFrom(
@@ -721,7 +678,6 @@ class _AdditionsState extends State<Additions> {
                               "baggageCount": selectedBaggageCount
                               // Add this line for seats
                             };
-                            print("threeValue$threeValue");
                             Navigator.pop(context, threeValue);
                           },
                           child: Icon(Icons.arrow_back)),
@@ -874,13 +830,8 @@ class _AdditionsState extends State<Additions> {
   }
 
   buildBaggage() {
-    print("Total baggage groups: ${ssrData.response.baggage.length}");
     for (int i = 0; i < ssrData.response.baggage.length; i++) {
-      print("Group $i length: ${ssrData.response.baggage[i].length}");
-      if (ssrData.response.baggage[i].isNotEmpty) {
-        print(
-            "  Route: ${ssrData.response.baggage[i][0].origin}-${ssrData.response.baggage[i][0].destination}");
-      }
+      if (ssrData.response.baggage[i].isNotEmpty) {}
     }
     final int totalPassengers =
         (widget.adultCount ?? 0) + (widget.childCount ?? 0);
@@ -1584,11 +1535,6 @@ class _AdditionsState extends State<Additions> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (context) {
-        print("DEBUG trvlusCommission: ${widget.trvlusCommission}");
-        print("DEBUG coupouncode: $coupouncode");
-        print("DEBUG adultFare: $adultFare");
-        print("DEBUG overallFare: $overallFare");
-        print("c.finalCouponValue${c.finalCouponValue}");
         final double realBaggageTotal = calculateBaggageTotal(); // ← here
         final double realMealsTotal = calculateMealsTotal(); // ← add this
         return FareBreakupSheet(

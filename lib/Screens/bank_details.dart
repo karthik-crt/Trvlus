@@ -115,7 +115,8 @@ class _BankDetailsState extends State<BankDetails> {
                                 ),
                                 onPressed: () {
                                   Clipboard.setData(
-                                    ClipboardData(text: bank.data[index].accNo),
+                                    ClipboardData(
+                                        text: bank.data[index].ifscCode),
                                   );
 
                                   ScaffoldMessenger.of(context).showSnackBar(

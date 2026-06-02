@@ -53,7 +53,6 @@ class _WalletState extends State<Wallet> {
     payment.data.removeWhere((item) => item.roleName == "Secret");
 
     statusCode = payment.statusCode; // ✅ Set statusCode from payment
-    print("statusCode$statusCode");
 
     // ✅ Only call user API if payment statusCode is "1"
     if (statusCode == "1") {

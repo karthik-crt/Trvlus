@@ -198,6 +198,10 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
   double infantFare = 0;
   final gextXvalue = Get.put(PriceAlertController());
 
+  // Add these fields to _FlightDetailsPageState:
+  bool isPassportRequiredAtTicket = false;
+  bool isPassportFullDetailRequiredAtBook = false;
+
   // final List<dynamic>? miniFareRules; // ✅ CORRECT
 
   getFareData() async {
@@ -207,11 +211,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     final vale = 0;
     print("FLIGHTDETAILPAGE SCREEN");
     // print("FLIGHTDETAILPAGE SCREEN");
-    print("FLIGHTDETAILPAGE SCREEN${widget.depDate}");
-    print(
-        "FLIGHTDETAILPAGE SCREEN inBoundData${widget.inBoundData['indepDate']}");
-    print(
-        "FLIGHTDETAILPAGE SCREEN outBoundData${widget.outBoundData['outdepDate']}");
     final prefs = await SharedPreferences.getInstance();
     double finalAmount = prefs.getDouble("payment") ?? 0.0;
     // print("Final Amount: $finalAmount");
@@ -246,6 +245,13 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       ssrdata = await ApiService()
           .ssr(widget.resultindex ?? "", widget.traceid ?? "");
       await getCustomerCommission();
+
+      final isInternational = isInternationalFromFareQuote(fareQuote);
+      isPassportRequiredAtTicket = isInternational ||
+          (fareQuote.response.results.isPassportRequiredAtTicket ?? false);
+      isPassportFullDetailRequiredAtBook = isInternational ||
+          (fareQuote.response.results.isPassportFullDetailRequiredAtBook ??
+              false);
       //PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
       // print("farepublishFare $farequote");
@@ -260,7 +266,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       // print("tboOfferedFare $tboOfferedFare");
 
       var isPriceChanged = fareQuote.response.isPriceChanged;
-      print("isPriceChanged $isPriceChanged");
 
       gextXvalue.isChanged.value = false;
 
@@ -386,7 +391,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     for (var item in fareBreakdown) {
       if (item.passengerType == 1) {
         adultBase = item.baseFare.toDouble();
-        print("adultBaseadultBase$adultBase");
         adultTax = item.tax.toDouble();
         adultCount = item.passengerCount.toInt();
       } else if (item.passengerType == 2) {
@@ -403,7 +407,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
     double inothercharges = 0;
     if (widget.inresultindex != null) {
       final infareBreakdown = infareQuote.response.results.fareBreakdown;
-      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
       inbaseFare = infareQuote.response.results.fare.baseFare;
       intax = infareQuote.response.results.fare.tax.toDouble();
       inothercharges = infareQuote.response.results.fare.otherCharges;
@@ -433,7 +436,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       // totalTax = tax + intax + othercharges + inothercharges;
       totalTax = tax + intax;
       // print("totalTax$totalTax");
-      print("gextXvalue.isChanged.value${gextXvalue.isChanged.value}");
       double finalBaseFare =
           gextXvalue.isChanged.value == true ? newBaseFare : totalBaseFare;
       double finalTax = gextXvalue.isChanged.value == true ? newTax : totalTax;
@@ -464,7 +466,7 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
         c.finalCouponValue = finalCouponValue;
         c.otherCharges = othercharges;
         // print("overallFare$overallFare");
-        print("Without Coupoun Code");
+        // print("Without Coupoun Code");
         // print("overallFare$finalBaseFare");
         // print("overallFare$finalTax");
         // print("otherCharges$othercharges");
@@ -476,7 +478,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
       totalchildCount = childCount + inchildCount;
       totalinfantCount = infantCount + ininfantCount;
       adultFare = adultBase + inadultBase;
-      print("adultFareadultFare$adultFare");
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
       // print("overallFare$overallFare");
@@ -503,7 +504,6 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
 
       try {
         final travelerData = await ApiService().gettraveler();
-        print("travelerData.data.length: ${travelerData.data.length}");
 
         if (travelerData.data.isEmpty) {
           Navigator.push(
@@ -622,6 +622,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                 trvlusTds: widget.trvlusTds,
                 trvlusNetFare: widget.trvlusNetFare,
                 othercharges: othercharges,
+                isPassportRequiredAtTicket: isPassportRequiredAtTicket,
+                isPassportFullDetailRequiredAtBook:
+                    isPassportFullDetailRequiredAtBook,
               ),
             ),
           );
@@ -790,14 +793,9 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
           DateFormat("EEE, dd MMM yy").format(parsedDate);
 
       final arrDateformat = widget.arrDate;
-      print("arrDateformat$arrDateformat");
       DateTime arrparsedDate = DateTime.parse(arrDateformat!);
       final finalarrDateformat =
           DateFormat("EEE, dd MMM yy").format(arrparsedDate);
-      print("finalarrDateformat$finalarrDateformat");
-
-      print(finaldepDateformat);
-      print(finalarrDateformat);
     } else {}
 
     return isLoading

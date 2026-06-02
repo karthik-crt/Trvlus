@@ -130,6 +130,7 @@ class _AfterpaymentState extends State<Afterpayment> {
   String bookingId = '';
   String statusMessage = '';
   double totalAmount = 0;
+  String appReference = '';
 
 // ✅ CORRECT
   double seatTotal = 0.0;
@@ -138,18 +139,6 @@ class _AfterpaymentState extends State<Afterpayment> {
 
   // TICKET API CALLING
   getSearchData() async {
-    print("TICKET API CALLING");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCoupounCode']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCoupounCode']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusTds']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusTds']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
-    print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
-    print(widget.stop);
-    print(widget.isLLC);
-    print(widget.resultindex);
-    print(widget.traceid);
-
     // final prefs = await SharedPreferences.getInstance();
     // final resultIndex = prefs.getString("ResultIndex");
     // final traceid = prefs.getString("TraceId");
@@ -192,7 +181,6 @@ class _AfterpaymentState extends State<Afterpayment> {
 
     setState(() {
       isLoading = true;
-      print("beforeOutput");
     });
 
     if (widget.outboundFlight != null && widget.inboundFlight != null) {
@@ -314,11 +302,13 @@ class _AfterpaymentState extends State<Afterpayment> {
                   ?.toString() ??
               "0";
           statusMessage = (searchData?["statusMessage"]);
+          appReference = (searchData?["data"]?["app_reference"]) ??
+              (searchData?["app_reference"]) ??
+              "";
         });
 
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING outBoundData");
-        print("API CALLING${widget.outBoundData['trvlusNetFare']}");
         await ApiService().ticketInvoice(
           pnr,
           bookingId.toString(),
@@ -331,7 +321,6 @@ class _AfterpaymentState extends State<Afterpayment> {
         );
       }
 
-      print("searchDataROUNDTRIP$searchData");
       if (widget.inBoundData['IsLCC'] == true) {
         searchData = await ApiService().ticket(
           widget.inBoundData['inresultindex'],
@@ -371,7 +360,6 @@ class _AfterpaymentState extends State<Afterpayment> {
           widget.inBoundData['trvlusNetFare'],
           othercharges,
         );
-        print("searchDataINBOUNDROUNDTRIP$searchData");
         setState(() {
           pnr =
               "$pnr${(searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? ""}";
@@ -427,8 +415,8 @@ class _AfterpaymentState extends State<Afterpayment> {
             widget.inBoundData['trvlusNetFare'],
             "");
 
-        print(
-            "BookingId from hold pnr: ${(searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? ""}");
+        // print(
+        //     "BookingId from hold pnr: ${(searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? ""}");
         // final pnr =
         //     (searchData?["data"]?["Response"]?["Response"]?["PNR"]) ?? "";
         // final bookingId =
@@ -446,7 +434,7 @@ class _AfterpaymentState extends State<Afterpayment> {
 
         print("HOLD-->TICKET API CALLING");
         print("INSIDE API CALLING inBoundData");
-        print("API CALLING${widget.inBoundData['netFare']}");
+
         await ApiService().ticketInvoice(
           pnr,
           bookingId.toString(),
@@ -461,8 +449,6 @@ class _AfterpaymentState extends State<Afterpayment> {
     } else {
       // ONEWAY
       if (widget.isLLC == true) {
-        print(widget.segmentsJson);
-        print("widgetjourneyList");
         final depTime = widget.depTime;
         final depDate = DateFormat(
           "dd MMM yy",
@@ -579,15 +565,7 @@ class _AfterpaymentState extends State<Afterpayment> {
         });
 
         final api = searchData;
-        print("API CALLING API$api");
 
-        print("BookingId from hold pnr: $pnr");
-        print("bookingIdbookingId: $bookingId");
-        print("traceid: $traceid");
-        // print("statusCodestatusCode: $statusCode");
-
-        print("HOLD-->TICKET API CALLING");
-        print("INSIDE API CALLING");
         await ApiService().ticketInvoice(
           pnr,
           bookingId.toString(),
@@ -602,7 +580,6 @@ class _AfterpaymentState extends State<Afterpayment> {
     }
     setState(() {
       isLoading = false;
-      print("AfterOutput");
     });
 
     // ✅ Check for booking failure
@@ -654,16 +631,12 @@ class _AfterpaymentState extends State<Afterpayment> {
 
     setState(() {
       isLoading = true;
-      print("selectTravelerbeforeOutput");
     });
     var traveler = await ApiService()
         .selectTraveler(passenger, childpassenger, infantpassenger);
-    // print("travelertravelertraveler${jsonEncode(traveler)}");
-    print("traveler");
     await getSearchData();
     setState(() {
       isLoading = false;
-      print("selectTravelerAfterOutput");
     });
   }
 
@@ -672,10 +645,8 @@ class _AfterpaymentState extends State<Afterpayment> {
 
     try {
       // selecttravelerData() internally calls getSearchData(), so don't call it again
-      // await selecttravelerData();
-      await getSearchData();
+      await selecttravelerData();
     } catch (e) {
-      print("Booking flow error: $e");
     } finally {
       setState(() => isLoading = false);
     }
@@ -703,7 +674,10 @@ class _AfterpaymentState extends State<Afterpayment> {
               SizedBox(width: 8),
               Text(
                 "Booking Failed",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black),
               ),
             ],
           ),
@@ -711,11 +685,20 @@ class _AfterpaymentState extends State<Afterpayment> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                message,
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 16),
+              // const Text(
+              //   "App Reference Number",
+              //   style: TextStyle(fontSize: 13, color: Colors.grey),
+              // ),
+              // const SizedBox(height: 4),
+              // Text(
+              //   appReference.isNotEmpty ? appReference : "N/A",
+              //   // ✅ shows CR42-701668-925699
+              //   style: const TextStyle(
+              //     fontSize: 16,
+              //     fontWeight: FontWeight.bold,
+              //     color: Colors.black,
+              //   ),
+              // ),
               // Countdown indicator
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 1.0, end: 0.0),
@@ -749,11 +732,9 @@ class _AfterpaymentState extends State<Afterpayment> {
   @override
   void initState() {
     // selecttravelerData();
-    print('passengerdetailsall${widget.passenger}');
     // 1. Calculate seat total
     seatTotal = 0.0;
     if (widget.seat != null) {
-      print("SEATSS${widget.seat}");
       for (var s in widget.seat!) {
         seatTotal +=
             (s['Price'] ?? s['price'] ?? s['Amount'] ?? s['amount'] ?? 0)
@@ -783,20 +764,12 @@ class _AfterpaymentState extends State<Afterpayment> {
         }
       });
     }
-    print("basefare DATA: ${widget.basefare}");
-    print("tax DATA: ${widget.tax}");
-    print("SEAT DATA: $seatTotal");
-    print("MEAL DATA: $mealTotal");
-    print("BAGGAGE DATA: $baggageTotal");
-    print("convenienceFee DATA: ${widget.convenienceFee}");
-    print("trvlusCommission DATA: ${widget.trvlusCommission}");
-    print("NETFARE DATA: ${widget.trvlusNetFare}");
+
     totalAmount = (widget.trvlusNetFare?.toDouble() ?? 0.0) +
         (widget.convenienceFee ?? 0.0) +
         seatTotal +
         mealTotal +
         baggageTotal;
-    print("totalAmount$totalAmount");
     _runBookingFlow();
 
     super.initState();

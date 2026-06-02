@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -193,16 +191,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       print("beforeOutput");
     });
     print("CONFIRMTRAVELERRR");
-    print("CONFIRMTRAVELERRR${widget.miniFareRules}");
     final prefs = await SharedPreferences.getInstance();
     double? paymentAmount = prefs.getDouble("payment");
-    print("Stored Amount: $paymentAmount");
-    print("baggagebaggage$totalBaggagePrice");
-    print("islcc${widget.isLLC}");
-    print("coupoun code${widget.coupouncode}");
-    print("islcc${widget.basefare}");
-    print("islcc${widget.tax}");
-    print("segmentsJson${widget.segmentsJson}");
     if (widget.outBoundData['outresultindex'] != null &&
         widget.inBoundData['inresultindex'] != null) {
       farerule = (await ApiService().farerule(
@@ -211,12 +201,12 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? ""));
       fareQuote = await ApiService().farequote(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
-      print("FAREQUOTE${fareQuote.response.results.fare.baseFare}");
-      print("FAREQUOTE${fareQuote.response.results.fare.tax}");
+      // print("FAREQUOTE${fareQuote.response.results.fare.baseFare}");
+      // print("FAREQUOTE${fareQuote.response.results.fare.tax}");
       infareQuote = await ApiService().farequote(
           widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
-      print("FAREQUOTE${infareQuote.response.results.fare.baseFare}");
-      print("FAREQUOTE${infareQuote.response.results.fare.tax}");
+      // print("FAREQUOTE${infareQuote.response.results.fare.baseFare}");
+      // print("FAREQUOTE${infareQuote.response.results.fare.tax}");
       ssrData = await ApiService().ssr(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
       ssrData = await ApiService()
@@ -226,14 +216,10 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
           .farequote(widget.resultindex ?? "", widget.traceid ?? "");
       ssrData = await ApiService()
           .ssr(widget.resultindex ?? "", widget.traceid ?? "");
-      debugPrint("ssrDATA: ${jsonEncode(ssrData)}", wrapWidth: 4500);
       final helo = ssrData.response;
-      debugPrint("RESPONSESSRDTAA${jsonEncode(helo)}", wrapWidth: 1500);
       // PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
-      print("farequotefarequote$farequote");
       var isPriceChanged = fareQuote.response.isPriceChanged;
-      print("isPriceChangedisPriceChanged$isPriceChanged");
       Get.find<PriceAlertController>().checkFare(
         farequote,
         isPriceChanged,
@@ -241,7 +227,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     }
     // FARECALCULATION
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
-    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
     final tax = fareQuote.response.results.fare.tax.toDouble();
 
@@ -275,9 +260,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     // INBOUNDFARE
     if (widget.inBoundData['inresultindex'] != null) {
       final infareBreakdown = infareQuote.response.results.fareBreakdown;
-      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
       inbaseFare = infareQuote.response.results.fare.baseFare;
-      print("inbaseFare$inbaseFare");
       intax = infareQuote.response.results.fare.tax.toDouble();
       for (var item in infareBreakdown) {
         if (item.passengerType == 1) {
@@ -300,7 +283,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       coupouncode = c.finalCouponValue;
       // othercharges = widget.othercharges ?? 0;
       othercharges = c.otherCharges;
-      print("otherachanges$othercharges");
       // totalBaseFare = c.finalBaseFare + inbaseFare;
       // totalBaseFare = c.finalBaseFare + inbaseFare;
       // print("totalFare${c.finalBaseFare}");
@@ -310,32 +292,17 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       // totalTax = c.finalTax + intax;
       totalBaseFare = c.finalBaseFare; // already includes inbound
       totalTax = c.finalTax;
-      print("totalTax$totalTax");
-      print("totalTax${c.finalTax}");
+
       // print("totalTax${intax}");
       if (widget.coupouncode! > 0) {
-        print("COMMISSION");
         baseFareOnly = totalBaseFare + totalTax - coupouncode;
-        print("baseFareOnly$totalBaseFare");
-        print("baseFareOnly$totalTax");
-        print("baseFareOnly$coupouncode");
         overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
-        print("overallFare$overallFare");
       } else {
-        print("NO COMMISSION");
         baseFareOnly = totalBaseFare +
             totalTax +
             othercharges +
             (widget.trvlusCommission ?? 0);
         overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
-
-        print("overallFare$overallFare");
-        print("totalBaseFare$totalBaseFare");
-        print("totalTax$totalTax");
-        print("mealTotal$mealTotal");
-        print("seatTotal$seatTotal");
-        print("totalBaggagePrice$totalBaggagePrice");
-        print("overallFare${widget.trvlusCommission}");
       }
       // totaladultCount = adultCount + inadultCount;
       // totalchildCount = childCount + inchildCount;
@@ -346,8 +313,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
       adultFare = adultBase + inadultBase;
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
-      print("overallFare$overallFare");
-      print("AferOutput");
     });
   }
 
@@ -357,12 +322,8 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
     final city = widget.city;
     final destination = widget.destination;
     final pax = widget.initialData;
-    print("PAxdetails$pax");
     final child = widget.childData;
-    print("childchild$child");
     final infant = widget.infantData;
-    print("infantinfant$child");
-    print("ISLLC${widget.isLLC}");
 
     int selectedindex = -1;
     if (widget.depDate != null) {
@@ -381,8 +342,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         (pax ?? []).asMap().entries.map((entry) {
       int index = entry.key;
       passenger = entry.value;
-      print("index$index");
-      print("passengerAdult$passenger");
       return {
         "type": "ADULT ${index + 1}",
         "name":
@@ -394,7 +353,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         (child ?? []).asMap().entries.map((entry) {
       int index = entry.key;
       childpassenger = entry.value;
-      print("passengerchild$childpassenger");
       return {
         "type": "CHILD ${index + 1}",
         "name":
@@ -406,7 +364,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         (infant ?? []).asMap().entries.map((entry) {
       int index = entry.key;
       infantpassenger = entry.value;
-      print("passengerinfant$infantpassenger");
       return {
         "type": "INFANT ${index + 1}",
         "name":
@@ -607,10 +564,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                                 GestureDetector(
                                   onTap: () {
                                     print('VIEW FULL DETAIL');
-                                    print(
-                                        "HELLO${widget.segments!.first.last.destination.airport.cityCode}");
-                                    print(
-                                        "HELLO${widget.segments!.first.last.destination.airport.cityName}");
                                     Get.to(
                                       () => Viewfulldetails(
                                         flight: {},
@@ -1347,13 +1300,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                             ssrData.response!.seatDynamic.isNotEmpty)
                           GestureDetector(
                             onTap: () async {
-                              print("TRACEID${widget.traceid}");
-                              print("RESULTINDEX${widget.resultindex}");
-                              print("adultCount${widget.adultCount}");
-                              print("childCount${widget.childCount}");
-                              print("infantCount${widget.infantCount}");
-                              print("trvlusNetFare${widget.trvlusNetFare}");
-
                               var value = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -1716,14 +1662,7 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                       SizedBox(height: 5.h),
                       ElevatedButton(
                         onPressed: () async {
-                          print("passengerdetailsAdults$pax");
-
-                          for (var i in passenger.entries) {
-                            print("loopPASSENGER${passenger[i]}");
-                          }
-                          print("passengerAdult$passenger");
-                          print("passengerdetailschild$childpassenger");
-                          print("passengerInfant$infantpassenger");
+                          for (var i in passenger.entries) {}
 
                           Get.to(
                             () => MakePaymentScreen(
@@ -1900,14 +1839,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         baseFareTotal += (widget.trvlusCommission ?? 0);
       }
       overallFare = baseFareOnly + mealTotal + seatTotal + totalBaggagePrice;
-      print("overallFare$overallFare");
-      print("baseFareTotal$baseFareTotal");
-      print("mealTotal$mealTotal");
-      print("seatTotal$seatTotal");
-      print("totalBaggagePrice$totalBaggagePrice");
-
-      print(
-          "Recalculated overallFare: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: $totalBaggagePrice)");
     });
   }
 
@@ -1920,9 +1851,6 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (context) {
-        print("DEBUG trvlusCommission: ${widget.trvlusCommission}");
-        print("c.finalCouponValue${c.finalCouponValue}");
-
         return FareBreakupSheet(
           basefare: c.finalBaseFare,
           tax: c.finalTax,

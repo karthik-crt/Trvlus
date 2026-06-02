@@ -52,7 +52,7 @@ class _LegalState extends State<Legal> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint('WebView Error: ${error.description}');
+            // debugPrint('WebView Error: ${error.description}');
           },
         ),
       )

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -215,22 +214,22 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     getCountryCode();
     loadBalance();
     startCountdown(); // ← Start timer here
-    print("FAREEEEE");
-    print(totalBalance);
+    //("FAREEEEE");
+    //(totalBalance);
   }
 
   Future<void> loadBalance() async {
     try {
       final userData = await ApiService().user();
       final balance = userData.data.first.walletTicketBooking;
-      print("balancebalance$balance");
-      print(widget.trvlusNetFare);
+      //("balancebalance$balance");
+      //(widget.trvlusNetFare);
 
       setState(() {
         totalBalance = balance;
       });
     } catch (e) {
-      print("Error loading balance: $e");
+      //("Error loading balance: $e");
       setState(() {
         totalBalance = 0.0;
       });
@@ -243,7 +242,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     });
     if (widget.outBoundData['outresultindex'] != null &&
         widget.inBoundData['inresultindex'] != null) {
-      print(widget.outresultindex);
+      //(widget.outresultindex);
       fareQuote = await ApiService().farequote(
           widget.outBoundData['outresultindex'] ?? "", widget.traceid ?? "");
       infareQuote = await ApiService().farequote(
@@ -253,19 +252,19 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       ssrData = await ApiService()
           .ssr(widget.inBoundData['inresultindex'] ?? "", widget.traceid ?? "");
     } else {
-      print("ONEWAYfareQuote");
+      //("ONEWAYfareQuote");
       fareQuote = await ApiService()
           .farequote(widget.resultindex ?? "", widget.traceid ?? "");
       ssrData = await ApiService()
           .ssr(widget.resultindex ?? "", widget.traceid ?? "");
-      print(
-          "FlightDetailChangeInfo: ${fareQuote.response.flightDetailChangeInfo}");
+      // //(
+      //     "FlightDetailChangeInfo: ${fareQuote.response.flightDetailChangeInfo}");
 
       // PRICEALERT
       var farequote = fareQuote.response.results.fare.publishedFare;
-      print("farequotefarequote$farequote");
+      //("farequotefarequote$farequote");
       var isPriceChanged = fareQuote.response.isPriceChanged;
-      print("isPriceChangedisPriceChanged$isPriceChanged");
+      //("isPriceChangedisPriceChanged$isPriceChanged");
 
       Get.find<PriceAlertController>().checkFare(
         farequote,
@@ -274,11 +273,11 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     }
     // FARECALCULATION
     final fareBreakdown = fareQuote.response.results.fareBreakdown;
-    print("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
+    //("fareBreakdownfareBreakdown${jsonEncode(fareBreakdown)}");
     final baseFare = fareQuote.response.results.fare.baseFare;
     final tax = fareQuote.response.results.fare.tax.toDouble();
     final convenienceFee = countrycode.data.first.convenienceFee;
-    print("convenienceFee$convenienceFee");
+    //("convenienceFee$convenienceFee");
 
     double adultBase = 0, adultTax = 0;
     double childBase = 0, childTax = 0;
@@ -310,9 +309,9 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     // INBOUNDFARE
     if (widget.inBoundData['inresultindex'] != null) {
       final infareBreakdown = infareQuote.response.results.fareBreakdown;
-      print("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
+      //("infareBreakdownfareBreakdown${jsonEncode(infareBreakdown)}");
       inbaseFare = infareQuote.response.results.fare.baseFare;
-      print("inbaseFare$inbaseFare");
+      //("inbaseFare$inbaseFare");
       intax = infareQuote.response.results.fare.tax.toDouble();
       for (var item in infareBreakdown) {
         if (item.passengerType == 1) {
@@ -332,26 +331,15 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     }
 
     setState(() {
-      print("PAYMENT");
-      print(
-          "FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCoupounCode']}");
-      print(
-          "FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCoupounCode']}");
-      print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusTds']}");
-      print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusTds']}");
-      print(
-          "FLIGHTDETAILPAGE SCREEN${widget.outBoundData['trvlusCommission']}");
-      print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['trvlusCommission']}");
-      print("FLIGHTDETAILPAGE SCREEN${widget.outBoundData['netFare']}");
-      print("FLIGHTDETAILPAGE SCREEN${widget.inBoundData['netFare']}");
+      //("PAYMENT");
       coupouncode = widget.coupouncode!;
       // othercharges = widget.othercharges ?? 0;
       othercharges = c.otherCharges;
-      print("othercharges$othercharges");
+      //("othercharges$othercharges");
       totalBaseFare = baseFare + inbaseFare;
-      print("totalFare$totalFare");
+      //("totalFare$totalFare");
       totalTax = tax + intax;
-      print("totalTax$totalTax");
+      //("totalTax$totalTax");
       // MEALS SEAT BAGGAGE
       mealTotal = 0.0;
       if (widget.meal.isNotEmpty) {
@@ -373,9 +361,9 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       for (var s in widget.seat) {
         seatTotal += ((s['Price'] as num?)?.toDouble() ?? 0.0);
       }
-      print("seatTotal$seatTotal");
+      //("seatTotal$seatTotal");
 
-      print("baggageTotal${widget.baggage}");
+      //("baggageTotal${widget.baggage}");
       baggageTotal = 0.0;
       if (widget.baggage.isNotEmpty) {
         widget.baggage.forEach((route, value) {
@@ -396,9 +384,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
           }
         });
       }
-      print("baggageTotal$baggageTotal");
-      print(
-          "overallFare with SSR: $overallFare (meals: $mealTotal, seats: $seatTotal, baggage: $baggageTotal)");
+      //("baggageTotal$baggageTotal");
 
       if (widget.coupouncode! > 0) {
         overallFare = c.finalBaseFare +
@@ -408,14 +394,6 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
             seatTotal +
             baggageTotal -
             c.finalCouponValue;
-        print("overallFare1$overallFare");
-        print("totalBaseFare$totalBaseFare");
-        print("totalTax$totalTax");
-        print("convenienceFee$convenienceFee");
-        print("mealTotal$mealTotal");
-        print("seatTotal$seatTotal");
-        print("baggageTotal$baggageTotal");
-        print("overallFare1$coupouncode");
       } else {
         overallFare = totalBaseFare +
             totalTax +
@@ -425,8 +403,6 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
             mealTotal +
             seatTotal +
             baggageTotal;
-        print("overallFare$overallFare");
-        print("convenienceFee${countrycode.data.first.convenienceFee}");
       }
       totaladultCount = adultCount + inadultCount;
       totalchildCount = childCount + inchildCount;
@@ -434,7 +410,6 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       adultFare = adultBase + inadultBase;
       childFare = childBase + inchildBase;
       infantFare = infantBase + ininfantBase;
-      print("overallFare$overallFare");
       isLoading = false;
 
       // Calculate meal total
@@ -449,8 +424,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
     convenienceFee = countrycode.data.first.convenienceFee;
     await getfarequotedata();
 
-    print("countrycode$countrycode");
-    print("convenienceFee$convenienceFee");
+    //("countrycode$countrycode");
+    //("convenienceFee$convenienceFee");
   }
 
   @override
@@ -465,13 +440,13 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         ),
       );
     }
-    // print("PAYMENT");
-    // print("segmentsJson${widget.segmentsJson}");
+    // //("PAYMENT");
+    // //("segmentsJson${widget.segmentsJson}");
     final flight = widget.flight;
     final city = widget.city;
     final destination = widget.destination;
     final passenger = widget.flightNumber ?? "";
-    // print("SEATS${widget.seat}");
+    // //("SEATS${widget.seat}");
 
     if (widget.depDate != null) {
       final depDateformat = widget.depDate;
@@ -483,7 +458,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       final finalarrDateformat =
           DateFormat("EEE,dd MMM yy").format(arrparsedDate);
     }
-    // print(
+    // //(
     //     "payment${widget.passenger} ${widget.childpassenger} ${widget.infantpassenger}");
 
     return Scaffold(
@@ -1606,7 +1581,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                 ),
                 SizedBox(height: 5.h),
                 // Builder(builder: (_) {
-                //   print("DEBUG: totalBalance=$totalBalance, overallFare=$overallFare, condition=${totalBalance >= overallFare}");
+                //   //("DEBUG: totalBalance=$totalBalance, overallFare=$overallFare, condition=${totalBalance >= overallFare}");
                 //   return const SizedBox.shrink();
                 // }),
                 if (totalBalance >= overallFare) ...[
@@ -1614,7 +1589,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
                       prefs.getString("ResultIndex");
-                      print("ISLLC${widget.isLLC}");
+                      //("ISLLC${widget.isLLC}");
                       // await ApiService().ticket();
                       Navigator.push(
                           context,

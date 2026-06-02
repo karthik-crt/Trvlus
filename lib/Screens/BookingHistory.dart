@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -67,7 +65,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
     });
     bookingHistory = await ApiService().bookingHistory();
     cancelReasonData = await ApiService().addStatus();
-    print("dsfsg${jsonEncode(cancelReasonData)}");
     // selectCancelReason = cancelReasonData.data.toString();
     // print("selectCancelReason${jsonEncode(selectCancelReason)}");
     setState(() {
@@ -192,7 +189,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
 
                         final totalDurationText =
                             '${totalMinutes ~/ 60}h ${totalMinutes % 60}m';
-                        print("totalDurationText$totalDurationText");
                         final create = booking.createdAt;
                         final date = DateTime.parse(create);
                         createdDate = DateFormat('dd MMM, yyyy').format(date);
@@ -200,7 +196,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                         String depatureStr =
                             booking.journeyList.first.depature; // "22 Oct 25"
                         DateTime bookingDate = parseBookingDate(depatureStr);
-                        print("bookingDatebookingDate$bookingDate");
                         DateTime today = DateTime.now();
                         DateTime todayDateOnly =
                             DateTime(today.year, today.month, today.day);
@@ -500,9 +495,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                 InkWell(
                                   splashColor: Colors.white,
                                   onTap: () {
-                                    print("Booking ID${booking.id}");
                                     var bookingID = booking.id;
-                                    print("bookingID$bookingID");
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -688,7 +681,72 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                       imagePath: "assets/icon/email.svg",
                                       label: "Email\nE-ticket",
                                       onTap: () {
-                                        print("Email E-ticket tapped");
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              content: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.check_circle,
+                                                    color: Color(0xFFF37023),
+                                                    size: 52,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  const Text(
+                                                    "Email Sent Successfully!",
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  const Text(
+                                                    "Your E-ticket has been sent to your registered email address.",
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  const SizedBox(height: 20),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    child: ElevatedButton(
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        backgroundColor:
+                                                            const Color(
+                                                                0xFFF37023),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                        ),
+                                                      ),
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                              context),
+                                                      child: const Text(
+                                                        "OK",
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 16),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
                                       },
                                     ),
                                     _buildActionButton(
@@ -969,8 +1027,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                                               selectCancelReason: selectCancelReason,
                                                                             );
 
-                                                                            print("Cancel API response: $response");
-
                                                                             setModalState(() {
                                                                               isBottomSheetLoading = false; // ✅ stop loader
                                                                             });
@@ -1088,7 +1144,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
         return DateFormat('yyyy-MM-dd').parse(dateStr);
       } catch (e2) {
         // If still fails, print and fallback to today (optional)
-        print("Date parsing failed for: $dateStr");
         return DateTime.now();
       }
     }

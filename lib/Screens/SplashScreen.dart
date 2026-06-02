@@ -41,29 +41,29 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  Future<void> dialog(String errorMessage, Color color) async {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(
-              "Token Check",
-              style: TextStyle(color: Colors.red),
-            ),
-            content: Text(
-              errorMessage,
-              style: TextStyle(color: color),
-            ),
-            actions: [
-              ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("Ok"))
-            ],
-          );
-        });
-  }
+  // Future<void> dialog(String errorMessage, Color color) async {
+  //   showDialog(
+  //       context: context,
+  //       builder: (context) {
+  //         return AlertDialog(
+  //           title: Text(
+  //             "Token Check",
+  //             style: TextStyle(color: Colors.red),
+  //           ),
+  //           content: Text(
+  //             errorMessage,
+  //             style: TextStyle(color: color),
+  //           ),
+  //           actions: [
+  //             ElevatedButton(
+  //                 onPressed: () {
+  //                   Navigator.pop(context);
+  //                 },
+  //                 child: Text("Ok"))
+  //           ],
+  //         );
+  //       });
+  // }
 
   Future<void> _authenticate() async {
     final prefs = await SharedPreferences.getInstance();
@@ -78,13 +78,11 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       String? token = await ApiService().flightAuthenticate();
       // ✅ Always show dialog with token (success)
-      await dialog("✅ Token Generated:\n\n${token ?? 'No token received'}",
-          Colors.green);
-
-      print("✅ Token saved: $token");
+      // await dialog("✅ Token Generated:\n\n${token ?? 'No token received'}",
+      //     Colors.green);
     } catch (e) {
       // ❌ Show dialog with error
-      await dialog("❌ Auth Failed:\n\n${e.toString()}", Colors.red);
+      // await dialog("❌ Auth Failed:\n\n${e.toString()}", Colors.red);
       print("❌ Auth error: $e");
     }
   }

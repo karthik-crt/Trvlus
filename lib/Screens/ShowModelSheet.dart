@@ -62,7 +62,6 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
     double adultFare = 0;
 
     final tax = widget.tax;
-    print("totaltotal$tax");
     // final othertaxcharges =
     //     ((widget.tax ?? 0) + (widget.othercharges ?? 0)).round();
     final othertaxcharges = (widget.tax ?? 0).toInt();

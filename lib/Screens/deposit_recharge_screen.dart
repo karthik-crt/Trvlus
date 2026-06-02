@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trvlus/Screens/recharge_status.dart';
 
 import 'bank_details.dart';
 import 'depositRequest.dart';
@@ -77,47 +78,53 @@ class _DepositRechargeScreenState extends State<DepositRechargeScreen> {
             SizedBox(
               height: 10,
             ),
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Color(0xFFF37023)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "VIEW RECHARGE STATUS",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_outlined,
-                    color: Colors.white,
-                  )
-                ],
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => RechargeStatus()));
+              },
+              child: Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Color(0xFFF37023)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "VIEW RECHARGE STATUS",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_outlined,
+                      color: Colors.white,
+                    )
+                  ],
+                ),
               ),
             ),
             SizedBox(
               height: 10,
             ),
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Color(0xFFF37023)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "NET BANKING",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_outlined,
-                    color: Colors.white,
-                  )
-                ],
-              ),
-            )
+            // Container(
+            //   padding: EdgeInsets.all(10),
+            //   decoration: BoxDecoration(
+            //       borderRadius: BorderRadius.circular(15),
+            //       color: Color(0xFFF37023)),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       Text(
+            //         "NET BANKING",
+            //         style: TextStyle(color: Colors.white),
+            //       ),
+            //       Icon(
+            //         Icons.arrow_forward_ios_outlined,
+            //         color: Colors.white,
+            //       )
+            //     ],
+            //   ),
+            // )
           ],
         ),
       ),

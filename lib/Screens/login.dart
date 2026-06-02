@@ -71,10 +71,10 @@ class _LoginPopupState extends State<LoginPopup> {
                     _isOtpSent = true;
                   });
                   // You can call your API here
-                  print("Send OTP to ${_mobileController.text}");
+                  // print("Send OTP to ${_mobileController.text}");
                 } else {
                   // Verify OTP API
-                  print("Verify OTP ${_otpController.text}");
+                  // print("Verify OTP ${_otpController.text}");
                   // Close popup after successful login
                   Navigator.of(context).pop();
                 }

@@ -58,7 +58,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _checkUserId() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id');
-    print("userId$userId");
 
     setState(() {
       _hasUserId = userId != null && userId.isNotEmpty;
@@ -154,16 +153,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   SliverAppBar(
                     backgroundColor: Colors.white,
                     centerTitle: true,
+                    titleSpacing: 10,
+                    //leading: ,
                     toolbarHeight: _hasUserId ? 280.h : 220.h,
                     // toolbarHeight: 60.h,
                     automaticallyImplyLeading: false,
                     flexibleSpace: FlexibleSpaceBar(
-                      centerTitle: true,
+                      //   centerTitle: true,
+
                       titlePadding: EdgeInsets.symmetric(
                           horizontal: 50.w, vertical: 20.h),
-                      background: Center(
-                          child: Container(
-                        decoration: BoxDecoration(
+                      background: Container(
+                        decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
@@ -189,12 +190,21 @@ class _ProfilePageState extends State<ProfilePage> {
                                     },
                                     child: Icon(Icons.arrow_back_rounded)),
                                 const Spacer(),
-                                Text(
-                                  " My Profile",
-                                  style:
-                                      Theme.of(context).textTheme.headlineLarge,
+                                Align(
+                                  alignment: AlignmentGeometry.center,
+                                  child: Text(
+                                    " My Profile",
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineLarge,
+                                  ),
                                 ),
-                                Spacer(),
+                                const SizedBox(
+                                  width: 30,
+                                ),
+                                const Spacer(),
+                                // Spacer(),
                                 // GestureDetector(
                                 //     onTap: () {
                                 //       Get.back();
@@ -212,10 +222,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                 padding: EdgeInsets.symmetric(vertical: 0),
                                 decoration: BoxDecoration(
                                     /* gradient: LinearGradient(
-                              colors: [Colors.orange.shade200, Colors.orange.shade100],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),*/
+                          colors: [Colors.orange.shade200, Colors.orange.shade100],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),*/
                                     ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -514,7 +524,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ElevatedButton(
                                       onPressed: () async {
                                         print("HElloooo");
-                                        print(profile.data.dateofbirth);
                                         final prefs = await SharedPreferences
                                             .getInstance();
                                         final userId =
@@ -614,7 +623,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ],
                           ],
                         ),
-                      )),
+                      ),
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -753,7 +762,6 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () async {
                 // Call your delete API
                 final response = await ApiService().deleteUser();
-                print("Deleted response: $response");
 
                 // Clear SharedPreferences
                 final prefs = await SharedPreferences.getInstance();

@@ -17,9 +17,9 @@ class _PriceAlertBottomSheetState extends State<PriceAlertBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final p = Get.find<PriceAlertController>();
-    print("p.isChanged${p.isChanged}");
-    print("p.newFare${p.newFare}");
-    print("p.oldFare${p.oldFare}");
+    // print("p.isChanged${p.isChanged}");
+    // print("p.newFare${p.newFare}");
+    // print("p.oldFare${p.oldFare}");
 
     return Container(
       height: 450,

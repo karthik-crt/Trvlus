@@ -141,9 +141,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
   @override
   void initState() {
     print("MOBILE VERIFY");
-    print("OTHER${widget.othercharges}");
     var ell = widget.airlineName;
-    print("segmentsJsonsegmentsJson${widget.segmentsJson}");
 
     super.initState();
     // Manually set default country to India
@@ -227,8 +225,7 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                   return Row(
                     children: [
                       GestureDetector(
-                        // onTap: _openCountryPicker,
-                        onTap: null,
+                        onTap: _openCountryPicker,
                         child: Container(
                           width: 120.w,
                           height: 50.h,
@@ -257,11 +254,11 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                   SizedBox(width: 5.w),
                                 ],
                               ),
-                              // Padding(
-                              //   padding: const EdgeInsets.only(top: 15),
-                              //   child: Icon(Icons.expand_more,
-                              //       color: Colors.grey[600]),
-                              // ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 15),
+                                child: Icon(Icons.expand_more,
+                                    color: Colors.grey[600]),
+                              ),
                             ],
                           ),
                         ),
@@ -294,15 +291,13 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                                   _mobileFocus.unfocus(); // removes cursor
                                 }
                               });
-                              print(
-                                  "Entered mobile number: $enteredMobileNumber");
-                              print(widget.outresultindex);
-                              print(widget.inresultindex);
+                              // print(
+                              //     "Entered mobile number: $enteredMobileNumber");
                               final prefs =
                                   await SharedPreferences.getInstance();
                               prefs.setString("mobile", enteredMobileNumber);
-                              print(
-                                  "Stored Mobile: ${prefs.getString("mobile")}");
+                              // print(
+                              //     "Stored Mobile: ${prefs.getString("mobile")}");
                               print("Stored Mobile:");
                             },
                             style: TextStyle(color: Colors.black),
@@ -350,8 +345,6 @@ class _MobileVerificationScreenState extends State<MobileVerificationScreen> {
                               try {
                                 await ApiService()
                                     .otpRequest(enteredMobileNumber);
-                                print(
-                                    "Final entered mobile: ${authController.mobileNumber.value}");
                                 Get.to(() => OtpVerificationScreen(
                                       flight: {},
                                       mobileNumber: enteredMobileNumber,

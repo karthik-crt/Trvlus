@@ -117,8 +117,8 @@ class Data {
     originalFare = json['originalFare']?.toDouble();
     bookingId = int.tryParse(json['booking_id']?.toString() ?? '0');
     status = json['status'] ?? '';
-    pnr = json['pnr'] ?? '';
-    gdspnr = json['gdspnr'] ?? '';
+    pnr = json['pnr']?.toString() ?? '';
+    gdspnr = json['gdspnr']?.toString() ?? '';
     passengerDetails = (json['passenger_details'] is List)
         ? (json['passenger_details'] as List)
             .map((e) => PassengerDetails.fromJson(e))

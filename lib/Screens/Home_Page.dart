@@ -144,7 +144,7 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     // ✅ Run ALL 30 dates in PARALLEL — not one by one
     final futures = <Future>[];
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 7; i++) {
       final date = now.add(Duration(days: i));
       final dateStr = DateFormat("yyyy-MM-dd").format(date);
       final key = DateTime(date.year, date.month, date.day);
@@ -251,13 +251,11 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
     });
     String formattedDate =
         DateFormat("yyyy-MM-dd").format(selectedDepatureDate!.toLocal());
-    print("formattedDate$formattedDate");
 
     String? formattedReturnDate;
     if (selectedReturnDate != null) {
       formattedReturnDate =
           DateFormat("yyyy-MM-dd").format(selectedReturnDate!.toLocal());
-      print("heloooooooo$formattedReturnDate");
     }
 
     // String date = selectedReturnDate.toString().substring(0, 10);
@@ -296,9 +294,9 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
 
   Future<void> date() async {
     final api = ApiService();
-    print("Authenticateapicalling");
-    print(selectedDepDate);
-    print("getCalendarFare$selectedDepatureDate");
+    // print("Authenticateapicalling");
+    // print(selectedDepDate);
+    // print("getCalendarFare$selectedDepatureDate");
 
     final response = await api.getCalendarFare(
       airportCode,
@@ -306,16 +304,13 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
       selectedDepatureDate,
     );
 
-    print("token$response");
-
     final searchResults = response['Response']['SearchResults'] as List;
-    print("searchResults$searchResults");
 
     // convert to map
     fareMap.clear();
     for (var result in searchResults) {
       final date = DateTime.parse(result['DepartureDate']).toLocal();
-      print("date$date");
+
       final key = DateTime(date.year, date.month, date.day); // remove time
       fareMap[key] = result['Fare'].toDouble(); // use normalized key
       // print('Mapped fare $key -> ${result['Fare']}');
@@ -337,25 +332,24 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
 
     // Format only the date part
     selectedDepatureDate = DateTime(now.year, now.month, now.day);
-    print("selectedDepatureDate$selectedDepatureDate");
+    // print("selectedDepatureDate$selectedDepatureDate");
     // date();
 
     returnDate = DateTime.now().add(const Duration(days: 1));
-    print('ReturnDate$returnDate');
+    // print('ReturnDate$returnDate');
     // Only set selectedReturnDate if it's a Round trip
     if (selectedTripType == "Round trip") {
       selectedReturnDate = returnDate;
     } else {
       selectedReturnDate = null;
     }
-    print('selectedReturnDate$selectedReturnDate');
+    // print('selectedReturnDate$selectedReturnDate');
     setPaxValue();
     // _selectedDepDate = today.toString();
   }
 
   Future<void> _requestNotificationPermission() async {
     PermissionStatus status = await Permission.notification.status;
-    print("Notification permission status: $status");
     if (!status.isGranted) {
       status = await Permission.notification.request();
     }
@@ -432,10 +426,10 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                 // format departure date once
                 String formattedDate = DateFormat("yyyy-MM-dd")
                     .format(selectedDepatureDate!.toLocal());
-                print("formattedDate$selectedReturnDate");
+                // print("formattedDate$selectedReturnDate");
 
                 String? formattedReturnDate;
-                print("formattedReturnDate$formattedReturnDate");
+                // print("formattedReturnDate$formattedReturnDate");
                 if (selectedReturnDate != null) {
                   formattedReturnDate = DateFormat("yyyy-MM-dd")
                       .format(selectedReturnDate!.toLocal());
@@ -770,14 +764,13 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                             setState(() {
                               _selectedDates = date;
                               selectedDepatureDate = date;
-                              print("departureDate$_selectedDates");
-                              print("returnDate$returnDate");
+                              // print("departureDate$_selectedDates");
+                              // print("returnDate$returnDate");
                             });
                           },
                           onReturnDateChanged: (date) {
                             setState(() {
                               returnDate = date;
-                              print("returnDateFromDeparturePicker$returnDate");
                             });
                           },
                           firstDate: DateTime.now(),
@@ -837,9 +830,6 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                                 onTap: () {
                                   setState(() {
                                     selectedTripType = "Round trip";
-                                    print("selectedTripTypeR$selectedTripType");
-                                    print(
-                                        "selete departure date $selectedDepatureDate");
 
                                     selectedDepatureDate ??= DateTime.now();
                                     returnDate = selectedDepatureDate!.add(
@@ -850,7 +840,6 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                                       selectedDepatureDate!,
                                       returnDate!,
                                     ];
-                                    print("returnDatehelo$returnDate");
                                   });
                                 },
                                 child: Container(
@@ -1120,10 +1109,9 @@ class _DatePickerFieldState extends State<DatePickerField> {
               isScrollControlled: true,
               builder: (context) {
                 DateTime? tempSelectedDate = widget.firstDate;
-                print("tempSelectedDate$tempSelectedDate");
+                // print("tempSelectedDate$tempSelectedDate");
                 DateTime? tempReturnDate = returnDate;
-                print("tempReturnDate$tempReturnDate");
-                print("hello${widget.onDateChanged}");
+                // print("tempReturnDate$tempReturnDate");
                 String activeTab =
                     widget.label == "Return on" ? "return" : "departure";
 
@@ -1140,7 +1128,6 @@ class _DatePickerFieldState extends State<DatePickerField> {
 
                 return StatefulBuilder(
                   builder: (context, localSetState) {
-                    print("Trip type is: ${currentTripType}");
                     return Container(
                       height: 550,
                       child: Scaffold(
@@ -1162,7 +1149,6 @@ class _DatePickerFieldState extends State<DatePickerField> {
                             onPressed: () {
                               if (selectedDepatureDate != null) {
                                 widget.onDateChanged(selectedDepatureDate!);
-                                print("departureDate${widget.onDateChanged}");
                               }
                               if (selectedReturnDate != null) {
                                 if (widget.onReturnDateChanged != null) {
@@ -1171,7 +1157,6 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                 } else {
                                   widget.onDateChanged(selectedReturnDate!);
                                 }
-                                print("returnDate$selectedReturnDate");
                               }
                               if (widget.onTripTypeChanged != null) {
                                 widget.onTripTypeChanged!(currentTripType);
@@ -1665,9 +1650,6 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                         if (currentTripType == 'One way') {
                                           if (dates.isNotEmpty) {
                                             selectedDepatureDate = dates.first;
-                                            print(
-                                              "One way -> Departure: $selectedDepatureDate",
-                                            );
                                           }
                                           selectedReturnDate = null;
                                         } else {
@@ -1686,9 +1668,6 @@ class _DatePickerFieldState extends State<DatePickerField> {
                                                   const Duration(days: 1),
                                                 );
                                               }
-                                              print(
-                                                "Round Trip -> Departure: $selectedDepatureDate",
-                                              );
                                             } else {
                                               selectedReturnDate = dates.first;
                                               // If return is moved before departure, push departure back
@@ -1719,14 +1698,14 @@ class _DatePickerFieldState extends State<DatePickerField> {
 
                                       // Debug logs
                                       if (selectedDepatureDate != null) {
-                                        print(
-                                          "Selected Departure Date: ${DateFormat("yyyy-MM-dd").format(selectedDepatureDate!)}",
-                                        );
+                                        // print(
+                                        //   "Selected Departure Date: ${DateFormat("yyyy-MM-dd").format(selectedDepatureDate!)}",
+                                        // );
                                       }
                                       if (selectedReturnDate != null) {
-                                        print(
-                                          "Selected Return Date: ${DateFormat("yyyy-MM-dd").format(selectedReturnDate!)}",
-                                        );
+                                        // print(
+                                        //   "Selected Return Date: ${DateFormat("yyyy-MM-dd").format(selectedReturnDate!)}",
+                                        // );
                                       }
                                     },
                                   ),
@@ -2079,7 +2058,6 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
                             modalSetState(() => children = value);
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setInt('children', children);
-                            print("childrenchildren$children");
                             setState(
                                 () => children = value); // Update parent state
                           } else {
@@ -2107,7 +2085,6 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
                             modalSetState(() => infants = value);
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setInt('infants', infants);
-                            print("infantsinfants$infants");
                             setState(
                                 () => infants = value); // Update parent state
                           } else {
@@ -2182,7 +2159,6 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
                   GestureDetector(
                     onTap: () {
                       if (value > 0) onChanged(value - 1);
-                      print("value$value");
                     },
                     child: Container(
                       padding: EdgeInsets.only(right: 5.w),

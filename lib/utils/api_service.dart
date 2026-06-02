@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:core';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
 
 import 'package:dio/dio.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
+
 // import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -52,10 +52,10 @@ class ApiBaseHelper {
   List<Map<String, dynamic>> passengersList = [];
 
   // LOCAL IP
-  static const _baseUrl = 'http://192.168.1.40:8000/api/';
+  // static const _baseUrl = 'http://192.168.1.34:8000/api/';
 
   // LIVE
-  // static const _baseUrl = 'https://dev-api.trvlus.com/api/';
+  static const _baseUrl = 'https://dev-api.trvlus.com/api/';
 
   //
   // (NEED TO HIDE ENDUSERIP FOR DATESCROLLER) [NEED TO CHANGE TICKET AND INVOICE URL]
@@ -74,7 +74,6 @@ class ApiBaseHelper {
   );
 
   Map<String, dynamic> decodeBase64Response(Map<String, dynamic> res) {
-    print("res$res");
     // try {
     const secretKey = 'ThisIsASecretKey'; // Move key inside
 
@@ -100,7 +99,6 @@ class ApiBaseHelper {
 
   dynamic _returnResponse(Response response) {
     print("response.statusCode");
-    print(response.statusCode);
     switch (response.statusCode) {
       case 200:
         var responseJson = response.data;
@@ -136,7 +134,7 @@ class ApiBaseHelper {
       headers['Authorization'] = 'Bearer $access';
     }
 
-    print("FINAL HEADERS = $headers");
+    // print("FINAL HEADERS = $headers");
     return headers;
   }
 
@@ -151,7 +149,6 @@ class ApiBaseHelper {
     var apiUrl = _baseUrl + url + params;
 
     final headers = await getMainHeaders();
-    print("GET HEADERS → $headers");
 
     try {
       final response = await dio.get(
@@ -207,7 +204,6 @@ class ApiBaseHelper {
     Map<String, String>? customHeaders,
   ]) async {
     String apiUrl = _baseUrl + url;
-    print("apiUrl Post $apiUrl");
 
     // Get default headers
     final headers = await getMainHeaders();
@@ -219,10 +215,10 @@ class ApiBaseHelper {
 
     dynamic responseJson;
     // print("TICKET REQUEST");
-    debugPrint(
-      const JsonEncoder.withIndent('  ').convert(body),
-      wrapWidth: 7000,
-    );
+    // debugPrint(
+    //   const JsonEncoder.withIndent('  ').convert(body),
+    //   wrapWidth: 7000,
+    // );
     try {
       final response = await dio.post(
         apiUrl,
@@ -239,7 +235,6 @@ class ApiBaseHelper {
             : null,
         // options: Options(headers: headers),
       );
-      print("reponse Data Data $response");
       responseJson = _returnResponse(response);
     } catch (e) {
       print("POST ERROR: $e");
@@ -272,7 +267,6 @@ class ApiBaseHelper {
   ]) async {
     String apiUrl =
         'http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest/$url';
-    print("apiUrl Post $apiUrl");
 
     // Get default headers
     final headers = await getMainHeaders();
@@ -284,10 +278,6 @@ class ApiBaseHelper {
 
     dynamic responseJson;
     print("TICKET REQUEST");
-    debugPrint(
-      const JsonEncoder.withIndent('  ').convert(body),
-      wrapWidth: 7000,
-    );
     try {
       final response = await dio.post(
         apiUrl,
@@ -298,7 +288,6 @@ class ApiBaseHelper {
             ? Options(headers: headers)
             : null,
       );
-      print("reponse Data Data $response");
       responseJson = _returnResponse(response);
     } catch (e) {
       print("POST ERROR: $e");
@@ -371,20 +360,17 @@ class ApiService {
     final authenticate = {"id": "1"};
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString("access_token");
-    print("accessToken$accessToken");
     try {
       final response = await _helper.dio.post(
         "flightAuthenticate",
         data: authenticate,
         options: Options(headers: {"Authorization": "Bearer $accessToken"}),
       );
-      print("Authenticate response: ${response.data}");
       // final decode = _helper.decodeBase64Response(response.data);
       // print("decodedecode$decode");
       final decode = response.data;
       _tokenId = decode["TokenId"];
       final token = await SharedPreferences.getInstance();
-      print("prefs$token");
       await token.setString('tokenId', _tokenId!);
       return _tokenId;
     } catch (e) {
@@ -399,13 +385,9 @@ class ApiService {
       print("AUTHENTICATE API CALLING");
       final response = await _helper.dio.post("mobileFlightAuth");
       // final decode = _helper.decodeBase64Response(response.data);
-      print("response$response");
       final decode = response.data;
-      print("Authenticate response mobile: $decode");
-      print("response$response");
       _tokenId = decode["TokenId"];
       final token = await SharedPreferences.getInstance();
-      print("prefs$token");
       await token.setString('tokenId', _tokenId!);
       return _tokenId;
     } catch (e) {
@@ -417,8 +399,6 @@ class ApiService {
   // OTP
   Future<Map<String, dynamic>> otpRequest(String mobileNumber) async {
     final authenticate = {"mobile_number": mobileNumber};
-    print("Sending OTP request for: $mobileNumber");
-
     try {
       final headers = await _helper.getMainHeaders(); // ✅ X-API-KEY
 
@@ -429,7 +409,6 @@ class ApiService {
       );
 
       final decode = response.data; // ✅ .data because dio returns Response
-      print("OTP Request Success: $decode");
       return decode;
     } catch (e) {
       print("OTP Request Failed: $e");
@@ -440,7 +419,6 @@ class ApiService {
   // OTP VERIFY
   Future<Map<String, dynamic>> otpVerify(String mobileNumber, otp) async {
     final authenticate = {"mobile_number": mobileNumber, "otp": otp};
-    print("VERIFY OTP request for: $authenticate");
 
     try {
       final headers = await _helper.getMainHeaders(); // ✅ X-API-KEY
@@ -452,13 +430,10 @@ class ApiService {
       );
 
       final decode = response.data; //
-      print("Login Success: $decode");
 
       // ✅ Extract user ID
       final userId = decode['data']['id'];
-      print("User ID: $userId");
       final accessToken = decode['access_token'];
-      print("accessToken$accessToken");
 
       // ✅ Store it in SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -479,19 +454,14 @@ class ApiService {
   Future<Map<String, dynamic>> deleteUser() async {
     final prefs = await SharedPreferences.getInstance();
     final user = prefs.getString('user_id');
-    print("DELETE USER PROFILE$user");
     final authenticate = {"id": user};
-    print("Deleted request for:$authenticate ");
     try {
       final response = await _helper.delete("delete-user?id=$user");
       // final decode = _helper.decodeBase64Response(response);
       final decode = response;
-      print("Deleted Success: ${response['statusCode']}");
       // await prefs.clear();
-      print("Clear all data");
       return decode;
     } catch (e) {
-      print("Deleted Failed: $e");
       rethrow;
     }
   }
@@ -499,7 +469,6 @@ class ApiService {
   // FARERULE
   Future<fare.FareRuleData> farerule(String resultIndex, String traceid) async {
     final prefs = await SharedPreferences.getInstance();
-    print("fareeeee$resultIndex");
     final tokenId = prefs.getString("tokenId");
     // final accessToken = prefs.getString("access_token");
 
@@ -513,11 +482,9 @@ class ApiService {
       "TraceId": traceid,
       "ResultIndex": resultIndex,
     };
-    print("fareruleBody$fareruleBody");
     final response = await _helper.post("mobileFareRule", fareruleBody);
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-    print("farerule response${jsonEncode(decode)}");
     return fare.fareRuleDataFromJson(decode);
   }
 
@@ -605,7 +572,6 @@ class ApiService {
     final tokenId = prefs.getString("tokenId");
     String formattedDate =
         DateFormat('yyyy-MM-dd').format(selectedDepatureDate);
-    print("formattedDateformattedDate$formattedDate");
 
     if (tokenId == null) {
       throw Exception("TokenId not found in SharedPreferences");
@@ -626,15 +592,12 @@ class ApiService {
       ],
       "Sources": null,
     };
-    print("hello");
-    print("body$body");
 
     try {
       // LIVE
       final response = await _helper.post("mobile/calendar-fare/", body);
       // LOCAL
       // final response = await _helper.postCalender("GetCalendarFare", body);
-      print("GetCalendarFare$response");
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       print("FULL CALENDAR API RESPONSE:");
       // print(encoder.convert(response));
@@ -686,11 +649,6 @@ class ApiService {
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
-    print("APICALLING$passenger");
-    print("RESULT INDEX$resultIndex");
-    print("cityName$cityName");
-    print("descityName$descityName");
-    print("depDate$depDate");
     final userID = prefs.getString('user_id');
 
     var passengersArrayData = [];
@@ -699,17 +657,13 @@ class ApiService {
 
     // ADDING ADULTS
     for (var passenger in passenger) {
-      print("passengerTotal$passenger");
       // GENDER
       final gender = passenger['gender'] == 'Mr' ? 1 : 2;
-      print("gender$gender");
 
       // // DATEOFBIRTH FORMAT
       final dob = passenger['Date of Birth'];
-      print("dateofbirth$dob");
       final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
       final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
-      print("formattedDOB$formattedDOB");
 
       //EXPIRYDATE FORMAT
       // final expiry = passenger['Expiry'];
@@ -775,14 +729,11 @@ class ApiService {
     for (var childpassenger in childpassenger) {
       // GENDER
       final gender = childpassenger['gender'] == 'Mr' ? 1 : 2;
-      print("childgender$gender");
 
       // // DATEOFBIRTH FORMAT
       final dob = childpassenger['Date of Birth'];
-      print("dateofbirth$dob");
       final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
       final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
-      print("childformattedDOB$formattedDOB");
 
       //EXPIRYDATE FORMAT
       final expiry = childpassenger['Expiry'];
@@ -837,10 +788,8 @@ class ApiService {
 
       // // DATEOFBIRTH FORMAT
       final dob = infantpassenger['Date of Birth'];
-      print("dateofbirth$dob");
       final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
       final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
-      print("childformattedDOB$formattedDOB");
 
       //EXPIRYDATE FORMAT
       final expiry = infantpassenger['Expiry'];
@@ -852,7 +801,6 @@ class ApiService {
       } else {
         formattedExpiry = "";
       }
-      print("formattedExpiryinfant$formattedExpiry");
 
       if (infantpassenger != null && infantpassenger.isNotEmpty) {
         passengersArrayData.add({
@@ -887,17 +835,13 @@ class ApiService {
       }
       print("CHILD API SENDING");
     }
-    debugPrint(
-      "passengersArray(ADULT,CHILD,INFANT)$passengersArrayData",
-      wrapWidth: 5000,
-    );
+    // debugPrint(
+    //   "passengersArray(ADULT,CHILD,INFANT)$passengersArrayData",
+    //   wrapWidth: 5000,
+    // );
 
     // JOURNEYLIST
-    print("journeyListarray$journeyListarray");
     for (var item in journeyList) {
-      print("journeyList$item");
-      print("journeyListarray$journeyListarray");
-
       journeyListarray.add({
         "Baggage": item['baggage'],
         "duration": item['duration'] != "" && item['duration'] != null
@@ -938,7 +882,6 @@ class ApiService {
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(expiry);
 
       final expiry = p['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1003,21 +946,15 @@ class ApiService {
           );
         }
       });
-      print("passengerMeals$passengerMeals");
-      print("passengerBaggage$passengerBaggage");
-      print("passengerSeat$passengerSeat");
       for (var mealItem in passengerMeals) {
         totalMealPrice += (mealItem["Price"] ?? 0).toDouble();
       }
-      print("totalMealPricetotalMealPrice$totalMealPrice");
       for (var seatItem in passengerSeat) {
         totalSeatPrice += (seatItem["Price"] ?? 0).toDouble();
       }
-      print("totalSeatPricetotalSeatPrice$totalSeatPrice");
       for (var baggageItem in passengerBaggage) {
         totalBaggagePrice += (baggageItem["Price"] ?? 0).toDouble();
       }
-      print("totalSeatPricetotalSeatPrice$totalBaggagePrice");
 
       passengersDetailData.add({
         "Title": p['gender'],
@@ -1085,7 +1022,6 @@ class ApiService {
     // MEALS + SEAT + CHILD(passengersDetailData)
     for (var i = 0; i < childpassenger.length; i++) {
       final cp = childpassenger[i];
-      print("hellllllll$cp");
 
       String paxKey = "Child ${i + 1}";
       List<Map<String, dynamic>> passengerMeals = [];
@@ -1129,8 +1065,6 @@ class ApiService {
         }
       }
       passengerSeat = seatByRoute.values.toList();
-      print("CHILD MEAL");
-      print(passengerMeals);
 
       final gender = cp['gender'] == 'Mstr' ? 1 : 2;
 
@@ -1143,7 +1077,6 @@ class ApiService {
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedexpiryDate);
 
       final expiry = cp['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1219,7 +1152,6 @@ class ApiService {
     // MEALS + SEAT + INFANTS(passengersDetailData)
     for (var i = 0; i < infantpassenger.length; i++) {
       final ip = infantpassenger[i];
-      print("hellllllll$ip");
 
       String paxKey = "Infants ${i + 1}";
       List<Map<String, dynamic>> passengerMeals = [];
@@ -1264,8 +1196,6 @@ class ApiService {
         }
       }
       passengerSeat = seatByRoute.values.toList();
-      print("Infants MEAL");
-      print(passengerMeals);
 
       final gender = ip['gender'] == 'Mstr' ? 1 : 2;
 
@@ -1278,7 +1208,6 @@ class ApiService {
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedexpiryDate);
 
       final expiry = ip['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1365,31 +1294,23 @@ class ApiService {
     }
 
     String appReferenceNumber = generateReferenceNumber();
-    print("appReferenceNumber$appReferenceNumber");
 
     final commision = tboCommission;
     final commisionPercentage = passengersDetailData.length * commision;
-    print("commisionPercentage$commisionPercentage");
 
     double? paymentAmount = prefs.getDouble("payment");
-    print("Stored Amount: $paymentAmount");
     double? walletReduction = trvlusNetFare +
         conveniencefee +
         totalMealPrice +
         totalSeatPrice +
         totalBaggagePrice;
-    print("Stored Amount: $walletReduction");
     final int? customerId = prefs.getInt('customer_id');
-    print("customer_id$customerId");
-    print("totalMealPrice$totalMealPrice");
     double? excessAmount = totalMealPrice + totalSeatPrice + totalBaggagePrice;
-    print("excessAmount$excessAmount");
-    print("DATEEEEE$depDate");
+
     // DateTime parsed = DateFormat('EEE, dd MMM yy').parse(depDate);
     // print("formattedDEp$parsed");
     // String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
     // print("formattedDEp$formattedDEP");
-    print("Departure DTAE$depDate");
     DateTime parsed;
     try {
       parsed = DateFormat('dd MMM yy').parse(depDate);
@@ -1397,7 +1318,6 @@ class ApiService {
       parsed = DateTime.parse(depDate);
     }
     String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
-    print("formattedDEp$formattedDEP");
     final holdparams = {
       "PreferredCurrency": null,
       "ResultIndex": resultIndex,
@@ -1456,13 +1376,8 @@ class ApiService {
 
     /// 4️⃣ API call
     final response = await _helper.post("noLccBook", holdparams);
-    print(jsonEncode(holdparams));
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-
-    debugPrint("holdticketResponseHold: $holdparams", wrapWidth: 2500);
-
-    debugPrint("holdticketResponse: ${jsonEncode(decode)}", wrapWidth: 4000);
 
     return decode;
   }
@@ -1481,13 +1396,9 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     final userID = prefs.getString('user_id');
-    print("ticketInvoiceticketInvoice$trvlusNetFare");
-    print("ticketInvoiceticketInvoice$conveniencefee");
     double? walletReduction =
         trvlusNetFare + conveniencefee + meal + baggage + seat;
-    print("walletReduction$walletReduction");
     final int? customerId = prefs.getInt('customer_id');
-    print("customer_id$customerId");
 
     if (tokenId == null) {
       throw Exception("TokenId not found in SharedPreferences");
@@ -1511,18 +1422,11 @@ class ApiService {
       "user": userID,
     };
 
-    print("ticketInvoice body: $body");
-
     final response = await _helper.post("ticketInvoice", body);
 
     // 🔥 Fix here
     final decode =
         response is Map<String, dynamic> ? response : {"success": response};
-
-    debugPrint(
-      "ticketInvoice response: ${jsonEncode(decode)}",
-      wrapWidth: 3000,
-    );
 
     return decode;
   }
@@ -1566,8 +1470,6 @@ class ApiService {
       trvlusTds,
       trvlusNetFare,
       othercharges) async {
-    print("journeyListjourneyList$journeyList");
-
     final prefs = await SharedPreferences.getInstance();
     final tokenId = prefs.getString("tokenId");
     final accessToken = prefs.getString("access_token");
@@ -1577,31 +1479,20 @@ class ApiService {
     final fromorigin = fare.getString('Origin');
     final todestination = fare.getString('Destination');
     final userID = prefs.getString('user_id');
-    print("APICALLING$passenger");
-    print(meal);
     var passengersArrayData = [];
     var passengersDetailData = [];
     var journeyListarray = [];
     // final finaltax = tax + othercharges;
     final finaltax = tax;
-    print("finaltax$finaltax");
-    print("finaltaxdffdff$trvlusCommission");
-    print("finaltax$tax");
-    print("finaltax$othercharges");
     final coupounCode = coupouncode;
-    print("coupounCode$coupounCode");
 
     // ADDING ADULTS
     for (var passenger in passenger) {
-      print("passengerTotal$passenger");
-
       // GENDER
       final gender = passenger['gender'] == 'Mr' ? 1 : 2;
-      print("gender$gender");
 
       // DOB FORMAT (SAFE)
       final dob = passenger['Date of Birth'];
-      print("dateofbirth$dob");
 
       String formattedDOB = "";
       if (dob != null && dob.toString().isNotEmpty) {
@@ -1610,10 +1501,8 @@ class ApiService {
       } else {
         formattedDOB = ""; // or null if API accepts
       }
-      print("formattedDOB$formattedDOB");
 
       final expiry = passenger['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1622,13 +1511,10 @@ class ApiService {
       } else {
         formattedExpiry = "";
       }
-      print("formattedExpiry$formattedExpiry");
 
       if (tokenId == null) {
         throw Exception("TokenId not found in SharedPreferences");
       }
-      print("PassportExpiry => [${passenger['PassportExpiry']}]");
-      print("ExpiryExpiry$passenger['Expiry']");
 
       passengersArrayData.add({
         "Title": passenger['gender'],
@@ -1673,24 +1559,19 @@ class ApiService {
         "GSTCompanyEmail": "",
       });
     }
-    print("CHILDPASSSENGER$childpassenger");
 
     // ADDING CHILD
     for (var childpassenger in childpassenger) {
       // GENDER
       final gender = childpassenger['gender'] == 'Mstr' ? 1 : 2;
-      print("childgender$gender");
 
       // // DATEOFBIRTH FORMAT
       final dob = childpassenger['Date of Birth'];
-      print("dateofbirth$dob");
       final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
       final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
-      print("childformattedDOB$formattedDOB");
 
       //EXPIRYDATE FORMAT
       final expiry = childpassenger['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1707,7 +1588,7 @@ class ApiService {
           "PaxType": 2, // child
           "DateOfBirth":
               formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
-          "Gender": '1',
+          "Gender": gender,
           "PassportNo": childpassenger['Passport No'] ?? "",
           "PassportExpiry": formattedExpiry.trim().isNotEmpty
               ? "${formattedExpiry}T00:00:00"
@@ -1731,25 +1612,20 @@ class ApiService {
           "IsLeadPax": false,
         });
       }
-      print("CHILD API SENDING");
     }
 
     // ADDING INFANT
     for (var infantpassenger in infantpassenger) {
       // GENDER
       final gender = infantpassenger['gender'] == 'Mstr' ? 1 : 2;
-      print("childgender$gender");
 
       // // DATEOFBIRTH FORMAT
       final dob = infantpassenger['Date of Birth'];
-      print("dateofbirth$dob");
       final parsedDate = DateFormat('dd-MM-yyyy').parse(dob);
       final formattedDOB = DateFormat('yyyy-MM-dd').format(parsedDate);
-      print("childformattedDOB$formattedDOB");
 
       //EXPIRYDATE FORMAT
       final expiry = infantpassenger['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1791,12 +1667,7 @@ class ApiService {
           "IsLeadPax": false,
         });
       }
-      print("INFANT API SENDING");
     }
-    debugPrint(
-      "passengersArray(ADULT,CHILD,INFANT)$passengersArrayData",
-      wrapWidth: 5000,
-    );
 // -------------------------------------------------------------------------------------
     // GENERATE APP REFRENCE NUMBER
     String generateReferenceNumber() {
@@ -1812,11 +1683,7 @@ class ApiService {
     }
 
     // JOURNEYLIST
-    print("journeyListarray$journeyListarray");
     for (var item in journeyList) {
-      print("journeyList$item");
-      print("journeyListarray$journeyListarray");
-
       journeyListarray.add({
         "Baggage": item['baggage'],
         "duration": item['duration'] != "" && item['duration'] != null
@@ -1850,16 +1717,12 @@ class ApiService {
       final p = passenger[i];
       final gender = p['gender'] == 'Mr' ? 1 : 2;
 
-      print(p['Date of Birth']);
       final dob = DateFormat('dd-MM-yyyy').parse(p['Date of Birth']);
-      print("dsgdhgd$dob");
       final formattedDOB = DateFormat('yyyy-MM-dd').format(dob);
-      print("sgregr$formattedDOB");
       // final expiry = DateFormat('dd-MM-yyyy').parse(p['Expiry']);
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(expiry);
 
       final expiry = p['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -1983,22 +1846,16 @@ class ApiService {
           passengerSeat.add(sData);
         }
       }
-      print("passengerBaggage$passengerBaggage");
-      print("passengerMeals$passengerMeals");
-      print("passengerSeat$passengerSeat");
       for (var mealItem in passengerMeals) {
         totalMealPrice += (mealItem["Price"] ?? 0).toDouble();
       }
-      print("totalMealPricetotalMealPrice$totalMealPrice");
       for (var seatItem in passengerSeat) {
         totalSeatPrice += (seatItem["Price"] ?? 0).toDouble();
       }
-      print("totalSeatPricetotalSeatPrice$totalSeatPrice");
 
       for (var baggageItem in passengerBaggage) {
         totalBaggagePrice += (baggageItem["Price"] ?? 0).toDouble();
       }
-      print("totalBaggagePricetotalBaggagePrice$totalBaggagePrice");
 
       passengersDetailData.add({
         "Title": p['gender'],
@@ -2007,7 +1864,7 @@ class ApiService {
         "PaxType": 1,
         "DateOfBirth":
             formattedDOB.isNotEmpty ? "${formattedDOB}T00:00:00" : null,
-        "Gender": 1,
+        "Gender": gender,
         "GSTCompanyAddress": "",
         "GSTCompanyContactNumber": "",
         "GSTCompanyName": "",
@@ -2066,7 +1923,6 @@ class ApiService {
     // MEALS + SEAT + CHILD(passengersDetailData)
     for (var i = 0; i < childpassenger.length; i++) {
       final cp = childpassenger[i];
-      print("hellllllll$cp");
 
       String paxKey = "Child ${i + 1}";
       List<Map<String, dynamic>> passengerMeals = [];
@@ -2123,8 +1979,6 @@ class ApiService {
         }
       }
       passengerSeat = seatByRoute.values.toList();
-      print("CHILD MEAL");
-      print(passengerMeals);
 
       final gender = cp['gender'] == 'Mstr' ? 1 : 2;
 
@@ -2137,7 +1991,6 @@ class ApiService {
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedexpiryDate);
 
       final expiry = cp['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -2213,7 +2066,6 @@ class ApiService {
     // MEALS + SEAT + INFANTS(passengersDetailData)
     for (var i = 0; i < infantpassenger.length; i++) {
       final ip = infantpassenger[i];
-      print("hellllllll$ip");
 
       String paxKey = "Infants ${i + 1}";
       List<Map<String, dynamic>> passengerMeals = [];
@@ -2259,8 +2111,6 @@ class ApiService {
         }
       }
       passengerSeat = seatByRoute.values.toList();
-      print("Infants MEAL");
-      print(passengerMeals);
 
       final gender = ip['gender'] == 'Mstr' ? 1 : 2;
 
@@ -2273,7 +2123,6 @@ class ApiService {
       // final formattedExpiry = DateFormat('yyyy-MM-dd').format(parsedexpiryDate);
 
       final expiry = ip['Expiry'];
-      print("expiry$expiry");
 
       String formattedExpiry = "";
       if (expiry != null && expiry.toString().trim().isNotEmpty) {
@@ -2347,36 +2196,20 @@ class ApiService {
     }
 
     String appReferenceNumber = generateReferenceNumber();
-    print("appReferenceNumber$appReferenceNumber");
     final commision = tboCommission;
-    print("commision$commision");
-    print("passengersDetailData${passengersDetailData.length}");
     final commisionPercentage = passengersDetailData.length * commision;
-    print("commisionPercentage$commisionPercentage");
     double? paymentAmount = prefs.getDouble("payment");
-    print("Stored Amount: $paymentAmount");
-    print("Stored Amount: $trvlusNetFare");
-    print("Stored Amount: $conveniencefee");
     double? walletReduction = trvlusNetFare +
         conveniencefee +
         totalMealPrice +
         totalSeatPrice +
         totalBaggagePrice;
-    print("Stored Amount: $walletReduction");
     final int? customerId = prefs.getInt('customer_id');
-    print("customer_id$customerId");
-    print("finaltotalMealPrice$totalMealPrice");
-    print("totalSeatPrice$totalSeatPrice");
-    print("totalBaggagePrice$totalBaggagePrice");
     double? excessAmount = totalMealPrice + totalSeatPrice + totalBaggagePrice;
-    print("excessAmountexcessAmount$excessAmount");
-    print("Departure DTAE$depDate");
-    print("DATEEEEE$depDate");
     // DateTime parsed = DateFormat('EEE, dd MMM yy').parse(depDate);
     // print("formattedDEp$parsed");
     // String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
     // print("formattedDEp$formattedDEP");
-    print("Departure DTAE$depDate");
     DateTime parsed;
     try {
       parsed = DateFormat('dd MMM yy').parse(depDate);
@@ -2384,7 +2217,6 @@ class ApiService {
       parsed = DateTime.parse(depDate);
     }
     String formattedDEP = DateFormat('yyyy-MM-dd').format(parsed);
-    print("formattedDEp$formattedDEP");
 
     /// 3️⃣ Confirm Booking Params
     final confirmBookingParams = {
@@ -2444,22 +2276,15 @@ class ApiService {
       "excessAmount": excessAmount,
     };
     // debugPrint("ticketBody: $ticketBody");
-    debugPrint(
-      "confirmBookingParams: ${jsonEncode(confirmBookingParams)}",
-      wrapWidth: 4000,
-    );
-    print("confirmBookingParams:${jsonEncode(confirmBookingParams)}");
     final formattedJson = const JsonEncoder.withIndent(
       '  ',
     ).convert(confirmBookingParams);
-    log(formattedJson);
+    // log(formattedJson);
 
     /// 4️⃣ API call
     final response = await _helper.post("ticketInvoice", confirmBookingParams);
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-
-    debugPrint("ticketResponse: ${jsonEncode(response)}", wrapWidth: 3000);
 
     return decode;
   }
@@ -2469,14 +2294,11 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final userID = prefs.getString('user_id') ?? "";
 
-    print("📌 bookingHistory() userID = $userID");
     final response = await _helper.get("mobileTicket?userid=$userID&mobile=1");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-    print("📩 API Response: $response");
     // Normalize backend response
     if (decode == null || decode["data"] == null || decode["data"] is! List) {
-      print("⚠ No data returned. Sending empty list.");
       return booking_history.BookingHistory(data: [], statusCode: "");
     }
 
@@ -2494,7 +2316,6 @@ class ApiService {
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
 
-    print("COUNTRYCODE response${jsonEncode(decode)}");
     if (decode["data"] == null) {
       return country_code.Countrycode(data: [], statusCode: "200");
     }
@@ -2525,11 +2346,9 @@ class ApiService {
     int triptype = selectedTripType == "One way" ? 1 : 2;
     if (selectedReturnDate != "") {
       formattedReturnDate = selectedReturnDate.toString().substring(0, 10);
-      print("formattedReturnformattedReturn$formattedReturnDate");
     }
     //await flightAuthenticate();
     final tokenId = prefs.getString("tokenId");
-    print("tokenId$tokenId");
 
     final params = {
       // "EndUserIp": "192.168.0.2",
@@ -2569,10 +2388,8 @@ class ApiService {
             ],
       "Sources": null,
     };
-    print("params$params");
     final response = await _helper.post("mobileFlightSearch", params);
     // final decode = _helper.decodeBase64Response(response);
-    print("FLIGHT SEARCH${jsonEncode(response)}");
     // printLargeJson(decode);
     return search.searchDataFromJson(response);
   }
@@ -2585,12 +2402,9 @@ class ApiService {
       // 🔹 Call API (no token check required)
       final response = await _helper.get("mobileCommission");
 
-      print("📩 API Raw Response: $response");
-
       // 🔹 Decrypt response (if required)
       // final decode = _helper.decodeBase64Response(response);
       final decode = response;
-      print("🔓 Decrypted Response: $decode");
 
       // 🔹 Normalize backend response EXACTLY like bookingHistory()
       if (decode == null || decode["data"] == null || decode["data"] is! List) {
@@ -2631,8 +2445,6 @@ class ApiService {
   // CUSTOMER COMMISION
   Future<Customercommission> getcustomercommission() async {
     final response = await _helper.get("customercomission?country=1");
-    print("Customercommission");
-    print("Customercommission$response");
     return customerCommissionFromJson(response);
   }
 
@@ -2642,10 +2454,6 @@ class ApiService {
     final userID = prefs.getString('user_id');
     final response =
         await _helper.get("mobilecommissionHistory?userid=$userID&pnr=$pnr");
-    print("userID$userID");
-    print("pnr$pnr");
-    print("Customercommission");
-    print("Customercommission$response");
     return commissionhistoryFromJson(response);
   }
 
@@ -2653,9 +2461,6 @@ class ApiService {
   Future<void> role() async {
     print("ROLE API IS CALLING");
     final response = await _helper.get("role");
-
-    print("Customercommission");
-    print("Customercommission$response");
 
     if (response['statusCode'] == "1") {
       List roles = response['data'];
@@ -2666,8 +2471,6 @@ class ApiService {
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setInt("customer_id", customerId);
-
-          print("Customer ID Stored: $customerId");
         }
       }
     }
@@ -2676,15 +2479,13 @@ class ApiService {
   // BANK DETAILS
   Future<Bankdetails> bankDetails() async {
     final response = await _helper.get("customerBankDetails?country=1");
-    print("response$response");
     return bankdetailsFromJson(response);
   }
 
   // CUSTOMERSUPPORT
   Future<Customersupport> getcustomersupport() async {
     final response = await _helper.get("customer-support?country=1");
-    print("customer-support");
-    print("customer-support$response");
+
     return customersupportFromJson(response);
   }
 
@@ -2695,11 +2496,8 @@ class ApiService {
       "updatemobileUser?id=$id",
       options: Options(headers: headers), // ✅ with headers
     );
-    print("decodedecode$response");
-    print("getprofileupdate$response");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response.data;
-    print("decodedecode$decode");
     return profileupdatation.getprofileFromJson(decode);
   }
 
@@ -2711,12 +2509,6 @@ class ApiService {
     date,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    print("API CALLING");
-    print("firstname$firstname");
-    print("firstname$lastname");
-    print("firstname$email");
-    print("firstname$mobile");
-    print("firstname$date");
     final body = {
       "first_name": firstname,
       "last_name": lastname,
@@ -2731,8 +2523,6 @@ class ApiService {
       "server_wallet": 0.0,
     };
     final userId = prefs.getString('user_id');
-    print("userId$userId");
-    print("bodybodybody$body");
 
     // await ApiService().getprofileupdate(userId);
     final response = await _helper.dio.patch(
@@ -2740,11 +2530,9 @@ class ApiService {
       data: body,
     );
 
-    print("decodedecode$response");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response.data;
-    print("Profile Update");
-    print("decodedecode$decode");
+
     return profileupdatation.getprofileFromJson(decode);
   }
 
@@ -2765,11 +2553,9 @@ class ApiService {
       body,
     );
 
-    print("decodedecode$response");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
-    print("Profile Update");
-    print("decodedecode$decode");
+
     return flightBookingHistoryFromJson(decode);
   }
 
@@ -2794,9 +2580,7 @@ class ApiService {
       options: Options(headers: {"Content-Type": "multipart/form-data"}),
     );
 
-    print("decodedecode$response");
     final decode = response.data;
-    print("decodedecode$decode");
 
     return profileupdatation.getprofileFromJson(decode);
   }
@@ -2805,12 +2589,10 @@ class ApiService {
   Future<addstatus.CancelReasonData> addStatus() async {
     print("ADD STATUS");
     final response = await _helper.get("addstatus");
-    print("ADD STATUS$response");
 
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
 
-    print("addstatus response${jsonEncode(decode)}");
     return addstatus.addstatusFromJson(decode);
   }
 
@@ -2820,18 +2602,14 @@ class ApiService {
     final userID = prefs.getString('user_id');
 
     final response = await _helper.get("mobileaccountStatus?userid=$userID");
-    print("responseresponse$response");
 
     final decode = response;
-
-    print("payment response${jsonEncode(decode)}");
 
     // ✅ SAFE CHECK ADDED (No logic changed)
     if (response["data"] != null &&
         response["data"] is List &&
         response["data"].isNotEmpty) {
       final amount = response["data"][0]["amount"];
-      print("Amount is: $amount");
 
       final pref = await SharedPreferences.getInstance();
       await pref.setDouble(
@@ -2854,11 +2632,8 @@ class ApiService {
 
     final prefs = await SharedPreferences.getInstance();
     final userID = prefs.getString('user_id');
-    print("USER API CALLING$userID");
     final response = await _helper.get("user?id=$userID");
-    print("response$response");
     final decode = response;
-    print("decodedecode$decode");
     return userStatus.userFromJson(decode);
   }
 
@@ -2879,10 +2654,8 @@ class ApiService {
       "trvlus_status": status,
       "app_ref": appref,
     };
-    print("cancelRequest$cancelRequest");
 
     final response = await _helper.post("cancel-req", cancelRequest);
-    print("cancel response${jsonEncode(response)}");
     return (response);
   }
 
@@ -2899,12 +2672,10 @@ class ApiService {
       "gst_pincode": gstpincode,
       "gst_address": gstaddress,
     };
-    print("GSTRequest$gst");
     final prefs = await SharedPreferences.getInstance();
     final userID = prefs.getString('user_id');
 
     final response = await _helper.post("GSTRequest?userid=$userID", gst);
-    print("GSTRequest response${jsonEncode(response)}");
     return (response);
   }
 
@@ -2934,10 +2705,8 @@ class ApiService {
       "remarks": remark,
       "user": userID
     };
-    print("depositRequest$depositRequest");
 
     final response = await _helper.post("deposit", depositRequest);
-    print("cancel response${jsonEncode(response)}");
     return (response);
   }
 
@@ -2945,11 +2714,9 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final userID = prefs.getString('user_id');
     final response = await _helper.get("deposit?id=$userID");
-    print("SelecttravelerSelecttraveler$response");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
 
-    print("addstatus response${jsonEncode(decode)}");
     return deposit.depositStatusFromJson(decode);
   }
 
@@ -3020,18 +2787,14 @@ class ApiService {
 
     // ================= API CALLS - one by one =================
     for (var passengerData in passengersArrayData) {
-      print("Sending Passenger: $passengerData");
-
       try {
         final response = await _helper.post(
           "passengers/create/",
           passengerData, // send single passenger at a time
         );
-        print("Passenger Added: ${jsonEncode(response)}");
+        print("SELECT TRAVELLER");
+        print("SELECT TRAVELLER$response");
       } on DioException catch (e) {
-        print('STATUS: ${e.response?.statusCode}');
-        print(
-            'ERROR BODY: ${e.response?.data}'); // This will show exact Django error
         print("Error adding passenger: $e");
       } catch (e) {
         print("Error adding passenger: $e");
@@ -3041,12 +2804,12 @@ class ApiService {
 
   // GET METHOD
   Future<traveller.Selecttraveler> gettraveler() async {
-    final response = await _helper.get("passengers/create/");
-    print("SelecttravelerSelecttraveler$response");
+    final prefs = await SharedPreferences.getInstance();
+    final userID = prefs.getString('user_id');
+    final response = await _helper.get("passengers/create/?user=$userID");
     // final decode = _helper.decodeBase64Response(response);
     final decode = response;
 
-    print("addstatus response${jsonEncode(decode)}");
     return traveller.selecttravelerdetailFromJson(decode);
   }
 
@@ -3057,18 +2820,7 @@ class ApiService {
       "passengers/create/?id=$passengerId",
       data: payload,
     );
-    print("updatePassengerupdatePassenger$response");
     // return response.statusCode == 200;
-  }
-
-  // ADDING PASSENGER ON THE SAME PAGE
-  Future<void> addSinglePassenger(Map<String, dynamic> payload) async {
-    final response = await _helper.post(
-      "passengers/create/",
-      payload,
-    );
-
-    debugPrint("Add Passenger Response: ${jsonEncode(response)}");
   }
 
   //   DOWNLOAD TICKET
@@ -3080,7 +2832,6 @@ class ApiService {
       //     "http://192.168.1.13:8000/api/ticket-download/$bookingId/$pnr/$tokenId";
       final url =
           "https://dev-api.trvlus.com/api/ticket-download/$bookingId/$pnr/$tokenId";
-      print("Pending$url");
 
       final response = await http.get(Uri.parse(url));
 
@@ -3103,8 +2854,6 @@ class ApiService {
 
         File file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
-
-        print("Ticket saved at $filePath");
       } else {
         print("Failed to download ticket: ${response.statusCode}");
       }
@@ -3123,9 +2872,6 @@ class ApiService {
       //     "http://192.168.1.13:8000/api/invoice-download/$bookingId/$pnr/$tokenId";
       final url =
           "https://dev-api.trvlus.com/api/invoice-download/$bookingId/$pnr/$tokenId";
-      print("Pending$url");
-
-      print("TokenId: $tokenId");
 
       final response = await http.get(Uri.parse(url));
 
@@ -3148,8 +2894,6 @@ class ApiService {
 
         File file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
-
-        print("Ticket saved at $filePath");
       } else {
         print("Failed to download ticket: ${response.statusCode}");
       }

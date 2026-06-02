@@ -117,7 +117,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
     super.initState();
     filterorigin = widget.fromAirport;
     filterdestination = widget.toAirport;
-    print("wighet${widget.adultCount}");
 
     // Setup scroll listeners for pagination
     _outboundScrollController.addListener(_onOutboundScroll);
@@ -191,7 +190,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
   getCommissionData() async {
     try {
       commission = await ApiService().commissionPercentage();
-      print("COMMISION$commission");
     } catch (e) {
       print("Error loading commission: $e");
     }
@@ -212,7 +210,6 @@ class _LocalroundtripState extends State<Localroundtrip> {
 
     try {
       customer = await ApiService().getcustomercommission();
-      print("customer$customer");
       searchData = await ApiService().getSearchResult(
         airportCode,
         fromAirport,
@@ -228,18 +225,14 @@ class _LocalroundtripState extends State<Localroundtrip> {
 
       outbound = searchData.response.results.first;
       inbound = searchData.response.results.last;
-      print("Passenger Count");
 
       final adult = widget.adultCount;
-      print("adultCount$adult");
       final child = widget.childCount;
-      print("childCount$child");
       final infant = widget.infantCount;
-      print("infantCount$infant");
       passengerCount = (int.tryParse(adult.toString()) ?? 0) +
           (int.tryParse(child.toString()) ?? 0) +
           (int.tryParse(infant.toString()) ?? 0);
-      print("passengerCount$passengerCount");
+      //("passengerCount$passengerCount");
 
       // Compute unique airlines(FILTER AIRLINES)
       Set<String> codes = <String>{};
@@ -689,7 +682,7 @@ class _LocalroundtripState extends State<Localroundtrip> {
     double flatOffer = detection - percentage;
 
     double netFare = publishFare + otherCharges - flatOffer.round();
-    print("ONWARDS PRICE$netFare");
+    // print("ONWARDS PRICE$netFare");
     return netFare;
   }
 
@@ -1843,7 +1836,6 @@ class _FlightCardState extends State<FlightCard> {
       String layoverCity =
           displayFlight.segments.first[1].origin.airport.cityName;
       layoverText = "${layoverHours}h ${layoverMins}m layover at $layoverCity";
-      print("layoverText$layoverText");
     }
 
     // TOTAL DURATION CALCULATION
@@ -1861,13 +1853,13 @@ class _FlightCardState extends State<FlightCard> {
 
     // FARE CALCULATION FOR LOWEST PRICE
     double publishFare = displayFlight.fare.publishedFare.toDouble();
-    print("publishFare$publishFare");
+    //("publishFare$publishFare");
     String offeredFare = displayFlight.fare.offeredFare.toString();
-    print("offeredFare$offeredFare");
+    //("offeredFare$offeredFare");
     double tboTDS = displayFlight.fare.tdsOnCommission.toDouble();
-    print("tboTDS$tboTDS");
+    //("tboTDS$tboTDS");
     final commissionEarned = displayFlight.fare.commissionEarned.toDouble();
-    print("commissionEarned$commissionEarned");
+    // print("commissionEarned$commissionEarned");
     double customerComm = 0.0;
     if (customer!.data.isNotEmpty && commissionEarned >= 0) {
       var commData = customer!.data[0];
@@ -1896,36 +1888,36 @@ class _FlightCardState extends State<FlightCard> {
         customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
       }
     }
-    print("customerComm$customerComm");
+    // print("customerComm$customerComm");
 
     double customertdsplb = displayFlight.fare.tdsOnPlb.toDouble();
-    print("customertdsplb$customertdsplb");
+    // print("customertdsplb$customertdsplb");
     double customerplbearned = displayFlight.fare.plbEarned.toDouble();
-    print("customerplbearned$customerplbearned");
+    // print("customerplbearned$customerplbearned");
     double finalcommissionplb = commissionEarned + customerplbearned;
-    print("finalcommissionplb$finalcommissionplb");
+    // print("finalcommissionplb$finalcommissionplb");
     double customercommissiondetection =
         finalcommissionplb - customerComm - tboTDS - customertdsplb;
-    print("customercommissiondetection$customercommissiondetection");
+    // print("customercommissiondetection$customercommissiondetection");
     int finalcustomercommission = customercommissiondetection.round();
-    print("finalcustomercommission$finalcustomercommission");
+    // print("finalcustomercommission$finalcustomercommission");
     double finalcommissionpercentage = finalcustomercommission * 0.02;
-    print("finalcommissionpercentage$finalcommissionpercentage");
+    // print("finalcommissionpercentage$finalcommissionpercentage");
     int commissionpercentageround = finalcommissionpercentage.round();
-    print("commissionpercentageround$commissionpercentageround");
+    // print("commissionpercentageround$commissionpercentageround");
     double finalflatoffer =
         customercommissiondetection - finalcommissionpercentage;
-    print("finalflatoffer$finalflatoffer");
+    // print("finalflatoffer$finalflatoffer");
     int finalcoupouncode = finalflatoffer.round();
-    print("finalcoupouncode$finalcoupouncode");
+    // print("finalcoupouncode$finalcoupouncode");
     double othercharges = displayFlight.fare.otherCharges;
-    print("othercharges$othercharges");
+    // print("othercharges$othercharges");
     int finaloffFare = (publishFare - finalflatoffer).round();
-    print("intfinaloffFare$finaloffFare");
+    // print("intfinaloffFare$finaloffFare");
     double finaloffferFare = double.parse(
       (publishFare - finalflatoffer).toStringAsFixed(2),
     );
-    print("finaloffferFare$finaloffferFare");
+    // print("finaloffferFare$finaloffferFare");
 
     return Padding(
       padding: EdgeInsets.only(
@@ -2260,16 +2252,16 @@ class _FlightCardState extends State<FlightCard> {
                       final variantFlight = entry.value;
                       double varPublishFare =
                           variantFlight.fare.publishedFare.toDouble();
-                      print("varPublishFare$varPublishFare");
+                      // print("varPublishFare$varPublishFare");
                       String varOfferedFare =
                           variantFlight.fare.offeredFare.toString();
-                      print("varOfferedFare$varOfferedFare");
+                      // print("varOfferedFare$varOfferedFare");
                       double varTboTDS =
                           variantFlight.fare.tdsOnCommission.toDouble();
-                      print("varTboTDS$varTboTDS");
+                      // print("varTboTDS$varTboTDS");
                       final varCommissionEarned =
                           variantFlight.fare.commissionEarned.toDouble();
-                      print("varCommissionEarned$varCommissionEarned");
+                      // print("varCommissionEarned$varCommissionEarned");
                       double varCustomerComm = 0.0;
                       if (customer!.data.isNotEmpty &&
                           varCommissionEarned >= 0) {
@@ -2310,39 +2302,39 @@ class _FlightCardState extends State<FlightCard> {
                               commData.commission_above_300?.toDouble() ?? 0.0;
                         }
                       }
-                      print("varCustomerComm$varCustomerComm");
+                      // print("varCustomerComm$varCustomerComm");
                       double varCustomertdsplb =
                           variantFlight.fare.tdsOnPlb.toDouble();
-                      print("varCustomertdsplb$varCustomertdsplb");
+                      // print("varCustomertdsplb$varCustomertdsplb");
                       double varCustomerplbearned =
                           variantFlight.fare.plbEarned.toDouble();
-                      print("varCustomerplbearned$varCustomerplbearned");
+                      // print("varCustomerplbearned$varCustomerplbearned");
                       double varfinalcommissionplb =
                           varCommissionEarned + varCustomerplbearned;
-                      print("varfinalcommissionplb$varfinalcommissionplb");
+                      // print("varfinalcommissionplb$varfinalcommissionplb");
                       double varCustomercommissiondetection =
                           varfinalcommissionplb -
                               varCustomerComm -
                               varTboTDS -
                               varCustomertdsplb;
-                      print(
-                          "varCustomercommissiondetection$varCustomercommissiondetection");
+                      // print(
+                      //     "varCustomercommissiondetection$varCustomercommissiondetection");
                       int varFinalcustomercommission =
                           varCustomercommissiondetection.round();
-                      print(
-                          "varFinalcustomercommission$varFinalcustomercommission");
+                      // print(
+                      //     "varFinalcustomercommission$varFinalcustomercommission");
                       double varFinalcommissionpercentage =
                           varFinalcustomercommission * 0.02;
-                      print(
-                          "varFinalcommissionpercentage$varFinalcommissionpercentage");
+                      // print(
+                      //     "varFinalcommissionpercentage$varFinalcommissionpercentage");
                       double varFinalflatoffer =
                           varCustomercommissiondetection -
                               varFinalcommissionpercentage;
-                      print("varFinalflatoffer$varFinalflatoffer");
+                      // print("varFinalflatoffer$varFinalflatoffer");
                       double varothercharges = variantFlight.fare.otherCharges;
                       int varFinaloffFare =
                           (varPublishFare - varFinalflatoffer).round();
-                      print("varFinaloffFare$varFinaloffFare");
+                      // print("varFinaloffFare$varFinaloffFare");
 
                       return Container(
                         margin: EdgeInsets.symmetric(vertical: 5),

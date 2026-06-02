@@ -57,4 +57,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+    </queries>
 </manifest>

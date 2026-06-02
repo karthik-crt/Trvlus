@@ -77,9 +77,7 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
     final city = widget.city;
     final destination = widget.destination;
     final sights = widget.stop;
-    print(sights);
     final segments = jsonEncode(widget.segments);
-    print("fullsegments$segments");
     void printLargeJson(dynamic data) {
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
       const int chunkSize = 800;
@@ -91,8 +89,6 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
         ));
       }
     }
-
-    printLargeJson("airlinecodeFULL${widget.segments}");
 
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
@@ -143,11 +139,6 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
 
                       final segmentDurationText =
                           "${segmentDurationMinutes ~/ 60}H ${segmentDurationMinutes % 60}m";
-                      // print("segmentDurationMinutes$segmentDurationMinutes");
-                      // print("segmentDurationText$segmentDurationText");
-                      print("AIRLINECODE${widget.airlineCode}");
-                      print(
-                          "SEGMENT AIRLINE: ${widget.segments![index][innerIndex].airline.airlineCode}");
                       final airlineCode = widget
                           .segments![index][innerIndex].airline.airlineCode;
 
@@ -510,13 +501,11 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
                                             nextDep.difference(currentArr);
                                         String layoverTime =
                                             "${layoverDuration.inHours}H ${layoverDuration.inMinutes % 60}m";
-                                        print("layoverTime$layoverTime");
                                         String layoverCity = widget
                                             .segments![index][innerIndex]
                                             .destination
                                             .airport
                                             .cityName;
-                                        print("layoverCity$layoverCity");
                                         return Text(
                                           "$layoverTime Layover at $layoverCity",
                                           style: TextStyle(
@@ -657,11 +646,8 @@ class _ViewfulldetailsState extends State<Viewfulldetails> {
 
 // -------- ✅ CORRECT SEGMENT DURATION (timezone-safe)
             final segmentDurationMinutes = segment.duration;
-            print("segmentDurationMinutes$segmentDurationMinutes");
             final segmentDurationText =
                 "${segmentDurationMinutes ~/ 60}H ${segmentDurationMinutes % 60}m";
-            print("segmentDurationText$segmentDurationText");
-
             String? layover;
             String? layoverCity;
 

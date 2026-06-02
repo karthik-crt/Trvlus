@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -86,7 +84,7 @@ class _RoundtripState extends State<Roundtrip> {
       isLoading = true;
     });
     commission = await ApiService().commissionPercentage();
-    print("COMMISION$commission");
+    //("COMMISION$commission");
     setState(() {
       isLoading = false;
     });
@@ -97,7 +95,7 @@ class _RoundtripState extends State<Roundtrip> {
       isLoading = true;
     });
     customer = await ApiService().getcustomercommission();
-    print("COMMISIONcustomer${jsonEncode(customer)}");
+    //("COMMISIONcustomer${jsonEncode(customer)}");
     await getCommissionData();
     setState(() {
       isLoading = false;
@@ -119,7 +117,7 @@ class _RoundtripState extends State<Roundtrip> {
         widget.adultCount,
         widget.childCount,
         widget.infantCount);
-    print("searchDatasearchData$depDate");
+    //("searchDatasearchData$depDate");
 
     Set<String> codes = <String>{};
     uniqueAirlines = [
@@ -233,7 +231,7 @@ class _RoundtripState extends State<Roundtrip> {
         });
       }
     } catch (e) {
-      print("Calendar API Error: $e");
+      //("Calendar API Error: $e");
     }
   }
 
@@ -513,15 +511,15 @@ class _RoundtripState extends State<Roundtrip> {
 
   // ✅ HELPER: Reusable fare calculation for any flight variant
   Map<String, dynamic> _calculateFare(dynamic flight) {
-    print("calculate Fare");
+    //("calculate Fare");
     double publishFare = flight.fare.publishedFare.toDouble();
-    print("publishFare$publishFare");
+    //("publishFare$publishFare");
     double offeredFare = flight.fare.offeredFare.toDouble();
-    print("offeredFare$offeredFare");
+    //("offeredFare$offeredFare");
     double tboTDS = flight.fare.tdsOnCommission.toDouble();
-    print("tboTDS$tboTDS");
+    //("tboTDS$tboTDS");
     final commissionEarned = flight.fare.commissionEarned.toDouble();
-    print("commissionEarned$commissionEarned");
+    //("commissionEarned$commissionEarned");
     double customerComm = 0.0;
     if (customer.data.isNotEmpty && commissionEarned >= 0) {
       var commData = customer.data[0];
@@ -550,31 +548,31 @@ class _RoundtripState extends State<Roundtrip> {
         customerComm = commData.commission_above_300?.toDouble() ?? 0.0;
       }
     }
-    print("customerComm$customerComm");
+    //("customerComm$customerComm");
     double customertdsplb = flight.fare.tdsOnPlb.toDouble();
-    print("customertdsplb$customertdsplb");
+    //("customertdsplb$customertdsplb");
     double customerplbearned = flight.fare.plbEarned.toDouble();
-    print("customerplbearned$customerplbearned");
+    //("customerplbearned$customerplbearned");
     double finalcommissionplb = commissionEarned + customerplbearned;
-    print("finalcommissionplb$finalcommissionplb");
+    //("finalcommissionplb$finalcommissionplb");
     double customercommissiondetection = finalcommissionplb <= 0
         ? 0.0
         : finalcommissionplb - customerComm - tboTDS - customertdsplb;
-    print("customercommissiondetection$customercommissiondetection");
+    //("customercommissiondetection$customercommissiondetection");
     double finalcommissionpercentage = customercommissiondetection * 0.02;
-    print("finalcommissionpercentage$finalcommissionpercentage");
+    //("finalcommissionpercentage$finalcommissionpercentage");
     double finalflatoffer =
         customercommissiondetection - finalcommissionpercentage;
-    print("finalflatoffer$finalflatoffer");
+    //("finalflatoffer$finalflatoffer");
     int finalcoupouncode = finalflatoffer.round();
-    print("finalcoupouncode$finalcoupouncode");
+    //("finalcoupouncode$finalcoupouncode");
     double othercharges = flight.fare.otherCharges;
-    print("othercharges$othercharges");
+    //("othercharges$othercharges");
     int finaloffFare = tboTDS <= 0
         ? (publishFare + customerComm).round()
         : (publishFare - finalflatoffer).round();
-    print("finaloffFare$finaloffFare");
-    print("finaloffFareInterbnational$finaloffFare");
+    //("finaloffFare$finaloffFare");
+    //("finaloffFareInterbnational$finaloffFare");
 
     return {
       'publishFare': publishFare,
@@ -684,113 +682,108 @@ class _RoundtripState extends State<Roundtrip> {
                   ),
                 ),
                 backgroundColor: Colors.grey.shade200,
-                body: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 2.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          color: Colors.white,
-                          child: Row(
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(left: 20.w),
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: totalFlights.toString(),
-                                        style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.orange),
-                                      ),
-                                      TextSpan(text: " "),
-                                      TextSpan(
-                                        text: "AVAILABLE FLIGHTS",
-                                        style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontSize: 14.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey),
-                                      ),
-                                    ],
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      color: Colors.white,
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(left: 20.w),
+                            child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: totalFlights.toString(),
+                                    style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange),
                                   ),
-                                ),
-                              ),
-                              SizedBox(width: 80.w),
-                              Container(
-                                height: 25.h,
-                                child: ElevatedButton.icon(
-                                  onPressed: () async {
-                                    var filterData = await showModalBottomSheet<
-                                        Map<String, dynamic>>(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(16))),
-                                      builder: (context) => Container(
-                                        height: 620.h,
-                                        child: FilterBottomSheet(
-                                            airlines: uniqueAirlines,
-                                            currentSelectedIndex:
-                                                currentSelectedIndex,
-                                            filterorigin: filterorigin,
-                                            filterdestination:
-                                                filterdestination),
-                                      ),
-                                    );
-                                    if (filterData != null) {
-                                      setState(() {
-                                        int airlineIndex =
-                                            filterData['airlineIndex'] ?? 0;
-                                        _selectedAirlineCode = airlineIndex == 0
-                                            ? null
-                                            : uniqueAirlines[airlineIndex]
-                                                ['code'];
-                                        _selectedStops = filterData['stops'];
-                                        _hideNonRefundable =
-                                            filterData['hideNonRefundable'] ??
-                                                false;
-                                        _selectedDepartureTimeRange =
-                                            filterData['departureTime'];
-                                        _selectedArrivalTimeRange =
-                                            filterData['arrivalTime'];
-                                        selectedindex = -1;
-                                        _initializePagination();
-                                      });
-                                    }
-                                  },
-                                  icon: Image.asset('assets/images/Filter.png',
-                                      height: 12.h, width: 12.w),
-                                  label: Text("Filter",
-                                      style: TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 10.sp,
-                                          color: Color(0xFF606060))),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.grey.shade100,
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(30.r)),
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 3.h, horizontal: 20.w),
+                                  TextSpan(text: " "),
+                                  TextSpan(
+                                    text: "AVAILABLE FLIGHTS",
+                                    style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        ListView.builder(
+                          SizedBox(width: 80.w),
+                          Container(
+                            height: 25.h,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                var filterData = await showModalBottomSheet<
+                                    Map<String, dynamic>>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(16))),
+                                  builder: (context) => Container(
+                                    height: 620.h,
+                                    child: FilterBottomSheet(
+                                        airlines: uniqueAirlines,
+                                        currentSelectedIndex:
+                                            currentSelectedIndex,
+                                        filterorigin: filterorigin,
+                                        filterdestination: filterdestination),
+                                  ),
+                                );
+                                if (filterData != null) {
+                                  setState(() {
+                                    int airlineIndex =
+                                        filterData['airlineIndex'] ?? 0;
+                                    _selectedAirlineCode = airlineIndex == 0
+                                        ? null
+                                        : uniqueAirlines[airlineIndex]['code'];
+                                    _selectedStops = filterData['stops'];
+                                    _hideNonRefundable =
+                                        filterData['hideNonRefundable'] ??
+                                            false;
+                                    _selectedDepartureTimeRange =
+                                        filterData['departureTime'];
+                                    _selectedArrivalTimeRange =
+                                        filterData['arrivalTime'];
+                                    selectedindex = -1;
+                                    _initializePagination();
+                                  });
+                                }
+                              },
+                              icon: Image.asset('assets/images/Filter.png',
+                                  height: 12.h, width: 12.w),
+                              label: Text("Filter",
+                                  style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 10.sp,
+                                      color: Color(0xFF606060))),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey.shade100,
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30.r)),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 3.h, horizontal: 20.w),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        child: ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          // ✅ itemCount uses grouped keys count
                           itemCount: _displayedFlightKeys.length + 1,
                           itemBuilder: (context, index) {
                             if (index == _displayedFlightKeys.length) {
@@ -799,9 +792,9 @@ class _RoundtripState extends State<Roundtrip> {
                             return _buildSingleFlightCard(index);
                           },
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               )
             : Scaffold(
@@ -1200,10 +1193,10 @@ class _RoundtripState extends State<Roundtrip> {
                         // Per-variant fare calculation
                         final varFareData = _calculateFare(variantFlight);
                         int varFinaloffFare = varFareData['finaloffFare'];
-                        print("varFinaloffFare$varFinaloffFare");
+                        //("varFinaloffFare$varFinaloffFare");
                         final controller = Get.put(PriceAlertController());
                         controller.oldFare.value = varFinaloffFare.toDouble();
-                        print("INTERNATIONAL GETX${controller.oldFare.value}");
+                        //("INTERNATIONAL GETX${controller.oldFare.value}");
                         double varFinalcoupouncode =
                             varFareData['finalflatoffer'];
                         double varPublishFare = varFareData['publishFare'];

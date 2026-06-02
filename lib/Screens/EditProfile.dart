@@ -47,7 +47,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       firstDate: DateTime(1925),
       lastDate: DateTime(2040),
     );
-    print("psicked date$picked");
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
@@ -65,12 +64,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     emailController.text = widget.email ?? "";
     mobileController.text = widget.mobile ?? "";
     dobController.text = widget.dob ?? "";
-    print("Names");
-    print(widget.firstName);
-    print(widget.lastName);
-    print(widget.email);
-    print(widget.mobile);
-    print(widget.dob);
 
     if (widget.dob != null && widget.dob!.isNotEmpty) {
       DateTime parsedDate = DateTime.parse(widget.dob!);
@@ -299,14 +292,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             }
 
             final date = fixDate(dob);
-            print("date$date");
-
-            print("dob$dob");
-            print("firstname$firstname");
-            print("lastname$lastname");
-            print("email$email");
-            print("mobile$mobile");
-            print("date$date");
             await ApiService()
                 .profileupdate(firstname, lastname, email, mobile, date);
             Navigator.pop(context);
