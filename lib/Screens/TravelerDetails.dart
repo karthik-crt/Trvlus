@@ -1953,209 +1953,211 @@ class _TravelerDetailsPageState extends State<TravelerDetailsPage> {
           ],
         ),
       ),
-      bottomNavigationBar: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(0.r)),
-              boxShadow: [],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Total Amount",
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontFamily: 'Inter',
-                            color: Colors.grey.shade600,
+      bottomNavigationBar: SafeArea(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(0.r)),
+                boxShadow: [],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Total Amount",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontFamily: 'Inter',
+                              color: Colors.grey.shade600,
+                            ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            showFareBreakupSheet(context);
-                          },
-                          child: Row(
-                            children: [
-                              Text(
-                                'View full details',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  color: Color(0xFFF37023),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14.sp,
+                          GestureDetector(
+                            onTap: () {
+                              showFareBreakupSheet(context);
+                            },
+                            child: Row(
+                              children: [
+                                Text(
+                                  'View full details',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFFF37023),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: 5.w),
-                              Icon(Icons.arrow_drop_up,
-                                  color: Color(0xFFF37023), size: 18),
-                            ],
+                                SizedBox(width: 5.w),
+                                Icon(Icons.arrow_drop_up,
+                                    color: Color(0xFFF37023), size: 18),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "₹${c.overallFare.toStringAsFixed(0)}",
+                            style: TextStyle(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFF37023),
+                            ),
+                          ),
+                          Text(
+                            "Including GST+ taxes",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 5.h),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (adultTravelers.length <
+                          (widget.adultCount?.toInt() ?? 0)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  "Please add all ${widget.adultCount} adult traveler(s)")),
+                        );
+                      } else if ((widget.childCount ?? 0) > 0 &&
+                          childTravelers.length <
+                              (widget.childCount?.toInt() ?? 0)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  "Please add all ${widget.childCount} child traveler(s)")),
+                        );
+                      } else if ((widget.infantCount ?? 0) > 0 &&
+                          infantTravelers.length <
+                              (widget.infantCount?.toInt() ?? 0)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  "Please add all ${widget.infantCount} infant traveler(s)")),
+                        );
+                      } else {
+                        Get.to(
+                          () => ConfirmTravelerDetails(
+                            flight: {},
+                            city: widget.city,
+                            destination: widget.destination,
+                            airlineName: widget.airlineName,
+                            airlineCode: widget.airlineCode,
+                            flightNumber: widget.flightNumber,
+                            cityName: widget.cityName,
+                            cityCode: widget.cityCode,
+                            descityName: widget.descityName,
+                            descityCode: widget.descityCode,
+                            depDate: widget.depDate,
+                            depTime: widget.depTime,
+                            arrDate: widget.arrDate,
+                            arrTime: widget.arrTime,
+                            duration: widget.duration,
+                            refundable: widget.refundable,
+                            stop: widget.stop,
+                            airportName: widget.airportName,
+                            desairportName: widget.desairportName,
+                            basefare: widget.basefare,
+                            segments: widget.segments,
+                            initialData: adultTravelers,
+                            childData: childTravelers,
+                            infantData: infantTravelers,
+                            resultindex: widget.resultindex,
+                            traceid: widget.traceid,
+                            outboundFlight: widget.outboundFlight,
+                            inboundFlight: widget.inboundFlight,
+                            total: widget.total,
+                            tax: widget.tax,
+                            adultCount: widget.adultCount,
+                            childCount: widget.childCount,
+                            infantCount: widget.infantCount,
+                            isLLC: widget.isLLC,
+                            outdepDate: widget.outdepDate,
+                            outdepTime: widget.outdepTime,
+                            outarrDate: widget.outarrDate,
+                            outarrTime: widget.outarrTime,
+                            indepDate: widget.indepDate,
+                            indepTime: widget.indepTime,
+                            inarrDate: widget.inarrDate,
+                            inarrTime: widget.inarrTime,
+                            outBoundData: widget.outBoundData,
+                            inBoundData: widget.inBoundData,
+                            outresultindex: widget.outresultindex,
+                            inresultindex: widget.inresultindex,
+                            segmentsJson: widget.segmentsJson,
+                            miniFareRules: widget.miniFareRules,
+                            coupouncode: widget.coupouncode,
+                            commonPublishedFare: widget.commonPublishedFare,
+                            tboOfferedFare: widget.tboOfferedFare,
+                            tboCommission: widget.tboCommission,
+                            tboTds: widget.tboTds,
+                            trvlusCommission: widget.trvlusCommission,
+                            trvlusTds: widget.trvlusTds,
+                            trvlusNetFare: widget.trvlusNetFare,
+                            othercharges: widget.othercharges,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 40.h),
+                      backgroundColor: const Color(0xFFF37023),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "₹${c.overallFare.toStringAsFixed(0)}",
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFF37023),
-                          ),
-                        ),
-                        Text(
-                          "Including GST+ taxes",
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                SizedBox(height: 5.h),
-                ElevatedButton(
-                  onPressed: () {
-                    if (adultTravelers.length <
-                        (widget.adultCount?.toInt() ?? 0)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                "Please add all ${widget.adultCount} adult traveler(s)")),
-                      );
-                    } else if ((widget.childCount ?? 0) > 0 &&
-                        childTravelers.length <
-                            (widget.childCount?.toInt() ?? 0)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                "Please add all ${widget.childCount} child traveler(s)")),
-                      );
-                    } else if ((widget.infantCount ?? 0) > 0 &&
-                        infantTravelers.length <
-                            (widget.infantCount?.toInt() ?? 0)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                "Please add all ${widget.infantCount} infant traveler(s)")),
-                      );
-                    } else {
-                      Get.to(
-                        () => ConfirmTravelerDetails(
-                          flight: {},
-                          city: widget.city,
-                          destination: widget.destination,
-                          airlineName: widget.airlineName,
-                          airlineCode: widget.airlineCode,
-                          flightNumber: widget.flightNumber,
-                          cityName: widget.cityName,
-                          cityCode: widget.cityCode,
-                          descityName: widget.descityName,
-                          descityCode: widget.descityCode,
-                          depDate: widget.depDate,
-                          depTime: widget.depTime,
-                          arrDate: widget.arrDate,
-                          arrTime: widget.arrTime,
-                          duration: widget.duration,
-                          refundable: widget.refundable,
-                          stop: widget.stop,
-                          airportName: widget.airportName,
-                          desairportName: widget.desairportName,
-                          basefare: widget.basefare,
-                          segments: widget.segments,
-                          initialData: adultTravelers,
-                          childData: childTravelers,
-                          infantData: infantTravelers,
-                          resultindex: widget.resultindex,
-                          traceid: widget.traceid,
-                          outboundFlight: widget.outboundFlight,
-                          inboundFlight: widget.inboundFlight,
-                          total: widget.total,
-                          tax: widget.tax,
-                          adultCount: widget.adultCount,
-                          childCount: widget.childCount,
-                          infantCount: widget.infantCount,
-                          isLLC: widget.isLLC,
-                          outdepDate: widget.outdepDate,
-                          outdepTime: widget.outdepTime,
-                          outarrDate: widget.outarrDate,
-                          outarrTime: widget.outarrTime,
-                          indepDate: widget.indepDate,
-                          indepTime: widget.indepTime,
-                          inarrDate: widget.inarrDate,
-                          inarrTime: widget.inarrTime,
-                          outBoundData: widget.outBoundData,
-                          inBoundData: widget.inBoundData,
-                          outresultindex: widget.outresultindex,
-                          inresultindex: widget.inresultindex,
-                          segmentsJson: widget.segmentsJson,
-                          miniFareRules: widget.miniFareRules,
-                          coupouncode: widget.coupouncode,
-                          commonPublishedFare: widget.commonPublishedFare,
-                          tboOfferedFare: widget.tboOfferedFare,
-                          tboCommission: widget.tboCommission,
-                          tboTds: widget.tboTds,
-                          trvlusCommission: widget.trvlusCommission,
-                          trvlusTds: widget.trvlusTds,
-                          trvlusNetFare: widget.trvlusNetFare,
-                          othercharges: widget.othercharges,
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 40.h),
-                    backgroundColor: const Color(0xFFF37023),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.r),
+                    child: Text(
+                      "Continue",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    "Continue",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            top: -12.h,
-            left: 135.w,
-            child: GestureDetector(
-              onTap: () {
-                showFareBreakupSheet(context);
-              },
-              child: Container(
-                height: 28.h,
-                width: 80.w,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Image.asset(
-                  "assets/images/TriangleButton.png",
-                  height: 24.h,
-                  width: 24.w,
+            Positioned(
+              top: -12.h,
+              left: 135.w,
+              child: GestureDetector(
+                onTap: () {
+                  showFareBreakupSheet(context);
+                },
+                child: Container(
+                  height: 28.h,
+                  width: 80.w,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Image.asset(
+                    "assets/images/TriangleButton.png",
+                    height: 24.h,
+                    width: 24.w,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2514,15 +2516,15 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
 
     if (travelerType == "adult") {
       firstDate = DateTime(1900);
-      lastDate = DateTime(now.year - 12, 12, 31);
+      lastDate = DateTime(now.year - 12, now.month, now.day);
       initialDate = lastDate;
     } else if (travelerType == "child") {
-      firstDate = DateTime(now.year - 12, 1, 1);
-      lastDate = DateTime(now.year - 2, 12, 31);
+      firstDate = DateTime(now.year - 12, now.month, now.day + 1);
+      lastDate = DateTime(now.year - 2, now.month, now.day);
       initialDate = DateTime(now.year - 6, now.month, now.day);
     } else if (travelerType == "infant") {
-      firstDate = DateTime(now.year - 2, 1, 1);
-      lastDate = DateTime(now.year, 12, 31);
+      firstDate = DateTime(now.year - 2, now.month, now.day + 1);
+      lastDate = now;
       initialDate = DateTime(now.year - 1, now.month, now.day);
     } else {
       firstDate = DateTime(1900);
@@ -2827,200 +2829,124 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                 activeColor: Color(0xFFF37023),
               ),
               SizedBox(height: 20.h),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _submitted = true; // enable validation messages
-                  });
+              SafeArea(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _submitted = true; // enable validation messages
+                    });
 
-                  if (!_formKey.currentState!.validate()) {
-                    // ❌ Invalid form → STOP here
-                    return;
-                  }
-                  showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (BuildContext context) {
-                        String typeLabel = '';
-                        int count = 0;
-                        if (widget.travelerType == 'adult') {
-                          typeLabel = 'Adult';
-                          count = widget.adultCount ?? 0;
-                        } else if (widget.travelerType == 'child') {
-                          typeLabel = 'Child';
-                          count = widget.childCount ?? 0;
-                        } else if (widget.travelerType == 'infant') {
-                          typeLabel = 'Infant';
-                          count = widget.infantCount ??
-                              0; // Now available after adding to constructor
-                        } else {
-                          typeLabel = 'Traveler'; // Fallback
-                          count = 1;
-                        }
+                    if (!_formKey.currentState!.validate()) {
+                      // ❌ Invalid form → STOP here
+                      return;
+                    }
+                    showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (BuildContext context) {
+                          String typeLabel = '';
+                          int count = 0;
+                          if (widget.travelerType == 'adult') {
+                            typeLabel = 'Adult';
+                            count = widget.adultCount ?? 0;
+                          } else if (widget.travelerType == 'child') {
+                            typeLabel = 'Child';
+                            count = widget.childCount ?? 0;
+                          } else if (widget.travelerType == 'infant') {
+                            typeLabel = 'Infant';
+                            count = widget.infantCount ??
+                                0; // Now available after adding to constructor
+                          } else {
+                            typeLabel = 'Traveler'; // Fallback
+                            count = 1;
+                          }
 
-                        return SingleChildScrollView(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: 20,
-                              right: 20,
-                              top: 20,
-                              bottom:
-                                  MediaQuery.of(context).viewInsets.bottom + 20,
-                            ),
-                            child: Wrap(
-                              children: [
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Align(
-                                        alignment: Alignment.topRight,
-                                        child: Image.asset(
-                                          'assets/icon/cancel.png',
-                                          height: 17,
+                          return SingleChildScrollView(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                left: 20,
+                                right: 20,
+                                top: 20,
+                                bottom:
+                                    MediaQuery.of(context).viewInsets.bottom +
+                                        20,
+                              ),
+                              child: Wrap(
+                                children: [
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Align(
+                                          alignment: Alignment.topRight,
+                                          child: Image.asset(
+                                            'assets/icon/cancel.png',
+                                            height: 17,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Text(
-                                      "Review Traveller",
-                                      style: TextStyle(
-                                        color: Color(0xFF444444),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text("$typeLabel $count"),
-                                    SizedBox(height: 10),
-                                    if (widget.travelerType == 'adult')
-                                      selectedGender == "Mr"
-                                          ? Image.asset('assets/icon/adult.png',
-                                              height: 50)
-                                          : Image.asset(
-                                              'assets/icon/adultFemale.png',
-                                              height: 50),
-                                    if (widget.travelerType == 'child')
-                                      selectedGender == "Mstr"
-                                          ? Image.asset('assets/icon/child.png',
-                                              height: 50)
-                                          : Image.asset(
-                                              'assets/icon/adultFemale.png',
-                                              height: 50),
-                                    if (widget.travelerType == 'infant')
-                                      selectedGender == "Mstr"
-                                          ? Image.asset(
-                                              'assets/icon/infant.png',
-                                              height: 50)
-                                          : Image.asset(
-                                              'assets/icon/infant.png',
-                                              height: 50),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      "$selectedGender ${firstNameController.text.trim()} ${lastNameController.text.trim()}",
-                                      style: TextStyle(
-                                        color: Color(0xFF000000),
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                /// ⬇️ SPACE AFTER HEADER (FIXED USING PADDING)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 25),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("First Name",
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
-                                      Text(firstNameController.text.trim(),
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
-                                    ],
-                                  ),
-                                ),
-
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Last Name",
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
-                                      Text(lastNameController.text.trim(),
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Gender",
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
+                                      SizedBox(height: 5),
                                       Text(
-                                        widget.travelerType == 'adult'
-                                            ? (selectedGender == "Mr"
-                                                ? "Male"
-                                                : "Female")
-                                            : (selectedGender == "Mstr"
-                                                ? "Male"
-                                                : "Female"),
+                                        "Review Traveller",
                                         style: TextStyle(
-                                            color: Color(0xFF000000),
-                                            fontSize: 15),
+                                          color: Color(0xFF444444),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text("$typeLabel $count"),
+                                      SizedBox(height: 10),
+                                      if (widget.travelerType == 'adult')
+                                        selectedGender == "Mr"
+                                            ? Image.asset(
+                                                'assets/icon/adult.png',
+                                                height: 50)
+                                            : Image.asset(
+                                                'assets/icon/adultFemale.png',
+                                                height: 50),
+                                      if (widget.travelerType == 'child')
+                                        selectedGender == "Mstr"
+                                            ? Image.asset(
+                                                'assets/icon/child.png',
+                                                height: 50)
+                                            : Image.asset(
+                                                'assets/icon/adultFemale.png',
+                                                height: 50),
+                                      if (widget.travelerType == 'infant')
+                                        selectedGender == "Mstr"
+                                            ? Image.asset(
+                                                'assets/icon/infant.png',
+                                                height: 50)
+                                            : Image.asset(
+                                                'assets/icon/infant.png',
+                                                height: 50),
+                                      SizedBox(height: 10),
+                                      Text(
+                                        "$selectedGender ${firstNameController.text.trim()} ${lastNameController.text.trim()}",
+                                        style: TextStyle(
+                                          color: Color(0xFF000000),
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
 
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Date Of Birth",
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
-                                      Text(dateController.text.trim(),
-                                          style: TextStyle(
-                                              color: Color(0xFF000000),
-                                              fontSize: 15)),
-                                    ],
-                                  ),
-                                ),
-
-                                if (widget.isPassportRequiredAtTicket == true)
+                                  /// ⬇️ SPACE AFTER HEADER (FIXED USING PADDING)
                                   Padding(
-                                    padding: const EdgeInsets.only(top: 8),
+                                    padding: const EdgeInsets.only(top: 25),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text("PassportNo",
+                                        Text("First Name",
                                             style: TextStyle(
                                                 color: Color(0xFF000000),
                                                 fontSize: 15)),
-                                        Text(passportNoController.text.trim(),
+                                        Text(firstNameController.text.trim(),
                                             style: TextStyle(
                                                 color: Color(0xFF000000),
                                                 fontSize: 15)),
@@ -3028,18 +2954,60 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                     ),
                                   ),
 
-                                if (widget.isPassportRequiredAtTicket == true)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 8),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text("Passport Expiry",
+                                        Text("Last Name",
                                             style: TextStyle(
                                                 color: Color(0xFF000000),
                                                 fontSize: 15)),
-                                        Text(expiryController.text.trim(),
+                                        Text(lastNameController.text.trim(),
+                                            style: TextStyle(
+                                                color: Color(0xFF000000),
+                                                fontSize: 15)),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Gender",
+                                            style: TextStyle(
+                                                color: Color(0xFF000000),
+                                                fontSize: 15)),
+                                        Text(
+                                          widget.travelerType == 'adult'
+                                              ? (selectedGender == "Mr"
+                                                  ? "Male"
+                                                  : "Female")
+                                              : (selectedGender == "Mstr"
+                                                  ? "Male"
+                                                  : "Female"),
+                                          style: TextStyle(
+                                              color: Color(0xFF000000),
+                                              fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Date Of Birth",
+                                            style: TextStyle(
+                                                color: Color(0xFF000000),
+                                                fontSize: 15)),
+                                        Text(dateController.text.trim(),
                                             style: TextStyle(
                                                 color: Color(0xFF000000),
                                                 fontSize: 15)),
@@ -3047,204 +3015,275 @@ class _AddTravelerPageState extends State<AddTravelerPage> {
                                     ),
                                   ),
 
-                                /// ⬇️ SPACE BEFORE BUTTON (FIXED)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 15),
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      String genderValue;
+                                  if (widget.isPassportRequiredAtTicket == true)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text("PassportNo",
+                                              style: TextStyle(
+                                                  color: Color(0xFF000000),
+                                                  fontSize: 15)),
+                                          Text(passportNoController.text.trim(),
+                                              style: TextStyle(
+                                                  color: Color(0xFF000000),
+                                                  fontSize: 15)),
+                                        ],
+                                      ),
+                                    ),
 
-                                      if (widget.travelerType == 'adult') {
-                                        genderValue = selectedGender == "Mr"
-                                            ? "Male"
-                                            : "Female";
-                                      } else {
-                                        genderValue = selectedGender == "Mstr"
-                                            ? "Male"
-                                            : "Female";
-                                      }
+                                  if (widget.isPassportRequiredAtTicket == true)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text("Passport Expiry",
+                                              style: TextStyle(
+                                                  color: Color(0xFF000000),
+                                                  fontSize: 15)),
+                                          Text(expiryController.text.trim(),
+                                              style: TextStyle(
+                                                  color: Color(0xFF000000),
+                                                  fontSize: 15)),
+                                        ],
+                                      ),
+                                    ),
 
-                                      if (_formKey.currentState!.validate()) {
-                                        Map<String, dynamic> data = {
-                                          'gender': selectedGender,
-                                          'Firstname':
-                                              firstNameController.text.trim(),
-                                          'lastname':
-                                              lastNameController.text.trim(),
-                                          'mobile':
-                                              mobileController.text.trim(),
-                                          'email': emailController.text.trim(),
-                                          'Passport No':
-                                              passportNoController.text.trim(),
-                                          'Date of Birth':
-                                              dateController.text.trim(),
-                                          'Expiry':
-                                              expiryController.text.trim(),
-                                          'wheelchair': requireWheelchair,
-                                          'Nationality': selectedNationality,
-                                          'IssusingCountry': selectedCountry,
-                                          'typeLable': typeLabel,
-                                          'title': genderValue
-                                        };
-                                        final passengerId =
-                                            widget.selectedpassenger?['id'];
-                                        if (passengerId != null) {
-                                          // Convert date from dd-MM-yyyy to yyyy-MM-dd
-                                          String convertDate(String input) {
-                                            try {
-                                              final parsed =
-                                                  DateFormat("dd-MM-yyyy")
-                                                      .parse(input);
-                                              return DateFormat("yyyy-MM-dd")
-                                                  .format(parsed);
-                                            } catch (_) {
-                                              return input;
-                                            }
+                                  /// ⬇️ SPACE BEFORE BUTTON (FIXED)
+                                  SafeArea(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 15),
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          String genderValue;
+
+                                          if (widget.travelerType == 'adult') {
+                                            genderValue = selectedGender == "Mr"
+                                                ? "Male"
+                                                : "Female";
+                                          } else {
+                                            genderValue =
+                                                selectedGender == "Mstr"
+                                                    ? "Male"
+                                                    : "Female";
                                           }
 
-                                          final updatePayload = {
-                                            'first_name':
-                                                firstNameController.text.trim(),
-                                            'last_name':
-                                                lastNameController.text.trim(),
-                                            'mobile':
-                                                mobileController.text.trim(),
-                                            'email':
-                                                emailController.text.trim(),
-                                            'passport_no': passportNoController
-                                                .text
-                                                .trim(),
-                                            'dob': convertDate(
-                                                dateController.text.trim()),
-                                            // ✅ yyyy-MM-dd
-                                            'passport_expiry': expiryController
-                                                    .text
-                                                    .trim()
-                                                    .isNotEmpty
-                                                ? convertDate(expiryController
-                                                    .text
-                                                    .trim())
-                                                : null, // ✅
-                                            // ✅ yyyy-MM-dd
-                                            'gender': selectedGender,
-                                            'wheel_chair':
-                                                requireWheelchair.toString(),
-                                            'nationality': selectedNationality,
-                                            'issusing_country': selectedCountry,
-                                            'title': selectedGender == "Mr"
-                                                ? "Male"
-                                                : "Female",
-                                          };
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            Map<String, dynamic> data = {
+                                              'gender': selectedGender,
+                                              'Firstname': firstNameController
+                                                  .text
+                                                  .trim(),
+                                              'lastname': lastNameController
+                                                  .text
+                                                  .trim(),
+                                              'mobile':
+                                                  mobileController.text.trim(),
+                                              'email':
+                                                  emailController.text.trim(),
+                                              'Passport No':
+                                                  passportNoController.text
+                                                      .trim(),
+                                              'Date of Birth':
+                                                  dateController.text.trim(),
+                                              'Expiry':
+                                                  expiryController.text.trim(),
+                                              'wheelchair': requireWheelchair,
+                                              'Nationality':
+                                                  selectedNationality,
+                                              'IssusingCountry':
+                                                  selectedCountry,
+                                              'typeLable': typeLabel,
+                                              'title': genderValue
+                                            };
+                                            final passengerId =
+                                                widget.selectedpassenger?['id'];
+                                            if (passengerId != null) {
+                                              // Convert date from dd-MM-yyyy to yyyy-MM-dd
+                                              String convertDate(String input) {
+                                                try {
+                                                  final parsed =
+                                                      DateFormat("dd-MM-yyyy")
+                                                          .parse(input);
+                                                  return DateFormat(
+                                                          "yyyy-MM-dd")
+                                                      .format(parsed);
+                                                } catch (_) {
+                                                  return input;
+                                                }
+                                              }
 
-                                          await ApiService().updatePassenger(
-                                              passengerId, updatePayload);
-                                        }
-                                        Get.back();
-                                        Get.back(result: data);
-                                        if (widget.selectedpassenger != null) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  TravelerDetailsPage(
-                                                flight: {},
-                                                city: widget.city,
-                                                destination: widget.destination,
-                                                airlineName: widget.airlineName,
-                                                airlineCode: widget.airlineCode,
-                                                flightNumber:
-                                                    widget.flightNumber,
-                                                cityName: widget.cityName,
-                                                cityCode: widget.cityCode,
-                                                descityName: widget.descityName,
-                                                descityCode: widget.descityCode,
-                                                depDate: widget.depDate,
-                                                depTime: widget.depTime,
-                                                arrDate: widget.arrDate,
-                                                arrTime: widget.arrTime,
-                                                duration: widget.duration,
-                                                refundable: widget.refundable,
-                                                stop: widget.stop,
-                                                airportName: widget.airportName,
-                                                desairportName:
-                                                    widget.desairportName,
-                                                basefare: widget.basefare,
-                                                tax: widget.tax,
-                                                segmentsJson:
-                                                    widget.segmentsJson,
-                                                segments: widget.segments,
-                                                adultCount: widget.adultCount,
-                                                childCount: widget.childCount,
-                                                infantCount: widget.infantCount,
-                                                selectedpassenger: data,
-                                                outBoundData:
-                                                    widget.outBoundData,
-                                                inBoundData: widget.inBoundData,
-                                                inboundFlight:
-                                                    widget.inboundFlight,
-                                                outboundFlight:
-                                                    widget.outboundFlight,
-                                                traceid: widget.traceid,
-                                                resultindex: widget.resultindex,
-                                                coupouncode: widget.coupouncode,
-                                                isLLC: widget.isLLC,
-                                                commonPublishedFare:
-                                                    widget.commonPublishedFare,
-                                                tboOfferedFare:
-                                                    widget.tboOfferedFare,
-                                                tboCommission:
-                                                    widget.tboCommission,
-                                                tboTds: widget.tboTds,
-                                                trvlusCommission:
-                                                    widget.trvlusCommission,
-                                                trvlusTds: widget.trvlusTds,
-                                                trvlusNetFare:
-                                                    widget.trvlusNetFare,
+                                              final updatePayload = {
+                                                'first_name':
+                                                    firstNameController.text
+                                                        .trim(),
+                                                'last_name': lastNameController
+                                                    .text
+                                                    .trim(),
+                                                'mobile': mobileController.text
+                                                    .trim(),
+                                                'email':
+                                                    emailController.text.trim(),
+                                                'passport_no':
+                                                    passportNoController.text
+                                                        .trim(),
+                                                'dob': convertDate(
+                                                    dateController.text.trim()),
+                                                // ✅ yyyy-MM-dd
+                                                'passport_expiry':
+                                                    expiryController.text
+                                                            .trim()
+                                                            .isNotEmpty
+                                                        ? convertDate(
+                                                            expiryController
+                                                                .text
+                                                                .trim())
+                                                        : null, // ✅
+                                                // ✅ yyyy-MM-dd
+                                                'gender': selectedGender,
+                                                'wheel_chair': requireWheelchair
+                                                    .toString(),
+                                                'nationality':
+                                                    selectedNationality,
+                                                'issusing_country':
+                                                    selectedCountry,
+                                                'title': selectedGender == "Mr"
+                                                    ? "Male"
+                                                    : "Female",
+                                              };
+
+                                              await ApiService()
+                                                  .updatePassenger(passengerId,
+                                                      updatePayload);
+                                            }
+                                            Get.back();
+                                            Get.back(result: data);
+                                            if (widget.selectedpassenger !=
+                                                null) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      TravelerDetailsPage(
+                                                    flight: {},
+                                                    city: widget.city,
+                                                    destination:
+                                                        widget.destination,
+                                                    airlineName:
+                                                        widget.airlineName,
+                                                    airlineCode:
+                                                        widget.airlineCode,
+                                                    flightNumber:
+                                                        widget.flightNumber,
+                                                    cityName: widget.cityName,
+                                                    cityCode: widget.cityCode,
+                                                    descityName:
+                                                        widget.descityName,
+                                                    descityCode:
+                                                        widget.descityCode,
+                                                    depDate: widget.depDate,
+                                                    depTime: widget.depTime,
+                                                    arrDate: widget.arrDate,
+                                                    arrTime: widget.arrTime,
+                                                    duration: widget.duration,
+                                                    refundable:
+                                                        widget.refundable,
+                                                    stop: widget.stop,
+                                                    airportName:
+                                                        widget.airportName,
+                                                    desairportName:
+                                                        widget.desairportName,
+                                                    basefare: widget.basefare,
+                                                    tax: widget.tax,
+                                                    segmentsJson:
+                                                        widget.segmentsJson,
+                                                    segments: widget.segments,
+                                                    adultCount:
+                                                        widget.adultCount,
+                                                    childCount:
+                                                        widget.childCount,
+                                                    infantCount:
+                                                        widget.infantCount,
+                                                    selectedpassenger: data,
+                                                    outBoundData:
+                                                        widget.outBoundData,
+                                                    inBoundData:
+                                                        widget.inBoundData,
+                                                    inboundFlight:
+                                                        widget.inboundFlight,
+                                                    outboundFlight:
+                                                        widget.outboundFlight,
+                                                    traceid: widget.traceid,
+                                                    resultindex:
+                                                        widget.resultindex,
+                                                    coupouncode:
+                                                        widget.coupouncode,
+                                                    isLLC: widget.isLLC,
+                                                    commonPublishedFare: widget
+                                                        .commonPublishedFare,
+                                                    tboOfferedFare:
+                                                        widget.tboOfferedFare,
+                                                    tboCommission:
+                                                        widget.tboCommission,
+                                                    tboTds: widget.tboTds,
+                                                    trvlusCommission:
+                                                        widget.trvlusCommission,
+                                                    trvlusTds: widget.trvlusTds,
+                                                    trvlusNetFare:
+                                                        widget.trvlusNetFare,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 18, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                            color: Color(0xFFF37023),
+                                          ),
+                                          child: Align(
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              "Continue",
+                                              style: TextStyle(
+                                                fontSize: 18.sp,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 18, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(18),
-                                        color: Color(0xFFF37023),
-                                      ),
-                                      child: Align(
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          "Continue",
-                                          style: TextStyle(
-                                            fontSize: 18.sp,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      });
-                },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 40.h),
-                  backgroundColor: Color(0xFFF37023),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.r),
+                          );
+                        });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 40.h),
+                    backgroundColor: Color(0xFFF37023),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
                   ),
-                ),
-                child: Text(
-                  "CONFIRM",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: Colors.white,
+                  child: Text(
+                    "CONFIRM",
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

@@ -413,33 +413,54 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
         exit(0);
       },
       child: Scaffold(
-        bottomNavigationBar: SingleChildScrollView(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
-            child: ElevatedButton(
-              onPressed: () async {
-                final data = await getSearchData();
-                // final dataset = searchData
-                //     .response.results.first.first.segments.length
-                //     .toString();
-                // print("finaldataset$dataset");
-                // format departure date once
-                String formattedDate = DateFormat("yyyy-MM-dd")
-                    .format(selectedDepatureDate!.toLocal());
-                // print("formattedDate$selectedReturnDate");
+        bottomNavigationBar: SafeArea(
+          child: SingleChildScrollView(
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 25.h),
+              child: ElevatedButton(
+                onPressed: () async {
+                  final data = await getSearchData();
+                  // final dataset = searchData
+                  //     .response.results.first.first.segments.length
+                  //     .toString();
+                  // print("finaldataset$dataset");
+                  // format departure date once
+                  String formattedDate = DateFormat("yyyy-MM-dd")
+                      .format(selectedDepatureDate!.toLocal());
+                  // print("formattedDate$selectedReturnDate");
 
-                String? formattedReturnDate;
-                // print("formattedReturnDate$formattedReturnDate");
-                if (selectedReturnDate != null) {
-                  formattedReturnDate = DateFormat("yyyy-MM-dd")
-                      .format(selectedReturnDate!.toLocal());
-                }
+                  String? formattedReturnDate;
+                  // print("formattedReturnDate$formattedReturnDate");
+                  if (selectedReturnDate != null) {
+                    formattedReturnDate = DateFormat("yyyy-MM-dd")
+                        .format(selectedReturnDate!.toLocal());
+                  }
 
-                if (selectedTripType == "One way") {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FlightResultsPage(
+                  if (selectedTripType == "One way") {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FlightResultsPage(
+                            airportCode: airportCode,
+                            fromAirport: fromAirport,
+                            toairportCode: toairportCode,
+                            toAirport: toAirport,
+                            selectedDepDate: formattedDate,
+                            selectedReturnDate: formattedReturnDate ?? "",
+                            selectedTripType: selectedTripType,
+                            adultCount: adults,
+                            childCount: children,
+                            infantCount: infants,
+                            searchData: searchData),
+                      ),
+                    );
+                  } else if (searchData
+                          .response.results.first.first.segments.length ==
+                      1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Localroundtrip(
                           airportCode: airportCode,
                           fromAirport: fromAirport,
                           toairportCode: toairportCode,
@@ -447,75 +468,56 @@ class _SearchFlightPageState extends State<SearchFlightPage> {
                           selectedDepDate: formattedDate,
                           selectedReturnDate: formattedReturnDate ?? "",
                           selectedTripType: selectedTripType,
+                          adultCount: adults.toString(),
+                          childCount: children.toString(),
+                          infantCount: infants.toString(),
+                        ),
+                      ),
+                    );
+                  } else {
+                    print("INTERNATIONAL ROUNDTRIP");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Roundtrip(
+                          airportCode: airportCode,
+                          selectedReturnDate: formattedReturnDate ?? "",
+                          selectedDepDate: formattedDate,
+                          search: searchData,
+                          toAirport: toAirport,
+                          fromAirport: fromAirport,
+                          toairportCode: toairportCode,
+                          selectedTripType: selectedTripType,
                           adultCount: adults,
                           childCount: children,
                           infantCount: infants,
-                          searchData: searchData),
-                    ),
-                  );
-                } else if (searchData
-                        .response.results.first.first.segments.length ==
-                    1) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => Localroundtrip(
-                        airportCode: airportCode,
-                        fromAirport: fromAirport,
-                        toairportCode: toairportCode,
-                        toAirport: toAirport,
-                        selectedDepDate: formattedDate,
-                        selectedReturnDate: formattedReturnDate ?? "",
-                        selectedTripType: selectedTripType,
-                        adultCount: adults.toString(),
-                        childCount: children.toString(),
-                        infantCount: infants.toString(),
-                      ),
-                    ),
-                  );
-                } else {
-                  print("INTERNATIONAL ROUNDTRIP");
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => Roundtrip(
-                        airportCode: airportCode,
-                        selectedReturnDate: formattedReturnDate ?? "",
-                        selectedDepDate: formattedDate,
-                        search: searchData,
-                        toAirport: toAirport,
-                        fromAirport: fromAirport,
-                        toairportCode: toairportCode,
-                        selectedTripType: selectedTripType,
-                        adultCount: adults,
-                        childCount: children,
-                        infantCount: infants,
-                      ),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF37023),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-                padding: EdgeInsets.symmetric(vertical: 0.02.sh),
-              ),
-              child: Center(
-                child: isLoading
-                    ? CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                    : Text(
-                        "Search Flights",
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.sp,
-                          color: Colors.white,
                         ),
                       ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF37023),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 0.02.sh),
+                ),
+                child: Center(
+                  child: isLoading
+                      ? CircularProgressIndicator(
+                          color: Colors.white,
+                        )
+                      : Text(
+                          "Search Flights",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
               ),
             ),
           ),
@@ -1131,41 +1133,41 @@ class _DatePickerFieldState extends State<DatePickerField> {
                     return Container(
                       height: 550,
                       child: Scaffold(
-                        floatingActionButton: Container(
-                          color: const Color(0xFFF5F5F5),
-                          margin: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 6.h,
-                          ),
-                          width: 300,
-                          height: 40.h,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF37023),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25.r),
+                        floatingActionButton: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 40.h,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF37023),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25.r),
+                                ),
                               ),
-                            ),
-                            onPressed: () {
-                              if (selectedDepatureDate != null) {
-                                widget.onDateChanged(selectedDepatureDate!);
-                              }
-                              if (selectedReturnDate != null) {
-                                if (widget.onReturnDateChanged != null) {
-                                  widget.onReturnDateChanged!(
-                                      selectedReturnDate!);
-                                } else {
-                                  widget.onDateChanged(selectedReturnDate!);
+                              onPressed: () {
+                                if (selectedDepatureDate != null) {
+                                  widget.onDateChanged(selectedDepatureDate!);
                                 }
-                              }
-                              if (widget.onTripTypeChanged != null) {
-                                widget.onTripTypeChanged!(currentTripType);
-                              }
-                              Navigator.pop(context);
-                            },
-                            child: const Text("Done"),
+                                if (selectedReturnDate != null) {
+                                  if (widget.onReturnDateChanged != null) {
+                                    widget.onReturnDateChanged!(
+                                        selectedReturnDate!);
+                                  } else {
+                                    widget.onDateChanged(selectedReturnDate!);
+                                  }
+                                }
+                                if (widget.onTripTypeChanged != null) {
+                                  widget.onTripTypeChanged!(currentTripType);
+                                }
+                                Navigator.pop(context);
+                              },
+                              child: const Text("Done"),
+                            ),
                           ),
                         ),
+                        floatingActionButtonLocation:
+                            FloatingActionButtonLocation.centerFloat,
                         body: SingleChildScrollView(
                           child: Container(
                             child: Column(
@@ -1899,41 +1901,43 @@ class _CombinedSelectionFieldState extends State<CombinedSelectionField> {
         return StatefulBuilder(
           builder: (BuildContext modalContext, StateSetter modalSetState) {
             return Scaffold(
-              bottomNavigationBar: SingleChildScrollView(
-                child: Padding(
-                  padding:
-                      EdgeInsets.only(right: 10.w, left: 10.w, bottom: 10.h),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final totalCount = adults + children + infants;
-                      if (totalCount > 9) {
-                        ScaffoldMessenger.of(modalContext).showSnackBar(
-                          SnackBar(
-                            content: Text('Maximum 9 passengers allowed'),
-                            backgroundColor: Colors.redAccent,
-                            behavior: SnackBarBehavior.floating,
-                            margin: EdgeInsets.all(16),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF37023),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
+              bottomNavigationBar: SafeArea(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding:
+                        EdgeInsets.only(right: 10.w, left: 10.w, bottom: 10.h),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final totalCount = adults + children + infants;
+                        if (totalCount > 9) {
+                          ScaffoldMessenger.of(modalContext).showSnackBar(
+                            SnackBar(
+                              content: Text('Maximum 9 passengers allowed'),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                              margin: EdgeInsets.all(16),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF37023),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Done",
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16.sp,
-                          color: Colors.white,
+                      child: Center(
+                        child: Text(
+                          "Done",
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

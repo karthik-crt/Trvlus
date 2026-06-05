@@ -1585,97 +1585,101 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                 //   return const SizedBox.shrink();
                 // }),
                 if (totalBalance >= overallFare) ...[
-                  ElevatedButton(
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      prefs.getString("ResultIndex");
-                      //("ISLLC${widget.isLLC}");
-                      // await ApiService().ticket();
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => Afterpayment(
-                                    flightNumber: widget.flightNumber,
-                                    airlineName: widget.airlineName,
-                                    depTime: widget.depTime,
-                                    depDate: widget.depDate,
-                                    airportName: widget.airportName,
-                                    arrTime: widget.arrTime,
-                                    arrDate: widget.arrDate,
-                                    desairportName: widget.desairportName,
-                                    duration: widget.duration,
-                                    airlineCode: widget.airlineCode,
-                                    cityCode: widget.cityCode,
-                                    descityCode: widget.descityCode,
-                                    cityName: widget.cityName,
-                                    descityName: widget.descityName,
-                                    outboundFlight: widget.outboundFlight,
-                                    inboundFlight: widget.inboundFlight,
-                                    outresultindex: widget.outresultindex,
-                                    inresultindex: widget.inresultindex,
-                                    passenger: widget.passenger,
-                                    childpassenger: widget.childpassenger,
-                                    infantpassenger: widget.infantpassenger,
-                                    basefare: widget.basefare,
-                                    tax: widget.tax,
-                                    isLLC: widget.isLLC,
-                                    outBoundData: widget.outBoundData,
-                                    inBoundData: widget.inBoundData,
-                                    meal: widget.meal,
-                                    baggage: widget.baggage,
-                                    seat: widget.seat,
-                                    stop: widget.stop,
-                                    resultindex: widget.resultindex,
-                                    traceid: widget.traceid,
-                                    segmentsJson: widget.segmentsJson,
-                                    convenienceFee: convenienceFee,
-                                    coupouncode: widget.coupouncode,
-                                    commonPublishedFare:
-                                        widget.commonPublishedFare,
-                                    tboOfferedFare: widget.tboOfferedFare,
-                                    tboCommission: widget.tboCommission,
-                                    tboTds: widget.tboTds,
-                                    trvlusCommission: widget.trvlusCommission,
-                                    trvlusTds: widget.trvlusTds,
-                                    trvlusNetFare: widget.trvlusNetFare,
-                                    othercharges: widget.othercharges,
-                                  )));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 40.h),
-                      backgroundColor: Color(0xFFF37023),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
+                  SafeArea(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        prefs.getString("ResultIndex");
+                        //("ISLLC${widget.isLLC}");
+                        // await ApiService().ticket();
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Afterpayment(
+                                      flightNumber: widget.flightNumber,
+                                      airlineName: widget.airlineName,
+                                      depTime: widget.depTime,
+                                      depDate: widget.depDate,
+                                      airportName: widget.airportName,
+                                      arrTime: widget.arrTime,
+                                      arrDate: widget.arrDate,
+                                      desairportName: widget.desairportName,
+                                      duration: widget.duration,
+                                      airlineCode: widget.airlineCode,
+                                      cityCode: widget.cityCode,
+                                      descityCode: widget.descityCode,
+                                      cityName: widget.cityName,
+                                      descityName: widget.descityName,
+                                      outboundFlight: widget.outboundFlight,
+                                      inboundFlight: widget.inboundFlight,
+                                      outresultindex: widget.outresultindex,
+                                      inresultindex: widget.inresultindex,
+                                      passenger: widget.passenger,
+                                      childpassenger: widget.childpassenger,
+                                      infantpassenger: widget.infantpassenger,
+                                      basefare: widget.basefare,
+                                      tax: widget.tax,
+                                      isLLC: widget.isLLC,
+                                      outBoundData: widget.outBoundData,
+                                      inBoundData: widget.inBoundData,
+                                      meal: widget.meal,
+                                      baggage: widget.baggage,
+                                      seat: widget.seat,
+                                      stop: widget.stop,
+                                      resultindex: widget.resultindex,
+                                      traceid: widget.traceid,
+                                      segmentsJson: widget.segmentsJson,
+                                      convenienceFee: convenienceFee,
+                                      coupouncode: widget.coupouncode,
+                                      commonPublishedFare:
+                                          widget.commonPublishedFare,
+                                      tboOfferedFare: widget.tboOfferedFare,
+                                      tboCommission: widget.tboCommission,
+                                      tboTds: widget.tboTds,
+                                      trvlusCommission: widget.trvlusCommission,
+                                      trvlusTds: widget.trvlusTds,
+                                      trvlusNetFare: widget.trvlusNetFare,
+                                      othercharges: widget.othercharges,
+                                    )));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 40.h),
+                        backgroundColor: Color(0xFFF37023),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      "Proceed to pay",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Colors.white,
+                      child: Text(
+                        "Proceed to pay",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ] else ...[
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SearchFlightPage()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 40.h),
-                      backgroundColor: Color(0xFFF37023),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
+                  SafeArea(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SearchFlightPage()));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 40.h),
+                        backgroundColor: Color(0xFFF37023),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      "Insuffient Wallet",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Colors.white,
+                      child: Text(
+                        "Insuffient Wallet",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

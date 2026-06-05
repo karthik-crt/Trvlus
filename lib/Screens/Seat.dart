@@ -145,7 +145,10 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
           for (var segment in seatDynamic.segmentSeat) {
             for (var row in segment.rowSeats) {
               for (var seat in row.seats) {
-                seatPriceMap[seat.code] = (seat.price ?? 0).toDouble();
+                // seatPriceMap[seat.code] = (seat.price ?? 0).toDouble();
+                seatPriceMap[
+                        "${seat.origin}_${seat.destination}_${seat.code}"] =
+                    (seat.price ?? 0).toDouble();
               }
             }
           }
@@ -232,8 +235,18 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen>
 
   double getTotalPrice() {
     double total = 0;
-    for (var code in selectedSeatsBySegment.values.expand((e) => e)) {
-      total += seatPriceMap[code] ?? seatPrice.toDouble();
+    for (int segIndex = 0; segIndex < segments.length; segIndex++) {
+      final seg = segments[segIndex];
+      final origin = seg.rowSeats.first.seats.first.origin;
+      final dest = seg.rowSeats.first.seats.first.destination;
+
+      for (var code in selectedSeatsBySegment[segIndex] ?? []) {
+        final compositeKey = "${origin}_${dest}_${code}";
+        print("compositeKey$compositeKey");
+        print("seatPriceMap keys: ${seatPriceMap.keys.toList()}"); // ← add this
+        total += seatPriceMap[compositeKey] ?? 0;
+        print("total$total");
+      }
     }
     return total;
   }

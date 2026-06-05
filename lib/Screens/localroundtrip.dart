@@ -796,65 +796,64 @@ class _LocalroundtripState extends State<Localroundtrip> {
             ),
             body: currentGrouped.isEmpty
                 ? _buildNoFlightsWidget()
-                : ListView(
-                    controller: currentScrollController,
+                : Column(
                     children: [
                       _buildFilterHeader(currentFlightCount),
-                      // SizedBox(
-                      //   height: 15,
-                      // ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: currentPaginated.length,
-                        itemBuilder: (context, index) {
-                          final flightKey =
-                              currentPaginated.keys.toList()[index];
-                          final flightVariants = currentPaginated[flightKey]!;
-                          final lowestPriceFlight = flightVariants.first;
+                      Expanded(
+                        child: ListView.builder(
+                          controller: currentScrollController,
+                          shrinkWrap: false,
+                          physics: AlwaysScrollableScrollPhysics(),
+                          itemCount: currentPaginated.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == currentPaginated.length) {
+                              if (currentPaginated.length <
+                                  currentGrouped.length) {
+                                return Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFFF37023),
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                return Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Center(
+                                    child: Text(
+                                      "Showing all ${currentGrouped.length} flights",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 12),
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
 
-                          int outBoundDuration =
-                              lowestPriceFlight.segments.first.first.duration;
-                          int hours = outBoundDuration ~/ 60;
-                          int minutes = outBoundDuration % 60;
+                            final flightKey =
+                                currentPaginated.keys.toList()[index];
+                            final flightVariants = currentPaginated[flightKey]!;
+                            final lowestPriceFlight = flightVariants.first;
 
-                          return FlightCard(
-                            key: ValueKey('${selectedBaggage}_$flightKey'),
-                            flight: lowestPriceFlight,
-                            flightVariants: flightVariants,
-                            hours: hours,
-                            minutes: minutes,
-                            onFlightSelected: (selectedFlight) {
-                              _handleFlightSelection(selectedFlight);
-                            },
-                          );
-                        },
+                            int outBoundDuration =
+                                lowestPriceFlight.segments.first.first.duration;
+                            int hours = outBoundDuration ~/ 60;
+                            int minutes = outBoundDuration % 60;
+
+                            return FlightCard(
+                              key: ValueKey('${selectedBaggage}_$flightKey'),
+                              flight: lowestPriceFlight,
+                              flightVariants: flightVariants,
+                              hours: hours,
+                              minutes: minutes,
+                              onFlightSelected: (selectedFlight) {
+                                _handleFlightSelection(selectedFlight);
+                              },
+                            );
+                          },
+                        ),
                       ),
-                      // Loading indicator for pagination
-                      if (currentPaginated.length < currentGrouped.length)
-                        Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFFF37023),
-                            ),
-                          ),
-                        ),
-                      // End of results indicator
-                      if (currentPaginated.length == currentGrouped.length &&
-                          currentGrouped.isNotEmpty)
-                        Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Center(
-                            child: Text(
-                              "Showing all ${currentGrouped.length} flights",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
           );
@@ -980,20 +979,22 @@ class _LocalroundtripState extends State<Localroundtrip> {
             ],
           ),
           SizedBox(height: 5),
-          GestureDetector(
-            onTap: _handleViewFareTap,
-            child: Container(
-              height: 50,
-              width: 400,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Color(0xFFF37023)),
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  "View Fare",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+          SafeArea(
+            child: GestureDetector(
+              onTap: _handleViewFareTap,
+              child: Container(
+                height: 50,
+                width: 400,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    color: Color(0xFFF37023)),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    "View Fare",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),
@@ -2910,32 +2911,34 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 65.h,
-        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, {
-              'airlineIndices': selectedAirlineIndices.toList(),
-              // ✅ Return list
-              'stops': selectedStops,
-              'hideNonRefundable': hideNonRefundable,
-              'departureTime': departureTime,
-              'arrivalTime': arrivalTime,
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF37023),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 65.h,
+          padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, {
+                'airlineIndices': selectedAirlineIndices.toList(),
+                // ✅ Return list
+                'stops': selectedStops,
+                'hideNonRefundable': hideNonRefundable,
+                'departureTime': departureTime,
+                'arrivalTime': arrivalTime,
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF37023),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
             ),
-          ),
-          child: Text(
-            "Apply Filter",
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            child: Text(
+              "Apply Filter",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

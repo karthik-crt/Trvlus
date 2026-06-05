@@ -1585,192 +1585,194 @@ class _ConfirmTravelerDetailsState extends State<ConfirmTravelerDetails> {
                 ],
               ),
             ),
-            bottomNavigationBar: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(0.r)),
-                    boxShadow: [],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Total Amount",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontFamily: 'Inter',
-                                  color: Colors.grey.shade600,
+            bottomNavigationBar: SafeArea(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(0.r)),
+                      boxShadow: [],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Total Amount",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontFamily: 'Inter',
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  // Action for "View full details"
-                                  showFareBreakupSheet(context);
-                                },
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      'View full details',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        color: Color(0xFFF37023),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14.sp,
+                                GestureDetector(
+                                  onTap: () {
+                                    // Action for "View full details"
+                                    showFareBreakupSheet(context);
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'View full details',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          color: Color(0xFFF37023),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14.sp,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(width: 5.w),
-                                    Icon(Icons.arrow_drop_up,
-                                        color: Color(0xFFF37023), size: 18),
-                                  ],
+                                      SizedBox(width: 5.w),
+                                      Icon(Icons.arrow_drop_up,
+                                          color: Color(0xFFF37023), size: 18),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                "₹${overallFare.round()}",
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFF37023),
-                                ),
-                              ),
-                              Text(
-                                "Including GST+ taxes",
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 5.h),
-                      ElevatedButton(
-                        onPressed: () async {
-                          for (var i in passenger.entries) {}
-
-                          Get.to(
-                            () => MakePaymentScreen(
-                              flight: flight,
-                              city: widget.city,
-                              destination: widget.destination,
-                              airlineName: widget.airlineName,
-                              airlineCode: widget.airlineCode,
-                              flightNumber: widget.flightNumber,
-                              cityName: widget.cityName,
-                              cityCode: widget.cityCode,
-                              descityName: widget.descityName,
-                              descityCode: widget.descityCode,
-                              depDate: widget.depDate,
-                              depTime: widget.depTime,
-                              arrDate: widget.arrDate,
-                              arrTime: widget.arrTime,
-                              duration: widget.duration,
-                              refundable: widget.refundable,
-                              stop: widget.stop,
-                              airportName: widget.airportName,
-                              desairportName: widget.desairportName,
-                              basefare: widget.basefare,
-                              segments: widget.segments,
-                              miniFareRules: widget.miniFareRules,
-                              initialData: widget.initialData,
-                              resultindex: widget.resultindex,
-                              traceid: widget.traceid,
-                              outboundFlight: widget.outboundFlight,
-                              inboundFlight: widget.inboundFlight,
-                              outresultindex: widget.outresultindex,
-                              inresultindex: widget.inresultindex,
-                              total: widget.total,
-                              tax: widget.tax,
-                              adultCount: widget.adultCount,
-                              childCount: widget.childCount,
-                              infantCount: widget.infantCount,
-                              passenger: pax,
-                              childpassenger: child,
-                              infantpassenger: infant,
-                              isLLC: widget.isLLC,
-                              outdepDate: widget.outdepDate,
-                              outdepTime: widget.outdepTime,
-                              outarrDate: widget.outarrDate,
-                              outarrTime: widget.outarrTime,
-                              indepDate: widget.indepDate,
-                              indepTime: widget.indepTime,
-                              inarrDate: widget.inarrDate,
-                              inarrTime: widget.inarrTime,
-                              outBoundData: widget.outBoundData,
-                              inBoundData: widget.inBoundData,
-                              meal: meal,
-                              seat: seat,
-                              baggage: baggage,
-                              segmentsJson: widget.segmentsJson,
-                              coupouncode: widget.coupouncode,
-                              commonPublishedFare: widget.commonPublishedFare,
-                              tboOfferedFare: widget.tboOfferedFare,
-                              tboCommission: widget.tboCommission,
-                              tboTds: widget.tboTds,
-                              trvlusCommission: widget.trvlusCommission,
-                              trvlusTds: widget.trvlusTds,
-                              trvlusNetFare: widget.trvlusNetFare,
-                              othercharges: widget.othercharges,
+                              ],
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 40.h),
-                          backgroundColor: Color(0xFFF37023),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.r),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "₹${overallFare.round()}",
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFF37023),
+                                  ),
+                                ),
+                                Text(
+                                  "Including GST+ taxes",
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 5.h),
+                        ElevatedButton(
+                          onPressed: () async {
+                            for (var i in passenger.entries) {}
+
+                            Get.to(
+                              () => MakePaymentScreen(
+                                flight: flight,
+                                city: widget.city,
+                                destination: widget.destination,
+                                airlineName: widget.airlineName,
+                                airlineCode: widget.airlineCode,
+                                flightNumber: widget.flightNumber,
+                                cityName: widget.cityName,
+                                cityCode: widget.cityCode,
+                                descityName: widget.descityName,
+                                descityCode: widget.descityCode,
+                                depDate: widget.depDate,
+                                depTime: widget.depTime,
+                                arrDate: widget.arrDate,
+                                arrTime: widget.arrTime,
+                                duration: widget.duration,
+                                refundable: widget.refundable,
+                                stop: widget.stop,
+                                airportName: widget.airportName,
+                                desairportName: widget.desairportName,
+                                basefare: widget.basefare,
+                                segments: widget.segments,
+                                miniFareRules: widget.miniFareRules,
+                                initialData: widget.initialData,
+                                resultindex: widget.resultindex,
+                                traceid: widget.traceid,
+                                outboundFlight: widget.outboundFlight,
+                                inboundFlight: widget.inboundFlight,
+                                outresultindex: widget.outresultindex,
+                                inresultindex: widget.inresultindex,
+                                total: widget.total,
+                                tax: widget.tax,
+                                adultCount: widget.adultCount,
+                                childCount: widget.childCount,
+                                infantCount: widget.infantCount,
+                                passenger: pax,
+                                childpassenger: child,
+                                infantpassenger: infant,
+                                isLLC: widget.isLLC,
+                                outdepDate: widget.outdepDate,
+                                outdepTime: widget.outdepTime,
+                                outarrDate: widget.outarrDate,
+                                outarrTime: widget.outarrTime,
+                                indepDate: widget.indepDate,
+                                indepTime: widget.indepTime,
+                                inarrDate: widget.inarrDate,
+                                inarrTime: widget.inarrTime,
+                                outBoundData: widget.outBoundData,
+                                inBoundData: widget.inBoundData,
+                                meal: meal,
+                                seat: seat,
+                                baggage: baggage,
+                                segmentsJson: widget.segmentsJson,
+                                coupouncode: widget.coupouncode,
+                                commonPublishedFare: widget.commonPublishedFare,
+                                tboOfferedFare: widget.tboOfferedFare,
+                                tboCommission: widget.tboCommission,
+                                tboTds: widget.tboTds,
+                                trvlusCommission: widget.trvlusCommission,
+                                trvlusTds: widget.trvlusTds,
+                                trvlusNetFare: widget.trvlusNetFare,
+                                othercharges: widget.othercharges,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size(double.infinity, 40.h),
+                            backgroundColor: Color(0xFFF37023),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                            ),
+                          ),
+                          child: Text(
+                            "Continue",
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                        child: Text(
-                          "Continue",
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Positioned(
-                  top: -12.h,
-                  left: 135.w,
-                  child: GestureDetector(
-                    onTap: () {
-                      showFareBreakupSheet(context);
-                    },
-                    child: Container(
-                      height: 28.h,
-                      width: 80.w,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Image.asset(
-                        "assets/images/TriangleButton.png",
-                        height: 24.h,
-                        width: 24.w,
+                  Positioned(
+                    top: -12.h,
+                    left: 135.w,
+                    child: GestureDetector(
+                      onTap: () {
+                        showFareBreakupSheet(context);
+                      },
+                      child: Container(
+                        height: 28.h,
+                        width: 80.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Image.asset(
+                          "assets/images/TriangleButton.png",
+                          height: 24.h,
+                          width: 24.w,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
   }
@@ -1972,72 +1974,74 @@ class _GSTBottomSheetState extends State<GSTBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: BouncingScrollPhysics(),
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16.w,
-          right: 16.w,
-          top: 16.h,
-          bottom: 16.h,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Title Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Add GST Details",
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+    return SafeArea(
+      child: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 16.w,
+            right: 16.w,
+            top: 16.h,
+            bottom: 16.h,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Title Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Add GST Details",
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-
-            _buildTextField("GST number", gstNumberController),
-            SizedBox(height: 12.h),
-            _buildTextField("GST holder name", gstHolderNameController),
-            SizedBox(height: 12.h),
-            _buildTextField("GST Pincode", gstPincodeController),
-            SizedBox(height: 12.h),
-            _buildTextField("GST Address", gstAddressController),
-            SizedBox(height: 16.h),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF37023),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-                minimumSize: Size(double.infinity, 38.h),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.close),
+                  ),
+                ],
               ),
-              onPressed: () async {
-                FocusScope.of(context).unfocus();
-                await ApiService().gstRequest(
-                  gstnumber: gstNumberController.text,
-                  gstholdername: gstHolderNameController.text,
-                  gstpincode: gstPincodeController.text,
-                  gstaddress: gstAddressController.text,
-                );
-                Navigator.pop(context);
-              },
-              child: Text(
-                "Apply filter",
-                style: TextStyle(fontSize: 16.sp, color: Colors.white),
+              SizedBox(height: 16.h),
+
+              _buildTextField("GST number", gstNumberController),
+              SizedBox(height: 12.h),
+              _buildTextField("GST holder name", gstHolderNameController),
+              SizedBox(height: 12.h),
+              _buildTextField("GST Pincode", gstPincodeController),
+              SizedBox(height: 12.h),
+              _buildTextField("GST Address", gstAddressController),
+              SizedBox(height: 16.h),
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF37023),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  minimumSize: Size(double.infinity, 38.h),
+                ),
+                onPressed: () async {
+                  FocusScope.of(context).unfocus();
+                  await ApiService().gstRequest(
+                    gstnumber: gstNumberController.text,
+                    gstholdername: gstHolderNameController.text,
+                    gstpincode: gstPincodeController.text,
+                    gstaddress: gstAddressController.text,
+                  );
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Apply filter",
+                  style: TextStyle(fontSize: 16.sp, color: Colors.white),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

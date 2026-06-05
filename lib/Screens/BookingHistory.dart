@@ -977,127 +977,147 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                                                               ),
                                                             const SizedBox(
                                                                 height: 50),
-                                                            GestureDetector(
-                                                              onTap:
-                                                                  isBottomSheetLoading
-                                                                      ? null
-                                                                      : () async {
-                                                                          print(
-                                                                              "ONTAPPPPP INSIDE");
+                                                            SafeArea(
+                                                              child:
+                                                                  GestureDetector(
+                                                                onTap: isBottomSheetLoading
+                                                                    ? null
+                                                                    : () async {
+                                                                        print(
+                                                                            "ONTAPPPPP INSIDE");
 
-                                                                          String
-                                                                              remark =
-                                                                              remarkController.text.trim();
+                                                                        String
+                                                                            remark =
+                                                                            remarkController.text.trim();
 
-                                                                          bool
-                                                                              hasReasonError =
-                                                                              !hasSelectedReason; // ✅ only true if user never picked
+                                                                        bool
+                                                                            hasReasonError =
+                                                                            !hasSelectedReason; // ✅ only true if user never picked
 
-                                                                          bool
-                                                                              hasRemarkError =
-                                                                              remark.isEmpty;
+                                                                        bool
+                                                                            hasRemarkError =
+                                                                            remark.isEmpty;
 
-                                                                          if (hasReasonError ||
-                                                                              hasRemarkError) {
-                                                                            setModalState(() {
-                                                                              showError = hasReasonError;
-                                                                              showRemarkError = hasRemarkError;
-                                                                            });
-                                                                            return;
-                                                                          }
-
+                                                                        if (hasReasonError ||
+                                                                            hasRemarkError) {
                                                                           setModalState(
                                                                               () {
                                                                             showError =
-                                                                                false;
+                                                                                hasReasonError;
                                                                             showRemarkError =
-                                                                                false;
+                                                                                hasRemarkError;
+                                                                          });
+                                                                          return;
+                                                                        }
+
+                                                                        setModalState(
+                                                                            () {
+                                                                          showError =
+                                                                              false;
+                                                                          showRemarkError =
+                                                                              false;
+                                                                          isBottomSheetLoading =
+                                                                              true;
+                                                                        });
+
+                                                                        try {
+                                                                          var response =
+                                                                              await ApiService().cancelRequest(
+                                                                            pnr:
+                                                                                booking.pnr,
+                                                                            appref:
+                                                                                booking.appReference,
+                                                                            bookingID:
+                                                                                booking.bookingId,
+                                                                            status:
+                                                                                booking.status,
+                                                                            remark:
+                                                                                remark,
+                                                                            selectCancelReason:
+                                                                                selectCancelReason,
+                                                                          );
+
+                                                                          setModalState(
+                                                                              () {
                                                                             isBottomSheetLoading =
-                                                                                true;
+                                                                                false; // ✅ stop loader
                                                                           });
 
-                                                                          try {
-                                                                            var response =
-                                                                                await ApiService().cancelRequest(
-                                                                              pnr: booking.pnr,
-                                                                              appref: booking.appReference,
-                                                                              bookingID: booking.bookingId,
-                                                                              status: booking.status,
-                                                                              remark: remark,
-                                                                              selectCancelReason: selectCancelReason,
-                                                                            );
+                                                                          if (response != null &&
+                                                                              (response['status'] == 'success' || response['statusCode'] == '1')) {
+                                                                            remarkController.clear(); // ✅ ADD THIS — clears the field
+                                                                            hasSelectedReason =
+                                                                                false; // ✅ ADD THIS
+                                                                            selectCancelReason =
+                                                                                null;
+                                                                            showRemarkError =
+                                                                                false;
+                                                                            showError =
+                                                                                false;
+                                                                            Navigator.pop(context); // ✅ close bottom sheet AFTER loader stops
 
-                                                                            setModalState(() {
-                                                                              isBottomSheetLoading = false; // ✅ stop loader
-                                                                            });
-
-                                                                            if (response != null &&
-                                                                                (response['status'] == 'success' || response['statusCode'] == '1')) {
-                                                                              remarkController.clear(); // ✅ ADD THIS — clears the field
-                                                                              hasSelectedReason = false; // ✅ ADD THIS
-                                                                              selectCancelReason = null;
-                                                                              showRemarkError = false;
-                                                                              showError = false;
-                                                                              Navigator.pop(context); // ✅ close bottom sheet AFTER loader stops
-
-                                                                              // ✅ refresh booking list
-                                                                              await getBookingData();
-                                                                            } else {
-                                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                                SnackBar(
-                                                                                  content: Text(response?['message'] ?? "Request failed"),
-                                                                                ),
-                                                                              );
-                                                                            }
-                                                                          } catch (e) {
-                                                                            setModalState(() {
-                                                                              isBottomSheetLoading = false;
-                                                                            });
-                                                                            print("Error: $e");
+                                                                            // ✅ refresh booking list
+                                                                            await getBookingData();
+                                                                          } else {
                                                                             ScaffoldMessenger.of(context).showSnackBar(
-                                                                              const SnackBar(content: Text("Something went wrong")),
+                                                                              SnackBar(
+                                                                                content: Text(response?['message'] ?? "Request failed"),
+                                                                              ),
                                                                             );
                                                                           }
-                                                                        },
-                                                              child: Container(
-                                                                height: 50,
-                                                                width: MediaQuery
-                                                                        .sizeOf(
-                                                                            context)
-                                                                    .width,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              20),
-                                                                  color: const Color(
-                                                                      0xFFF37023),
-                                                                ),
-                                                                alignment:
-                                                                    Alignment
-                                                                        .center,
-                                                                child: isBottomSheetLoading // ✅ was isLoading before
-                                                                    ? const SizedBox(
-                                                                        height:
-                                                                            20,
-                                                                        width:
-                                                                            20,
-                                                                        child:
-                                                                            CircularProgressIndicator(
-                                                                          color:
-                                                                              Colors.white,
-                                                                          strokeWidth:
-                                                                              2,
-                                                                        ),
-                                                                      )
-                                                                    : const Text(
-                                                                        "Send",
-                                                                        style: TextStyle(
+                                                                        } catch (e) {
+                                                                          setModalState(
+                                                                              () {
+                                                                            isBottomSheetLoading =
+                                                                                false;
+                                                                          });
+                                                                          print(
+                                                                              "Error: $e");
+                                                                          ScaffoldMessenger.of(context)
+                                                                              .showSnackBar(
+                                                                            const SnackBar(content: Text("Something went wrong")),
+                                                                          );
+                                                                        }
+                                                                      },
+                                                                child:
+                                                                    Container(
+                                                                  height: 50,
+                                                                  width: MediaQuery
+                                                                          .sizeOf(
+                                                                              context)
+                                                                      .width,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            20),
+                                                                    color: const Color(
+                                                                        0xFFF37023),
+                                                                  ),
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: isBottomSheetLoading // ✅ was isLoading before
+                                                                      ? const SizedBox(
+                                                                          height:
+                                                                              20,
+                                                                          width:
+                                                                              20,
+                                                                          child:
+                                                                              CircularProgressIndicator(
                                                                             color:
                                                                                 Colors.white,
-                                                                            fontSize: 20),
-                                                                      ),
+                                                                            strokeWidth:
+                                                                                2,
+                                                                          ),
+                                                                        )
+                                                                      : const Text(
+                                                                          "Send",
+                                                                          style: TextStyle(
+                                                                              color: Colors.white,
+                                                                              fontSize: 20),
+                                                                        ),
+                                                                ),
                                                               ),
                                                             ),
                                                           ],

@@ -250,121 +250,124 @@ class _MultiAddTravelerPageState extends State<MultiAddTravelerPage> {
           }(),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: ElevatedButton(
-          onPressed: () async {
-            List<Map<String, dynamic>> allData = [];
-            bool allValid = true;
-            for (int i = 0; i < _formKeys.length; i++) {
-              if (_formKeys[i].currentState == null) {
-                // Form not expanded — use pre-filled passenger data directly
-                allData.add(widget.selectedpassengers[i]);
-              } else if (!_formKeys[i].currentState!.validateForm()) {
-                allValid = false;
-              } else {
-                allData.add(_formKeys[i].currentState!.getData());
-              }
-            }
-            if (!allValid) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Please fix the errors in the form')));
-              return;
-            }
-
-            for (var data in allData) {
-              final passengerId = data['id'];
-              if (passengerId != null) {
-                String convertDate(String input) {
-                  try {
-                    final parsed = DateFormat("dd-MM-yyyy").parse(input);
-                    return DateFormat("yyyy-MM-dd").format(parsed);
-                  } catch (_) {
-                    return input;
-                  }
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: ElevatedButton(
+            onPressed: () async {
+              List<Map<String, dynamic>> allData = [];
+              bool allValid = true;
+              for (int i = 0; i < _formKeys.length; i++) {
+                if (_formKeys[i].currentState == null) {
+                  // Form not expanded — use pre-filled passenger data directly
+                  allData.add(widget.selectedpassengers[i]);
+                } else if (!_formKeys[i].currentState!.validateForm()) {
+                  allValid = false;
+                } else {
+                  allData.add(_formKeys[i].currentState!.getData());
                 }
-
-                final updatePayload = {
-                  'first_name': data['Firstname'],
-                  'last_name': data['lastname'],
-                  'mobile': data['mobile'],
-                  'email': data['email'],
-                  'passport_no': data['Passport No'],
-                  'dob': convertDate(data['Date of Birth']),
-                  'passport_expiry': data['Expiry'].isNotEmpty
-                      ? convertDate(data['Expiry'])
-                      : null,
-                  'gender': data['gender'],
-                  'wheel_chair': data['wheelchair'].toString(),
-                  'nationality': data['Nationality'],
-                  'issusing_country': data['IssusingCountry'],
-                  'title': data['title'],
-                };
-                await ApiService().updatePassenger(passengerId, updatePayload);
               }
-            }
+              if (!allValid) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Please fix the errors in the form')));
+                return;
+              }
 
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => TravelerDetailsPage(
-                          flight: widget.flight,
-                          city: widget.city,
-                          destination: widget.destination,
-                          airlineName: widget.airlineName,
-                          cityName: widget.cityName,
-                          cityCode: widget.cityCode,
-                          airlineCode: widget.airlineCode,
-                          airportName: widget.airportName,
-                          desairportName: widget.desairportName,
-                          flightNumber: widget.flightNumber,
-                          depDate: widget.depDate,
-                          depTime: widget.depTime,
-                          refundable: widget.refundable,
-                          arrDate: widget.arrDate,
-                          arrTime: widget.arrTime,
-                          descityName: widget.descityName,
-                          descityCode: widget.descityCode,
-                          stop: widget.stop,
-                          duration: widget.duration,
-                          basefare: widget.basefare,
-                          tax: widget.tax,
-                          segments: widget.segments,
-                          segmentsJson: widget.segmentsJson,
-                          traceid: widget.traceid,
-                          resultindex: widget.resultindex,
-                          adultCount: widget.adultCount,
-                          childCount: widget.childCount,
-                          infantCount: widget.infantCount,
-                          coupouncode: widget.coupouncode,
-                          isLLC: widget.isLLC,
-                          commonPublishedFare: widget.commonPublishedFare,
-                          tboOfferedFare: widget.tboOfferedFare,
-                          tboCommission: widget.tboCommission,
-                          tboTds: widget.tboTds,
-                          trvlusCommission: widget.trvlusCommission,
-                          trvlusTds: widget.trvlusTds,
-                          trvlusNetFare: widget.trvlusNetFare,
-                          outresultindex: widget.outresultindex,
-                          inresultindex: widget.inresultindex,
-                          outBoundData: widget.outBoundData,
-                          inBoundData: widget.inBoundData,
-                          outboundFlight: widget.outboundFlight,
-                          inboundFlight: widget.inboundFlight,
-                          selectedpassengers: allData,
-                        )));
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFFF37023),
-            minimumSize: Size(double.infinity, 50.h),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.r)),
+              for (var data in allData) {
+                final passengerId = data['id'];
+                if (passengerId != null) {
+                  String convertDate(String input) {
+                    try {
+                      final parsed = DateFormat("dd-MM-yyyy").parse(input);
+                      return DateFormat("yyyy-MM-dd").format(parsed);
+                    } catch (_) {
+                      return input;
+                    }
+                  }
+
+                  final updatePayload = {
+                    'first_name': data['Firstname'],
+                    'last_name': data['lastname'],
+                    'mobile': data['mobile'],
+                    'email': data['email'],
+                    'passport_no': data['Passport No'],
+                    'dob': convertDate(data['Date of Birth']),
+                    'passport_expiry': data['Expiry'].isNotEmpty
+                        ? convertDate(data['Expiry'])
+                        : null,
+                    'gender': data['gender'],
+                    'wheel_chair': data['wheelchair'].toString(),
+                    'nationality': data['Nationality'],
+                    'issusing_country': data['IssusingCountry'],
+                    'title': data['title'],
+                  };
+                  await ApiService()
+                      .updatePassenger(passengerId, updatePayload);
+                }
+              }
+
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => TravelerDetailsPage(
+                            flight: widget.flight,
+                            city: widget.city,
+                            destination: widget.destination,
+                            airlineName: widget.airlineName,
+                            cityName: widget.cityName,
+                            cityCode: widget.cityCode,
+                            airlineCode: widget.airlineCode,
+                            airportName: widget.airportName,
+                            desairportName: widget.desairportName,
+                            flightNumber: widget.flightNumber,
+                            depDate: widget.depDate,
+                            depTime: widget.depTime,
+                            refundable: widget.refundable,
+                            arrDate: widget.arrDate,
+                            arrTime: widget.arrTime,
+                            descityName: widget.descityName,
+                            descityCode: widget.descityCode,
+                            stop: widget.stop,
+                            duration: widget.duration,
+                            basefare: widget.basefare,
+                            tax: widget.tax,
+                            segments: widget.segments,
+                            segmentsJson: widget.segmentsJson,
+                            traceid: widget.traceid,
+                            resultindex: widget.resultindex,
+                            adultCount: widget.adultCount,
+                            childCount: widget.childCount,
+                            infantCount: widget.infantCount,
+                            coupouncode: widget.coupouncode,
+                            isLLC: widget.isLLC,
+                            commonPublishedFare: widget.commonPublishedFare,
+                            tboOfferedFare: widget.tboOfferedFare,
+                            tboCommission: widget.tboCommission,
+                            tboTds: widget.tboTds,
+                            trvlusCommission: widget.trvlusCommission,
+                            trvlusTds: widget.trvlusTds,
+                            trvlusNetFare: widget.trvlusNetFare,
+                            outresultindex: widget.outresultindex,
+                            inresultindex: widget.inresultindex,
+                            outBoundData: widget.outBoundData,
+                            inBoundData: widget.inBoundData,
+                            outboundFlight: widget.outboundFlight,
+                            inboundFlight: widget.inboundFlight,
+                            selectedpassengers: allData,
+                          )));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFF37023),
+              minimumSize: Size(double.infinity, 50.h),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r)),
+            ),
+            child: Text("SAVE & CONTINUE",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold)),
           ),
-          child: Text("SAVE & CONTINUE",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold)),
         ),
       ),
     );

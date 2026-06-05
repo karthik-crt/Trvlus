@@ -277,33 +277,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(left: 10.w, bottom: 15.h, right: 10.w),
-        child: ElevatedButton(
-          onPressed: () async {
-            final firstname = firstNameController.text;
-            final lastname = lastNameController.text;
-            final email = emailController.text;
-            final mobile = mobileController.text;
-            final dob = dateController.text;
-            String fixDate(String inputDate) {
-              DateTime parsed = DateFormat("dd-MM-yyyy").parse(inputDate);
-              return DateFormat("yyyy-MM-dd").format(parsed);
-            }
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(left: 10.w, bottom: 15.h, right: 10.w),
+          child: ElevatedButton(
+            onPressed: () async {
+              final firstname = firstNameController.text;
+              final lastname = lastNameController.text;
+              final email = emailController.text;
+              final mobile = mobileController.text;
+              final dob = dateController.text;
+              String fixDate(String inputDate) {
+                DateTime parsed = DateFormat("dd-MM-yyyy").parse(inputDate);
+                return DateFormat("yyyy-MM-dd").format(parsed);
+              }
 
-            final date = fixDate(dob);
-            await ApiService()
-                .profileupdate(firstname, lastname, email, mobile, date);
-            Navigator.pop(context);
-          },
-          style: ElevatedButton.styleFrom(
-            minimumSize: Size(double.infinity, 40.h),
-            backgroundColor: Color(0xFFF37023),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
+              final date = fixDate(dob);
+              await ApiService()
+                  .profileupdate(firstname, lastname, email, mobile, date);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(double.infinity, 40.h),
+              backgroundColor: Color(0xFFF37023),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
             ),
+            child: Text("Save Details"),
           ),
-          child: Text("Save Details"),
         ),
       ),
     );

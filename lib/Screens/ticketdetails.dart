@@ -400,214 +400,487 @@ class _TicketdetailsState extends State<Ticketdetails> {
           ? Center(
               child: CircularProgressIndicator(color: Color(0xFFF37023)),
             )
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    margin: EdgeInsets.all(10),
-                    padding: EdgeInsets.all(10),
-                    height: 150,
-                    width: MediaQuery.sizeOf(context).width,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white),
-                    child: Column(
-                      children: [
-                        const Row(
-                          children: [
-                            Text(
-                              'Booking Details',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Airline PNR",
-                              style: TextStyle(
-                                  fontSize: 12.sp, fontFamily: 'Inter'),
-                            ),
-                            Text(
-                              bookingdetailsid.data.first.pnr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.h,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Reference Number",
-                              style: TextStyle(
-                                  fontSize: 12.sp, fontFamily: 'Inter'),
-                            ),
-                            Text(
-                              bookingdetailsid.data.first.appReference,
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8.h,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Booking Status",
-                              style: TextStyle(
-                                  fontSize: 12.sp, fontFamily: 'Inter'),
-                            ),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w, vertical: 5.h),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(15.r),
-                              ),
-                              child: Text(
-                                bookingdetailsid.data.first.status,
+          : SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Container(
+                      margin: EdgeInsets.all(10),
+                      padding: EdgeInsets.all(10),
+                      height: 150,
+                      width: MediaQuery.sizeOf(context).width,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white),
+                      child: Column(
+                        children: [
+                          const Row(
+                            children: [
+                              Text(
+                                'Booking Details',
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  // Green text color
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10.sp,
-                                ),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Airline PNR",
+                                style: TextStyle(
+                                    fontSize: 12.sp, fontFamily: 'Inter'),
                               ),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 8,
-                        ),
-                      ],
+                              Text(
+                                bookingdetailsid.data.first.pnr,
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 8.h,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Reference Number",
+                                style: TextStyle(
+                                    fontSize: 12.sp, fontFamily: 'Inter'),
+                              ),
+                              Text(
+                                bookingdetailsid.data.first.appReference,
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 8.h,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Booking Status",
+                                style: TextStyle(
+                                    fontSize: 12.sp, fontFamily: 'Inter'),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w, vertical: 5.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(15.r),
+                                ),
+                                child: Text(
+                                  bookingdetailsid.data.first.status,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    // Green text color
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10.sp,
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            height: 8,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(7),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Dynamic flight segments with separate layover between cards
-                        ...() {
-                          List<Widget> flightSections = [];
-                          final journeys =
-                              bookingdetailsid.data.first.journeyList;
-                          for (int segmentIndex = 0;
-                              segmentIndex < journeys.length;
-                              segmentIndex++) {
-                            final journey = journeys[segmentIndex];
-                            final isLastSegment =
-                                segmentIndex == journeys.length - 1;
+                    Container(
+                      margin: EdgeInsets.all(7),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Dynamic flight segments with separate layover between cards
+                          ...() {
+                            List<Widget> flightSections = [];
+                            final journeys =
+                                bookingdetailsid.data.first.journeyList;
+                            for (int segmentIndex = 0;
+                                segmentIndex < journeys.length;
+                                segmentIndex++) {
+                              final journey = journeys[segmentIndex];
+                              final isLastSegment =
+                                  segmentIndex == journeys.length - 1;
 
-                            List<Widget> segmentChildren = [
-                              Row(
-                                children: [
-                                  Image.asset(
-                                    'assets/${journey.OperatorCode}.gif',
-                                    fit: BoxFit.fill,
-                                    height: 35,
-                                    width: 35,
-                                  ),
-                                  SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        width: 100,
-                                        child: Text(
-                                          journey.OperatorName,
-                                          style: TextStyle(
-                                              fontFamily: 'Inter',
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14.sp,
-                                              color: Colors.black),
-                                        ),
-                                      ),
-                                      RichText(
-                                        text: TextSpan(
-                                          text: journey.OperatorCode,
-                                          // first text
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall,
-                                          // base style
-                                          children: [
-                                            TextSpan(text: " "),
-                                            TextSpan(
-                                              text: journey.FlightNumber,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                      color:
-                                                          Colors.grey.shade700),
-                                            ),
-                                            TextSpan(text: " "),
-                                            TextSpan(
-                                              text: " ${""}",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .headlineSmall
-                                                  ?.copyWith(
-                                                    fontSize: 12.sp,
-                                                    color: primaryColor,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  SizedBox(width: 43.w),
-                                  Image.asset(
-                                    "assets/images/Line.png",
-                                  ),
-                                  const Spacer(),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Economy Class",
+                              List<Widget> segmentChildren = [
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/${journey.OperatorCode}.gif',
+                                      fit: BoxFit.fill,
+                                      height: 35,
+                                      width: 35,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          width: 100,
+                                          child: Text(
+                                            journey.OperatorName,
                                             style: TextStyle(
                                                 fontFamily: 'Inter',
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 12.sp,
+                                                fontSize: 14.sp,
                                                 color: Colors.black),
                                           ),
-                                          SizedBox(
-                                            width: 6.w,
+                                        ),
+                                        RichText(
+                                          text: TextSpan(
+                                            text: journey.OperatorCode,
+                                            // first text
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall,
+                                            // base style
+                                            children: [
+                                              TextSpan(text: " "),
+                                              TextSpan(
+                                                text: journey.FlightNumber,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                        color: Colors
+                                                            .grey.shade700),
+                                              ),
+                                              TextSpan(text: " "),
+                                              TextSpan(
+                                                text: " ${""}",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .headlineSmall
+                                                    ?.copyWith(
+                                                      fontSize: 12.sp,
+                                                      color: primaryColor,
+                                                    ),
+                                              ),
+                                            ],
                                           ),
-                                          SizedBox(
-                                            height: 4.h,
+                                        )
+                                      ],
+                                    ),
+                                    SizedBox(width: 43.w),
+                                    Image.asset(
+                                      "assets/images/Line.png",
+                                    ),
+                                    const Spacer(),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "Economy Class",
+                                              style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12.sp,
+                                                  color: Colors.black),
+                                            ),
+                                            SizedBox(
+                                              width: 6.w,
+                                            ),
+                                            SizedBox(
+                                              height: 4.h,
+                                            ),
+                                            Image.asset(
+                                                "assets/images/star.png")
+                                          ],
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
+                                SizedBox(height: 8.h),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DotDivider(
+                                    dotSize: 1.h, // Adjust size
+                                    spacing: 2.r, // Adjust spacing
+                                    dotCount: 97, // Adjust number of dots
+                                    color: Colors.grey, // Adjust color
+                                  ),
+                                ),
+                                SizedBox(height: 8.h),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              journey.DepatureTime,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4.w),
+                                          ],
+                                        ),
+                                        //SizedBox(height: 4.h),
+                                        Text(
+                                          journey.Depature,
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            color: Colors.grey,
                                           ),
-                                          Image.asset("assets/images/star.png")
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                            _formatDuration(
+                                                int.parse(journey.duration)),
+                                            style: TextStyle(fontSize: 12.sp)),
+                                        Image.asset(
+                                            'assets/images/flightColor.png'),
+                                        // Text(
+                                        //   "1 hr 14m",
+                                        //   style: TextStyle(
+                                        //       fontFamily: 'Inter', fontSize: 12.sp),
+                                        // ),
+                                      ],
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              journey.ArrivalTime ?? 'N/A',
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4.w),
+                                          ],
+                                        ),
+                                        Text(
+                                          journey.Arrival ?? 'N/A',
+                                          style: TextStyle(fontSize: 12.sp),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 5.h),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              journey.FromCityName,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Text(
+                                              journey.FromAirportCode,
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        //SizedBox(height: 4.h),
+                                        // Text(
+                                        //   flight["departure"],
+                                        //   style: TextStyle(
+                                        //     fontSize: 12.sp,
+                                        //     color: Colors.grey,
+                                        //   ),
+                                        // ),
+                                      ],
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              journey.ToCityName,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Text(
+                                              journey.ToAirportCode,
+                                              style: TextStyle(
+                                                fontSize: 12.sp,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        // Text(
+                                        //   flight["arrival"],
+                                        //   style: TextStyle(fontSize: 12.sp),
+                                        // ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ];
+
+                              // Add the flight card to the list
+                              flightSections.add(
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 10.h),
+                                  child: Card(
+                                    color: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.r)),
+                                    elevation: 2,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12.w),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: segmentChildren,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+
+                              // If not the last segment, add a SEPARATE layover widget after this card
+                              if (!isLastSegment) {
+                                final thisJourney = journeys[segmentIndex];
+                                final nextJourney = journeys[segmentIndex + 1];
+                                flightSections.add(
+                                  Container(
+                                    margin: EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 5.h),
+                                    // Slight margin for visual separation
+                                    height: 40.h,
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10.w, vertical: 8.h),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFFFFE7E5),
+                                      border:
+                                          Border.all(color: Color(0xFFFFD7D7)),
+                                      borderRadius: BorderRadius.circular(
+                                          8.r), // Rounded corners
+                                    ),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.sync_alt,
+                                            color: Color(0xFFFF4D4F),
+                                            size: 16.sp,
+                                          ),
+                                          SizedBox(width: 8.w),
+                                          Text(
+                                            nextJourney.LayOverTime ??
+                                                'Layover at ${thisJourney.ToCityName}',
+                                            style: TextStyle(
+                                              color: Color(0xFFFF4D4F),
+                                              fontSize: 14, // Font size
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
                                         ],
                                       ),
-                                    ],
-                                  )
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                            return flightSections;
+                          }(),
+                          // SizedBox(height: 10.h),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      margin: EdgeInsets.all(7),
+                      child: Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        elevation: 2,
+                        child: Padding(
+                          padding: EdgeInsets.all(12.w),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Image.asset("assets/images/Bagging.png"),
+                                  SizedBox(
+                                    width: 8.w,
+                                  ),
+                                  Text(
+                                    "Baggage",
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: 130.w),
                                 ],
+                              ),
+                              Text(
+                                "Add additional checking package at low price",
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.normal),
                               ),
                               SizedBox(height: 8.h),
                               SingleChildScrollView(
@@ -619,528 +892,161 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                   color: Colors.grey, // Adjust color
                                 ),
                               ),
-                              SizedBox(height: 8.h),
+                              //SizedBox(height: 8.h),
+                              SizedBox(height: 12.h),
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                // crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  SizedBox(), // Empty space for alignment
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            journey.DepatureTime,
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          SizedBox(width: 4.w),
-                                        ],
-                                      ),
-                                      //SizedBox(height: 4.h),
                                       Text(
-                                        journey.Depature,
+                                        "Cabin Bag",
                                         style: TextStyle(
-                                          fontSize: 12.sp,
-                                          color: Colors.grey,
+                                          fontFamily: 'Inter',
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.normal,
+                                          color: Color(0xFF909090),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  Column(
-                                    children: [
+                                      SizedBox(
+                                          width: 20.w), // Space between headers
                                       Text(
-                                          _formatDuration(
-                                              int.parse(journey.duration)),
-                                          style: TextStyle(fontSize: 12.sp)),
-                                      Image.asset(
-                                          'assets/images/flightColor.png'),
-                                      // Text(
-                                      //   "1 hr 14m",
-                                      //   style: TextStyle(
-                                      //       fontFamily: 'Inter', fontSize: 12.sp),
-                                      // ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            journey.ArrivalTime ?? 'N/A',
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          SizedBox(width: 4.w),
-                                        ],
-                                      ),
-                                      Text(
-                                        journey.Arrival ?? 'N/A',
-                                        style: TextStyle(fontSize: 12.sp),
+                                        "Check-in Bag",
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.normal,
+                                          color: Color(0xFF909090),
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 5.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                              SizedBox(height: 8.h),
+
+                              // Baggage List - Dynamic for segments
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: bookingdetailsid
+                                    .data.first.journeyList.length,
+                                // Adjust based on your data
+                                separatorBuilder: (context, index) => Divider(),
+                                itemBuilder: (context, index) {
+                                  final journey = bookingdetailsid
+                                      .data.first.journeyList[index];
+                                  return Row(
+                                    //mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            journey.FromCityName,
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          SizedBox(width: 4.w),
-                                          Text(
-                                            journey.FromAirportCode,
-                                            style: TextStyle(
-                                              fontSize: 12.sp,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      //SizedBox(height: 4.h),
-                                      // Text(
-                                      //   flight["departure"],
-                                      //   style: TextStyle(
-                                      //     fontSize: 12.sp,
-                                      //     color: Colors.grey,
-                                      //   ),
-                                      // ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            journey.ToCityName,
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          SizedBox(width: 4.w),
-                                          Text(
-                                            journey.ToAirportCode,
-                                            style: TextStyle(
-                                              fontSize: 12.sp,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      // Text(
-                                      //   flight["arrival"],
-                                      //   style: TextStyle(fontSize: 12.sp),
-                                      // ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ];
-
-                            // Add the flight card to the list
-                            flightSections.add(
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 10.h),
-                                child: Card(
-                                  color: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.r)),
-                                  elevation: 2,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(12.w),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: segmentChildren,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-
-                            // If not the last segment, add a SEPARATE layover widget after this card
-                            if (!isLastSegment) {
-                              final thisJourney = journeys[segmentIndex];
-                              final nextJourney = journeys[segmentIndex + 1];
-                              flightSections.add(
-                                Container(
-                                  margin: EdgeInsets.symmetric(
-                                      horizontal: 7, vertical: 5.h),
-                                  // Slight margin for visual separation
-                                  height: 40.h,
-                                  width: double.infinity,
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10.w, vertical: 8.h),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFFFE7E5),
-                                    border:
-                                        Border.all(color: Color(0xFFFFD7D7)),
-                                    borderRadius: BorderRadius.circular(
-                                        8.r), // Rounded corners
-                                  ),
-                                  child: Center(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.sync_alt,
-                                          color: Color(0xFFFF4D4F),
-                                          size: 16.sp,
-                                        ),
-                                        SizedBox(width: 8.w),
-                                        Text(
-                                          nextJourney.LayOverTime ??
-                                              'Layover at ${thisJourney.ToCityName}',
-                                          style: TextStyle(
-                                            color: Color(0xFFFF4D4F),
-                                            fontSize: 14, // Font size
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                          return flightSections;
-                        }(),
-                        // SizedBox(height: 10.h),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(7),
-                    child: Card(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      elevation: 2,
-                      child: Padding(
-                        padding: EdgeInsets.all(12.w),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Image.asset("assets/images/Bagging.png"),
-                                SizedBox(
-                                  width: 8.w,
-                                ),
-                                Text(
-                                  "Baggage",
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                SizedBox(width: 130.w),
-                              ],
-                            ),
-                            Text(
-                              "Add additional checking package at low price",
-                              style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.normal),
-                            ),
-                            SizedBox(height: 8.h),
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DotDivider(
-                                dotSize: 1.h, // Adjust size
-                                spacing: 2.r, // Adjust spacing
-                                dotCount: 97, // Adjust number of dots
-                                color: Colors.grey, // Adjust color
-                              ),
-                            ),
-                            //SizedBox(height: 8.h),
-                            SizedBox(height: 12.h),
-                            Row(
-                              // crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                SizedBox(), // Empty space for alignment
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      "Cabin Bag",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.normal,
-                                        color: Color(0xFF909090),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width: 20.w), // Space between headers
-                                    Text(
-                                      "Check-in Bag",
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.normal,
-                                        color: Color(0xFF909090),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.h),
-
-                            // Baggage List - Dynamic for segments
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              itemCount: bookingdetailsid
-                                  .data.first.journeyList.length,
-                              // Adjust based on your data
-                              separatorBuilder: (context, index) => Divider(),
-                              itemBuilder: (context, index) {
-                                final journey = bookingdetailsid
-                                    .data.first.journeyList[index];
-                                return Row(
-                                  //mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    // Baggage Details
-                                    Padding(
-                                      padding: EdgeInsets.only(right: 0.w),
-                                      child: Row(
-                                        //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            journey.CabinBaggage ?? 'N/A',
-                                            style: TextStyle(
-                                              fontFamily: 'Inter',
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          //Spacer(),
-                                          SizedBox(width: 50.w),
-                                          Text(
-                                            journey.Baggage ?? 'N/A',
-                                            style: TextStyle(
-                                              fontFamily: 'Inter',
-                                              fontSize: 12.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          SizedBox(width: 60.h),
-                                          Text(
-                                            '${journey.FromAirportCode} - ${journey.ToAirportCode}',
-                                            style: TextStyle(
-                                                fontSize: 12.sp,
+                                      // Baggage Details
+                                      Padding(
+                                        padding: EdgeInsets.only(right: 0.w),
+                                        child: Row(
+                                          //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              journey.CabinBaggage ?? 'N/A',
+                                              style: TextStyle(
                                                 fontFamily: 'Inter',
-                                                color: Color(0xFF909090)),
-                                          )
-                                        ],
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            //Spacer(),
+                                            SizedBox(width: 50.w),
+                                            Text(
+                                              journey.Baggage ?? 'N/A',
+                                              style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(width: 60.h),
+                                            Text(
+                                              '${journey.FromAirportCode} - ${journey.ToAirportCode}',
+                                              style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  fontFamily: 'Inter',
+                                                  color: Color(0xFF909090)),
+                                            )
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                                    ],
+                                  );
+                                },
+                              ),
 
-                            SizedBox(height: 12.h),
-                          ],
+                              SizedBox(height: 12.h),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isShowCal = !isShowCal;
-                        });
-                      },
-                      child: _buildCancellationPolicy()),
-                  SizedBox(
-                    height: 5,
-                  ),
-
-                  // Cancellation charges
-                  if (miniFareRules
-                      .any((r) => (r as MiniFareRule).type == 'Cancellation'))
-                    Container(
-                      margin: EdgeInsets.all(13),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.white),
-                      child: GestureDetector(
+                    GestureDetector(
                         onTap: () {
-                          //("isshowcal");
                           setState(() {
                             isShowCal = !isShowCal;
                           });
                         },
-                        child: Column(children: [
-                          Row(
-                            children: [
-                              Image.asset('assets/images/cancellation.png'),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Cancellation Charges",
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    "cancellation between (IST)",
-                                    style: TextStyle(fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                              Spacer(),
-                              Text(
-                                isShowCal ? "View Less" : "View More",
-                                style:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              Icon(
-                                isShowCal
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down_outlined,
-                                color: Colors.grey.shade700,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                          isShowCal
-                              ? Column(
-                                  children: [
-                                    const Divider(),
-                                    SizedBox(height: 8.h),
-                                    ...miniFareRules
-                                        .map((rule) => rule as MiniFareRule)
-                                        .where((r) => r.type == 'Cancellation')
-                                        .map((r) {
-                                      final from = r.from ?? '0';
-                                      final to = r.to ?? '';
-                                      final details = r.details ?? '';
-                                      final journey = r.journeyPoints ?? '';
-                                      // NEW CODE:
-                                      final String label;
-                                      if (from.toString().isEmpty &&
-                                          to.toString().isEmpty) {
-                                        label = journey;
-                                      } else if (to.toString().isEmpty) {
-                                        label = "$from hrs+ before departure";
-                                      } else {
-                                        label =
-                                            "$from – $to hrs before departure";
-                                      }
-                                      final String displayJourney =
-                                          (from.toString().isEmpty &&
-                                                  to.toString().isEmpty)
-                                              ? ''
-                                              : journey;
-
-                                      return _buildPolicyRow(
-                                          label, displayJourney, details);
-                                      return Column(
-                                        children: [
-                                          _buildPolicyRow(
-                                              label, journey, details),
-                                          SizedBox(height: 12.h),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ],
-                                )
-                              : Container()
-                        ]),
-                      ),
+                        child: _buildCancellationPolicy()),
+                    SizedBox(
+                      height: 5,
                     ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  // Date Change charges
-                  if (miniFareRules
-                      .any((r) => (r as MiniFareRule).type == 'Reissue'))
-                    Container(
-                      margin: EdgeInsets.all(13),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.white),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isShowDateChange = !isShowDateChange;
-                          });
-                        },
-                        child: Column(
-                          children: [
+
+                    // Cancellation charges
+                    if (miniFareRules
+                        .any((r) => (r as MiniFareRule).type == 'Cancellation'))
+                      Container(
+                        margin: EdgeInsets.all(13),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white),
+                        child: GestureDetector(
+                          onTap: () {
+                            //("isshowcal");
+                            setState(() {
+                              isShowCal = !isShowCal;
+                            });
+                          },
+                          child: Column(children: [
                             Row(
                               children: [
-                                SvgPicture.asset("assets/icon/datechange.svg"),
-                                SizedBox(width: 10),
+                                Image.asset('assets/images/cancellation.png'),
+                                SizedBox(
+                                  width: 10,
+                                ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Date Change Charges",
+                                      "Cancellation Charges",
                                       style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      "date change between (IST)",
+                                      "cancellation between (IST)",
                                       style: TextStyle(fontSize: 13),
                                     ),
                                   ],
                                 ),
                                 Spacer(),
                                 Text(
-                                  isShowDateChange ? "View Less" : "View More",
+                                  isShowCal ? "View Less" : "View More",
                                   style: TextStyle(
                                       fontSize: 12, color: Colors.grey),
                                 ),
                                 Icon(
-                                  isShowDateChange
+                                  isShowCal
                                       ? Icons.arrow_drop_up
                                       : Icons.arrow_drop_down_outlined,
                                   color: Colors.grey.shade700,
@@ -1148,14 +1054,15 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                 ),
                               ],
                             ),
-                            isShowDateChange
+                            isShowCal
                                 ? Column(
                                     children: [
                                       const Divider(),
                                       SizedBox(height: 8.h),
                                       ...miniFareRules
                                           .map((rule) => rule as MiniFareRule)
-                                          .where((r) => r.type == 'Reissue')
+                                          .where(
+                                              (r) => r.type == 'Cancellation')
                                           .map((r) {
                                         final from = r.from ?? '0';
                                         final to = r.to ?? '';
@@ -1165,16 +1072,13 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                         final String label;
                                         if (from.toString().isEmpty &&
                                             to.toString().isEmpty) {
-                                          label =
-                                              journey; // show only journey point as label
+                                          label = journey;
                                         } else if (to.toString().isEmpty) {
                                           label = "$from hrs+ before departure";
                                         } else {
                                           label =
                                               "$from – $to hrs before departure";
                                         }
-
-// If from/to are empty, don't pass journey separately (it's already in label)
                                         final String displayJourney =
                                             (from.toString().isEmpty &&
                                                     to.toString().isEmpty)
@@ -1194,85 +1098,257 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                     ],
                                   )
                                 : Container()
-                          ],
+                          ]),
                         ),
                       ),
+                    SizedBox(
+                      height: 5,
                     ),
-
-                  // Traveler Details
-                  Container(
-                    margin: EdgeInsets.all(13),
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          istravel = !istravel;
-                        });
-                      },
-                      child: Column(
-                        children: [
-                          Row(
+                    // Date Change charges
+                    if (miniFareRules
+                        .any((r) => (r as MiniFareRule).type == 'Reissue'))
+                      Container(
+                        margin: EdgeInsets.all(13),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isShowDateChange = !isShowDateChange;
+                            });
+                          },
+                          child: Column(
                             children: [
-                              Icon(
-                                Icons.person,
-                                color: Colors.deepOrange,
+                              Row(
+                                children: [
+                                  SvgPicture.asset(
+                                      "assets/icon/datechange.svg"),
+                                  SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Date Change Charges",
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        "date change between (IST)",
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    isShowDateChange
+                                        ? "View Less"
+                                        : "View More",
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  ),
+                                  Icon(
+                                    isShowDateChange
+                                        ? Icons.arrow_drop_up
+                                        : Icons.arrow_drop_down_outlined,
+                                    color: Colors.grey.shade700,
+                                    size: 20,
+                                  ),
+                                ],
                               ),
-                              SizedBox(
-                                width: 5,
-                              ),
-                              Text(
-                                "Traveler Details",
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Spacer(),
-                              Text(
-                                istravel ? "View Less" : "View More",
-                                style:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              Icon(
-                                istravel
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down_outlined,
-                                color: Colors.grey.shade700,
-                                size: 20,
-                              ),
+                              isShowDateChange
+                                  ? Column(
+                                      children: [
+                                        const Divider(),
+                                        SizedBox(height: 8.h),
+                                        ...miniFareRules
+                                            .map((rule) => rule as MiniFareRule)
+                                            .where((r) => r.type == 'Reissue')
+                                            .map((r) {
+                                          final from = r.from ?? '0';
+                                          final to = r.to ?? '';
+                                          final details = r.details ?? '';
+                                          final journey = r.journeyPoints ?? '';
+                                          // NEW CODE:
+                                          final String label;
+                                          if (from.toString().isEmpty &&
+                                              to.toString().isEmpty) {
+                                            label =
+                                                journey; // show only journey point as label
+                                          } else if (to.toString().isEmpty) {
+                                            label =
+                                                "$from hrs+ before departure";
+                                          } else {
+                                            label =
+                                                "$from – $to hrs before departure";
+                                          }
+
+                                          // If from/to are empty, don't pass journey separately (it's already in label)
+                                          final String displayJourney =
+                                              (from.toString().isEmpty &&
+                                                      to.toString().isEmpty)
+                                                  ? ''
+                                                  : journey;
+
+                                          return _buildPolicyRow(
+                                              label, displayJourney, details);
+                                          return Column(
+                                            children: [
+                                              _buildPolicyRow(
+                                                  label, journey, details),
+                                              SizedBox(height: 12.h),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ],
+                                    )
+                                  : Container()
                             ],
                           ),
-                          istravel
-                              ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    Text(
-                                      "ADULTS",
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      itemCount: bookingdetailsid
-                                          .data.first.passengerDetails.length,
-                                      itemBuilder: (context, index) {
-                                        final passenger = bookingdetailsid
-                                            .data.first.passengerDetails[index];
-                                        if (bookingdetailsid
-                                                .data
-                                                .first
-                                                .passengerDetails[index]
-                                                .PaxType ==
-                                            1)
+                        ),
+                      ),
+
+                    // Traveler Details
+                    Container(
+                      margin: EdgeInsets.all(13),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            istravel = !istravel;
+                          });
+                        },
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.person,
+                                  color: Colors.deepOrange,
+                                ),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Text(
+                                  "Traveler Details",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Spacer(),
+                                Text(
+                                  istravel ? "View Less" : "View More",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                                Icon(
+                                  istravel
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down_outlined,
+                                  color: Colors.grey.shade700,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                            istravel
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text(
+                                        "ADULTS",
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                      SizedBox(
+                                        height: 5,
+                                      ),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: bookingdetailsid
+                                            .data.first.passengerDetails.length,
+                                        itemBuilder: (context, index) {
+                                          final passenger = bookingdetailsid
+                                              .data
+                                              .first
+                                              .passengerDetails[index];
+                                          if (bookingdetailsid
+                                                  .data
+                                                  .first
+                                                  .passengerDetails[index]
+                                                  .PaxType ==
+                                              1)
+                                            return Column(
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 10),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                    color: Color(0xFFE6E6E6),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      SvgPicture.asset(
+                                                        "assets/icon/adult.svg",
+                                                        height: 15,
+                                                        width: 15,
+                                                      ),
+                                                      Text(
+                                                        '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.black),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                SizedBox(height: 10),
+                                              ],
+                                            );
+                                        },
+                                      ),
+                                      SizedBox(
+                                        height: 5,
+                                      ),
+                                      if (childCount > 0)
+                                        Text(
+                                          "CHILD",
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      SizedBox(
+                                        height: 5,
+                                      ),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: bookingdetailsid
+                                            .data.first.passengerDetails
+                                            .where((p) => p.PaxType == 2)
+                                            .length,
+                                        itemBuilder: (context, index) {
+                                          final passengerList = bookingdetailsid
+                                              .data.first.passengerDetails;
+                                          final childPassengers = passengerList
+                                              .where((p) => p.PaxType == 2)
+                                              .toList();
+
+                                          final passenger = childPassengers[
+                                              index]; // 👈 Access each child passenger
+
                                           return Column(
                                             children: [
                                               Container(
@@ -1287,7 +1363,7 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                 child: Row(
                                                   children: [
                                                     SvgPicture.asset(
-                                                      "assets/icon/adult.svg",
+                                                      "assets/icon/child.svg",
                                                       height: 15,
                                                       width: 15,
                                                     ),
@@ -1302,370 +1378,240 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                               SizedBox(height: 10),
                                             ],
                                           );
-                                      },
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    if (childCount > 0)
-                                      Text(
-                                        "CHILD",
-                                        style: TextStyle(color: Colors.black),
+                                        },
                                       ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      itemCount: bookingdetailsid
-                                          .data.first.passengerDetails
-                                          .where((p) => p.PaxType == 2)
-                                          .length,
-                                      itemBuilder: (context, index) {
-                                        final passengerList = bookingdetailsid
-                                            .data.first.passengerDetails;
-                                        final childPassengers = passengerList
-                                            .where((p) => p.PaxType == 2)
-                                            .toList();
-
-                                        final passenger = childPassengers[
-                                            index]; // 👈 Access each child passenger
-
-                                        return Column(
-                                          children: [
-                                            Container(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 10, vertical: 10),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                color: Color(0xFFE6E6E6),
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  SvgPicture.asset(
-                                                    "assets/icon/child.svg",
-                                                    height: 15,
-                                                    width: 15,
-                                                  ),
-                                                  Text(
-                                                    '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
-                                                    style: TextStyle(
-                                                        color: Colors.black),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            SizedBox(height: 10),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    if (infantCount > 0)
-                                      Text(
-                                        "INFANT",
-                                        style: TextStyle(color: Colors.black),
+                                      SizedBox(
+                                        height: 10,
                                       ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      itemCount: bookingdetailsid
-                                          .data.first.passengerDetails
-                                          .where((p) => p.PaxType == 3)
-                                          .length,
-                                      itemBuilder: (context, index) {
-                                        final passengerList = bookingdetailsid
-                                            .data.first.passengerDetails;
-                                        final infantPassengers = passengerList
+                                      if (infantCount > 0)
+                                        Text(
+                                          "INFANT",
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                      SizedBox(
+                                        height: 5,
+                                      ),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: NeverScrollableScrollPhysics(),
+                                        itemCount: bookingdetailsid
+                                            .data.first.passengerDetails
                                             .where((p) => p.PaxType == 3)
-                                            .toList();
+                                            .length,
+                                        itemBuilder: (context, index) {
+                                          final passengerList = bookingdetailsid
+                                              .data.first.passengerDetails;
+                                          final infantPassengers = passengerList
+                                              .where((p) => p.PaxType == 3)
+                                              .toList();
 
-                                        final passenger = infantPassengers[
-                                            index]; // 👈 Access each child passenger
+                                          final passenger = infantPassengers[
+                                              index]; // 👈 Access each child passenger
 
-                                        return Column(
-                                          children: [
-                                            Container(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 10, vertical: 10),
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                color: Color(0xFFE6E6E6),
+                                          return Column(
+                                            children: [
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 10),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  color: Color(0xFFE6E6E6),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    SvgPicture.asset(
+                                                      "assets/icon/child.svg",
+                                                      height: 15,
+                                                      width: 15,
+                                                    ),
+                                                    Text(
+                                                      '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
+                                                      style: TextStyle(
+                                                          color: Colors.black),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                              child: Row(
-                                                children: [
-                                                  SvgPicture.asset(
-                                                    "assets/icon/child.svg",
-                                                    height: 15,
-                                                    width: 15,
-                                                  ),
-                                                  Text(
-                                                    '${passenger.Title} ${passenger.FirstName} ${passenger.LastName}',
-                                                    style: TextStyle(
-                                                        color: Colors.black),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            SizedBox(height: 10),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                )
-                              : Container(),
-                        ],
+                                              SizedBox(height: 10),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  )
+                                : Container(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  // FARE
-                  Container(
-                    margin: EdgeInsets.all(13),
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            //("fr");
-                            setState(() {
-                              isfare = !isfare;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              SvgPicture.asset('assets/icon/fare.svg'),
-                              SizedBox(
-                                width: 5,
-                              ),
-                              Text(
-                                "Fare BreakUp",
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Spacer(),
-                              Text(
-                                isfare ? "View Less" : "View More",
-                                style:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              Icon(
-                                isfare
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down_outlined,
-                                color: Colors.grey.shade700,
-                                size: 20,
-                              )
-                            ],
+                    // FARE
+                    Container(
+                      margin: EdgeInsets.all(13),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              //("fr");
+                              setState(() {
+                                isfare = !isfare;
+                              });
+                            },
+                            child: Row(
+                              children: [
+                                SvgPicture.asset('assets/icon/fare.svg'),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Text(
+                                  "Fare BreakUp",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Spacer(),
+                                Text(
+                                  isfare ? "View Less" : "View More",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                                Icon(
+                                  isfare
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down_outlined,
+                                  color: Colors.grey.shade700,
+                                  size: 20,
+                                )
+                              ],
+                            ),
                           ),
-                        ),
-                        isfare == true
-                            ? Column(
-                                children: [
-                                  Divider(),
-                                  Container(
-                                    margin: EdgeInsets.all(5),
-                                    padding: EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        color: Color(0xFFFFE7DA)),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text("Base Fare",
-                                                style: TextStyle(
-                                                    fontSize: 14.sp,
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            Text('₹$baseFare',
-                                                style: TextStyle(
-                                                    fontSize: 14.sp,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFFF37023))),
-                                          ],
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                                "Adults($adultCount X ₹${adultFare.toInt()})",
-                                                style: TextStyle(
-                                                  fontSize: 12.sp,
-                                                  color: Colors.grey,
-                                                )),
-                                            Text("₹${totaladultFare.toInt()}",
-                                                style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    color: Colors.grey)),
-                                          ],
-                                        ),
-                                        SizedBox(height: 3.h),
-                                        if (childCount > 0)
+                          isfare == true
+                              ? Column(
+                                  children: [
+                                    Divider(),
+                                    Container(
+                                      margin: EdgeInsets.all(5),
+                                      padding: EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          color: Color(0xFFFFE7DA)),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text("Base Fare",
+                                                  style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              Text('₹$baseFare',
+                                                  style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Color(0xFFF37023))),
+                                            ],
+                                          ),
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                  "Child ($childCount X ₹${childFare.toInt()}))",
+                                                  "Adults($adultCount X ₹${adultFare.toInt()})",
                                                   style: TextStyle(
                                                     fontSize: 12.sp,
                                                     color: Colors.grey,
                                                   )),
-                                              Text("₹${totalchildFare.toInt()}",
+                                              Text("₹${totaladultFare.toInt()}",
                                                   style: TextStyle(
                                                       fontSize: 12.sp,
                                                       color: Colors.grey)),
                                             ],
                                           ),
-                                        SizedBox(height: 3.h),
-                                        if (infantCount > 0)
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                  "Infant ($infantCount X ₹${infantFare.toInt()}))",
-                                                  style: TextStyle(
-                                                    fontSize: 12.sp,
-                                                    color: Colors.grey,
-                                                  )),
-                                              Text(
-                                                  "₹${totalinfantFare.toInt()}",
-                                                  style: TextStyle(
-                                                      fontSize: 12.sp,
-                                                      color: Colors.grey)),
-                                            ],
-                                          ),
-                                        SizedBox(height: 5.h),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 7,
-                                  ),
-                                  Column(
-                                    children: [
-                                      Container(
-                                        margin: EdgeInsets.all(5),
-                                        padding: EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            color: Color(0xFFF5F5F5)),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("Tax and Surcharges",
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                                Text(
-                                                    '₹${bookingdetailsid.data.first.price.Tax}',
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
-                                              ],
-                                            ),
+                                          SizedBox(height: 3.h),
+                                          if (childCount > 0)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
                                                 Text(
-                                                    "Airline taxes and sur charges",
+                                                    "Child ($childCount X ₹${childFare.toInt()}))",
                                                     style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color:
-                                                            Color(0xFF909090),
-                                                        fontWeight:
-                                                            FontWeight.bold)),
+                                                      fontSize: 12.sp,
+                                                      color: Colors.grey,
+                                                    )),
                                                 Text(
-                                                    "₹${bookingdetailsid.data.first.price.Tax}",
+                                                    "₹${totalchildFare.toInt()}",
                                                     style: TextStyle(
                                                         fontSize: 12.sp,
                                                         color: Colors.grey)),
                                               ],
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        height: 7,
-                                      ),
-                                      Container(
-                                        margin: EdgeInsets.all(5),
-                                        padding: EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            color: Color(0xFFF5F5F5)),
-                                        child: Column(
-                                          children: [
+                                          SizedBox(height: 3.h),
+                                          if (infantCount > 0)
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Text("Convenience Fee",
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
                                                 Text(
-                                                    '₹${bookingdetailsid.data.first.convenienceFee}',
+                                                    "Infant ($infantCount X ₹${infantFare.toInt()}))",
                                                     style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
+                                                      fontSize: 12.sp,
+                                                      color: Colors.grey,
+                                                    )),
+                                                Text(
+                                                    "₹${totalinfantFare.toInt()}",
+                                                    style: TextStyle(
+                                                        fontSize: 12.sp,
+                                                        color: Colors.grey)),
                                               ],
                                             ),
-                                            if (coupounCode > 0)
+                                          SizedBox(height: 5.h),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 7,
+                                    ),
+                                    Column(
+                                      children: [
+                                        Container(
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              color: Color(0xFFF5F5F5)),
+                                          child: Column(
+                                            children: [
                                               Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment
                                                         .spaceBetween,
                                                 children: [
-                                                  Text("COUPOUN DISCOUNT",
+                                                  Text("Tax and Surcharges",
                                                       style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: Colors.black,
-                                                        // fontWeight:
-                                                        //     FontWeight.bold
-                                                      )),
+                                                          fontSize: 14.sp,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
                                                   Text(
-                                                      '₹${commissionHistory.data.first.customerCouponDiscount.round()}',
+                                                      '₹${bookingdetailsid.data.first.price.Tax}',
                                                       style: TextStyle(
                                                           fontSize: 14.sp,
                                                           fontWeight:
@@ -1674,241 +1620,321 @@ class _TicketdetailsState extends State<Ticketdetails> {
                                                               0xFFF37023))),
                                                 ],
                                               ),
-                                          ],
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                      "Airline taxes and sur charges",
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color:
+                                                              Color(0xFF909090),
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text(
+                                                      "₹${bookingdetailsid.data.first.price.Tax}",
+                                                      style: TextStyle(
+                                                          fontSize: 12.sp,
+                                                          color: Colors.grey)),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(
-                                        height: 7,
-                                      ),
-                                      Container(
-                                        margin: EdgeInsets.all(5),
-                                        padding: EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            color: Color(0xFFFFE7DA)),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("Baggage Charge",
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                                Text('₹$totalbaggage',
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("Meal Charge",
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                                Text('₹$totalmeals',
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("Seat Charge",
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                                Text('₹$totalseat',
-                                                    style: TextStyle(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
-                                              ],
-                                            ),
-                                          ],
+                                        SizedBox(
+                                          height: 7,
                                         ),
-                                      ),
+                                        Container(
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              color: Color(0xFFF5F5F5)),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("Convenience Fee",
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text(
+                                                      '₹${bookingdetailsid.data.first.convenienceFee}',
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                              0xFFF37023))),
+                                                ],
+                                              ),
+                                              if (coupounCode > 0)
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text("COUPOUN DISCOUNT",
+                                                        style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color: Colors.black,
+                                                          // fontWeight:
+                                                          //     FontWeight.bold
+                                                        )),
+                                                    Text(
+                                                        '₹${commissionHistory.data.first.customerCouponDiscount.round()}',
+                                                        style: TextStyle(
+                                                            fontSize: 14.sp,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Color(
+                                                                0xFFF37023))),
+                                                  ],
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 7,
+                                        ),
+                                        Container(
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              color: Color(0xFFFFE7DA)),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("Baggage Charge",
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text('₹$totalbaggage',
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                              0xFFF37023))),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("Meal Charge",
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text('₹$totalmeals',
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                              0xFFF37023))),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("Seat Charge",
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text('₹$totalseat',
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                              0xFFF37023))),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
 
-                                      SizedBox(
-                                        height: 7,
-                                      ),
-                                      Container(
-                                        margin: EdgeInsets.all(5),
-                                        padding: EdgeInsets.all(10),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("TOTAL",
-                                                    style: TextStyle(
-                                                        fontSize: 13.sp,
-                                                        color:
-                                                            Color(0xFF606060),
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                                Text(
-                                                    "₹${total.toStringAsFixed(0)}",
-                                                    style: TextStyle(
-                                                        fontSize: 17.sp,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Color(0xFFF37023))),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text("AMOUNT",
-                                                    style: TextStyle(
-                                                        fontSize: 13.sp,
-                                                        color:
-                                                            Color(0xFF606060),
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                                Text("Including GST+ taxes",
-                                                    style: TextStyle(
-                                                        fontSize: 13.sp,
-                                                        color:
-                                                            Color(0xFF909090))),
-                                              ],
-                                            ),
-                                          ],
+                                        SizedBox(
+                                          height: 7,
                                         ),
-                                      ),
-                                      // Align(
-                                      //   alignment: Alignment.bottomRight,
-                                      //   child: Text("Including GST+ taxes"),
-                                      // )
-                                    ],
-                                  )
-                                ],
-                              )
-                            : Container()
-                      ],
+                                        Container(
+                                          margin: EdgeInsets.all(5),
+                                          padding: EdgeInsets.all(10),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("TOTAL",
+                                                      style: TextStyle(
+                                                          fontSize: 13.sp,
+                                                          color:
+                                                              Color(0xFF606060),
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text(
+                                                      "₹${total.toStringAsFixed(0)}",
+                                                      style: TextStyle(
+                                                          fontSize: 17.sp,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                              0xFFF37023))),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text("AMOUNT",
+                                                      style: TextStyle(
+                                                          fontSize: 13.sp,
+                                                          color:
+                                                              Color(0xFF606060),
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                                  Text("Including GST+ taxes",
+                                                      style: TextStyle(
+                                                          fontSize: 13.sp,
+                                                          color: Color(
+                                                              0xFF909090))),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Align(
+                                        //   alignment: Alignment.bottomRight,
+                                        //   child: Text("Including GST+ taxes"),
+                                        // )
+                                      ],
+                                    )
+                                  ],
+                                )
+                              : Container()
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // Support
-                  Container(
-                    margin: EdgeInsets.all(13),
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            //("fr");
-                            setState(() {
-                              iscontact = !iscontact;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              Image.asset(
-                                'assets/images/support.png',
-                                height: 20,
-                              ),
-                              SizedBox(
-                                width: 5,
-                              ),
-                              Text(
-                                "Contact Support",
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Spacer(),
-                              Text(
-                                iscontact ? "View Less" : "View More",
-                                style:
-                                    TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              Icon(
-                                iscontact
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down_outlined,
-                                color: Colors.grey.shade700,
-                                size: 20,
-                              )
-                            ],
+                    // Support
+                    Container(
+                      margin: EdgeInsets.all(13),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 15, vertical: 17.5),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              //("fr");
+                              setState(() {
+                                iscontact = !iscontact;
+                              });
+                            },
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  'assets/images/support.png',
+                                  height: 20,
+                                ),
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Text(
+                                  "Contact Support",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Spacer(),
+                                Text(
+                                  iscontact ? "View Less" : "View More",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                                Icon(
+                                  iscontact
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down_outlined,
+                                  color: Colors.grey.shade700,
+                                  size: 20,
+                                )
+                              ],
+                            ),
                           ),
-                        ),
-                        iscontact == true
-                            ? Column(
-                                children: [
-                                  Divider(),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Mobile"),
-                                      Text(
-                                        bookingdetailsid.data.first
-                                            .passengerDetails.first.ContactNo,
-                                        style: TextStyle(
-                                            color: Color(0xFF303030),
-                                            fontWeight: FontWeight.bold),
-                                      )
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Email"),
-                                      Text(
-                                        bookingdetailsid.data.first
-                                            .passengerDetails.first.Email,
-                                        style: TextStyle(
-                                            color: Color(0xFF303030),
-                                            fontWeight: FontWeight.bold),
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : Container()
-                      ],
+                          iscontact == true
+                              ? Column(
+                                  children: [
+                                    Divider(),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Mobile"),
+                                        Text(
+                                          bookingdetailsid.data.first
+                                              .passengerDetails.first.ContactNo,
+                                          style: TextStyle(
+                                              color: Color(0xFF303030),
+                                              fontWeight: FontWeight.bold),
+                                        )
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Email"),
+                                        Text(
+                                          bookingdetailsid.data.first
+                                              .passengerDetails.first.Email,
+                                          style: TextStyle(
+                                              color: Color(0xFF303030),
+                                              fontWeight: FontWeight.bold),
+                                        )
+                                      ],
+                                    ),
+                                  ],
+                                )
+                              : Container()
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

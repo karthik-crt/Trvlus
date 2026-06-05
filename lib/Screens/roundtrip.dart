@@ -1928,29 +1928,31 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 65.h,
-        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, {
-              'airlineIndex': selectedAirlineIndex ?? 0,
-              'stops': selectedStops,
-              'hideNonRefundable': hideNonRefundable,
-              'departureTime': departureTime,
-              'arrivalTime': arrivalTime,
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF37023),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.r)),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 65.h,
+          padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, {
+                'airlineIndex': selectedAirlineIndex ?? 0,
+                'stops': selectedStops,
+                'hideNonRefundable': hideNonRefundable,
+                'departureTime': departureTime,
+                'arrivalTime': arrivalTime,
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF37023),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r)),
+            ),
+            child: Text("Apply Filter",
+                style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
           ),
-          child: Text("Apply Filter",
-              style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
         ),
       ),
     );

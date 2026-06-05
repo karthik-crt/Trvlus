@@ -583,49 +583,51 @@ class _AdditionsState extends State<Additions> {
                         ],
                       ),
                       SizedBox(height: 5.h),
-                      ElevatedButton(
-                        onPressed: () {
-                          // ApiService().bookTicket(selectedSeatPayload,
-                          //     widget.resultindex, widget.traceid);
-                          // Same data bundle as back arrow
-                          Map<String, dynamic> threeValue = {
-                            "meal": selectedMealData,
-                            "seat": selectedSeatPayload,
-                            "baggage": getFormattedBaggageData(),
-                            "baggageCount": selectedBaggageCount,
-                          };
-                          void printLargeJson(dynamic data) {
-                            final jsonString =
-                                const JsonEncoder.withIndent('  ')
-                                    .convert(data);
-                            const int chunkSize = 800;
+                      SafeArea(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // ApiService().bookTicket(selectedSeatPayload,
+                            //     widget.resultindex, widget.traceid);
+                            // Same data bundle as back arrow
+                            Map<String, dynamic> threeValue = {
+                              "meal": selectedMealData,
+                              "seat": selectedSeatPayload,
+                              "baggage": getFormattedBaggageData(),
+                              "baggageCount": selectedBaggageCount,
+                            };
+                            void printLargeJson(dynamic data) {
+                              final jsonString =
+                                  const JsonEncoder.withIndent('  ')
+                                      .convert(data);
+                              const int chunkSize = 800;
 
-                            for (int i = 0;
-                                i < jsonString.length;
-                                i += chunkSize) {
-                              print(jsonString.substring(
-                                i,
-                                i + chunkSize > jsonString.length
-                                    ? jsonString.length
-                                    : i + chunkSize,
-                              ));
+                              for (int i = 0;
+                                  i < jsonString.length;
+                                  i += chunkSize) {
+                                print(jsonString.substring(
+                                  i,
+                                  i + chunkSize > jsonString.length
+                                      ? jsonString.length
+                                      : i + chunkSize,
+                                ));
+                              }
                             }
-                          }
 
-                          Navigator.pop(context, threeValue);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 40.h),
-                          backgroundColor: Color(0xFFF37023),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.r),
+                            Navigator.pop(context, threeValue);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size(double.infinity, 40.h),
+                            backgroundColor: Color(0xFFF37023),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          "Next",
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            color: Colors.white,
+                          child: Text(
+                            "Next",
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),

@@ -3719,34 +3719,36 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 65.h,
-        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context, {
-              'airlineIndices': selectedAirlineIndices.toList(),
-              // NEW key for multi
-              'stops': selectedStops,
-              'hideNonRefundable': hideNonRefundable,
-              // <-- ADD THIS
-              'departureTime': departureTime,
-              // ADD
-              'arrivalTime': arrivalTime,
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF37023),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 65.h,
+          padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, {
+                'airlineIndices': selectedAirlineIndices.toList(),
+                // NEW key for multi
+                'stops': selectedStops,
+                'hideNonRefundable': hideNonRefundable,
+                // <-- ADD THIS
+                'departureTime': departureTime,
+                // ADD
+                'arrivalTime': arrivalTime,
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF37023),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
             ),
-          ),
-          child: Text(
-            "Apply Filter",
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            child: Text(
+              "Apply Filter",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),

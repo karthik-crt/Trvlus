@@ -2249,33 +2249,35 @@ class _FlightDetailsPageState extends State<FlightDetailsPage> {
                         ],
                       ),
                       SizedBox(height: 5.h),
-                      ElevatedButton(
-                        onPressed: () async {
-                          await checkLoginStatus();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: Size(double.infinity, 40.h),
-                          backgroundColor: Color(0xFFF37023),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.r),
+                      SafeArea(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await checkLoginStatus();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size(double.infinity, 40.h),
+                            backgroundColor: Color(0xFFF37023),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                            ),
                           ),
+                          child: isContinueLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  "Continue",
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
-                        child: isContinueLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                "Continue",
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: Colors.white,
-                                ),
-                              ),
                       ), // ElevatedButton(
                       //   onPressed: () async {
                       //     print("RESULTINDEXRESULTINDEX");

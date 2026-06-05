@@ -415,22 +415,24 @@ class _FareBreakupSheetState extends State<FareBreakupSheet> {
                 ),
               ),
               SizedBox(height: 10.h),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFF37023),
-                  minimumSize: Size(double.infinity, 35.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.r),
+              SafeArea(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFF37023),
+                    minimumSize: Size(double.infinity, 35.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
                   ),
-                ),
-                child: Text(
-                  "Continue",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: Colors.white,
+                  child: Text(
+                    "Continue",
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

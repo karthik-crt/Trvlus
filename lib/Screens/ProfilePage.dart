@@ -627,113 +627,116 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        buildListTile(
-                          "assets/icon/booking_history.svg",
-                          "Booking history",
-                          onTap: () async {
-                            Get.to(BookingHistoryPage());
-                          },
-                        ),
-                        Column(
-                          children: [
-                            buildListTile(
-                              "assets/icon/notification.svg",
-                              "Notification",
-                              onTap: () {
-                                Navigator.push(
+                    child: SafeArea(
+                      top: false,
+                      child: Column(
+                        children: [
+                          buildListTile(
+                            "assets/icon/booking_history.svg",
+                            "Booking history",
+                            onTap: () async {
+                              Get.to(BookingHistoryPage());
+                            },
+                          ),
+                          Column(
+                            children: [
+                              buildListTile(
+                                "assets/icon/notification.svg",
+                                "Notification",
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            NotificationScreen()),
+                                  );
+                                },
+                              )
+                            ],
+                          ),
+                          buildListTile("assets/icon/translate.svg", "Language",
+                              trailing: "English"),
+                          _hasUserId
+                              ? GestureDetector(
+                                  onTap:
+                                      _showDeleteDialog, // ✅ Call the confirmation dialog
+                                  child: buildListTile(
+                                    "assets/icon/deleteUser.svg",
+                                    "Delete Profile",
+                                  ),
+                                )
+                              : SizedBox.shrink(),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          NotificationScreen()),
-                                );
-                              },
-                            )
-                          ],
-                        ),
-                        buildListTile("assets/icon/translate.svg", "Language",
-                            trailing: "English"),
-                        _hasUserId
-                            ? GestureDetector(
-                                onTap:
-                                    _showDeleteDialog, // ✅ Call the confirmation dialog
-                                child: buildListTile(
-                                  "assets/icon/deleteUser.svg",
-                                  "Delete Profile",
-                                ),
-                              )
-                            : SizedBox.shrink(),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                                          const CustomerSupport()));
+                            },
+                            child: buildListTile(
+                                "assets/icon/contacts.svg", "Help & Support"),
+                          ),
+                          // GestureDetector(
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (_) => Tearmsandcondition(),
+                          //       ),
+                          //     );
+                          //   },
+                          //   child: buildListTile("assets/icon/T&C.svg", "T&C"),
+                          // ),
+                          // GestureDetector(
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (_) => PrivacyPolicyScreen(),
+                          //       ),
+                          //     );
+                          //   },
+                          //   child: buildListTile(
+                          //     "assets/icon/privacypolicy.svg",
+                          //     "Privacy Policy",
+                          //   ),
+                          // ),
+                          // GestureDetector(
+                          //   onTap: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (_) => Refundpolicy(),
+                          //       ),
+                          //     );
+                          //   },
+                          //   child: buildListTile(
+                          //       "assets/icon/refundpolicy.svg", "Refund Policy"),
+                          // ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CustomerSupport()));
-                          },
-                          child: buildListTile(
-                              "assets/icon/contacts.svg", "Help & Support"),
-                        ),
-                        // GestureDetector(
-                        //   onTap: () {
-                        //     Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //         builder: (_) => Tearmsandcondition(),
-                        //       ),
-                        //     );
-                        //   },
-                        //   child: buildListTile("assets/icon/T&C.svg", "T&C"),
-                        // ),
-                        // GestureDetector(
-                        //   onTap: () {
-                        //     Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //         builder: (_) => PrivacyPolicyScreen(),
-                        //       ),
-                        //     );
-                        //   },
-                        //   child: buildListTile(
-                        //     "assets/icon/privacypolicy.svg",
-                        //     "Privacy Policy",
-                        //   ),
-                        // ),
-                        // GestureDetector(
-                        //   onTap: () {
-                        //     Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //         builder: (_) => Refundpolicy(),
-                        //       ),
-                        //     );
-                        //   },
-                        //   child: buildListTile(
-                        //       "assets/icon/refundpolicy.svg", "Refund Policy"),
-                        // ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const Legal(),
-                              ),
-                            );
-                          },
-                          child: buildListTile(
-                              "assets/icon/legalpolicy.svg", "Legal Policy"),
-                        ),
-                        GestureDetector(
-                            onTap: () => _onShareXFileFromAssets(context),
+                                  builder: (_) => const Legal(),
+                                ),
+                              );
+                            },
                             child: buildListTile(
-                                "assets/icon/share.svg", "Share App")),
-                        GestureDetector(
-                          onTap: () => _showLogoutDialog(),
-                          child:
-                              buildListTile("assets/icon/logout.svg", "Logout"),
-                        ),
-                      ],
+                                "assets/icon/legalpolicy.svg", "Legal Policy"),
+                          ),
+                          GestureDetector(
+                              onTap: () => _onShareXFileFromAssets(context),
+                              child: buildListTile(
+                                  "assets/icon/share.svg", "Share App")),
+                          GestureDetector(
+                            onTap: () => _showLogoutDialog(),
+                            child: buildListTile(
+                                "assets/icon/logout.svg", "Logout"),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

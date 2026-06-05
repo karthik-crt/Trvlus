@@ -223,136 +223,57 @@ class _SelectTravellerState extends State<SelectTraveller> {
   Widget build(BuildContext context) {
     return Stack(children: [
       Scaffold(
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(10),
-          child: SizedBox(
-            height: 50, // better height for finger tap
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    // Build selected passengers list (same logic as Apply button)
-                    List<Map<String, dynamic>> selectedPassengersList = [];
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: SizedBox(
+              height: 50, // better height for finger tap
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      // Build selected passengers list (same logic as Apply button)
+                      List<Map<String, dynamic>> selectedPassengersList = [];
 
-                    for (int index in selectedPassengerIndices) {
-                      final passenger = allPassengers[index];
-                      final date =
-                          DateFormat('yyyy-MM-dd').parseStrict(passenger.dob);
-                      final formattedDate =
-                          DateFormat('dd-MM-yyyy').format(date);
+                      for (int index in selectedPassengerIndices) {
+                        final passenger = allPassengers[index];
+                        final date =
+                            DateFormat('yyyy-MM-dd').parseStrict(passenger.dob);
+                        final formattedDate =
+                            DateFormat('dd-MM-yyyy').format(date);
 
-                      String formattedExpiry = '';
-                      final rawExpiry = passenger.passportExpiry ?? '';
-                      if (rawExpiry.isNotEmpty) {
-                        try {
-                          final expiry =
-                              DateFormat('yyyy-MM-dd').parseStrict(rawExpiry);
-                          formattedExpiry =
-                              DateFormat('dd-MM-yyyy').format(expiry);
-                        } catch (e) {
-                          formattedExpiry = '';
+                        String formattedExpiry = '';
+                        final rawExpiry = passenger.passportExpiry ?? '';
+                        if (rawExpiry.isNotEmpty) {
+                          try {
+                            final expiry =
+                                DateFormat('yyyy-MM-dd').parseStrict(rawExpiry);
+                            formattedExpiry =
+                                DateFormat('dd-MM-yyyy').format(expiry);
+                          } catch (e) {
+                            formattedExpiry = '';
+                          }
                         }
+
+                        selectedPassengersList.add({
+                          'id': passenger.id,
+                          'gender': passenger.gender,
+                          'Firstname': passenger.firstName,
+                          'lastname': passenger.lastName,
+                          'mobile': passenger.mobile,
+                          'email': passenger.email,
+                          'Passport No': passenger.passportNo,
+                          'Date of Birth': formattedDate,
+                          'Expiry': formattedExpiry,
+                          'typeLable': passenger.paxType,
+                          'wheelchair': false,
+                          'Nationality': 'Indian',
+                          'title': passenger.title,
+                          "IssusingCountry": "India",
+                        });
                       }
 
-                      selectedPassengersList.add({
-                        'id': passenger.id,
-                        'gender': passenger.gender,
-                        'Firstname': passenger.firstName,
-                        'lastname': passenger.lastName,
-                        'mobile': passenger.mobile,
-                        'email': passenger.email,
-                        'Passport No': passenger.passportNo,
-                        'Date of Birth': formattedDate,
-                        'Expiry': formattedExpiry,
-                        'typeLable': passenger.paxType,
-                        'wheelchair': false,
-                        'Nationality': 'Indian',
-                        'title': passenger.title,
-                        "IssusingCountry": "India",
-                      });
-                    }
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TravelerDetailsPage(
-                          flight: {},
-                          city: widget.city,
-                          destination: widget.destination,
-                          airlineName: widget.airlineName,
-                          airlineCode: widget.airlineCode,
-                          flightNumber: widget.flightNumber,
-                          cityName: widget.cityName,
-                          cityCode: widget.cityCode,
-                          descityName: widget.descityName,
-                          descityCode: widget.descityCode,
-                          depDate: widget.depDate,
-                          depTime: widget.depTime,
-                          arrDate: widget.arrDate,
-                          arrTime: widget.arrTime,
-                          duration: widget.duration,
-                          refundable: widget.refundable,
-                          stop: widget.stop,
-                          airportName: widget.airportName,
-                          desairportName: widget.desairportName,
-                          basefare: widget.basefare,
-                          segments: widget.segments,
-                          resultindex: widget.resultindex,
-                          traceid: widget.traceid,
-                          outboundFlight: widget.outboundFlight,
-                          inboundFlight: widget.inboundFlight,
-                          total: widget.total,
-                          tax: widget.tax,
-                          adultCount: widget.adultCount,
-                          childCount: widget.childCount,
-                          infantCount: widget.infantCount,
-                          isLLC: widget.isLLC,
-                          outdepDate: widget.outdepDate,
-                          outdepTime: widget.outdepTime,
-                          outarrDate: widget.outarrDate,
-                          outarrTime: widget.outarrTime,
-                          indepDate: widget.indepDate,
-                          indepTime: widget.indepTime,
-                          inarrDate: widget.inarrDate,
-                          inarrTime: widget.inarrTime,
-                          outBoundData: widget.outBoundData,
-                          inBoundData: widget.inBoundData,
-                          segmentsJson: widget.segmentsJson,
-                          coupouncode: widget.coupouncode,
-                          commonPublishedFare: widget.commonPublishedFare,
-                          tboOfferedFare: widget.tboOfferedFare,
-                          tboCommission: widget.tboCommission,
-                          tboTds: widget.tboTds,
-                          trvlusCommission: widget.trvlusCommission,
-                          trvlusTds: widget.trvlusTds,
-                          trvlusNetFare: widget.trvlusNetFare,
-                          // Pass selected passengers so they appear pre-filled
-                          selectedpassengers: selectedPassengersList.isNotEmpty
-                              ? selectedPassengersList
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFF37023),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  child: Text(
-                    "+Add More",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (selectedPassengerIndices.isEmpty) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -407,195 +328,277 @@ class _SelectTravellerState extends State<SelectTraveller> {
                             trvlusCommission: widget.trvlusCommission,
                             trvlusTds: widget.trvlusTds,
                             trvlusNetFare: widget.trvlusNetFare,
+                            // Pass selected passengers so they appear pre-filled
+                            selectedpassengers:
+                                selectedPassengersList.isNotEmpty
+                                    ? selectedPassengersList
+                                    : null,
                           ),
                         ),
                       );
-                      return; // ✅ stop here
-                    }
-
-                    List<Map<String, dynamic>> selectedPassengersList = [];
-
-                    for (int index in selectedPassengerIndices) {
-                      final passenger = allPassengers[index];
-                      final date =
-                          DateFormat('yyyy-MM-dd').parseStrict(passenger.dob);
-                      final formattedDate =
-                          DateFormat('dd-MM-yyyy').format(date);
-
-                      String formattedExpiry = '';
-                      final rawExpiry = passenger.passportExpiry ?? '';
-                      if (rawExpiry.isNotEmpty) {
-                        try {
-                          final expiry =
-                              DateFormat('yyyy-MM-dd').parseStrict(rawExpiry);
-                          formattedExpiry =
-                              DateFormat('dd-MM-yyyy').format(expiry);
-                        } catch (e) {
-                          formattedExpiry = '';
-                        }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFF37023),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: Text(
+                      "+Add More",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (selectedPassengerIndices.isEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TravelerDetailsPage(
+                              flight: {},
+                              city: widget.city,
+                              destination: widget.destination,
+                              airlineName: widget.airlineName,
+                              airlineCode: widget.airlineCode,
+                              flightNumber: widget.flightNumber,
+                              cityName: widget.cityName,
+                              cityCode: widget.cityCode,
+                              descityName: widget.descityName,
+                              descityCode: widget.descityCode,
+                              depDate: widget.depDate,
+                              depTime: widget.depTime,
+                              arrDate: widget.arrDate,
+                              arrTime: widget.arrTime,
+                              duration: widget.duration,
+                              refundable: widget.refundable,
+                              stop: widget.stop,
+                              airportName: widget.airportName,
+                              desairportName: widget.desairportName,
+                              basefare: widget.basefare,
+                              segments: widget.segments,
+                              resultindex: widget.resultindex,
+                              traceid: widget.traceid,
+                              outboundFlight: widget.outboundFlight,
+                              inboundFlight: widget.inboundFlight,
+                              total: widget.total,
+                              tax: widget.tax,
+                              adultCount: widget.adultCount,
+                              childCount: widget.childCount,
+                              infantCount: widget.infantCount,
+                              isLLC: widget.isLLC,
+                              outdepDate: widget.outdepDate,
+                              outdepTime: widget.outdepTime,
+                              outarrDate: widget.outarrDate,
+                              outarrTime: widget.outarrTime,
+                              indepDate: widget.indepDate,
+                              indepTime: widget.indepTime,
+                              inarrDate: widget.inarrDate,
+                              inarrTime: widget.inarrTime,
+                              outBoundData: widget.outBoundData,
+                              inBoundData: widget.inBoundData,
+                              segmentsJson: widget.segmentsJson,
+                              coupouncode: widget.coupouncode,
+                              commonPublishedFare: widget.commonPublishedFare,
+                              tboOfferedFare: widget.tboOfferedFare,
+                              tboCommission: widget.tboCommission,
+                              tboTds: widget.tboTds,
+                              trvlusCommission: widget.trvlusCommission,
+                              trvlusTds: widget.trvlusTds,
+                              trvlusNetFare: widget.trvlusNetFare,
+                            ),
+                          ),
+                        );
+                        return; // ✅ stop here
                       }
 
-                      Map<String, dynamic> selectedPassenger = {
-                        'id': passenger.id,
-                        'gender': passenger.gender,
-                        'Firstname': passenger.firstName,
-                        'lastname': passenger.lastName,
-                        'mobile': passenger.mobile,
-                        'email': passenger.email,
-                        'Passport No': passenger.passportNo,
-                        'Date of Birth': formattedDate,
-                        'Expiry': formattedExpiry,
-                        'typeLable': passenger.paxType,
-                        // 'Adult', 'Child', 'Infant'
-                        'wheelchair': false,
-                        'Nationality': 'Indian',
-                        'title': passenger.title,
-                        "IssusingCountry": "India",
-                      };
-                      selectedPassengersList.add(selectedPassenger);
-                    }
+                      List<Map<String, dynamic>> selectedPassengersList = [];
 
-                    if (selectedPassengerIndices.length == 1) {
-                      final passenger =
-                          allPassengers[selectedPassengerIndices.first];
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddTravelerPage(
-                            flight: {},
-                            city: widget.city,
-                            destination: widget.destination,
-                            airlineName: widget.airlineName,
-                            airlineCode: widget.airlineCode,
-                            flightNumber: widget.flightNumber,
-                            cityName: widget.cityName,
-                            cityCode: widget.cityCode,
-                            descityName: widget.descityName,
-                            descityCode: widget.descityCode,
-                            depDate: widget.depDate,
-                            depTime: widget.depTime,
-                            arrDate: widget.arrDate,
-                            arrTime: widget.arrTime,
-                            duration: widget.duration,
-                            refundable: widget.refundable,
-                            stop: widget.stop,
-                            airportName: widget.airportName,
-                            desairportName: widget.desairportName,
-                            basefare: widget.basefare,
-                            tax: widget.tax,
-                            segments: widget.segments,
-                            travelerType: passenger.paxType.toLowerCase(),
-                            // ✅ FIXED: 'adult' / 'child' / 'infant'
-                            isPassportRequiredAtTicket:
-                                widget.isPassportRequiredAtTicket,
-                            isPassportFullDetailRequiredAtBook:
-                                widget.isPassportFullDetailRequiredAtBook,
-                            adultCount: widget.adultCount,
-                            // ✅ always pass all counts
-                            childCount: widget.childCount,
-                            // ✅ always pass all counts
-                            infantCount: widget.infantCount,
-                            // ✅ always pass all counts
-                            selectedpassenger: selectedPassengersList.first,
-                            traceid: widget.traceid,
-                            resultindex: widget.resultindex,
-                            coupouncode: widget.coupouncode ?? 0,
-                            segmentsJson: widget.segmentsJson,
-                            isLLC: widget.isLLC,
-                            commonPublishedFare: widget.commonPublishedFare,
-                            tboOfferedFare: widget.tboOfferedFare,
-                            tboCommission: widget.tboCommission,
-                            tboTds: widget.tboTds,
-                            trvlusCommission: widget.trvlusCommission,
-                            trvlusTds: widget.trvlusTds,
-                            trvlusNetFare: widget.trvlusNetFare,
-                            outresultindex: widget.outresultindex,
-                            inresultindex: widget.inresultindex,
-                            outBoundData: widget.outBoundData,
-                            inBoundData: widget.inBoundData,
-                            inboundFlight: widget.inboundFlight,
-                            outboundFlight: widget.outboundFlight,
+                      for (int index in selectedPassengerIndices) {
+                        final passenger = allPassengers[index];
+                        final date =
+                            DateFormat('yyyy-MM-dd').parseStrict(passenger.dob);
+                        final formattedDate =
+                            DateFormat('dd-MM-yyyy').format(date);
+
+                        String formattedExpiry = '';
+                        final rawExpiry = passenger.passportExpiry ?? '';
+                        if (rawExpiry.isNotEmpty) {
+                          try {
+                            final expiry =
+                                DateFormat('yyyy-MM-dd').parseStrict(rawExpiry);
+                            formattedExpiry =
+                                DateFormat('dd-MM-yyyy').format(expiry);
+                          } catch (e) {
+                            formattedExpiry = '';
+                          }
+                        }
+
+                        Map<String, dynamic> selectedPassenger = {
+                          'id': passenger.id,
+                          'gender': passenger.gender,
+                          'Firstname': passenger.firstName,
+                          'lastname': passenger.lastName,
+                          'mobile': passenger.mobile,
+                          'email': passenger.email,
+                          'Passport No': passenger.passportNo,
+                          'Date of Birth': formattedDate,
+                          'Expiry': formattedExpiry,
+                          'typeLable': passenger.paxType,
+                          // 'Adult', 'Child', 'Infant'
+                          'wheelchair': false,
+                          'Nationality': 'Indian',
+                          'title': passenger.title,
+                          "IssusingCountry": "India",
+                        };
+                        selectedPassengersList.add(selectedPassenger);
+                      }
+
+                      if (selectedPassengerIndices.length == 1) {
+                        final passenger =
+                            allPassengers[selectedPassengerIndices.first];
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddTravelerPage(
+                              flight: {},
+                              city: widget.city,
+                              destination: widget.destination,
+                              airlineName: widget.airlineName,
+                              airlineCode: widget.airlineCode,
+                              flightNumber: widget.flightNumber,
+                              cityName: widget.cityName,
+                              cityCode: widget.cityCode,
+                              descityName: widget.descityName,
+                              descityCode: widget.descityCode,
+                              depDate: widget.depDate,
+                              depTime: widget.depTime,
+                              arrDate: widget.arrDate,
+                              arrTime: widget.arrTime,
+                              duration: widget.duration,
+                              refundable: widget.refundable,
+                              stop: widget.stop,
+                              airportName: widget.airportName,
+                              desairportName: widget.desairportName,
+                              basefare: widget.basefare,
+                              tax: widget.tax,
+                              segments: widget.segments,
+                              travelerType: passenger.paxType.toLowerCase(),
+                              // ✅ FIXED: 'adult' / 'child' / 'infant'
+                              isPassportRequiredAtTicket:
+                                  widget.isPassportRequiredAtTicket,
+                              isPassportFullDetailRequiredAtBook:
+                                  widget.isPassportFullDetailRequiredAtBook,
+                              adultCount: widget.adultCount,
+                              // ✅ always pass all counts
+                              childCount: widget.childCount,
+                              // ✅ always pass all counts
+                              infantCount: widget.infantCount,
+                              // ✅ always pass all counts
+                              selectedpassenger: selectedPassengersList.first,
+                              traceid: widget.traceid,
+                              resultindex: widget.resultindex,
+                              coupouncode: widget.coupouncode ?? 0,
+                              segmentsJson: widget.segmentsJson,
+                              isLLC: widget.isLLC,
+                              commonPublishedFare: widget.commonPublishedFare,
+                              tboOfferedFare: widget.tboOfferedFare,
+                              tboCommission: widget.tboCommission,
+                              tboTds: widget.tboTds,
+                              trvlusCommission: widget.trvlusCommission,
+                              trvlusTds: widget.trvlusTds,
+                              trvlusNetFare: widget.trvlusNetFare,
+                              outresultindex: widget.outresultindex,
+                              inresultindex: widget.inresultindex,
+                              outBoundData: widget.outBoundData,
+                              inBoundData: widget.inBoundData,
+                              inboundFlight: widget.inboundFlight,
+                              outboundFlight: widget.outboundFlight,
+                            ),
                           ),
-                        ),
-                      );
-                    } else {
-                      setState(() => _isNavigating = true);
-                      await Future.delayed(const Duration(milliseconds: 100));
-                      if (!mounted) return;
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MultiAddTravelerPage(
-                            flight: {},
-                            city: widget.city,
-                            destination: widget.destination,
-                            airlineName: widget.airlineName,
-                            airlineCode: widget.airlineCode,
-                            flightNumber: widget.flightNumber,
-                            cityName: widget.cityName,
-                            cityCode: widget.cityCode,
-                            descityName: widget.descityName,
-                            descityCode: widget.descityCode,
-                            depDate: widget.depDate,
-                            depTime: widget.depTime,
-                            arrDate: widget.arrDate,
-                            arrTime: widget.arrTime,
-                            duration: widget.duration,
-                            refundable: widget.refundable,
-                            stop: widget.stop,
-                            airportName: widget.airportName,
-                            desairportName: widget.desairportName,
-                            basefare: widget.basefare,
-                            tax: widget.tax,
-                            segments: widget.segments,
-                            isPassportRequiredAtTicket:
-                                widget.isPassportRequiredAtTicket,
-                            isPassportFullDetailRequiredAtBook:
-                                widget.isPassportFullDetailRequiredAtBook,
-                            adultCount: widget.adultCount,
-                            childCount: widget.childCount,
-                            infantCount: widget.infantCount,
-                            selectedpassengers: selectedPassengersList,
-                            traceid: widget.traceid,
-                            resultindex: widget.resultindex,
-                            coupouncode: widget.coupouncode ?? 0,
-                            segmentsJson: widget.segmentsJson,
-                            isLLC: widget.isLLC,
-                            commonPublishedFare: widget.commonPublishedFare,
-                            tboOfferedFare: widget.tboOfferedFare,
-                            tboCommission: widget.tboCommission,
-                            tboTds: widget.tboTds,
-                            trvlusCommission: widget.trvlusCommission,
-                            trvlusTds: widget.trvlusTds,
-                            trvlusNetFare: widget.trvlusNetFare,
-                            outresultindex: widget.outresultindex,
-                            inresultindex: widget.inresultindex,
-                            outBoundData: widget.outBoundData,
-                            inBoundData: widget.inBoundData,
-                            inboundFlight: widget.inboundFlight,
-                            outboundFlight: widget.outboundFlight,
+                        );
+                      } else {
+                        setState(() => _isNavigating = true);
+                        await Future.delayed(const Duration(milliseconds: 100));
+                        if (!mounted) return;
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MultiAddTravelerPage(
+                              flight: {},
+                              city: widget.city,
+                              destination: widget.destination,
+                              airlineName: widget.airlineName,
+                              airlineCode: widget.airlineCode,
+                              flightNumber: widget.flightNumber,
+                              cityName: widget.cityName,
+                              cityCode: widget.cityCode,
+                              descityName: widget.descityName,
+                              descityCode: widget.descityCode,
+                              depDate: widget.depDate,
+                              depTime: widget.depTime,
+                              arrDate: widget.arrDate,
+                              arrTime: widget.arrTime,
+                              duration: widget.duration,
+                              refundable: widget.refundable,
+                              stop: widget.stop,
+                              airportName: widget.airportName,
+                              desairportName: widget.desairportName,
+                              basefare: widget.basefare,
+                              tax: widget.tax,
+                              segments: widget.segments,
+                              isPassportRequiredAtTicket:
+                                  widget.isPassportRequiredAtTicket,
+                              isPassportFullDetailRequiredAtBook:
+                                  widget.isPassportFullDetailRequiredAtBook,
+                              adultCount: widget.adultCount,
+                              childCount: widget.childCount,
+                              infantCount: widget.infantCount,
+                              selectedpassengers: selectedPassengersList,
+                              traceid: widget.traceid,
+                              resultindex: widget.resultindex,
+                              coupouncode: widget.coupouncode ?? 0,
+                              segmentsJson: widget.segmentsJson,
+                              isLLC: widget.isLLC,
+                              commonPublishedFare: widget.commonPublishedFare,
+                              tboOfferedFare: widget.tboOfferedFare,
+                              tboCommission: widget.tboCommission,
+                              tboTds: widget.tboTds,
+                              trvlusCommission: widget.trvlusCommission,
+                              trvlusTds: widget.trvlusTds,
+                              trvlusNetFare: widget.trvlusNetFare,
+                              outresultindex: widget.outresultindex,
+                              inresultindex: widget.inresultindex,
+                              outBoundData: widget.outBoundData,
+                              inBoundData: widget.inBoundData,
+                              inboundFlight: widget.inboundFlight,
+                              outboundFlight: widget.outboundFlight,
+                            ),
                           ),
-                        ),
-                      );
-                      if (mounted) setState(() => _isNavigating = false);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFF37023),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                        );
+                        if (mounted) setState(() => _isNavigating = false);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFF37023),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: Text(
+                      "Apply",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    "Apply",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
